@@ -21,8 +21,6 @@ local MyGUID = UnitGUID("player")
 local PetGUID = ""
 local _
 
-local Channel
-
 Defaults["announcements-enable"] = true
 Defaults["announcements-channel"] = "SELF"
 
@@ -30,56 +28,56 @@ Announcements.Spells = {
 
 }
 
+local Announce = function(message)
+        local Channel = Announcements:GetChannelToSend()
+
+        if Channel then
+                SendChatMessage(message, Channel)
+        else
+                print(message)
+        end
+end
+
 function Announcements:GetChannelToSend()
-	if ((Settings["announcements-channel"] == "SELF") or (IsBattleground() or IsRatedBattleground())) then
-		return
-	elseif (Settings["announcements-channel"] == "GROUP") then
-		if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-			return "INSTANCE_CHAT"
-		elseif IsInGroup(LE_PARTY_CATEGORY_HOME) then
+        local Setting = Settings["announcements-channel"]
+
+        if ((Setting == "SELF") or (IsBattleground() or IsRatedBattleground())) then
+                return
+        elseif (Setting == "GROUP") then
+                if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+                        return "INSTANCE_CHAT"
+                elseif IsInGroup(LE_PARTY_CATEGORY_HOME) then
 			if IsInRaid() then
 				return "RAID"
 			else
 				return "PARTY"
 			end
 		end
-	elseif (Settings["announcements-channel"] == "SAY") then
-		return "SAY"
-	else
-		return "EMOTE"
-	end
+        elseif (Setting == "SAY") then
+                return "SAY"
+        else
+                return "EMOTE"
+        end
 end
 
 Announcements.Events = {
-	["SPELL_INTERRUPT"] = function(target, id, spell)
-		if UnitIsFriend("player", target) then -- Quaking filter
-			return
-		end
+        ["SPELL_INTERRUPT"] = function(target, id, spell)
+                if UnitIsFriend("player", target) then -- Quaking filter
+                        return
+                end
 
-		Channel = Announcements:GetChannelToSend()
+                Announce(format(InterruptMessage, target, id, spell))
+        end,
 
-		if Channel then
-			SendChatMessage(format(InterruptMessage, target, id, spell), Channel)
-		else
-			print(format(InterruptMessage, target, id, spell))
-		end
-	end,
+        --[[["SPELL_DISPEL"] = function(target, id, spell)
+                if (not UnitIsFriend("player", target)) then
+                        SendChatMessage(format(DispelledMessage, target, id, spell), "EMOTE")
+                end
+        end,]]
 
-	--[[["SPELL_DISPEL"] = function(target, id, spell)
-		if (not UnitIsFriend("player", target)) then
-			SendChatMessage(format(DispelledMessage, target, id, spell), "EMOTE")
-		end
-	end,]]
-
-	["SPELL_STOLEN"] = function(target, id, spell)
-		Channel = Announcements:GetChannelToSend()
-
-		if Channel then
-			SendChatMessage(format(StolenMessage, target, id, spell), Channel)
-		else
-			print(format(StolenMessage, target, id, spell))
-		end
-	end,
+        ["SPELL_STOLEN"] = function(target, id, spell)
+                Announce(format(StolenMessage, target, id, spell))
+        end,
 }
 
 function Announcements:COMBAT_LOG_EVENT_UNFILTERED()
@@ -115,8 +113,10 @@ function Announcements:UNIT_PET(owner)
 	end
 end
 
-function Announcements:OnEvent(event, arg)
-	self[event](self, arg)
+function Announcements:OnEvent(event, ...)
+        if self[event] then
+                self[event](self, ...)
+        end
 end
 
 function Announcements:Load()
@@ -127,9 +127,9 @@ function Announcements:Load()
 	self:GROUP_ROSTER_UPDATE()
 	self:UNIT_PET("player")
 
-	self:RegisterEvent("UNIT_PET")
-	self:RegisterEvent("GROUP_ROSTER_UPDATE")
-	self:SetScript("OnEvent", self.OnEvent)
+        self:RegisterEvent("UNIT_PET")
+        self:RegisterEvent("GROUP_ROSTER_UPDATE")
+        self:SetScript("OnEvent", self.OnEvent)
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["General"], function(left, right)

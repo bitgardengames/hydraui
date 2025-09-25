@@ -7,6 +7,7 @@ local IsInRaid = IsInRaid
 local GetNumGroupMembers = GetNumGroupMembers
 local LE_PARTY_CATEGORY_HOME = LE_PARTY_CATEGORY_HOME
 local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
+local wipe = wipe
 
 local AddOnVersion = HydraUI.UIVersion
 local AddOnNum = tonumber(HydraUI.UIVersion)
@@ -23,27 +24,42 @@ local Tables = {}
 local Queue = {}
 local QueueHead = 1
 local QueueTail = 0
+local QueuedChannels = {}
 
 local Throttle = HydraUI:GetModule("Throttle")
 
 function Update:QueueChannel(channel, target)
+        if (not channel) then
+                return false
+        end
+
+        local key = target and (channel .. target) or channel
+
+        if QueuedChannels[key] then
+                return false
+        end
+
         local Data = Tables[#Tables]
 
         if Data then
                 Tables[#Tables] = nil
                 Data[1] = channel
                 Data[2] = target
+                Data[3] = key
         else
-                Data = {channel, target}
+                Data = {channel, target, key}
         end
 
         QueueTail = QueueTail + 1
         Queue[QueueTail] = Data
+        QueuedChannels[key] = true
 
         if (not self:GetScript("OnUpdate")) then
                 self.Timer = self.Delay
                 self:SetScript("OnUpdate", self.OnUpdate)
         end
+
+        return true
 end
 
 function Update:OnUpdate(elapsed)
@@ -55,9 +71,14 @@ function Update:OnUpdate(elapsed)
                 if Data then
                         CT:SendAddonMessage("NORMAL", "HydraUI-Version", AddOnVersion, Data[1], Data[2])
 
+                        QueuedChannels[Data[3]] = nil
+
                         Queue[QueueHead] = nil
                         QueueHead = QueueHead + 1
 
+                        Data[1] = nil
+                        Data[2] = nil
+                        Data[3] = nil
                         Tables[#Tables + 1] = Data
 
                         self.Timer = self.Delay
@@ -65,12 +86,14 @@ function Update:OnUpdate(elapsed)
                         if (QueueHead > QueueTail) then
                                 QueueHead = 1
                                 QueueTail = 0
+                                wipe(QueuedChannels)
                                 self:SetScript("OnUpdate", nil)
                         end
                 else
                         self.Timer = self.Delay
                         QueueHead = 1
                         QueueTail = 0
+                        wipe(QueuedChannels)
                         self:SetScript("OnUpdate", nil)
                 end
         end
@@ -106,13 +129,17 @@ function Update:GROUP_ROSTER_UPDATE()
 		self.SentInst = false
 	end
 
-	if (Instance > 0 and not self.SentInst) then
-		self:QueueChannel("INSTANCE_CHAT")
-		self.SentInst = true
-	elseif (Home > 0 and not self.SentHome) then
-		self:QueueChannel(IsInRaid(LE_PARTY_CATEGORY_HOME) and "RAID" or IsInGroup(LE_PARTY_CATEGORY_HOME) and "PARTY")
-		self.SentHome = true
-	end
+        if (Instance > 0 and not self.SentInst) then
+                if self:QueueChannel("INSTANCE_CHAT") then
+                        self.SentInst = true
+                end
+        elseif (Home > 0 and not self.SentHome) then
+                local channel = (IsInRaid(LE_PARTY_CATEGORY_HOME) and "RAID") or (IsInGroup(LE_PARTY_CATEGORY_HOME) and "PARTY")
+
+                if self:QueueChannel(channel) then
+                        self.SentHome = true
+                end
+        end
 end
 
 function Update:CHAT_MSG_ADDON(prefix, message, channel, sender)

@@ -11,54 +11,69 @@ local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
 local AddOnVersion = HydraUI.UIVersion
 local AddOnNum = tonumber(HydraUI.UIVersion)
 local User = HydraUI.UserName .. "-" .. HydraUI.UserRealm
-local tinsert = table.insert
-local tremove = table.remove
 local CT = ChatThrottleLib
 
 local Update = HydraUI:NewModule("Update")
 Update.SentHome = false
 Update.SentInst = false
 Update.Timer = 5
+Update.Delay = 5
 
 local Tables = {}
 local Queue = {}
+local QueueHead = 1
+local QueueTail = 0
 
 local Throttle = HydraUI:GetModule("Throttle")
 
 function Update:QueueChannel(channel, target)
-	local Data
+        local Data = Tables[#Tables]
 
-	if (#Tables == 0) then
-		Data = {channel, target}
-	else
-		Data = tremove(Tables, 1)
-		Data[1] = channel
-		Data[2] = target
-	end
+        if Data then
+                Tables[#Tables] = nil
+                Data[1] = channel
+                Data[2] = target
+        else
+                Data = {channel, target}
+        end
 
-	tinsert(Queue, Data)
+        QueueTail = QueueTail + 1
+        Queue[QueueTail] = Data
 
-	if (not self:GetScript("OnUpdate")) then
-		self:SetScript("OnUpdate", self.OnUpdate)
-	end
+        if (not self:GetScript("OnUpdate")) then
+                self.Timer = self.Delay
+                self:SetScript("OnUpdate", self.OnUpdate)
+        end
 end
 
 function Update:OnUpdate(elapsed)
-	self.Timer = self.Timer - elapsed
+        self.Timer = self.Timer - elapsed
 
-	if (self.Timer < 0) then
-		local Data = tremove(Queue, 1)
+        if (self.Timer < 0) then
+                local Data = Queue[QueueHead]
 
-		CT:SendAddonMessage("NORMAL", "HydraUI-Version", AddOnVersion, Data[1], Data[2])
+                if Data then
+                        CT:SendAddonMessage("NORMAL", "HydraUI-Version", AddOnVersion, Data[1], Data[2])
 
-		tinsert(Tables, Data)
+                        Queue[QueueHead] = nil
+                        QueueHead = QueueHead + 1
 
-		self.Timer = 5
+                        Tables[#Tables + 1] = Data
 
-		if (#Queue == 0) then
-			self:SetScript("OnUpdate", nil)
-		end
-	end
+                        self.Timer = self.Delay
+
+                        if (QueueHead > QueueTail) then
+                                QueueHead = 1
+                                QueueTail = 0
+                                self:SetScript("OnUpdate", nil)
+                        end
+                else
+                        self.Timer = self.Delay
+                        QueueHead = 1
+                        QueueTail = 0
+                        self:SetScript("OnUpdate", nil)
+                end
+        end
 end
 
 function Update:PLAYER_ENTERING_WORLD()

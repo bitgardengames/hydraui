@@ -1,57 +1,48 @@
 local HydraUI = select(2, ...):get()
 
-local tinsert = table.insert
-local tremove = table.remove
 local GetTime = GetTime
 
 local Throttle = HydraUI:NewModule("Throttle")
-local Active = {}
-local Inactive = {}
+local Records = {}
 
 function Throttle:IsThrottled(name)
-	for i = 1, #Active do
-		if (Active[i][1] == name) then
-			local Item = tremove(Active, i)
+        local record = Records[name]
 
-			if (GetTime() - Item[2] >= Item[3]) then
-				tinsert(Inactive, Item)
+        if (not record or not record.Active) then
+                return false
+        end
 
-				return false
-			end
+        if ((GetTime() - record.Started) >= record.Duration) then
+                record.Active = false
 
-			return true
-		end
-	end
+                return false
+        end
+
+        return true
 end
 
 function Throttle:Exists(name)
-	for i = 1, #Active do
-		if (Active[i][1] == name) then
-			return true
-		end
-	end
-
-	for i = 1, #Inactive do
-		if (Inactive[i][1] == name) then
-			return true
-		end
-	end
+        return Records[name] ~= nil
 end
 
 function Throttle:Start(name, duration)
-	if (not self:Exists(name)) then
-		tinsert(Inactive, {name, GetTime(), duration})
-	end
+        local record = Records[name]
+        local now = GetTime()
 
-	if (not self:IsThrottled(name)) then
-		for i = 1, #Inactive do
-			if (Inactive[i][1] == name) then
-				Inactive[i][2] = GetTime()
+        if (record and record.Active) then
+                if ((now - record.Started) < record.Duration) then
+                        return
+                end
 
-				tinsert(Active, tremove(Inactive, i))
+                record.Active = false
+        end
 
-				break
-			end
-		end
-	end
+        if not record then
+                record = {}
+                Records[name] = record
+        end
+
+        record.Duration = duration
+        record.Started = now
+        record.Active = true
 end

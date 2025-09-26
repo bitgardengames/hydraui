@@ -21,6 +21,7 @@ local DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B = 0.65, 0.65, 0.65
 -- Locals
 local floor = math.floor
 local max = math.max
+local min = math.min
 local type = type
 local wipe = wipe
 local tinsert = table.insert
@@ -186,33 +187,62 @@ end
 
 local LayoutWidgetColumn = function(frame, widgets, offset, anchorPoint, anchorX)
         if (not widgets) or (#widgets == 0) then
+                if frame.VisibleWidgets then
+                        for index = #frame.VisibleWidgets, 1, -1 do
+                                local widget = frame.VisibleWidgets[index]
+
+                                if widget then
+                                        widget:Hide()
+                                        frame.VisibleWidgets[index] = nil
+                                end
+                        end
+                end
+
                 return
         end
 
         local startIndex = frame.ScrollingDisabled and 1 or (offset or 1)
-        local lastVisible = frame.ScrollingDisabled and #widgets or (startIndex + MAX_WIDGETS_SHOWN - 1)
-        local previous
+        local lastVisible = frame.ScrollingDisabled and #widgets or min(startIndex + MAX_WIDGETS_SHOWN - 1, #widgets)
 
-        for index = 1, #widgets do
+        if (lastVisible < startIndex) then
+                return
+        end
+
+        local visibleWidgets = frame.VisibleWidgets or {}
+
+        for index = #visibleWidgets, 1, -1 do
+                local widget = visibleWidgets[index]
+
+                if widget then
+                        widget:Hide()
+                        visibleWidgets[index] = nil
+                end
+        end
+
+        local previous
+        local visibleIndex = 0
+
+        for index = startIndex, lastVisible do
                 local widget = widgets[index]
 
                 if widget then
                         widget:ClearAllPoints()
 
-                        if ShouldShowWidget(index, startIndex, lastVisible) then
-                                if previous then
-                                        widget:SetPoint("TOP", previous, "BOTTOM", 0, -2)
-                                else
-                                        widget:SetPoint(anchorPoint, frame, anchorX, -SPACING)
-                                end
-
-                                widget:Show()
-                                previous = widget
+                        if previous then
+                                widget:SetPoint("TOP", previous, "BOTTOM", 0, -2)
                         else
-                                widget:Hide()
+                                widget:SetPoint(anchorPoint, frame, anchorX, -SPACING)
                         end
+
+                        widget:Show()
+
+                        previous = widget
+                        visibleIndex = visibleIndex + 1
+                        visibleWidgets[visibleIndex] = widget
                 end
         end
+
+        frame.VisibleWidgets = visibleWidgets
 end
 
 local UpdateScrollArrows = function(window)
@@ -276,23 +306,21 @@ local WindowScrollBarOnMouseWheel = function(self, delta)
 	WindowOnMouseWheel(self:GetParent(), delta)
 end
 
-local StyleScrollButton = function(button, arrowTexture, arrowR, arrowG, arrowB)
+local StyleScrollButton = function(button, arrowTexture, headerTexture, widgetTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB, arrowR, arrowG, arrowB)
         button:SetBackdrop(HydraUI.BackdropAndBorder)
         button:SetBackdropColor(0, 0, 0, 0)
         button:SetBackdropBorderColor(0, 0, 0)
 
-        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
-
         button.Texture = button:CreateTexture(nil, "ARTWORK")
         button.Texture:SetPoint("TOPLEFT", button, 1, -1)
         button.Texture:SetPoint("BOTTOMRIGHT", button, -1, 1)
-        button.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+        button.Texture:SetTexture(headerTexture)
         button.Texture:SetVertexColor(brightR, brightG, brightB)
 
         button.Highlight = button:CreateTexture(nil, "HIGHLIGHT")
         button.Highlight:SetPoint("TOPLEFT", button, 1, -1)
         button.Highlight:SetPoint("BOTTOMRIGHT", button, -1, 1)
-        button.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        button.Highlight:SetTexture(widgetTexture)
         button.Highlight:SetVertexColor(1, 1, 1)
         button.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
@@ -304,13 +332,11 @@ local StyleScrollButton = function(button, arrowTexture, arrowR, arrowG, arrowB)
         if arrowR then
                 button.Arrow:SetVertexColor(arrowR, arrowG, arrowB)
         else
-                button.Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
+                button.Arrow:SetVertexColor(widgetColorR, widgetColorG, widgetColorB)
         end
 end
 
-local AttachScrollScripts = function(button, delta)
-        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
-
+local AttachScrollScripts = function(button, delta, brightR, brightG, brightB)
         button:SetScript("OnMouseUp", function(self)
                 self.Texture:SetVertexColor(brightR, brightG, brightB)
 
@@ -322,29 +348,29 @@ local AttachScrollScripts = function(button, delta)
         end)
 end
 
-local AddWindowScrollBar = function(self)
+local AddWindowScrollBar = function(self, windowColorR, windowColorG, windowColorB, widgetTexture, headerTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB)
         -- Scroll up
         self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
         self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
         self.ScrollUp:SetPoint("TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1))
-        StyleScrollButton(self.ScrollUp, "Arrow Up", DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B)
-        AttachScrollScripts(self.ScrollUp, 1)
+        StyleScrollButton(self.ScrollUp, "Arrow Up", headerTexture, widgetTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB, DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B)
+        AttachScrollScripts(self.ScrollUp, 1, brightR, brightG, brightB)
 
         -- Scroll down
         self.ScrollDown = CreateFrame("Frame", nil, self, "BackdropTemplate")
         self.ScrollDown:SetSize(16, WIDGET_HEIGHT)
         self.ScrollDown:SetPoint("BOTTOMRIGHT", GUI, -SPACING, SPACING)
-        StyleScrollButton(self.ScrollDown, "Arrow Down")
-        AttachScrollScripts(self.ScrollDown, -1)
+        StyleScrollButton(self.ScrollDown, "Arrow Down", headerTexture, widgetTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB)
+        AttachScrollScripts(self.ScrollDown, -1, brightR, brightG, brightB)
 
 	local ScrollBar = CreateFrame("Slider", nil, self, "BackdropTemplate")
 	ScrollBar:SetPoint("TOPLEFT", self.ScrollUp, "BOTTOMLEFT", 0, -2)
 	ScrollBar:SetPoint("BOTTOMRIGHT", self.ScrollDown, "TOPRIGHT", 0, 2)
-	ScrollBar:SetThumbTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        ScrollBar:SetThumbTexture(widgetTexture)
 	ScrollBar:SetOrientation("VERTICAL")
 	ScrollBar:SetValueStep(1)
 	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-        ScrollBar:SetBackdropColor(GetColorRGB("ui-window-main-color"))
+        ScrollBar:SetBackdropColor(windowColorR, windowColorG, windowColorB)
 	ScrollBar:SetBackdropBorderColor(0, 0, 0)
 	ScrollBar:SetMinMaxValues(1, self.MaxScroll)
 	ScrollBar:SetValue(1)
@@ -356,7 +382,7 @@ local AddWindowScrollBar = function(self)
 
 	local Thumb = ScrollBar:GetThumbTexture()
 	Thumb:SetSize(ScrollBar:GetWidth(), WIDGET_HEIGHT)
-	Thumb:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        Thumb:SetTexture(widgetTexture)
 	Thumb:SetVertexColor(0, 0, 0)
 
 	ScrollBar.NewThumb = ScrollBar:CreateTexture(nil, "BORDER")
@@ -365,16 +391,16 @@ local AddWindowScrollBar = function(self)
 	ScrollBar.NewThumb:SetTexture(Assets:GetTexture("Blank"))
 	ScrollBar.NewThumb:SetVertexColor(0, 0, 0)
 
-	ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
-	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
-	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-        ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-        ScrollBar.NewThumb2:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+        ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
+        ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
+        ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
+        ScrollBar.NewThumb2:SetTexture(widgetTexture)
+        ScrollBar.NewThumb2:SetVertexColor(brightR, brightG, brightB)
 
 	ScrollBar.Highlight = ScrollBar:CreateTexture(nil, "HIGHLIGHT")
 	ScrollBar.Highlight:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
 	ScrollBar.Highlight:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-	ScrollBar.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        ScrollBar.Highlight:SetTexture(widgetTexture)
 	ScrollBar.Highlight:SetVertexColor(1, 1, 1)
 	ScrollBar.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
@@ -382,7 +408,7 @@ local AddWindowScrollBar = function(self)
 	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
 	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
         ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
-        ScrollBar.Progress:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+        ScrollBar.Progress:SetVertexColor(brightR, brightG, brightB)
 	ScrollBar.Progress:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
 	self:EnableMouseWheel(true)
@@ -499,31 +525,27 @@ function GUI:CreateWidgetWindow(category, name, parent)
 	Window:SetPoint("BOTTOMRIGHT", self, -SPACING, SPACING)
 	Window:Hide()
 
-	Window.LeftWidgetsBG = CreateFrame("Frame", nil, Window)
-	Window.LeftWidgetsBG:SetWidth(GROUP_WIDTH)
-	Window.LeftWidgetsBG:SetPoint("TOPLEFT", Window, 0, 0)
-	Window.LeftWidgetsBG:SetPoint("BOTTOMLEFT", Window, 0, 0)
+        local windowColorR, windowColorG, windowColorB = GetColorRGB("ui-window-main-color")
+        local widgetTexture = Assets:GetTexture(Settings["ui-widget-texture"])
+        local headerTexture = Assets:GetTexture(Settings["ui-header-texture"])
+        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
+        local widgetColorR, widgetColorG, widgetColorB = GetColorRGB("ui-widget-color")
 
-	Window.LeftWidgetsBG.Backdrop = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.LeftWidgetsBG.Backdrop:SetWidth(GROUP_WIDTH)
-	Window.LeftWidgetsBG.Backdrop:SetPoint("TOPLEFT", Window.LeftWidgetsBG, 0, 0)
-	Window.LeftWidgetsBG.Backdrop:SetPoint("BOTTOMLEFT", Window.LeftWidgetsBG, 0, 0)
-	Window.LeftWidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.LeftWidgetsBG.Backdrop:SetBackdropColor(GetColorRGB("ui-window-main-color"))
-	Window.LeftWidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
+        Window.LeftWidgetsBG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
+        Window.LeftWidgetsBG:SetWidth(GROUP_WIDTH)
+        Window.LeftWidgetsBG:SetPoint("TOPLEFT", Window, 0, 0)
+        Window.LeftWidgetsBG:SetPoint("BOTTOMLEFT", Window, 0, 0)
+        Window.LeftWidgetsBG:SetBackdrop(HydraUI.BackdropAndBorder)
+        Window.LeftWidgetsBG:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+        Window.LeftWidgetsBG:SetBackdropBorderColor(0, 0, 0)
 
-	Window.RightWidgetsBG = CreateFrame("Frame", nil, Window)
-	Window.RightWidgetsBG:SetWidth(GROUP_WIDTH)
-	Window.RightWidgetsBG:SetPoint("TOPLEFT", Window.LeftWidgetsBG, "TOPRIGHT", 2, 0)
-	Window.RightWidgetsBG:SetPoint("BOTTOMLEFT", Window.LeftWidgetsBG, "BOTTOMRIGHT", 2, 0)
-
-	Window.RightWidgetsBG.Backdrop = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.RightWidgetsBG.Backdrop:SetWidth(GROUP_WIDTH)
-	Window.RightWidgetsBG.Backdrop:SetPoint("TOPLEFT", Window.RightWidgetsBG, 0, 0)
-	Window.RightWidgetsBG.Backdrop:SetPoint("BOTTOMLEFT", Window.RightWidgetsBG, 0, 0)
-	Window.RightWidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.RightWidgetsBG.Backdrop:SetBackdropColor(GetColorRGB("ui-window-main-color"))
-	Window.RightWidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
+        Window.RightWidgetsBG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
+        Window.RightWidgetsBG:SetWidth(GROUP_WIDTH)
+        Window.RightWidgetsBG:SetPoint("TOPLEFT", Window.LeftWidgetsBG, "TOPRIGHT", 2, 0)
+        Window.RightWidgetsBG:SetPoint("BOTTOMLEFT", Window.LeftWidgetsBG, "BOTTOMRIGHT", 2, 0)
+        Window.RightWidgetsBG:SetBackdrop(HydraUI.BackdropAndBorder)
+        Window.RightWidgetsBG:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+        Window.RightWidgetsBG:SetBackdropBorderColor(0, 0, 0)
 
 	Window.Category = category
 	Window.Name = name
@@ -554,16 +576,16 @@ function GUI:CreateWidgetWindow(category, name, parent)
 	Window.MaxScroll = max((#Window.LeftWidgets - (MAX_WIDGETS_SHOWN - 1)), (#Window.RightWidgets - (MAX_WIDGETS_SHOWN - 1)), 1)
 	Window.WidgetCount = max(#Window.LeftWidgets, #Window.RightWidgets)
 
-	if (Window.MaxScroll > 1) then
-		AddWindowScrollBar(Window)
-	else
-		Window.ScrollFiller = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-		Window.ScrollFiller:SetPoint("TOPRIGHT", Window, 0, 0)
-		Window.ScrollFiller:SetPoint("BOTTOMRIGHT", Window, 0, 0)
-		Window.ScrollFiller:SetWidth(16)
-		Window.ScrollFiller:SetBackdrop(HydraUI.BackdropAndBorder)
-		Window.ScrollFiller:SetBackdropColor(GetColorRGB("ui-window-main-color"))
-		Window.ScrollFiller:SetBackdropBorderColor(0, 0, 0)
+        if (Window.MaxScroll > 1) then
+                AddWindowScrollBar(Window, windowColorR, windowColorG, windowColorB, widgetTexture, headerTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB)
+        else
+                Window.ScrollFiller = CreateFrame("Frame", nil, Window, "BackdropTemplate")
+                Window.ScrollFiller:SetPoint("TOPRIGHT", Window, 0, 0)
+                Window.ScrollFiller:SetPoint("BOTTOMRIGHT", Window, 0, 0)
+                Window.ScrollFiller:SetWidth(16)
+                Window.ScrollFiller:SetBackdrop(HydraUI.BackdropAndBorder)
+                Window.ScrollFiller:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+                Window.ScrollFiller:SetBackdropBorderColor(0, 0, 0)
 
 		Window:SetScript("OnMouseWheel", NoScroll)
 	end

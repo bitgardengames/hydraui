@@ -39,6 +39,10 @@ end
 local RegisterWidget = function(self, widget, id)
         tinsert(self.Widgets, widget)
 
+        if widget.Hide then
+                widget:Hide()
+        end
+
         if (id and id ~= "") then
                 GUI.WidgetID[id] = widget
         end
@@ -47,6 +51,7 @@ end
 local CreateAnchor = function(self, id)
         local anchor = CreateFrame("Frame", nil, self)
         anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+        anchor:Hide()
 
         RegisterWidget(self, anchor, id)
 
@@ -378,9 +383,10 @@ GUI.Widgets.CreateAnimatedDoubleLine = function(self, id, left, right, r, g, b)
 end
 
 GUI.Widgets.CreateHeader = function(self, text)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.IsHeader = true
+        local Anchor = CreateFrame("Frame", nil, self)
+        Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+        Anchor.IsHeader = true
+        Anchor:Hide()
 
 	local Text = Anchor:CreateFontString(nil, "OVERLAY")
 	Text:SetPoint("CENTER", Anchor, 0, 0)
@@ -406,9 +412,10 @@ end
 
 -- Footer
 GUI.Widgets.CreateFooter = function(self)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.IsHeader = true
+        local Anchor = CreateFrame("Frame", nil, self)
+        Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+        Anchor.IsHeader = true
+        Anchor:Hide()
 
 	local BG = Anchor:CreateTexture(nil, "BORDER")
 	BG:SetAllPoints()

@@ -1,6 +1,7 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
 -- Locals
+local format = format
 local type = type
 local next = next
 local tonumber = tonumber
@@ -31,9 +32,21 @@ local LAST_ACTIVE_DROPDOWN
 
 local GUI = HydraUI:GetModule("GUI")
 
+local FormatColor = function(color, text)
+        return format("|cFF%s%s|r", color, tostring(text))
+end
+
+local RegisterWidget = function(self, widget, id)
+        tinsert(self.Widgets, widget)
+
+        if (id and id ~= "") then
+                GUI.WidgetID[id] = widget
+        end
+end
+
 local Ignore = {
-	["ui-profile"] = true,
-	["profile-copy"] = true,
+        ["ui-profile"] = true,
+        ["profile-copy"] = true,
 }
 
 -- Functions
@@ -92,17 +105,13 @@ GUI.Widgets.CreateLine = function(self, id, text)
 	Text:SetSize(GROUP_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("LEFT")
-	Text:SetText(format("|cFF%s%s|r", Settings["ui-widget-font-color"], tostring(text)))
+        Text:SetText(FormatColor(Settings["ui-widget-font-color"], text))
 
-	Anchor.Text = Text
+        Anchor.Text = Text
 
-	tinsert(self.Widgets, Anchor)
+        RegisterWidget(self, Anchor, id)
 
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
-
-	return Text
+        return Text
 end
 
 -- Double Line
@@ -115,25 +124,21 @@ GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
 	Left:SetSize((GROUP_WIDTH / 2) - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Left, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Left:SetJustifyH("LEFT")
-	Left:SetText(format("|cFF%s%s|r", Settings["ui-widget-font-color"], tostring(left)))
+        Left:SetText(FormatColor(Settings["ui-widget-font-color"], left))
 
 	local Right = Anchor:CreateFontString(nil, "OVERLAY")
 	Right:SetPoint("RIGHT", Anchor, -HEADER_SPACING, 0)
 	Right:SetSize((GROUP_WIDTH / 2) - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Right, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Right:SetJustifyH("RIGHT")
-	Right:SetText(format("|cFF%s%s|r", Settings["ui-widget-font-color"], tostring(right)))
+        Right:SetText(FormatColor(Settings["ui-widget-font-color"], right))
 
 	Anchor.Left = Left
 	Anchor.Right = Right
 
-	tinsert(self.Widgets, Anchor)
+        RegisterWidget(self, Anchor, id)
 
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
-
-	return Left
+        return Left
 end
 
 -- Message
@@ -198,7 +203,7 @@ GUI.Widgets.CreateAnimatedLine = function(self, id, left, right, r, g, b)
 	Left:SetSize(GROUP_WIDTH - 8, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Left, Settings["ui-widget-font"], 16)
 	Left:SetJustifyH("LEFT")
-	Left:SetText(format("|cFF%s%s|r", Settings["ui-widget-font-color"], left))
+        Left:SetText(FormatColor(Settings["ui-widget-font-color"], left))
 
 	local Parent = CreateFrame("Frame", nil, Anchor)
 	Parent:SetSize(Left:GetStringWidth() + 8, WIDGET_HEIGHT + 4)
@@ -249,11 +254,7 @@ GUI.Widgets.CreateAnimatedLine = function(self, id, left, right, r, g, b)
 	ScaleOut:SetOrder(2)
 	ScaleOut:SetGroup(Group)
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+        RegisterWidget(self, Anchor, id)
 end
 
 GUI.Widgets.CreateAnimatedDoubleLine = function(self, id, left, right, r, g, b)
@@ -366,13 +367,9 @@ GUI.Widgets.CreateAnimatedDoubleLine = function(self, id, left, right, r, g, b)
 		Anchor.RightParent.SOut:SetOrder(2)
 	end
 
-	tinsert(self.Widgets, Anchor)
+        RegisterWidget(self, Anchor, id)
 
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
-
-	return Anchor.Left, Anchor.Right
+        return Anchor.Left, Anchor.Right
 end
 
 GUI.Widgets.CreateHeader = function(self, text)
@@ -385,7 +382,7 @@ GUI.Widgets.CreateHeader = function(self, text)
 	Text:SetHeight(WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Text, Settings["ui-header-font"], 12)
 	Text:SetJustifyH("CENTER")
-	Text:SetText("|cFF"..Settings["ui-header-font-color"]..text.."|r")
+        Text:SetText(FormatColor(Settings["ui-header-font-color"], text))
 
 	local BG = Anchor:CreateTexture(nil, "BORDER")
 	BG:SetAllPoints()
@@ -397,9 +394,9 @@ GUI.Widgets.CreateHeader = function(self, text)
 	Texture:SetTexture(Assets:GetTexture("Blank"))
 	Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
-	tinsert(self.Widgets, Anchor)
+        RegisterWidget(self, Anchor)
 
-	return Text
+        return Text
 end
 
 -- Footer
@@ -418,7 +415,7 @@ GUI.Widgets.CreateFooter = function(self)
 	Texture:SetTexture(Assets:GetTexture("Blank"))
 	Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
-	tinsert(self.Widgets, Anchor)
+        RegisterWidget(self, Anchor)
 end
 
 -- Button
@@ -519,7 +516,7 @@ GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
 	Text:SetSize(GROUP_WIDTH - BUTTON_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("LEFT")
-	Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	Button.Texture = Texture
 	Button.Highlight = Highlight
@@ -528,11 +525,7 @@ GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
 
 	Anchor.Button = Button
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+        RegisterWidget(self, Anchor, id)
 
 	return Anchor
 end
@@ -599,20 +592,16 @@ GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, labe
 	Text:SetSize(GROUP_WIDTH - STATUSBAR_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("LEFT")
-	Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	Bar.Anim = Anim
 	Bar.Spark = Spark
 	Bar.MiddleText = MiddleText
 	Bar.Text = Text
 
-	tinsert(self.Widgets, Anchor)
+        RegisterWidget(self, Anchor, id)
 
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
-
-	return Bar
+        return Bar
 end
 
 -- Checkbox
@@ -703,7 +692,7 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 	Text:SetSize(GROUP_WIDTH - CHECKBOX_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("LEFT")
-	Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	local Hover = Checkbox:CreateTexture(nil, "HIGHLIGHT")
 	Hover:SetPoint("TOPLEFT", Checkbox, 1, -1)
@@ -735,11 +724,7 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 	Checkbox.FadeIn = FadeIn
 	Checkbox.FadeOut = FadeOut
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+        RegisterWidget(self, Anchor, id)
 
 	return Checkbox
 end
@@ -894,7 +879,7 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	Text:SetSize(GROUP_WIDTH - SWITCH_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("LEFT")
-	Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	local Highlight = Switch:CreateTexture(nil, "HIGHLIGHT")
 	Highlight:SetPoint("TOPLEFT", Switch, 1, -1)
@@ -914,11 +899,7 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 
 	Anchor.Switch = Switch
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+        RegisterWidget(self, Anchor, id)
 
 	return Switch
 end
@@ -1020,7 +1001,7 @@ function GUI:CreateInputWindow()
 	Window.Header.Text:SetPoint("LEFT", Window.Header, HEADER_SPACING, -1)
 	HydraUI:SetFontInfo(Window.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	Window.Header.Text:SetJustifyH("LEFT")
-	Window.Header.Text:SetText("|cFF" .. Settings["ui-header-font-color"] .. Language["Input"] .. "|r")
+        Window.Header.Text:SetText(FormatColor(Settings["ui-header-font-color"], Language["Input"]))
 
 	-- Close button
 	Window.CloseButton = CreateFrame("Frame", nil, Window, "BackdropTemplate")
@@ -1191,7 +1172,7 @@ GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 	Input.Text:SetSize(GROUP_WIDTH - INPUT_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Input.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Input.Text:SetJustifyH("LEFT")
-	Input.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Input.Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	Input.FadeIn = LibMotion:CreateAnimation(Input.Flash, "Fade")
 	Input.FadeIn:SetEasing("in")
@@ -1204,11 +1185,7 @@ GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 	Input.FadeOut:SetDuration(0.3)
 	Input.FadeOut:SetChange(0)
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+        RegisterWidget(self, Anchor, id)
 
 	Anchor.Input = Input
 
@@ -1243,7 +1220,7 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 	Text:SetJustifyH("LEFT")
 	Text:SetShadowColor(0, 0, 0)
 	Text:SetShadowOffset(1, -1)
-	Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	local Anchor2 = CreateFrame("Frame", nil, self)
 	Anchor2:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
@@ -1346,8 +1323,8 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 	Input.FadeOut:SetDuration(0.3)
 	Input.FadeOut:SetChange(0)
 
-	tinsert(self.Widgets, Anchor)
-	tinsert(self.Widgets, Anchor2)
+        RegisterWidget(self, Anchor, id)
+        RegisterWidget(self, Anchor2)
 
 	Anchor.Input = Input
 
@@ -1430,7 +1407,7 @@ function GUI:CreateExportWindow()
 	Window.Header.Text:SetPoint("LEFT", Window.Header, HEADER_SPACING, -1)
 	HydraUI:SetFontInfo(Window.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	Window.Header.Text:SetJustifyH("LEFT")
-	Window.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"]..Language["Export string"].."|r")
+        Window.Header.Text:SetText(FormatColor(Settings["ui-header-font-color"], Language["Export string"]))
 
 	-- Close button
 	Window.Header.CloseButton = CreateFrame("Frame", nil, Window.Header)
@@ -1602,7 +1579,7 @@ function GUI:CreateImportWindow()
 	Window.Header.Text:SetPoint("LEFT", Window.Header, HEADER_SPACING, -1)
 	HydraUI:SetFontInfo(Window.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	Window.Header.Text:SetJustifyH("LEFT")
-	Window.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"].."Import string".."|r")
+        Window.Header.Text:SetText(FormatColor(Settings["ui-header-font-color"], "Import string"))
 
 	-- Close button
 	Window.Header.CloseButton = CreateFrame("Frame", nil, Window.Header)
@@ -2096,7 +2073,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Text:SetSize(GROUP_WIDTH - DROPDOWN_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Dropdown.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Dropdown.Text:SetJustifyH("LEFT")
-	Dropdown.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Dropdown.Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	Dropdown.ArrowAnchor = CreateFrame("Frame", nil, Dropdown)
 	Dropdown.ArrowAnchor:SetSize(WIDGET_HEIGHT, WIDGET_HEIGHT)
@@ -2189,13 +2166,11 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 
 	Anchor.Dropdown = Dropdown
 
-	if self.Widgets then
-		tinsert(self.Widgets, Anchor)
-	end
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+        if self.Widgets then
+                RegisterWidget(self, Anchor, id)
+        elseif (id ~= "") then
+                GUI.WidgetID[id] = Anchor
+        end
 
 	return Dropdown
 end
@@ -2487,7 +2462,7 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	Slider.Text:SetSize(GROUP_WIDTH - SLIDER_WIDTH - EDITBOX_WIDTH - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Slider.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Slider.Text:SetJustifyH("LEFT")
-	Slider.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Slider.Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
 	Slider.TrackTexture = Slider:CreateTexture(nil, "ARTWORK")
 	Slider.TrackTexture:SetPoint("TOPLEFT", Slider, 1, -1)
@@ -2532,11 +2507,7 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 
 	Slider:Show()
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+        RegisterWidget(self, Anchor, id)
 
 	return Slider
 end
@@ -2727,7 +2698,7 @@ local CreateColorPicker = function()
 	ColorPicker.Header.Text:SetPoint("LEFT", ColorPicker.Header, HEADER_SPACING, -1)
 	HydraUI:SetFontInfo(ColorPicker.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	ColorPicker.Header.Text:SetJustifyH("LEFT")
-	ColorPicker.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"].."Select a color".."|r")
+        ColorPicker.Header.Text:SetText(FormatColor(Settings["ui-header-font-color"], "Select a color"))
 
 	-- Close button
 	ColorPicker.CloseButton = CreateFrame("Frame", nil, ColorPicker, "BackdropTemplate")
@@ -2921,7 +2892,7 @@ local CreateColorPicker = function()
 	ColorPicker.AcceptText:SetPoint("CENTER", ColorPicker.Accept, 0, 0)
 	HydraUI:SetFontInfo(ColorPicker.AcceptText, Settings["ui-button-font"], Settings["ui-font-size"])
 	ColorPicker.AcceptText:SetJustifyH("CENTER")
-	ColorPicker.AcceptText:SetText("|cFF"..Settings["ui-button-font-color"]..ACCEPT.."|r")
+        ColorPicker.AcceptText:SetText(FormatColor(Settings["ui-button-font-color"], ACCEPT))
 
 	-- Cancel
 	ColorPicker.Cancel = CreateFrame("Frame", nil, ColorPicker, "BackdropTemplate")
@@ -2952,7 +2923,7 @@ local CreateColorPicker = function()
 	ColorPicker.CancelText:SetPoint("CENTER", ColorPicker.Cancel, 0, 0)
 	HydraUI:SetFontInfo(ColorPicker.CancelText, Settings["ui-button-font"], Settings["ui-font-size"])
 	ColorPicker.CancelText:SetJustifyH("CENTER")
-	ColorPicker.CancelText:SetText("|cFF"..Settings["ui-button-font-color"]..CANCEL.."|r")
+        ColorPicker.CancelText:SetText(FormatColor(Settings["ui-button-font-color"], CANCEL))
 
 	ColorPicker.BG = CreateFrame("Frame", nil, ColorPicker, "BackdropTemplate")
 	ColorPicker.BG:SetPoint("TOPLEFT", ColorPicker.Header, -3, 3)
@@ -3191,9 +3162,9 @@ GUI.Widgets.CreateColorSelection = function(self, id, value, label, tooltip, hoo
 	Button.Text:SetSize(GROUP_WIDTH - COLOR_WIDTH - SWATCH_SIZE - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Button.Text:SetJustifyH("LEFT")
-	Button.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+        Button.Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
 
-	tinsert(self.Widgets, Anchor)
+        RegisterWidget(self, Anchor)
 
-	return Button
+        return Button
 end

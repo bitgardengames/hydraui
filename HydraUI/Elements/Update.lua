@@ -13,12 +13,13 @@ local AddOnVersion = HydraUI.UIVersion
 local AddOnNum = tonumber(HydraUI.UIVersion)
 local User = HydraUI.UserName .. "-" .. HydraUI.UserRealm
 local CT = ChatThrottleLib
+local After = C_Timer.After
 
 local Update = HydraUI:NewModule("Update")
 Update.SentHome = false
 Update.SentInst = false
-Update.Timer = 5
 Update.Delay = 5
+Update.TimerHandle = nil
 
 local Tables = {}
 local Queue = {}
@@ -28,80 +29,81 @@ local QueuedChannels = {}
 
 local Throttle = HydraUI:GetModule("Throttle")
 
+local ProcessQueueTimer = function()
+	Update:ProcessQueue()
+end
+
 function Update:QueueChannel(channel, target)
-        if (not channel) then
-                return false
-        end
+	if (not channel) then
+		return false
+	end
 
-        local key = target and (channel .. target) or channel
+	local key = target and (channel .. target) or channel
 
-        if QueuedChannels[key] then
-                return false
-        end
+	if QueuedChannels[key] then
+		return false
+	end
 
-        local Data = Tables[#Tables]
+	local Data = Tables[#Tables]
 
-        if Data then
-                Tables[#Tables] = nil
-                Data[1] = channel
-                Data[2] = target
-                Data[3] = key
-        else
-                Data = {channel, target, key}
-        end
+	if Data then
+		Tables[#Tables] = nil
+		Data[1] = channel
+		Data[2] = target
+		Data[3] = key
+	else
+		Data = {channel, target, key}
+	end
 
-        QueueTail = QueueTail + 1
-        Queue[QueueTail] = Data
-        QueuedChannels[key] = true
+	QueueTail = QueueTail + 1
+	Queue[QueueTail] = Data
+	QueuedChannels[key] = true
 
-        if (not self:GetScript("OnUpdate")) then
-                self.Timer = self.Delay
-                self:SetScript("OnUpdate", self.OnUpdate)
-        end
+	if (not self.TimerHandle) then
+		self.TimerHandle = true
+		After(self.Delay, ProcessQueueTimer)
+	end
 
-        return true
+	return true
 end
 
-function Update:OnUpdate(elapsed)
-        self.Timer = self.Timer - elapsed
+function Update:ProcessQueue()
+	self.TimerHandle = nil
 
-        if (self.Timer < 0) then
-                local Data = Queue[QueueHead]
+	local Data = Queue[QueueHead]
 
-                if Data then
-                        CT:SendAddonMessage("NORMAL", "HydraUI-Version", AddOnVersion, Data[1], Data[2])
+	if Data then
+		CT:SendAddonMessage("NORMAL", "HydraUI-Version", AddOnVersion, Data[1], Data[2])
 
-                        QueuedChannels[Data[3]] = nil
+		QueuedChannels[Data[3]] = nil
 
-                        Queue[QueueHead] = nil
-                        QueueHead = QueueHead + 1
+		Queue[QueueHead] = nil
+		QueueHead = QueueHead + 1
 
-                        Data[1] = nil
-                        Data[2] = nil
-                        Data[3] = nil
-                        Tables[#Tables + 1] = Data
+		Data[1] = nil
+		Data[2] = nil
+		Data[3] = nil
+		Tables[#Tables + 1] = Data
 
-                        self.Timer = self.Delay
-
-                        if (QueueHead > QueueTail) then
-                                QueueHead = 1
-                                QueueTail = 0
-                                wipe(QueuedChannels)
-                                self:SetScript("OnUpdate", nil)
-                        end
-                else
-                        self.Timer = self.Delay
-                        QueueHead = 1
-                        QueueTail = 0
-                        wipe(QueuedChannels)
-                        self:SetScript("OnUpdate", nil)
-                end
-        end
+		if (QueueHead <= QueueTail) then
+			self.TimerHandle = true
+			After(self.Delay, ProcessQueueTimer)
+		else
+			QueueHead = 1
+			QueueTail = 0
+			wipe(QueuedChannels)
+		end
+	else
+		QueueHead = 1
+		QueueTail = 0
+		wipe(QueuedChannels)
+	end
 end
+
 
 function Update:PLAYER_ENTERING_WORLD()
 	if (not HydraUI.IsMainline and not IsInInstance()) and (not Throttle:IsThrottled("vrsn")) then
-		C_Timer.After(5, function()
+		After(5, function()
 			self:QueueChannel("YELL")
 		end)
 

@@ -40,6 +40,8 @@ GUI.LoadCalls = {}
 GUI.Buttons = {}
 GUI.ButtonQueue = {}
 GUI.ScrollButtons = {}
+GUI.ActiveTopButton = nil
+GUI.ActiveChildButton = nil
 
 local ClearTable = function(tbl)
         if wipe then
@@ -49,6 +51,80 @@ local ClearTable = function(tbl)
                         tbl[i] = nil
                 end
         end
+end
+
+local DeselectButton = function(button)
+        if (not button) then
+                return
+        end
+
+        if button.Window then
+                button.Window:Hide()
+        end
+
+        if button.Selected and (button.Selected:GetAlpha() > 0) then
+                button.Selected:SetAlpha(0)
+        end
+end
+
+local CollapseChildren = function(self, button)
+        if (not button or not button.Children or not button.ChildrenShown) then
+                return false
+        end
+
+        button.ChildrenShown = false
+
+        if button.Arrow then
+                button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+        end
+
+        for i = 1, #button.Children do
+                local child = button.Children[i]
+
+                if (self.ActiveChildButton == child) then
+                        self.ActiveChildButton = nil
+                end
+
+                DeselectButton(child)
+                child:Hide()
+        end
+
+        return true
+end
+
+local ExpandChildren = function(self, button)
+        if (not button or not button.Children or button.ChildrenShown) then
+                return false
+        end
+
+        button.ChildrenShown = true
+
+        if button.Arrow then
+                button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+        end
+
+        for i = 1, #button.Children do
+                local child = button.Children[i]
+
+                DeselectButton(child)
+                child:Hide()
+        end
+
+        self.ActiveChildButton = nil
+
+        return true
+end
+
+local EnsureWindow = function(self, button)
+        if (not button) then
+                return
+        end
+
+        if (not button.Window) then
+                button.Window = self:CreateWidgetWindow(button.Category, button.Name, button.Parent)
+        end
+
+        return button.Window
 end
 
 local UpdateArrows = function(scrollUp, scrollDown, offset, maxOffset)
@@ -469,109 +545,84 @@ function GUI:CreateWidgetWindow(category, name, parent)
 end
 
 function GUI:ShowWindow(category, name, parent)
-	local Categories = self.Categories
+        local button, parentButton = self:GetButton(category, name, parent)
 
-	for i = 1, #Categories do
-		for j = 1, #Categories[i].Buttons do
-			if parent then
-				if (Categories[i].Buttons[j].Name == parent and Categories[i].Buttons[j].Children) then
-					for o = 1, #Categories[i].Buttons[j].Children do
-						if (Categories[i].Buttons[j].Children[o].Name == name) then
-							if (not Categories[i].Buttons[j].Children[o].Window) then
-								Categories[i].Buttons[j].Children[o].Window = self:CreateWidgetWindow(category, name, parent)
-							end
+        if (not button) then
+                return
+        end
 
-							Categories[i].Buttons[j].Window:Hide()
+        if parent and (not parentButton) then
+                return
+        end
 
-							Categories[i].Buttons[j].Children[o].Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-							Categories[i].Buttons[j].Children[o].Window:Show()
-						elseif Categories[i].Buttons[j].Children[o].Window then
-							Categories[i].Buttons[j].Children[o].Window:Hide()
+        local requiresScroll = false
 
-							if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
-								Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
-							end
-						end
-					end
+        if parent then
+                if self.ActiveChildButton and (self.ActiveChildButton ~= button) then
+                        DeselectButton(self.ActiveChildButton)
+                end
 
-					if (Categories[i].Buttons[j].Selected:GetAlpha() > 0) then
-						Categories[i].Buttons[j].Selected:SetAlpha(0)
-					end
-				elseif Categories[i].Buttons[j].Window then
-					Categories[i].Buttons[j].Window:Hide()
-				end
-			elseif (Categories[i].Name == category) and (Categories[i].Buttons[j].Name == name) then
-				if (not Categories[i].Buttons[j].Window) then
-					Categories[i].Buttons[j].Window = self:CreateWidgetWindow(category, name, parent)
-				end
+                if self.ActiveTopButton and (self.ActiveTopButton ~= parentButton) then
+                        DeselectButton(self.ActiveTopButton)
 
-				Categories[i].Buttons[j].Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-				Categories[i].Buttons[j].Window:Show()
+                        if CollapseChildren(self, self.ActiveTopButton) then
+                                requiresScroll = true
+                        end
+                end
 
-				if Categories[i].Buttons[j].Children then
-					if Categories[i].Buttons[j].ChildrenShown then
-						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+                self.ActiveTopButton = parentButton
+                self.ActiveChildButton = button
 
-						for o = 1, #Categories[i].Buttons[j].Children do
-							if Categories[i].Buttons[j].Children[o].Window then
-								Categories[i].Buttons[j].Children[o].Window:Hide()
+                if parentButton then
+                        if ExpandChildren(self, parentButton) then
+                                requiresScroll = true
+                        end
 
-								if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
-									Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
-								end
-							end
+                        if parentButton.Window then
+                                parentButton.Window:Hide()
+                        end
 
-							Categories[i].Buttons[j].Children[o]:Hide()
-						end
+                        if parentButton.Selected and (parentButton.Selected:GetAlpha() > 0) then
+                                parentButton.Selected:SetAlpha(0)
+                        end
+                end
+        else
+                if self.ActiveChildButton then
+                        DeselectButton(self.ActiveChildButton)
+                        self.ActiveChildButton = nil
+                end
 
-						Categories[i].Buttons[j].ChildrenShown = false
-					else
-						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+                if self.ActiveTopButton and (self.ActiveTopButton ~= button) then
+                        DeselectButton(self.ActiveTopButton)
 
-						for o = 1, #Categories[i].Buttons[j].Children do
-							if Categories[i].Buttons[j].Children[o].Window then
-								Categories[i].Buttons[j].Children[o].Window:Hide()
+                        if CollapseChildren(self, self.ActiveTopButton) then
+                                requiresScroll = true
+                        end
+                end
 
-								if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
-									Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
-								end
-							end
+                self.ActiveTopButton = button
 
-							Categories[i].Buttons[j].Children[o]:Hide()
-						end
+                if button.Children then
+                        if button.ChildrenShown then
+                                if CollapseChildren(self, button) then
+                                        requiresScroll = true
+                                end
+                        else
+                                if ExpandChildren(self, button) then
+                                        requiresScroll = true
+                                end
+                        end
+                end
+        end
 
-						Categories[i].Buttons[j].ChildrenShown = true
-					end
-				end
-			else
-				if Categories[i].Buttons[j].Window then
-					Categories[i].Buttons[j].Window:Hide()
+        EnsureWindow(self, button)
 
-					if (Categories[i].Buttons[j].Selected:GetAlpha() > 0) then
-						Categories[i].Buttons[j].Selected:SetAlpha(0)
-					end
+        button.Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+        button.Window:Show()
 
-					if Categories[i].Buttons[j].Children then
-						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-
-						for o = 1, #Categories[i].Buttons[j].Children do
-							if Categories[i].Buttons[j].Children[o].Window then
-								Categories[i].Buttons[j].Children[o].Window:Hide()
-							end
-
-							Categories[i].Buttons[j].Children[o]:Hide()
-						end
-
-						Categories[i].Buttons[j].ChildrenShown = false
-					end
-				end
-			end
-		end
-	end
-
-	self:ScrollSelections()
-
-	--CloseLastDropdown()
+        if requiresScroll then
+                self:ScrollSelections()
+        end
 end
 
 local WindowButtonOnEnter = function(self)
@@ -607,19 +658,37 @@ local WindowSubButtonOnMouseDown = function(self)
 end
 
 function GUI:HasButton(category, name, parent)
-	if parent then
-		if (self.Buttons[category] and self.Buttons[category][parent]) then
-			return self.Buttons[category][parent][name]
-		end
-	else
-		return (self.Buttons[category] and self.Buttons[category][name])
-	end
+        if parent then
+                if (self.Buttons[category] and self.Buttons[category][parent]) then
+                        return self.Buttons[category][parent][name]
+                end
+        else
+                return (self.Buttons[category] and self.Buttons[category][name])
+        end
+end
+
+function GUI:GetButton(category, name, parent)
+        local categoryButtons = self.Buttons[category]
+
+        if (not categoryButtons) then
+                return
+        end
+
+        if parent then
+                local parentButton = categoryButtons[parent]
+
+                if parentButton then
+                        return parentButton[name], parentButton
+                end
+        else
+                return categoryButtons[name]
+        end
 end
 
 function GUI:CreateWindow(category, name, parent)
-	if self:HasButton(category, name, parent) then
-		return
-	end
+        if self:HasButton(category, name, parent) then
+                return
+        end
 
 	if (not self.Categories[category]) then
 		self:CreateCategory(category)
@@ -674,26 +743,32 @@ function GUI:CreateWindow(category, name, parent)
 		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], 12)
 		Button.Text:SetText("|cFF" .. Settings["ui-widget-font-color"] .. name .. "|r")
 
-		for j = 1, #Category.Buttons do
-			if (Category.Buttons[j].Name == parent) then
-				if (not Category.Buttons[j].Children) then
-					Category.Buttons[j].Children = {}
+                local parentButton
 
-					Category.Buttons[j].Arrow = Category.Buttons[j]:CreateTexture(nil, "OVERLAY")
+                for j = 1, #Category.Buttons do
+                        if (Category.Buttons[j].Name == parent) then
+                                parentButton = Category.Buttons[j]
+
+                                if (not Category.Buttons[j].Children) then
+                                        Category.Buttons[j].Children = {}
+
+                                        Category.Buttons[j].Arrow = Category.Buttons[j]:CreateTexture(nil, "OVERLAY")
 					Category.Buttons[j].Arrow:SetPoint("RIGHT", Category.Buttons[j], -3, -1)
 					Category.Buttons[j].Arrow:SetSize(16, 16)
 					Category.Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 					Category.Buttons[j].Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 				end
 
-				tinsert(Category.Buttons[j].Children, Button)
+                                tinsert(Category.Buttons[j].Children, Button)
 
-				break
-			end
-		end
-	else
-		Button:SetScript("OnMouseUp", WindowButtonOnMouseUp)
-		Button:SetScript("OnMouseDown", WindowButtonOnMouseDown)
+                                break
+                        end
+                end
+
+                Button.ParentButton = parentButton
+        else
+                Button:SetScript("OnMouseUp", WindowButtonOnMouseUp)
+                Button:SetScript("OnMouseDown", WindowButtonOnMouseDown)
 
 		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 

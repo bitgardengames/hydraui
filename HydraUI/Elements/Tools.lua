@@ -6,7 +6,9 @@ local select = select
 local date = date
 local sub = string.sub
 local format = string.format
+local gsub = string.gsub
 local floor = math.floor
+local ceil = math.ceil
 local match = string.match
 local reverse = string.reverse
 

@@ -117,16 +117,33 @@ HydraUI.ComboPoints = {}
 HydraUI.TotemColors = {}
 
 function HydraUI:SetColorEntry(t, key, hex)
-	R, G, B = self:HexToRGB(hex)
+        if (not hex) then
+                return
+        end
 
-	if (not t[key]) then
-		t[key] = {}
-	end
+        local normalized = self:NormalizeHex(hex)
 
-	t[key][1] = R
-	t[key][2] = G
-	t[key][3] = B
-	t[key]["Hex"] = hex
+        if (not normalized) then
+                return
+        end
+
+        local entry = t[key]
+
+        if (entry and entry.Hex == normalized) then
+                return
+        end
+
+        R, G, B = self:HexToRGB(normalized)
+
+        if (not entry) then
+                entry = {}
+                t[key] = entry
+        end
+
+        entry[1] = R
+        entry[2] = G
+        entry[3] = B
+        entry.Hex = normalized
 end
 
 function HydraUI:UpdateClassColors()

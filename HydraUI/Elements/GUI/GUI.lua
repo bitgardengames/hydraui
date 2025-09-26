@@ -28,10 +28,6 @@ local tsort = table.sort
 
 local GUI = HydraUI:NewModule("GUI")
 
-local GetColorRGB = function(key)
-        return HydraUI:HexToRGB(Settings[key])
-end
-
 -- Storage
 GUI.Categories = {}
 GUI.Widgets = {}
@@ -42,15 +38,52 @@ GUI.ButtonQueue = {}
 GUI.ScrollButtons = {}
 GUI.ActiveTopButton = nil
 GUI.ActiveChildButton = nil
+GUI.ColorCache = {}
 
 local ClearTable = function(tbl)
         if wipe then
                 wipe(tbl)
         else
-                for i = #tbl, 1, -1 do
-                        tbl[i] = nil
+                for key in pairs(tbl) do
+                        tbl[key] = nil
                 end
         end
+end
+
+function GUI:GetColorRGB(key)
+	local color = self.ColorCache[key]
+	local value = Settings[key]
+
+	if (value == nil) then
+		return 1, 1, 1
+	end
+
+	if (color and color.Hex == value) then
+		return color.R, color.G, color.B
+	end
+
+	local r, g, b = HydraUI:HexToRGB(value)
+
+	if color then
+		color.R, color.G, color.B = r, g, b
+		color.Hex = value
+	else
+		self.ColorCache[key] = {R = r, G = g, B = b, Hex = value}
+	end
+
+	return r, g, b
+end
+
+function GUI:ClearColorCache(key)
+	if key then
+		self.ColorCache[key] = nil
+	else
+		ClearTable(self.ColorCache)
+	end
+end
+
+local GetColorRGB = function(key)
+	return GUI:GetColorRGB(key)
 end
 
 local DeselectButton = function(button)
@@ -418,7 +451,7 @@ function GUI:CreateCategory(name)
 	Texture:SetPoint("TOPLEFT", Category, 1, -1)
 	Texture:SetPoint("BOTTOMRIGHT", Category, -1, 1)
 	Texture:SetTexture(Assets:GetTexture("Blank"))
-	Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+	Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
 
 	Category.Text = Text
 	Category.Texture = Texture
@@ -476,7 +509,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 	Window.LeftWidgetsBG.Backdrop:SetPoint("TOPLEFT", Window.LeftWidgetsBG, 0, 0)
 	Window.LeftWidgetsBG.Backdrop:SetPoint("BOTTOMLEFT", Window.LeftWidgetsBG, 0, 0)
 	Window.LeftWidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.LeftWidgetsBG.Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	Window.LeftWidgetsBG.Backdrop:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 	Window.LeftWidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
 	Window.RightWidgetsBG = CreateFrame("Frame", nil, Window)
@@ -489,7 +522,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 	Window.RightWidgetsBG.Backdrop:SetPoint("TOPLEFT", Window.RightWidgetsBG, 0, 0)
 	Window.RightWidgetsBG.Backdrop:SetPoint("BOTTOMLEFT", Window.RightWidgetsBG, 0, 0)
 	Window.RightWidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.RightWidgetsBG.Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	Window.RightWidgetsBG.Backdrop:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 	Window.RightWidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
 	Window.Category = category
@@ -529,7 +562,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.ScrollFiller:SetPoint("BOTTOMRIGHT", Window, 0, 0)
 		Window.ScrollFiller:SetWidth(16)
 		Window.ScrollFiller:SetBackdrop(HydraUI.BackdropAndBorder)
-		Window.ScrollFiller:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+		Window.ScrollFiller:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 		Window.ScrollFiller:SetBackdropBorderColor(0, 0, 0)
 
 		Window:SetScript("OnMouseWheel", NoScroll)
@@ -733,7 +766,7 @@ function GUI:CreateWindow(category, name, parent)
 
 		Button.Parent = parent
 
-		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+		Button.Selected:SetVertexColor(GetColorRGB("ui-widget-color"))
 
 		Button.Text:SetPoint("LEFT", Button, SPACING * 3, 0)
 		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], 12)
@@ -752,7 +785,7 @@ function GUI:CreateWindow(category, name, parent)
 					Category.Buttons[j].Arrow:SetPoint("RIGHT", Category.Buttons[j], -3, -1)
 					Category.Buttons[j].Arrow:SetSize(16, 16)
 					Category.Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-					Category.Buttons[j].Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+					Category.Buttons[j].Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
 				end
 
                                 tinsert(Category.Buttons[j].Children, Button)
@@ -766,7 +799,7 @@ function GUI:CreateWindow(category, name, parent)
                 Button:SetScript("OnMouseUp", WindowButtonOnMouseUp)
                 Button:SetScript("OnMouseDown", WindowButtonOnMouseDown)
 
-		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+		Button.Selected:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 		Button.Text:SetPoint("LEFT", Button, 4, 0)
 		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], Settings["ui-header-font-size"])
@@ -970,7 +1003,7 @@ function GUI:CreateUpdateWindow()
 	self.UpdateWindow:SetSize(340, 168) -- GUI_WIDTH / 3 -- 220 200
 	self.UpdateWindow:SetPoint("CENTER", HydraUI.UIParent, 0, 0)
 	self.UpdateWindow:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.UpdateWindow:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
+	self.UpdateWindow:SetBackdropColor(GetColorRGB("ui-window-bg-color"))
 	self.UpdateWindow:SetBackdropBorderColor(0, 0, 0)
 	self.UpdateWindow:EnableMouse(true)
 	self.UpdateWindow:SetMovable(true)
@@ -991,14 +1024,14 @@ function GUI:CreateUpdateWindow()
 	self.UpdateWindow.Header.Texture:SetPoint("TOPLEFT", self.UpdateWindow.Header, 1, -1)
 	self.UpdateWindow.Header.Texture:SetPoint("BOTTOMRIGHT", self.UpdateWindow.Header, -1, 1)
 	self.UpdateWindow.Header.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.UpdateWindow.Header.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+	self.UpdateWindow.Header.Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
 
 	self.UpdateWindow.Header.Text = self.UpdateWindow.Header:CreateFontString(nil, "OVERLAY")
 	self.UpdateWindow.Header.Text:SetPoint("LEFT", self.UpdateWindow.Header, 5, 0)
 	self.UpdateWindow.Header.Text:SetSize(340 - 6, HEADER_HEIGHT)
 	HydraUI:SetFontInfo(self.UpdateWindow.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	self.UpdateWindow.Header.Text:SetJustifyH("LEFT")
-	self.UpdateWindow.Header.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-header-font-color"]))
+	self.UpdateWindow.Header.Text:SetTextColor(GetColorRGB("ui-header-font-color"))
 	self.UpdateWindow.Header.Text:SetText(Language["Update"])
 
 	self.UpdateWindow.CloseButton = CreateFrame("Frame", nil, self.UpdateWindow.Header)
@@ -1021,12 +1054,12 @@ function GUI:CreateUpdateWindow()
 	self.UpdateWindow.WidgetsBG.Backdrop = CreateFrame("Frame", nil, self.UpdateWindow, "BackdropTemplate")
 	self.UpdateWindow.WidgetsBG.Backdrop:SetAllPoints(self.UpdateWindow.WidgetsBG)
 	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
 	self.UpdateWindow.Text = CreateFrame("EditBox", nil, self.UpdateWindow.WidgetsBG)
 	HydraUI:SetFontInfo(self.UpdateWindow.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
-	self.UpdateWindow.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	self.UpdateWindow.Text:SetTextColor(GetColorRGB("ui-widget-color"))
 	self.UpdateWindow.Text:SetPoint("TOPLEFT", self.UpdateWindow.WidgetsBG, 6, -6)
 	self.UpdateWindow.Text:SetPoint("TOPRIGHT", self.UpdateWindow.WidgetsBG, -6, 6)
 	self.UpdateWindow.Text:SetHeight(80)
@@ -1042,14 +1075,14 @@ function GUI:CreateUpdateWindow()
 		Box:SetPoint("LEFT", self.UpdateWindow.WidgetsBG, 3, 0)
 		Box:SetPoint("RIGHT", self.UpdateWindow.WidgetsBG, -3, 0)
 		Box:SetBackdrop(HydraUI.BackdropAndBorder)
-		Box:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+		Box:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 		Box:SetBackdropBorderColor(0, 0, 0)
 
 		--[[Box.Texture = Box:CreateTexture(nil, "BACKGROUND")
 		Box.Texture:SetPoint("TOPLEFT", Box, 1, -1)
 		Box.Texture:SetPoint("BOTTOMRIGHT", Box, -1, 1)
 		Box.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-		Box.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))]]
+		Box.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))]]
 
 		Box.Input = CreateFrame("EditBox", nil, Box)
 		HydraUI:SetFontInfo(Box.Input, Settings["ui-widget-font"], Settings["ui-font-size"])
@@ -1140,7 +1173,7 @@ function GUI:CreateUpdateAlert()
 	self.Alert.Text:SetPoint("LEFT", self.Alert, 30, -1)
 	HydraUI:SetFontInfo(self.Alert.Text, Settings["ui-header-font"], Settings["ui-font-size"])
 	self.Alert.Text:SetJustifyH("LEFT")
-	self.Alert.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	self.Alert.Text:SetTextColor(GetColorRGB("ui-widget-color"))
 	self.Alert.Text:SetText("Update available") -- localize
 
 	self.Alert:SetWidth(self.Alert.Text:GetStringWidth() + 32)
@@ -1150,7 +1183,7 @@ function GUI:CreateUpdateAlert()
 	end)
 
 	self.Alert:SetScript("OnLeave", function(self)
-		self.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+		self.Text:SetTextColor(GetColorRGB("ui-widget-color"))
 	end)
 
 	self.Alert:SetScript("OnMouseDown", function(self)
@@ -1188,7 +1221,7 @@ function GUI:CreateGUI()
 	self:SetSize(GUI_WIDTH, GUI_HEIGHT)
 	self:SetPoint("CENTER", HydraUI.UIParent, 0, 0)
 	self:SetBackdrop(HydraUI.BackdropAndBorder)
-	self:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
+	self:SetBackdropColor(GetColorRGB("ui-window-bg-color"))
 	self:SetBackdropBorderColor(0, 0, 0)
 	self:EnableMouse(true)
 	self:SetMovable(true)
@@ -1236,14 +1269,14 @@ function GUI:CreateGUI()
 	self.Header.Texture:SetPoint("TOPLEFT", self.Header, 1, -1)
 	self.Header.Texture:SetPoint("BOTTOMRIGHT", self.Header, -1, 1)
 	self.Header.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.Header.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+	self.Header.Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
 
 	self.Header.Text = self.Header:CreateFontString(nil, "OVERLAY")
 	self.Header.Text:SetPoint("CENTER", self.Header, 0, -1)
 	self.Header.Text:SetSize(HEADER_WIDTH - 6, HEADER_HEIGHT)
 	HydraUI:SetFontInfo(self.Header.Text, Settings["ui-header-font"], Settings["ui-title-font-size"])
 	self.Header.Text:SetJustifyH("CENTER")
-	self.Header.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	self.Header.Text:SetTextColor(GetColorRGB("ui-widget-color"))
 	self.Header.Text:SetText("Hydra|cFFEAEAEAUI|r")
 
 	-- Menu parent
@@ -1252,7 +1285,7 @@ function GUI:CreateGUI()
 	self.MenuParent:SetPoint("BOTTOMLEFT", self, SPACING, SPACING)
 	self.MenuParent:SetPoint("TOPLEFT", self.Header, "BOTTOMLEFT", 0, -2)
 	self.MenuParent:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.MenuParent:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	self.MenuParent:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 	self.MenuParent:SetBackdropBorderColor(0, 0, 0)
 	self.MenuParent:SetScript("OnMouseWheel", MenuParentOnMouseWheel)
 
@@ -1264,13 +1297,13 @@ function GUI:CreateGUI()
 	self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
 	self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
 	self.ScrollUp:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+		self.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 		SelectionOnMouseWheel(self:GetParent(), 1)
 	end)
 
 	self.ScrollUp:SetScript("OnMouseDown", function(self)
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
+		local R, G, B = GetColorRGB("ui-widget-bright-color")
 
 		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
 	end)
@@ -1279,7 +1312,7 @@ function GUI:CreateGUI()
 	self.ScrollUp.Texture:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
 	self.ScrollUp.Texture:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
 	self.ScrollUp.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollUp.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+	self.ScrollUp.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 	self.ScrollUp.Highlight = self.ScrollUp:CreateTexture(nil, "HIGHLIGHT")
 	self.ScrollUp.Highlight:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
@@ -1302,13 +1335,13 @@ function GUI:CreateGUI()
 	self.ScrollDown:SetBackdropColor(0, 0, 0, 0)
 	self.ScrollDown:SetBackdropBorderColor(0, 0, 0)
 	self.ScrollDown:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+		self.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 		SelectionOnMouseWheel(self:GetParent(), -1)
 	end)
 
 	self.ScrollDown:SetScript("OnMouseDown", function(self)
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
+		local R, G, B = GetColorRGB("ui-widget-bright-color")
 
 		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
 	end)
@@ -1317,7 +1350,7 @@ function GUI:CreateGUI()
 	self.ScrollDown.Texture:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
 	self.ScrollDown.Texture:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
 	self.ScrollDown.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollDown.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+	self.ScrollDown.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 	self.ScrollDown.Highlight = self.ScrollDown:CreateTexture(nil, "HIGHLIGHT")
 	self.ScrollDown.Highlight:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
@@ -1330,7 +1363,7 @@ function GUI:CreateGUI()
 	self.ScrollDown.Arrow:SetPoint("CENTER", self.ScrollDown, 0, 0)
 	self.ScrollDown.Arrow:SetSize(16, 16)
 	self.ScrollDown.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-	self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	self.ScrollDown.Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
 
 	-- Selection scrollbar
 	local ScrollBar = CreateFrame("Slider", nil, self.MenuParent, "BackdropTemplate")
@@ -1340,7 +1373,7 @@ function GUI:CreateGUI()
 	ScrollBar:SetOrientation("VERTICAL")
 	ScrollBar:SetValueStep(1)
 	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-	ScrollBar:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	ScrollBar:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 	ScrollBar:SetBackdropBorderColor(0, 0, 0)
 	ScrollBar:EnableMouseWheel(true)
 	ScrollBar:SetScript("OnMouseWheel", SelectionScrollBarOnMouseWheel)
@@ -1363,13 +1396,13 @@ function GUI:CreateGUI()
 	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
 	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
 	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+	ScrollBar.NewThumb2:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
 	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
 	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
 	ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.Progress:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+	ScrollBar.Progress:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 	ScrollBar.Progress:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
 	-- Close button

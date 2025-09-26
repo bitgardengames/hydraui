@@ -24,10 +24,13 @@ local max = math.max
 local type = type
 local wipe = wipe
 local tinsert = table.insert
-local tremove = table.remove
 local tsort = table.sort
 
 local GUI = HydraUI:NewModule("GUI")
+
+local GetColorRGB = function(key)
+        return HydraUI:HexToRGB(Settings[key])
+end
 
 -- Storage
 GUI.Categories = {}
@@ -36,6 +39,7 @@ GUI.WidgetID = {}
 GUI.LoadCalls = {}
 GUI.Buttons = {}
 GUI.ButtonQueue = {}
+GUI.ButtonQueueLookup = {}
 GUI.ScrollButtons = {}
 
 local ClearTable = function(tbl)
@@ -53,7 +57,7 @@ local UpdateArrows = function(scrollUp, scrollDown, offset, maxOffset)
                 return
         end
 
-        local enabledR, enabledG, enabledB = HydraUI:HexToRGB(Settings["ui-widget-color"])
+        local enabledR, enabledG, enabledB = GetColorRGB("ui-widget-color")
 
         if (offset <= 1) then
                 scrollUp.Arrow:SetVertexColor(DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B)
@@ -69,24 +73,33 @@ local UpdateArrows = function(scrollUp, scrollDown, offset, maxOffset)
 end
 
 local LayoutWidgetColumn = function(frame, widgets, offset, anchorPoint, anchorX)
-        local firstVisible
         local lastVisible = offset + MAX_WIDGETS_SHOWN - 1
+        local previous
 
-        for i = 1, #widgets do
+        for i = 1, offset - 1 do
+                local widget = widgets[i]
+
+                if widget then
+                        widget:Hide()
+                        widget:ClearAllPoints()
+                end
+        end
+
+        for i = offset, #widgets do
                 local widget = widgets[i]
 
                 if widget then
                         widget:ClearAllPoints()
 
-                        if (i >= offset) and (i <= lastVisible) then
-                                if not firstVisible then
+                        if (i <= lastVisible) then
+                                if not previous then
                                         widget:SetPoint(anchorPoint, frame, anchorX, -SPACING)
-                                        firstVisible = i
                                 else
-                                        widget:SetPoint("TOP", widgets[i-1], "BOTTOM", 0, -2)
+                                        widget:SetPoint("TOP", previous, "BOTTOM", 0, -2)
                                 end
 
                                 widget:Show()
+                                previous = widget
                         else
                                 widget:Hide()
                         end
@@ -121,117 +134,104 @@ end
 
 local NoScroll = function() end
 
+local SetWindowOffset = function(self, offset)
+        local newOffset = ClampOffset(self, offset)
+
+        if (self.Offset == newOffset) then
+                return false
+        end
+
+        self.Offset = newOffset
+
+        Scroll(self)
+
+        return true
+end
+
 local SetOffsetByDelta = function(self, delta)
         if (delta > 0) then -- Up
-                self.Offset = ClampOffset(self, self.Offset - 1)
+                return SetWindowOffset(self, (self.Offset or 1) - 1)
         else -- Down
-                self.Offset = ClampOffset(self, self.Offset + 1)
+                return SetWindowOffset(self, (self.Offset or 1) + 1)
         end
 end
 
 local WindowOnMouseWheel = function(self, delta)
-        SetOffsetByDelta(self, delta)
-        Scroll(self)
-        self.ScrollBar:SetValue(self.Offset)
-end
-
-local SetWindowOffset = function(self, offset)
-        self.Offset = ClampOffset(self, offset)
-
-        Scroll(self)
+        if SetOffsetByDelta(self, delta) and self.ScrollBar then
+                self.ScrollBar:SetValue(self.Offset)
+        end
 end
 
 local WindowScrollBarOnValueChanged = function(self)
-	local Parent = self:GetParent()
+        local Parent = self:GetParent()
 
-	Parent.Offset = Round(self:GetValue())
-
-	Scroll(Parent)
+        SetWindowOffset(Parent, Round(self:GetValue()))
 end
 
 local WindowScrollBarOnMouseWheel = function(self, delta)
 	WindowOnMouseWheel(self:GetParent(), delta)
 end
 
-local WindowScrollBarOnMouseUp = function(self)
-	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+local StyleScrollButton = function(button, arrowTexture, arrowR, arrowG, arrowB)
+        button:SetBackdrop(HydraUI.BackdropAndBorder)
+        button:SetBackdropColor(0, 0, 0, 0)
+        button:SetBackdropBorderColor(0, 0, 0)
 
-	WindowOnMouseWheel(self:GetParent(), 1)
+        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
+
+        button.Texture = button:CreateTexture(nil, "ARTWORK")
+        button.Texture:SetPoint("TOPLEFT", button, 1, -1)
+        button.Texture:SetPoint("BOTTOMRIGHT", button, -1, 1)
+        button.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+        button.Texture:SetVertexColor(brightR, brightG, brightB)
+
+        button.Highlight = button:CreateTexture(nil, "HIGHLIGHT")
+        button.Highlight:SetPoint("TOPLEFT", button, 1, -1)
+        button.Highlight:SetPoint("BOTTOMRIGHT", button, -1, 1)
+        button.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        button.Highlight:SetVertexColor(1, 1, 1)
+        button.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+
+        button.Arrow = button:CreateTexture(nil, "OVERLAY")
+        button.Arrow:SetPoint("CENTER", button, 0, 0)
+        button.Arrow:SetSize(16, 16)
+        button.Arrow:SetTexture(Assets:GetTexture(arrowTexture))
+
+        if arrowR then
+                button.Arrow:SetVertexColor(arrowR, arrowG, arrowB)
+        else
+                button.Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
+        end
 end
 
-local WindowScrollBarOnMouseDown = function(self)
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
+local AttachScrollScripts = function(button, delta)
+        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
 
-	self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
+        button:SetScript("OnMouseUp", function(self)
+                self.Texture:SetVertexColor(brightR, brightG, brightB)
+
+                WindowOnMouseWheel(self:GetParent(), delta)
+        end)
+
+        button:SetScript("OnMouseDown", function(self)
+                self.Texture:SetVertexColor(brightR * 0.85, brightG * 0.85, brightB * 0.85)
+        end)
 end
 
 local AddWindowScrollBar = function(self)
-	-- Scroll up
-	self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
-	self.ScrollUp:SetPoint("TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1))
-	self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
-	self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
-	self.ScrollUp:SetScript("OnMouseUp", WindowScrollBarOnMouseUp)
-	self.ScrollUp:SetScript("OnMouseDown", WindowScrollBarOnMouseDown)
+        -- Scroll up
+        self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
+        self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
+        self.ScrollUp:SetPoint("TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1))
+        StyleScrollButton(self.ScrollUp, "Arrow Up", DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B)
+        AttachScrollScripts(self.ScrollUp, 1)
 
-	self.ScrollUp.Texture = self.ScrollUp:CreateTexture(nil, "ARTWORK")
-	self.ScrollUp.Texture:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
-	self.ScrollUp.Texture:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
-	self.ScrollUp.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollUp.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	self.ScrollUp.Highlight = self.ScrollUp:CreateTexture(nil, "HIGHLIGHT")
-	self.ScrollUp.Highlight:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
-	self.ScrollUp.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
-	self.ScrollUp.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	self.ScrollUp.Highlight:SetVertexColor(1, 1, 1)
-	self.ScrollUp.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-
-	self.ScrollUp.Arrow = self.ScrollUp:CreateTexture(nil, "OVERLAY")
-	self.ScrollUp.Arrow:SetPoint("CENTER", self.ScrollUp, 0, 0)
-	self.ScrollUp.Arrow:SetSize(16, 16)
-	self.ScrollUp.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-	self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-
-	-- Scroll down
-	self.ScrollDown = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.ScrollDown:SetSize(16, WIDGET_HEIGHT)
-	self.ScrollDown:SetPoint("BOTTOMRIGHT", GUI, -SPACING, SPACING)
-	self.ScrollDown:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.ScrollDown:SetBackdropColor(0, 0, 0, 0)
-	self.ScrollDown:SetBackdropBorderColor(0, 0, 0)
-	self.ScrollDown:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-		WindowOnMouseWheel(self:GetParent(), -1)
-	end)
-
-	self.ScrollDown:SetScript("OnMouseDown", function(self)
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
-
-		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
-	end)
-
-	self.ScrollDown.Texture = self.ScrollDown:CreateTexture(nil, "ARTWORK")
-	self.ScrollDown.Texture:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
-	self.ScrollDown.Texture:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
-	self.ScrollDown.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollDown.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	self.ScrollDown.Highlight = self.ScrollDown:CreateTexture(nil, "HIGHLIGHT")
-	self.ScrollDown.Highlight:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
-	self.ScrollDown.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
-	self.ScrollDown.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	self.ScrollDown.Highlight:SetVertexColor(1, 1, 1)
-	self.ScrollDown.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-
-	self.ScrollDown.Arrow = self.ScrollDown:CreateTexture(nil, "OVERLAY")
-	self.ScrollDown.Arrow:SetPoint("CENTER", self.ScrollDown, 0, 0)
-	self.ScrollDown.Arrow:SetSize(16, 16)
-	self.ScrollDown.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-	self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+        -- Scroll down
+        self.ScrollDown = CreateFrame("Frame", nil, self, "BackdropTemplate")
+        self.ScrollDown:SetSize(16, WIDGET_HEIGHT)
+        self.ScrollDown:SetPoint("BOTTOMRIGHT", GUI, -SPACING, SPACING)
+        StyleScrollButton(self.ScrollDown, "Arrow Down")
+        AttachScrollScripts(self.ScrollDown, -1)
 
 	local ScrollBar = CreateFrame("Slider", nil, self, "BackdropTemplate")
 	ScrollBar:SetPoint("TOPLEFT", self.ScrollUp, "BOTTOMLEFT", 0, -2)
@@ -240,7 +240,7 @@ local AddWindowScrollBar = function(self)
 	ScrollBar:SetOrientation("VERTICAL")
 	ScrollBar:SetValueStep(1)
 	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-	ScrollBar:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+        ScrollBar:SetBackdropColor(GetColorRGB("ui-window-main-color"))
 	ScrollBar:SetBackdropBorderColor(0, 0, 0)
 	ScrollBar:SetMinMaxValues(1, self.MaxScroll)
 	ScrollBar:SetValue(1)
@@ -264,8 +264,8 @@ local AddWindowScrollBar = function(self)
 	ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
 	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
 	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+        ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        ScrollBar.NewThumb2:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 	ScrollBar.Highlight = ScrollBar:CreateTexture(nil, "HIGHLIGHT")
 	ScrollBar.Highlight:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
@@ -277,8 +277,8 @@ local AddWindowScrollBar = function(self)
 	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
 	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
 	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
-	ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.Progress:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+        ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
+        ScrollBar.Progress:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 	ScrollBar.Progress:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
 	self:EnableMouseWheel(true)
@@ -359,7 +359,84 @@ function GUI:CreateCategory(name)
 end
 
 local DisableScrolling = function(self)
-	self.ScrollingDisabled = true
+        self.ScrollingDisabled = true
+end
+
+local QueueWindow = function(self, category, name, parent)
+        local lookup = self.ButtonQueueLookup
+        local categoryLookup = lookup[category]
+
+        if (not categoryLookup) then
+                categoryLookup = {Top = {}, Children = {}}
+                lookup[category] = categoryLookup
+        end
+
+        if parent then
+                local parentLookup = categoryLookup.Children[parent]
+
+                if (not parentLookup) then
+                        parentLookup = {}
+                        categoryLookup.Children[parent] = parentLookup
+                end
+
+                if parentLookup[name] then
+                        return
+                end
+
+                parentLookup[name] = true
+                self.ButtonQueue[#self.ButtonQueue + 1] = {category, name, parent}
+        else
+                if categoryLookup.Top[name] then
+                        return
+                end
+
+                categoryLookup.Top[name] = true
+                self.ButtonQueue[#self.ButtonQueue + 1] = {category, name}
+        end
+end
+
+local RunLoadCalls = function(self, category, name, parent, leftColumn, rightColumn)
+        local categoryData = self.LoadCalls[category]
+
+        if (not categoryData) then
+                return
+        end
+
+        local container
+
+        if parent then
+                local parentData = categoryData[parent]
+
+                if not parentData then
+                        return
+                end
+
+                local children = parentData.Children
+
+                if not children then
+                        return
+                end
+
+                container = children[name]
+        else
+                container = categoryData[name]
+        end
+
+        if (not container) then
+                return
+        end
+
+        local queue = container.Calls
+
+        if (not queue or #queue == 0) then
+                return
+        end
+
+        for i = 1, #queue do
+                queue[i](leftColumn, rightColumn)
+        end
+
+        ClearTable(queue)
 end
 
 function GUI:CreateWidgetWindow(category, name, parent)
@@ -413,19 +490,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG[Name] = Function
 	end
 
-	if (parent and self.LoadCalls[category][parent].Children) then
-		for i = 1, #self.LoadCalls[category][parent].Children[name].Calls do
-			self.LoadCalls[category][parent].Children[name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
-
-			tremove(self.LoadCalls[category][parent].Children[name].Calls, 1)
-		end
-	else
-		for i = 1, #self.LoadCalls[category][name].Calls do
-			self.LoadCalls[category][name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
-
-			tremove(self.LoadCalls[category][name].Calls, 1)
-		end
-	end
+        RunLoadCalls(self, category, name, parent, Window.LeftWidgetsBG, Window.RightWidgetsBG)
 
 	if (#Window.LeftWidgetsBG.Widgets > 0) then
 		Window.LeftWidgetsBG:CreateFooter()
@@ -657,7 +722,7 @@ function GUI:CreateWindow(category, name, parent)
 
 		Button.Parent = parent
 
-		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+                Button.Selected:SetVertexColor(GetColorRGB("ui-widget-color"))
 
 		Button.Text:SetPoint("LEFT", Button, SPACING * 3, 0)
 		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], 12)
@@ -672,7 +737,7 @@ function GUI:CreateWindow(category, name, parent)
 					Category.Buttons[j].Arrow:SetPoint("RIGHT", Category.Buttons[j], -3, -1)
 					Category.Buttons[j].Arrow:SetSize(16, 16)
 					Category.Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-					Category.Buttons[j].Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+                                        Category.Buttons[j].Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
 				end
 
 				tinsert(Category.Buttons[j].Children, Button)
@@ -684,7 +749,7 @@ function GUI:CreateWindow(category, name, parent)
 		Button:SetScript("OnMouseUp", WindowButtonOnMouseUp)
 		Button:SetScript("OnMouseDown", WindowButtonOnMouseDown)
 
-		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+                Button.Selected:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 		Button.Text:SetPoint("LEFT", Button, 4, 0)
 		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], Settings["ui-header-font-size"])
@@ -711,27 +776,53 @@ function GUI:CreateWindow(category, name, parent)
 end
 
 function GUI:AddWidgets(category, name, arg1, arg2)
-	if (not self.LoadCalls[category]) then
-		self.LoadCalls[category] = {}
-	end
+        local categoryCalls = self.LoadCalls[category]
 
-	if (not self.LoadCalls[category][name]) then
-		self.LoadCalls[category][name] = {Calls = {}}
-	end
+        if (not categoryCalls) then
+                categoryCalls = {}
+                self.LoadCalls[category] = categoryCalls
+        end
 
-	if (type(arg1) == "function") then
-		tinsert(self.LoadCalls[category][name].Calls, arg1)
-		tinsert(self.ButtonQueue, {category, name})
-	else -- string
-		if (not self.LoadCalls[category][arg1].Children) then
-			self.LoadCalls[category][arg1].Children = {}
-		end
+        if (type(arg1) == "function") then
+                local windowData = categoryCalls[name]
 
-		self.LoadCalls[category][arg1].Children[name] = {Calls = {}}
+                if (not windowData) then
+                        windowData = {Calls = {}}
+                        categoryCalls[name] = windowData
+                end
 
-		tinsert(self.LoadCalls[category][arg1].Children[name].Calls, arg2)
-		tinsert(self.ButtonQueue, {category, name, arg1})
-	end
+                windowData.Calls[#windowData.Calls + 1] = arg1
+
+                QueueWindow(self, category, name)
+        else -- string
+                local parentName = arg1
+                local parentData = categoryCalls[parentName]
+
+                if (not parentData) then
+                        parentData = {Calls = {}}
+                        categoryCalls[parentName] = parentData
+                elseif (not parentData.Calls) then
+                        parentData.Calls = {}
+                end
+
+                local children = parentData.Children
+
+                if (not children) then
+                        children = {}
+                        parentData.Children = children
+                end
+
+                local childData = children[name]
+
+                if (not childData) then
+                        childData = {Calls = {}}
+                        children[name] = childData
+                end
+
+                childData.Calls[#childData.Calls + 1] = arg2
+
+                QueueWindow(self, category, name, parentName)
+        end
 end
 
 function GUI:GetWidget(id)
@@ -820,27 +911,37 @@ function GUI:ClampSelectionOffset(offset)
 end
 
 function GUI:SetSelectionOffset(offset)
-        self.Offset = offset
+        local newOffset = self:ClampSelectionOffset(offset)
 
-        self.Offset = self:ClampSelectionOffset(self.Offset)
+        if (self.Offset == newOffset) then
+                return false
+        end
+
+        self.Offset = newOffset
 
         self:ScrollSelections()
+
+        return true
 end
 
 function GUI:SetSelectionOffsetByDelta(delta)
+        local offset = (self.Offset or 1)
+
         if (delta > 0) then -- Up
-                self.Offset = self.Offset - 1
+                offset = offset - 1
         else -- Down
-                self.Offset = self.Offset + 1
+                offset = offset + 1
         end
 
-        self.Offset = self:ClampSelectionOffset(self.Offset)
+        return self:SetSelectionOffset(offset)
 end
 
 local SelectionOnMouseWheel = function(self, delta)
-	self:SetSelectionOffsetByDelta(delta)
-	self:ScrollSelections()
-	self.ScrollBar:SetValue(self.Offset)
+        local scrollBar = self.ScrollBar
+
+        if scrollBar and self:SetSelectionOffsetByDelta(delta) then
+                scrollBar:SetValue(self.Offset)
+        end
 end
 
 local Round = function(num, dec)
@@ -850,9 +951,7 @@ local Round = function(num, dec)
 end
 
 local SelectionScrollBarOnValueChanged = function(self)
-        GUI.Offset = GUI:ClampSelectionOffset(Round(self:GetValue()))
-
-        GUI:ScrollSelections()
+        GUI:SetSelectionOffset(Round(self:GetValue()))
 end
 
 local MenuParentOnMouseWheel = function(self, delta)
@@ -1301,11 +1400,16 @@ function GUI:CreateGUI()
 	self.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
 	self.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
 
-	for i = 1, #self.ButtonQueue do
-		self:CreateWindow(unpack(tremove(self.ButtonQueue, 1)))
-	end
+        local buttonQueue = self.ButtonQueue
 
-	self:SortMenuButtons()
+        for i = 1, #buttonQueue do
+                self:CreateWindow(unpack(buttonQueue[i]))
+        end
+
+        ClearTable(buttonQueue)
+        ClearTable(self.ButtonQueueLookup)
+
+        self:SortMenuButtons()
 
 	self.ScrollBar:SetMinMaxValues(1, ((self.NumShownButtons or 15) - MAX_WIDGETS_SHOWN) + 1)
 	self.ScrollBar:SetValue(1)

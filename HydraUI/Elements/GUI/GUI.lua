@@ -24,7 +24,6 @@ local max = math.max
 local type = type
 local wipe = wipe
 local tinsert = table.insert
-local tremove = table.remove
 local tsort = table.sort
 
 local GUI = HydraUI:NewModule("GUI")
@@ -134,32 +133,38 @@ end
 
 local NoScroll = function() end
 
+local SetWindowOffset = function(self, offset)
+        local newOffset = ClampOffset(self, offset)
+
+        if (self.Offset == newOffset) then
+                return false
+        end
+
+        self.Offset = newOffset
+
+        Scroll(self)
+
+        return true
+end
+
 local SetOffsetByDelta = function(self, delta)
         if (delta > 0) then -- Up
-                self.Offset = ClampOffset(self, self.Offset - 1)
+                return SetWindowOffset(self, (self.Offset or 1) - 1)
         else -- Down
-                self.Offset = ClampOffset(self, self.Offset + 1)
+                return SetWindowOffset(self, (self.Offset or 1) + 1)
         end
 end
 
 local WindowOnMouseWheel = function(self, delta)
-        SetOffsetByDelta(self, delta)
-        Scroll(self)
-        self.ScrollBar:SetValue(self.Offset)
-end
-
-local SetWindowOffset = function(self, offset)
-        self.Offset = ClampOffset(self, offset)
-
-        Scroll(self)
+        if SetOffsetByDelta(self, delta) and self.ScrollBar then
+                self.ScrollBar:SetValue(self.Offset)
+        end
 end
 
 local WindowScrollBarOnValueChanged = function(self)
-	local Parent = self:GetParent()
+        local Parent = self:GetParent()
 
-	Parent.Offset = Round(self:GetValue())
-
-	Scroll(Parent)
+        SetWindowOffset(Parent, Round(self:GetValue()))
 end
 
 local WindowScrollBarOnMouseWheel = function(self, delta)
@@ -353,7 +358,31 @@ function GUI:CreateCategory(name)
 end
 
 local DisableScrolling = function(self)
-	self.ScrollingDisabled = true
+        self.ScrollingDisabled = true
+end
+
+local RunLoadCalls = function(self, category, name, parent, leftColumn, rightColumn)
+        local queue
+
+        if parent then
+                local categoryData = self.LoadCalls[category]
+                local parentData = categoryData and categoryData[parent]
+                local children = parentData and parentData.Children
+                queue = children and children[name] and children[name].Calls
+        else
+                local categoryData = self.LoadCalls[category]
+                queue = categoryData and categoryData[name] and categoryData[name].Calls
+        end
+
+        if (not queue or #queue == 0) then
+                return
+        end
+
+        for i = 1, #queue do
+                queue[i](leftColumn, rightColumn)
+        end
+
+        ClearTable(queue)
 end
 
 function GUI:CreateWidgetWindow(category, name, parent)
@@ -407,19 +436,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG[Name] = Function
 	end
 
-	if (parent and self.LoadCalls[category][parent].Children) then
-		for i = 1, #self.LoadCalls[category][parent].Children[name].Calls do
-			self.LoadCalls[category][parent].Children[name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
-
-			tremove(self.LoadCalls[category][parent].Children[name].Calls, 1)
-		end
-	else
-		for i = 1, #self.LoadCalls[category][name].Calls do
-			self.LoadCalls[category][name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
-
-			tremove(self.LoadCalls[category][name].Calls, 1)
-		end
-	end
+        RunLoadCalls(self, category, name, parent, Window.LeftWidgetsBG, Window.RightWidgetsBG)
 
 	if (#Window.LeftWidgetsBG.Widgets > 0) then
 		Window.LeftWidgetsBG:CreateFooter()
@@ -1295,11 +1312,15 @@ function GUI:CreateGUI()
 	self.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
 	self.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
 
-	for i = 1, #self.ButtonQueue do
-		self:CreateWindow(unpack(tremove(self.ButtonQueue, 1)))
-	end
+        local buttonQueue = self.ButtonQueue
 
-	self:SortMenuButtons()
+        for i = 1, #buttonQueue do
+                self:CreateWindow(unpack(buttonQueue[i]))
+        end
+
+        ClearTable(buttonQueue)
+
+        self:SortMenuButtons()
 
 	self.ScrollBar:SetMinMaxValues(1, ((self.NumShownButtons or 15) - MAX_WIDGETS_SHOWN) + 1)
 	self.ScrollBar:SetValue(1)

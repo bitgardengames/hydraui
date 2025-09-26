@@ -700,7 +700,7 @@ L["Apply the scale recommended based on your resolution"] = "Apply the scale rec
 L["Are you sure you would like to change your UI scale to the suggested setting of %s?"] = "Are you sure you would like to change your UI scale to the suggested setting of %s?"
 
 -- Taxi
-L["Land Early"] = "Land Early"
+L["Land Early"] = "Приземлиться раньше"
 
 -- Tools
 L["Today"] = "Today"

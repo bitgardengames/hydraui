@@ -4,6 +4,7 @@ local Experience = HydraUI:NewModule("Experience")
 
 local format = format
 local floor = floor
+local min = math.min
 local XP, MaxXP, Rested
 local GetTime = GetTime
 local IsResting = IsResting
@@ -139,6 +140,7 @@ function Experience:CreateBar()
 	self.LastMax = UnitXPMax("player")
 	self.Seconds = 0
 	self.Gained = 0
+	self.IsFirstUpdate = true
 
 	self.BarBG = CreateFrame("Frame", nil, self, "BackdropTemplate")
 	self.BarBG:SetPoint("TOPLEFT", self, 0, 0)
@@ -201,10 +203,11 @@ function Experience:CreateBar()
 
 	self.Bar.Rested.Spark = self.Bar.Rested:CreateTexture(nil, "OVERLAY")
 	self.Bar.Rested.Spark:SetWidth(1)
-	self.Bar.Rested.Spark:SetPoint("TOPLEFT", self.Bar:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
-	self.Bar.Rested.Spark:SetPoint("BOTTOMLEFT", self.Bar:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+	self.Bar.Rested.Spark:SetPoint("TOPLEFT", self.Bar.Rested:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
+	self.Bar.Rested.Spark:SetPoint("BOTTOMLEFT", self.Bar.Rested:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
 	self.Bar.Rested.Spark:SetTexture(Assets:GetTexture("Blank"))
 	self.Bar.Rested.Spark:SetVertexColor(0, 0, 0)
+	self.Bar.Rested.Spark:SetAlpha(0)
 
 	self.Bar.Quest = CreateFrame("StatusBar", nil, self.Bar)
 	self.Bar.Quest:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
@@ -214,10 +217,11 @@ function Experience:CreateBar()
 
 	self.Bar.Quest.Spark = self.Bar.Quest:CreateTexture(nil, "OVERLAY")
 	self.Bar.Quest.Spark:SetWidth(1)
-	self.Bar.Quest.Spark:SetPoint("TOPLEFT", self.Bar:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
-	self.Bar.Quest.Spark:SetPoint("BOTTOMLEFT", self.Bar:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+	self.Bar.Quest.Spark:SetPoint("TOPLEFT", self.Bar.Quest:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
+	self.Bar.Quest.Spark:SetPoint("BOTTOMLEFT", self.Bar.Quest:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
 	self.Bar.Quest.Spark:SetTexture(Assets:GetTexture("Blank"))
 	self.Bar.Quest.Spark:SetVertexColor(0, 0, 0)
+	self.Bar.Quest.Spark:SetAlpha(0)
 
 	self.Progress = self.Bar:CreateFontString(nil, "OVERLAY")
 	self.Progress:SetPoint("LEFT", self.Bar, 5, 0)
@@ -234,9 +238,22 @@ end
 
 function Experience:Update()
 	Rested = GetXPExhaustion()
-    XP = UnitXP("player")
-    MaxXP = UnitXPMax("player")
-    RestingText = IsResting() and ("|cFF" .. Settings["experience-rested-color"] .. "zZz|r") or ""
+	XP = UnitXP("player")
+	MaxXP = UnitXPMax("player")
+	RestingText = IsResting() and ("|cFF" .. Settings["experience-rested-color"] .. "zZz|r") or ""
+
+	if IsPlayerAtEffectiveMaxLevel() then
+	        self:Hide()
+		return
+	end
+
+	if (not self:IsShown()) then
+	        self:Show()
+	end
+
+	if (not MaxXP or MaxXP == 0) then
+		MaxXP = 1
+	end
 
 	local QuestLogXP = 0
 	local ZoneName
@@ -244,15 +261,10 @@ function Experience:Update()
 	local MapID = C_Map.GetBestMapForUnit("player")
 	local CurrentZone
 
-	-- Expansion transition script, remove after launch
-	if (not self:IsShown() and not IsPlayerAtEffectiveMaxLevel()) then
-		self:Show()
-	end
-
 	if MapID then
-		CurrentZone = C_Map.GetMapInfo(MapID).name or GetRealZoneText()
+	        CurrentZone = C_Map.GetMapInfo(MapID).name or GetRealZoneText()
 	else
-		CurrentZone = GetRealZoneText()
+	        CurrentZone = GetRealZoneText()
 	end
 
 	if HydraUI.IsMainline then
@@ -282,16 +294,24 @@ function Experience:Update()
 	end
 
 	if (QuestLogXP > 0) then
-		if HasXPBuff then
-			QuestLogXP = QuestLogXP * XPMod
-		end
+	        if HasXPBuff then
+	                QuestLogXP = QuestLogXP * XPMod
+	        end
 
-		self.Bar.QuestXP = QuestLogXP
-		self.Bar.Quest:SetValue(min(XP + QuestLogXP, MaxXP))
-		self.Bar.Quest:Show()
+	        self.Bar.QuestXP = QuestLogXP
+	        self.Bar.Quest:SetValue(min(XP + QuestLogXP, MaxXP))
+	        self.Bar.Quest:Show()
+
+	        if (self.Bar.Quest.Spark:GetAlpha() == 0) then
+	                self.Bar.Quest.Spark:SetAlpha(1)
+	        end
 	else
-		self.Bar.Quest:Hide()
-		self.Bar.QuestXP = 0
+	        self.Bar.Quest:Hide()
+	        self.Bar.QuestXP = 0
+
+	        if (self.Bar.Quest.Spark:GetAlpha() > 0) then
+	                self.Bar.Quest.Spark:SetAlpha(0)
+	        end
 	end
 
 	self.Bar:SetMinMaxValues(0, MaxXP)
@@ -299,12 +319,14 @@ function Experience:Update()
 	self.Bar.Quest:SetMinMaxValues(0, MaxXP)
 
 	if Rested then
-		self.Bar.Rested:SetValue(XP + Rested)
+	        local RestValue = min(XP + Rested, MaxXP)
 
-		if Settings["experience-display-rested-value"] then
-			self.Progress:SetFormattedText("%s%s / %s (+%s) %s", Level, HydraUI:Comma(XP), HydraUI:Comma(MaxXP), HydraUI:Comma(Rested), RestingText)
-		else
-			self.Progress:SetFormattedText("%s%s / %s %s", Level, HydraUI:Comma(XP), HydraUI:Comma(MaxXP), RestingText)
+	        self.Bar.Rested:SetValue(RestValue)
+
+	        if Settings["experience-display-rested-value"] then
+	                self.Progress:SetFormattedText("%s%s / %s (+%s) %s", Level, HydraUI:Comma(XP), HydraUI:Comma(MaxXP), HydraUI:Comma(Rested), RestingText)
+	        else
+	                self.Progress:SetFormattedText("%s%s / %s %s", Level, HydraUI:Comma(XP), HydraUI:Comma(MaxXP), RestingText)
 		end
 	else
 		self.Bar.Rested:SetValue(0)
@@ -314,34 +336,36 @@ function Experience:Update()
 	self.Percentage:SetText(floor((XP / MaxXP * 100 + 0.05) * 10) / 10 .. "%")
 
 	if (XP > 0) then
-		if (self.Bar.Spark:GetAlpha() == 0) then
-			self.Bar.Spark:SetAlpha(1)
+	        if (self.Bar.Spark:GetAlpha() == 0) then
+	                self.Bar.Spark:SetAlpha(1)
 		end
 	elseif (self.Bar.Spark:GetAlpha() > 0) then
 		self.Bar.Spark:SetAlpha(0)
 	end
 
 	if (Rested and (Rested > 0)) then
-		if (self.Bar.Rested.Spark:GetAlpha() == 0) then
-			self.Bar.Rested.Spark:SetAlpha(1)
-		end
+	        if (self.Bar.Rested.Spark:GetAlpha() == 0) then
+	                self.Bar.Rested.Spark:SetAlpha(1)
+	        end
 	elseif (self.Bar.Rested.Spark:GetAlpha() > 0) then
-		self.Bar.Rested.Spark:SetAlpha(0)
+	        self.Bar.Rested.Spark:SetAlpha(0)
 	end
 
 	if Settings["experience-animate"] then
-		if (not first) then
-			self.Change:SetChange(XP)
-			self.Change:Play()
+	        if self.IsFirstUpdate then
+	                self.Bar:SetValue(XP)
+	                self.IsFirstUpdate = false
+	        else
+	                self.Change:SetChange(XP)
+	                self.Change:Play()
 
-			if ((XP > self.LastXP) and not self.Flash:IsPlaying()) then
-				self.Flash:Play()
-			end
-		else
-			self.Bar:SetValue(XP)
-		end
+	                if ((XP > self.LastXP) and not self.Flash:IsPlaying()) then
+	                        self.Flash:Play()
+	                end
+	        end
 	else
-		self.Bar:SetValue(XP)
+	        self.Bar:SetValue(XP)
+	        self.IsFirstUpdate = false
 	end
 
 	if self.TooltipShown then
@@ -365,9 +389,9 @@ end
 
 function Experience:PLAYER_LEVEL_UP()
 	if IsPlayerAtEffectiveMaxLevel() then
-		self:Hide()
-		--self:UnregisterAllEvents()
-		--self:SetScript("OnEnter", nil)
+	        self:Hide()
+	        --self:UnregisterAllEvents()
+	        --self:SetScript("OnEnter", nil)
 		--self:SetScript("OnLeave", nil)
 		--self:SetScript("OnEvent", nil)
 	end
@@ -435,11 +459,15 @@ function Experience:OnEnter()
 		return
 	end
 
-	GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -8)
-
 	Rested = GetXPExhaustion()
 	XP = UnitXP("player")
-	Max = UnitXPMax("player")
+	local Max = UnitXPMax("player") or 0
+
+	if (Max == 0) then
+		return
+	end
+
+	GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -8)
 
 	local Percent = floor((XP / Max * 100 + 0.05) * 10) / 10
 	local Remaining = Max - XP

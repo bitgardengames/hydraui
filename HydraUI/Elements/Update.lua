@@ -4,7 +4,10 @@ local tonumber = tonumber
 local IsInGuild = IsInGuild
 local IsInGroup = IsInGroup
 local IsInRaid = IsInRaid
+local IsInInstance = IsInInstance
 local GetNumGroupMembers = GetNumGroupMembers
+local UnitOnTaxi = UnitOnTaxi
+local GetZoneText = GetZoneText
 local LE_PARTY_CATEGORY_HOME = LE_PARTY_CATEGORY_HOME
 local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
 local wipe = wipe
@@ -30,7 +33,31 @@ local QueuedChannels = {}
 local Throttle = HydraUI:GetModule("Throttle")
 
 local ProcessQueueTimer = function()
-	Update:ProcessQueue()
+        Update:ProcessQueue()
+end
+
+local function QueueVersionYell(self)
+        if Throttle:IsThrottled("vrsn") then
+                return false
+        end
+
+        if self:QueueChannel("YELL") then
+                Throttle:Start("vrsn", 10)
+
+                return true
+        end
+
+        return false
+end
+
+local function HandleTaxiZoneChange(self)
+        if UnitOnTaxi("player") then
+                local Zone = GetZoneText()
+
+                if (Zone ~= self.Zone) and QueueVersionYell(self) then
+                        self.Zone = Zone
+                end
+        end
 end
 
 function Update:QueueChannel(channel, target)
@@ -102,15 +129,13 @@ end
 
 
 function Update:PLAYER_ENTERING_WORLD()
-	if (not HydraUI.IsMainline and not IsInInstance()) and (not Throttle:IsThrottled("vrsn")) then
-		After(5, function()
-			self:QueueChannel("YELL")
-		end)
+        if (not HydraUI.IsMainline and not IsInInstance()) then
+                After(5, function()
+                        QueueVersionYell(self)
+                end)
+        end
 
-		Throttle:Start("vrsn", 10)
-	end
-
-	self:GROUP_ROSTER_UPDATE()
+        self:GROUP_ROSTER_UPDATE()
 end
 
 function Update:GUILD_ROSTER_UPDATE()
@@ -165,27 +190,11 @@ function Update:CHAT_MSG_ADDON(prefix, message, channel, sender)
 end
 
 function Update:ZONE_CHANGED_NEW_AREA()
-	if UnitOnTaxi("player") then
-		local Zone = GetZoneText()
-
-		if (Zone ~= self.Zone and not Throttle:IsThrottled("vrsn")) then
-			self:QueueChannel("YELL")
-			self.Zone = Zone
-			Throttle:Start("vrsn", 10)
-		end
-	end
+        HandleTaxiZoneChange(self)
 end
 
 function Update:ZONE_CHANGED()
-	if UnitOnTaxi("player") then
-		local Zone = GetZoneText()
-
-		if (Zone ~= self.Zone and not Throttle:IsThrottled("vrsn")) then
-			self:QueueChannel("YELL")
-			self.Zone = Zone
-			Throttle:Start("vrsn", 10)
-		end
-	end
+        HandleTaxiZoneChange(self)
 end
 
 function Update:OnEvent(event, ...)

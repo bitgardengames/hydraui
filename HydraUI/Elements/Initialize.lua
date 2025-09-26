@@ -8,7 +8,6 @@ local Modules = {}
 local Plugins = {}
 local ModuleQueue = {}
 local PluginQueue = {}
-local ModuleQueueIndex = 0
 
 -- Core functions and data
 local HydraUI = CreateFrame("Frame", nil, UIParent)
@@ -25,6 +24,7 @@ local GetAddOnInfo = C_AddOns and C_AddOns.GetAddOnInfo or GetAddOnInfo
 local ErrorHandler = geterrorhandler()
 local xpcall = xpcall
 local type = type
+local wipe = wipe
 
 local ReportError = function(context, err)
 	ErrorHandler(format("HydraUI: %s - %s", context, err or "Unknown error"))
@@ -81,15 +81,14 @@ function HydraUI:NewModule(name)
 		return Module
 	end
 
-	Module = CreateFrame("Frame", "HydraUI " .. name, self.UIParent, "BackdropTemplate")
-	Module.Name = name
+        Module = CreateFrame("Frame", "HydraUI " .. name, self.UIParent, "BackdropTemplate")
+        Module.Name = name
 
-	Modules[name] = Module
+        Modules[name] = Module
 
-	ModuleQueueIndex = ModuleQueueIndex + 1
-	ModuleQueue[ModuleQueueIndex] = Module
+        ModuleQueue[#ModuleQueue + 1] = Module
 
-	return Module
+        return Module
 end
 
 function HydraUI:GetModule(name)
@@ -111,15 +110,21 @@ local BuildModuleContext = function(kind, object)
 end
 
 function HydraUI:LoadModules()
-	for i = 1, #ModuleQueue do
-		local Module = ModuleQueue[i]
+        local ModuleCount = #ModuleQueue
 
-		if (Module and Module.Load and not Module.Loaded) then
-			if SafeCall(BuildModuleContext("Module", Module), Module.Load, Module) then
-				Module.Loaded = true
-			end
-		end
-	end
+        for i = 1, ModuleCount do
+                local Module = ModuleQueue[i]
+
+                if (Module and Module.Load and not Module.Loaded) then
+                        if SafeCall(BuildModuleContext("Module", Module), Module.Load, Module) then
+                                Module.Loaded = true
+                        end
+                end
+        end
+
+        if (ModuleCount > 0) then
+                wipe(ModuleQueue)
+        end
 end
 
 function HydraUI:NewPlugin(name)

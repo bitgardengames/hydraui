@@ -44,6 +44,15 @@ local RegisterWidget = function(self, widget, id)
         end
 end
 
+local CreateAnchor = function(self, id)
+        local anchor = CreateFrame("Frame", nil, self)
+        anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+
+        RegisterWidget(self, anchor, id)
+
+        return anchor
+end
+
 local Ignore = {
         ["ui-profile"] = true,
         ["profile-copy"] = true,
@@ -97,32 +106,28 @@ end
 
 -- Line
 GUI.Widgets.CreateLine = function(self, id, text)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+        local Anchor = CreateAnchor(self, id)
 
-	local Text = Anchor:CreateFontString(nil, "OVERLAY")
-	Text:SetPoint("LEFT", Anchor, HEADER_SPACING, 0)
-	Text:SetSize(GROUP_WIDTH - 6, WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Text:SetJustifyH("LEFT")
+        local Text = Anchor:CreateFontString(nil, "OVERLAY")
+        Text:SetPoint("LEFT", Anchor, HEADER_SPACING, 0)
+        Text:SetSize(GROUP_WIDTH - 6, WIDGET_HEIGHT)
+        HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+        Text:SetJustifyH("LEFT")
         Text:SetText(FormatColor(Settings["ui-widget-font-color"], text))
 
         Anchor.Text = Text
-
-        RegisterWidget(self, Anchor, id)
 
         return Text
 end
 
 -- Double Line
 GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+        local Anchor = CreateAnchor(self, id)
 
-	local Left = Anchor:CreateFontString(nil, "OVERLAY")
-	Left:SetPoint("LEFT", Anchor, HEADER_SPACING, 0)
-	Left:SetSize((GROUP_WIDTH / 2) - 6, WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(Left, Settings["ui-widget-font"], Settings["ui-font-size"])
+        local Left = Anchor:CreateFontString(nil, "OVERLAY")
+        Left:SetPoint("LEFT", Anchor, HEADER_SPACING, 0)
+        Left:SetSize((GROUP_WIDTH / 2) - 6, WIDGET_HEIGHT)
+        HydraUI:SetFontInfo(Left, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Left:SetJustifyH("LEFT")
         Left:SetText(FormatColor(Settings["ui-widget-font-color"], left))
 
@@ -133,10 +138,8 @@ GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
 	Right:SetJustifyH("RIGHT")
         Right:SetText(FormatColor(Settings["ui-widget-font-color"], right))
 
-	Anchor.Left = Left
-	Anchor.Right = Right
-
-        RegisterWidget(self, Anchor, id)
+        Anchor.Left = Left
+        Anchor.Right = Right
 
         return Left
 end

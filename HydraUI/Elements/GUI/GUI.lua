@@ -147,30 +147,30 @@ local UpdateArrows = function(scrollUp, scrollDown, offset, maxOffset)
         end
 end
 
+local ShouldShowWidget = function(index, firstVisible, lastVisible)
+        return (index >= firstVisible) and (index <= lastVisible)
+end
+
 local LayoutWidgetColumn = function(frame, widgets, offset, anchorPoint, anchorX)
-        local lastVisible = offset + MAX_WIDGETS_SHOWN - 1
-        local previous
-
-        for i = 1, offset - 1 do
-                local widget = widgets[i]
-
-                if widget then
-                        widget:Hide()
-                        widget:ClearAllPoints()
-                end
+        if (not widgets) or (#widgets == 0) then
+                return
         end
 
-        for i = offset, #widgets do
-                local widget = widgets[i]
+        local startIndex = frame.ScrollingDisabled and 1 or (offset or 1)
+        local lastVisible = frame.ScrollingDisabled and #widgets or (startIndex + MAX_WIDGETS_SHOWN - 1)
+        local previous
+
+        for index = 1, #widgets do
+                local widget = widgets[index]
 
                 if widget then
                         widget:ClearAllPoints()
 
-                        if (i <= lastVisible) then
-                                if not previous then
-                                        widget:SetPoint(anchorPoint, frame, anchorX, -SPACING)
-                                else
+                        if ShouldShowWidget(index, startIndex, lastVisible) then
+                                if previous then
                                         widget:SetPoint("TOP", previous, "BOTTOM", 0, -2)
+                                else
+                                        widget:SetPoint(anchorPoint, frame, anchorX, -SPACING)
                                 end
 
                                 widget:Show()
@@ -201,8 +201,8 @@ local ClampOffset = function(window, offset)
 end
 
 local Scroll = function(self)
-        LayoutWidgetColumn(self.LeftWidgetsBG, self.LeftWidgets, self.LeftWidgetsBG.ScrollingDisabled and 1 or self.Offset, "TOPLEFT", SPACING)
-        LayoutWidgetColumn(self.RightWidgetsBG, self.RightWidgets, self.RightWidgetsBG.ScrollingDisabled and 1 or self.Offset, "TOPRIGHT", -SPACING)
+        LayoutWidgetColumn(self.LeftWidgetsBG, self.LeftWidgets, self.Offset, "TOPLEFT", SPACING)
+        LayoutWidgetColumn(self.RightWidgetsBG, self.RightWidgets, self.Offset, "TOPRIGHT", -SPACING)
 
         UpdateScrollArrows(self)
 end
@@ -224,11 +224,9 @@ local SetWindowOffset = function(self, offset)
 end
 
 local SetOffsetByDelta = function(self, delta)
-        if (delta > 0) then -- Up
-                return SetWindowOffset(self, (self.Offset or 1) - 1)
-        else -- Down
-                return SetWindowOffset(self, (self.Offset or 1) + 1)
-        end
+        local direction = (delta > 0) and -1 or 1
+
+        return SetWindowOffset(self, (self.Offset or 1) + direction)
 end
 
 local WindowOnMouseWheel = function(self, delta)
@@ -238,9 +236,7 @@ local WindowOnMouseWheel = function(self, delta)
 end
 
 local WindowScrollBarOnValueChanged = function(self)
-        local Parent = self:GetParent()
-
-        SetWindowOffset(Parent, Round(self:GetValue()))
+        SetWindowOffset(self:GetParent(), Round(self:GetValue()))
 end
 
 local WindowScrollBarOnMouseWheel = function(self, delta)
@@ -827,64 +823,74 @@ function GUI:GetWidget(id)
 end
 
 function GUI:ScrollSelections()
-        local Count = 0
-        local Categories = self.Categories
-        local ScrollButtons = self.ScrollButtons
+        local categories = self.Categories
+        local scrollButtons = self.ScrollButtons
+        local offset = self.Offset or 1
+        local firstVisible = offset
+        local lastVisible = offset + MAX_WIDGETS_SHOWN - 1
+        local count = 0
 
-        -- Collect buttons
-        ClearTable(ScrollButtons)
+        self.Offset = offset
 
-        for i = 1, #Categories do
-                Count = Count + 1
+        ClearTable(scrollButtons)
 
-                if (Count >= self.Offset) and (Count <= self.Offset + MAX_WIDGETS_SHOWN - 1) then
-			tinsert(ScrollButtons, Categories[i])
-		end
+        for i = 1, #categories do
+                local category = categories[i]
 
-		Categories[i]:Hide()
+                count = count + 1
+                category:Hide()
 
-		for j = 1, #Categories[i].Buttons do
-			Count = Count + 1
-
-			if (Count >= self.Offset) and (Count <= self.Offset + MAX_WIDGETS_SHOWN - 1) then
-				tinsert(ScrollButtons, Categories[i].Buttons[j])
-			end
-
-			if Categories[i].Buttons[j].ChildrenShown then
-				for o = 1, #Categories[i].Buttons[j].Children do
-					Count = Count + 1
-
-					if (Count >= self.Offset) and (Count <= self.Offset + MAX_WIDGETS_SHOWN - 1) then
-						tinsert(ScrollButtons, Categories[i].Buttons[j].Children[o])
-						Categories[i].Buttons[j].Children[o]:Show()
-					else
-						Categories[i].Buttons[j].Children[o]:Hide()
-					end
-				end
-			end
-
-			Categories[i].Buttons[j]:Hide()
-		end
-	end
-
-        self.TotalSelections = Count
-
-        local maxOffset = max((Count - MAX_WIDGETS_SHOWN) + 1, 1)
-
-        self.ScrollBar:SetMinMaxValues(1, maxOffset)
-
-        for i = 1, #ScrollButtons do
-                if ScrollButtons[i] then
-                        ScrollButtons[i]:ClearAllPoints()
-
-			if (i == 1) then
-				ScrollButtons[i]:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
-			else
-				ScrollButtons[i]:SetPoint("TOP", ScrollButtons[i-1], "BOTTOM", 0, -2)
-			end
-
-                        ScrollButtons[i]:Show()
+                if ShouldShowWidget(count, firstVisible, lastVisible) then
+                        scrollButtons[#scrollButtons + 1] = category
                 end
+
+                for j = 1, #category.Buttons do
+                        local button = category.Buttons[j]
+
+                        count = count + 1
+                        button:Hide()
+
+                        if ShouldShowWidget(count, firstVisible, lastVisible) then
+                                scrollButtons[#scrollButtons + 1] = button
+                        end
+
+                        if button.ChildrenShown then
+                                for childIndex = 1, #button.Children do
+                                        local child = button.Children[childIndex]
+
+                                        count = count + 1
+
+                                        if ShouldShowWidget(count, firstVisible, lastVisible) then
+                                                scrollButtons[#scrollButtons + 1] = child
+                                                child:Show()
+                                        else
+                                                child:Hide()
+                                        end
+                                end
+                        end
+                end
+        end
+
+        self.TotalSelections = count
+
+        local maxOffset = max((count - MAX_WIDGETS_SHOWN) + 1, 1)
+
+        if self.ScrollBar then
+                self.ScrollBar:SetMinMaxValues(1, maxOffset)
+        end
+
+        for index = 1, #scrollButtons do
+                local button = scrollButtons[index]
+
+                button:ClearAllPoints()
+
+                if (index == 1) then
+                        button:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
+                else
+                        button:SetPoint("TOP", scrollButtons[index - 1], "BOTTOM", 0, -2)
+                end
+
+                button:Show()
         end
 
         UpdateArrows(self.ScrollUp, self.ScrollDown, self.Offset, maxOffset)

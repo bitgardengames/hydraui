@@ -145,8 +145,8 @@ Events["LevelPlus"] = "UNIT_LEVEL PLAYER_LEVEL_UP UNIT_CLASSIFICATION_CHANGED"
 Methods["LevelPlus"] = function(unit)
 	local Class = UnitClassification(unit)
 
-	if (Class == "worldboss") then
-		return "Boss"
+        if (Class == "worldboss") then
+                return Language["Boss"]
 	else
 		local Plus = Methods["Plus"](unit)
 		local Level = Methods["Level"](unit)

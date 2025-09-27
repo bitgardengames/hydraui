@@ -322,11 +322,11 @@ L["Uninterruptible"] = "차단 불가"
 
 -- Commands
 L["|cFF%sHydraUI|r Commands"] = "|cFF%sHydraUI|r 명령어"
-L["|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Toggle the settings window"] = "|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - 설정 창을 전환합니다"
-L["|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Drag UI elements around the screen"] = "|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - UI 요소를 화면에서 드래그합니다"
-L["|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - 모든 이동 요소를 기본 위치로 되돌립니다"
-L["|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - 마우스오버 단축키 설정을 전환합니다"
-L["|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - 저장된 UI 정보와 설정을 모두 초기화합니다"
+L["|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window"] = "|Hcommand:/hui|h|cFF%s/hui|r|h - 설정 창을 전환합니다"
+L["|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen"] = "|Hcommand:/hui move|h|cFF%s/hui move|r|h - UI 요소를 화면에서 드래그합니다"
+L["|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - 모든 이동 요소를 기본 위치로 되돌립니다"
+L["|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - 마우스오버 단축키 설정을 전환합니다"
+L["|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - 저장된 UI 정보와 설정을 모두 초기화합니다"
 
 -- Cooldowns
 L["|cff%s%s|r is ready!"] = "|cff%s%s|r 사용 준비 완료!"
@@ -634,6 +634,9 @@ L['Profile "%s" has been copied from "%s".'] = '프로필 "%s"이(가) "%s"에�
 L['Are you sure you would like to change to the current profile to "%s"?'] = '현재 프로필을 "%s"(으)로 변경하시겠습니까?'
 L["Are you sure you would like to copy %s to %s?"] = "%s의 설정을 %s(으)로 복사하시겠습니까?"
 L["All"] = "전체"
+L["Failure decoding"] = "디코딩 실패"
+L["Failure decompressing"] = "압축 해제 실패"
+L["Failure deserializing"] = "역직렬화 실패"
 
 -- Reputation
 L["Reputation"] = "평판"

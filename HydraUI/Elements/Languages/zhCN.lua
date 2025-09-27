@@ -322,11 +322,11 @@ L["Uninterruptible"] = "不可打断"
 
 -- Commands
 L["|cFF%sHydraUI|r Commands"] = "|cFF%sHydraUI|r 指令"
-L["|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Toggle the settings window"] = "|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - 切换设置窗口"
-L["|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Drag UI elements around the screen"] = "|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - 在画面上拖动界面组件"
-L["|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - 将所有移动框架重设至默认位置"
-L["|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - 切换鼠标指向按键绑定"
-L["|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - 重设所有保存的界面信息与设置"
+L["|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window"] = "|Hcommand:/hui|h|cFF%s/hui|r|h - 切换设置窗口"
+L["|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen"] = "|Hcommand:/hui move|h|cFF%s/hui move|r|h - 在画面上拖动界面组件"
+L["|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - 将所有移动框架重设至默认位置"
+L["|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - 切换鼠标指向按键绑定"
+L["|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - 重设所有保存的界面信息与设置"
 
 -- Cooldowns
 L["|cff%s%s|r is ready!"] = "|cff%s%s|r 已就绪！"
@@ -634,6 +634,9 @@ L['Profile "%s" has been copied from "%s".'] = '设置档 "%s" 已自 "%s" 复�
 L['Are you sure you would like to change to the current profile to "%s"?'] = '确定要将目前设置档切换为 "%s" 吗？'
 L["Are you sure you would like to copy %s to %s?"] = "确定要将 %s 复制到 %s 吗？"
 L["All"] = "全部"
+L["Failure decoding"] = "解码失败"
+L["Failure decompressing"] = "解压失败"
+L["Failure deserializing"] = "反序列化失败"
 
 -- Reputation
 L["Reputation"] = "声望"

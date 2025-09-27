@@ -50,11 +50,11 @@ end
 Commands["help"] = function()
 	print(format(Language["|cFF%sHydraUI|r Commands"], Settings["ui-widget-color"]))
 	print(" ")
-	print(format("|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window", Settings["ui-widget-color"]))
-	print(format("|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen", Settings["ui-widget-color"]))
-	print(format("|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations", Settings["ui-widget-color"]))
-	print(format("|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding", Settings["ui-widget-color"]))
-	print(format("|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings", Settings["ui-widget-color"]))
+	print(format(Language["|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window"], Settings["ui-widget-color"]))
+	print(format(Language["|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen"], Settings["ui-widget-color"]))
+	print(format(Language["|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations"], Settings["ui-widget-color"]))
+	print(format(Language["|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding"], Settings["ui-widget-color"]))
+	print(format(Language["|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings"], Settings["ui-widget-color"]))
 end
 
 local RunCommand = function(arg)

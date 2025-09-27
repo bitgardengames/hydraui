@@ -320,11 +320,11 @@ L["Uninterruptible"] = "Non interrompibile"
 
 -- Commands
 L["|cFF%sHydraUI|r Commands"] = "Comandi di |cFF%sHydraUI|r"
-L["|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Toggle the settings window"] = "|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Attiva/disattiva la finestra delle impostazioni"
-L["|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Drag UI elements around the screen"] = "|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Trascina gli elementi dell'UI sullo schermo"
-L["|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Riposiziona tutti i riquadri mobili nelle posizioni predefinite"
-L["|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Attiva la configurazione dei tasti al passaggio del mouse"
-L["|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Reimposta tutte le informazioni e impostazioni dell'UI memorizzate"
+L["|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window"] = "|Hcommand:/hui|h|cFF%s/hui|r|h - Attiva/disattiva la finestra delle impostazioni"
+L["|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen"] = "|Hcommand:/hui move|h|cFF%s/hui move|r|h - Trascina gli elementi dell'UI sullo schermo"
+L["|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Riposiziona tutti i riquadri mobili nelle posizioni predefinite"
+L["|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Attiva/disattiva la configurazione dei tasti al passaggio del mouse"
+L["|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reimposta tutte le informazioni e impostazioni dell'UI memorizzate"
 
 -- Cooldowns
 L["|cff%s%s|r is ready!"] = "|cff%s%s|r è pronto!"
@@ -632,6 +632,9 @@ L['Profile "%s" has been copied from "%s".'] = 'Il profilo "%s" è stato copiato
 L['Are you sure you would like to change to the current profile to "%s"?'] = 'Sei sicuro di voler cambiare il profilo attuale in "%s"?'
 L["Are you sure you would like to copy %s to %s?"] = "Sei sicuro di voler copiare %s in %s?"
 L["All"] = "Tutti"
+L["Failure decoding"] = "Errore durante la decodifica"
+L["Failure decompressing"] = "Errore durante la decompressione"
+L["Failure deserializing"] = "Errore durante la deserializzazione"
 
 -- Reputation
 L["Reputation"] = "Reputazione"

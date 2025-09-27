@@ -815,6 +815,8 @@ local SwitchCommitValue = function(self, newValue, skipHooks, skipSave, skipAnim
         newValue = (newValue and true) or false
 
         local changed = (self.Value ~= newValue)
+        local startOffset = (self.Value and SWITCH_TRAVEL) or 0
+        local endOffset = (newValue and SWITCH_TRAVEL) or 0
 
         if self.Move:IsPlaying() then
                 self.Move:Stop()
@@ -822,19 +824,16 @@ local SwitchCommitValue = function(self, newValue, skipHooks, skipSave, skipAnim
 
         self.Thumb:ClearAllPoints()
 
-        if newValue then
-                self.Thumb:SetPoint("LEFT", self, 0, 0)
-                self.Move:SetOffset(SWITCH_TRAVEL, 0)
+        if (not skipAnimation) and changed then
+                self.Thumb:SetPoint("LEFT", self, startOffset, 0)
+                self.Move:SetOffset(endOffset - startOffset, 0)
+                self.Move:Play()
         else
-                self.Thumb:SetPoint("RIGHT", self, 0, 0)
-                self.Move:SetOffset(-SWITCH_TRAVEL, 0)
+                self.Thumb:SetPoint("LEFT", self, endOffset, 0)
+                self.Move:SetOffset(0, 0)
         end
 
         self.Value = newValue
-
-        if (not skipAnimation) and changed then
-                self.Move:Play()
-        end
 
         if changed and (not skipSave) then
                 SetVariable(self.ID, newValue)

@@ -240,11 +240,13 @@ function HydraUI:CreateMover(frame, padding)
 		return
 	end
 
-	local Label = Name
+		local Label = Name
 
-	if find(Label, "HydraUI") then
-		Label = gsub(Label, "HydraUI ", "")
-	end
+		if find(Label, "HydraUI") then
+			Label = gsub(Label, "HydraUI ", "")
+		end
+
+		Label = Language[Label]
 
 	if (not Parent) then
 		Parent = HydraUIParent
@@ -281,7 +283,7 @@ function HydraUI:CreateMover(frame, padding)
 	Mover.Label = Mover.BG:CreateFontString(nil, "OVERLAY")
 	HydraUI:SetFontInfo(Mover.Label, Settings["ui-widget-font"], 12)
 	Mover.Label:SetPoint("CENTER", Mover, 0, 0)
-	Mover.Label:SetText(Label)
+		Mover.Label:SetText(Label)
 
 	frame:ClearAllPoints()
 	frame:SetPoint("CENTER", Mover, 0, 0)

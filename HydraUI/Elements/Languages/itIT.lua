@@ -72,8 +72,12 @@ L["Action Bar 2"] = "Barra delle azioni 2"
 L["Action Bar 3"] = "Barra delle azioni 3"
 L["Action Bar 4"] = "Barra delle azioni 4"
 L["Action Bar 5"] = "Barra delle azioni 5"
+L["Action Bar 6"] = "Barra delle azioni 6"
+L["Action Bar 7"] = "Barra delle azioni 7"
+L["Action Bar 8"] = "Barra delle azioni 8"
 L["Pet Bar"] = "Barra del famiglio"
 L["Stance Bar"] = "Barra delle posture"
+L["Extra Action"] = "Azione extra"
 L["Enable action bar 1"] = "Abilita la barra delle azioni 1"
 L["Enable action bar 2"] = "Abilita la barra delle azioni 2"
 L["Enable action bar 3"] = "Abilita la barra delle azioni 3"
@@ -159,6 +163,7 @@ L["Set the color of the aura count"] = "Imposta il colore del conteggio delle au
 
 -- Bags Frame
 L["Bags Frame"] = "Cornice sacche"
+L["Bags Window"] = "Cornice sacche"
 L["Show"] = "Mostra"
 L["Hide"] = "Nascondi"
 L["Mouseover"] = "Al passaggio del mouse"
@@ -581,6 +586,7 @@ L["Nudge"] = "Sposta"
 
 -- Micro Menu
 L["Micro Menu Buttons"] = "Pulsanti micro menu"
+L["Micro Buttons"] = "Pulsanti micro"
 L["Set Max Opacity"] = "Imposta opacità massima"
 L["Set the visibility of the micro menu buttons"] = "Imposta la visibilità dei pulsanti del micro menu"
 L["Set the opacity of the micro menu buttons when visiblity is set to Mouseover"] = "Imposta l'opacità dei pulsanti del micro menu quando la visibilità è impostata su Al passaggio del mouse"

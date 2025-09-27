@@ -36,6 +36,19 @@ local FormatColor = function(color, text)
         return format("|cFF%s%s|r", color, tostring(text))
 end
 
+local GetTexture = function(key)
+        return GUI:GetTexture(key)
+end
+
+local GetHexColor = function(hex)
+        return GUI:GetHexColor(hex)
+end
+
+local DISABLED_FONT_R, DISABLED_FONT_G, DISABLED_FONT_B = GetHexColor("A5A5A5")
+local WHITE_FONT_R, WHITE_FONT_G, WHITE_FONT_B = GetHexColor("FFFFFF")
+local CLOSE_BUTTON_HOVER_R, CLOSE_BUTTON_HOVER_G, CLOSE_BUTTON_HOVER_B = GetHexColor("C0392B")
+local CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B = GetHexColor("EEEEEE")
+
 local RegisterWidget = function(self, widget, id)
         tinsert(self.Widgets, widget)
 
@@ -65,19 +78,23 @@ local Ignore = {
 
 -- Functions
 local SetVariable = function(id, value)
-	if Ignore[id] then
-		return
-	end
+        if Ignore[id] then
+                return
+        end
 
-	local Name = HydraUI:GetActiveProfileName()
+        local Name = HydraUI:GetActiveProfileName()
 
-	if Name then
-		HydraUI:SetProfileValue(Name, id, value)
-	end
+        if Name then
+                HydraUI:SetProfileValue(Name, id, value)
+        end
 
-	Settings[id] = value
+        Settings[id] = value
 
-	GUI:ClearColorCache(id)
+        GUI:ClearColorCache(id)
+
+        if find(id, "texture", 1, true) then
+                GUI:ClearTextureCache()
+        end
 end
 
 local Round = function(num, dec)
@@ -87,7 +104,20 @@ local Round = function(num, dec)
 end
 
 local TrimHex = function(s)
-	return match(s, "|c%x%x%x%x%x%x%x%x(.-)|r") or s
+        return match(s, "|c%x%x%x%x%x%x%x%x(.-)|r") or s
+end
+
+local GetDropdownSortKey = function(entry)
+        local key = entry.SortKey
+
+        if key then
+                return key
+        end
+
+        key = TrimHex(entry.Key or "")
+        entry.SortKey = key
+
+        return key
 end
 
 local AnchorOnEnter = function(self)
@@ -226,13 +256,13 @@ GUI.Widgets.CreateAnimatedLine = function(self, id, left, right, r, g, b)
 	local Top = Parent:CreateTexture(nil, "ARTWORK")
 	Top:SetSize(Parent:GetWidth(), WIDGET_HEIGHT / 2 + 2)
 	Top:SetPoint("TOP", Parent, -3, 0)
-	Top:SetTexture(Assets:GetTexture("RenHorizonUp"))
+	Top:SetTexture(GetTexture("RenHorizonUp"))
 	Top:SetVertexColor(r * 1.7, g * 1.7, b * 1.7)
 
 	Anchor.Bottom = Parent:CreateTexture(nil, "ARTWORK")
 	Anchor.Bottom:SetSize(Parent:GetWidth(), WIDGET_HEIGHT / 2 + 2)
 	Anchor.Bottom:SetPoint("BOTTOM", Parent, -3, 0)
-	Anchor.Bottom:SetTexture(Assets:GetTexture("RenHorizonDown"))
+	Anchor.Bottom:SetTexture(GetTexture("RenHorizonDown"))
 	Anchor.Bottom:SetVertexColor(r * 1.7, g * 1.7, b * 1.7)
 
 	local Group = LibMotion:CreateAnimationGroup()
@@ -289,13 +319,13 @@ GUI.Widgets.CreateAnimatedDoubleLine = function(self, id, left, right, r, g, b)
 	Anchor.TopLeft = Anchor.LeftParent:CreateTexture(nil, "ARTWORK")
 	Anchor.TopLeft:SetSize(Anchor.LeftParent:GetWidth(), WIDGET_HEIGHT / 2 + 2)
 	Anchor.TopLeft:SetPoint("TOP", Anchor.LeftParent, -3, 0)
-	Anchor.TopLeft:SetTexture(Assets:GetTexture("RenHorizonUp"))
+	Anchor.TopLeft:SetTexture(GetTexture("RenHorizonUp"))
 	Anchor.TopLeft:SetVertexColor(r * 1.7, g * 1.7, b * 1.7)
 
 	Anchor.BottomLeft = Anchor.LeftParent:CreateTexture(nil, "ARTWORK")
 	Anchor.BottomLeft:SetSize(Anchor.LeftParent:GetWidth(), WIDGET_HEIGHT / 2 + 2)
 	Anchor.BottomLeft:SetPoint("BOTTOM", Anchor.LeftParent, -3, 0)
-	Anchor.BottomLeft:SetTexture(Assets:GetTexture("RenHorizonDown"))
+	Anchor.BottomLeft:SetTexture(GetTexture("RenHorizonDown"))
 	Anchor.BottomLeft:SetVertexColor(r * 1.7, g * 1.7, b * 1.7)
 
 	Anchor.LeftParent.Fade = LibMotion:CreateAnimationGroup()
@@ -342,13 +372,13 @@ GUI.Widgets.CreateAnimatedDoubleLine = function(self, id, left, right, r, g, b)
 		Anchor.TopRight = Anchor.RightParent:CreateTexture(nil, "ARTWORK")
 		Anchor.TopRight:SetSize(Anchor.RightParent:GetWidth(), WIDGET_HEIGHT / 2 + 2)
 		Anchor.TopRight:SetPoint("TOP", Anchor.RightParent, 3, 0)
-		Anchor.TopRight:SetTexture(Assets:GetTexture("RenHorizonUp"))
+		Anchor.TopRight:SetTexture(GetTexture("RenHorizonUp"))
 		Anchor.TopRight:SetVertexColor(r * 1.7, g * 1.7, b * 1.7)
 
 		Anchor.BottomRight = Anchor.RightParent:CreateTexture(nil, "ARTWORK")
 		Anchor.BottomRight:SetSize(Anchor.RightParent:GetWidth(), WIDGET_HEIGHT / 2 + 2)
 		Anchor.BottomRight:SetPoint("BOTTOM", Anchor.RightParent, 3, 0)
-		Anchor.BottomRight:SetTexture(Assets:GetTexture("RenHorizonDown"))
+		Anchor.BottomRight:SetTexture(GetTexture("RenHorizonDown"))
 		Anchor.BottomRight:SetVertexColor(r * 1.7, g * 1.7, b * 1.7)
 
 		Anchor.RightParent.Fade = LibMotion:CreateAnimationGroup()
@@ -402,7 +432,7 @@ GUI.Widgets.CreateHeader = function(self, text)
 	local Texture = Anchor:CreateTexture(nil, "ARTWORK")
 	Texture:SetPoint("TOPLEFT", Anchor, 1, -1)
 	Texture:SetPoint("BOTTOMRIGHT", Anchor, -1, 1)
-	Texture:SetTexture(Assets:GetTexture("Blank"))
+	Texture:SetTexture(GetTexture("Blank"))
 	Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
         RegisterWidget(self, Anchor)
@@ -424,7 +454,7 @@ GUI.Widgets.CreateFooter = function(self)
 	local Texture = Anchor:CreateTexture(nil, "ARTWORK")
 	Texture:SetPoint("TOPLEFT", Anchor, 1, -1)
 	Texture:SetPoint("BOTTOMRIGHT", Anchor, -1, 1)
-	Texture:SetTexture(Assets:GetTexture("Blank"))
+	Texture:SetTexture(GetTexture("Blank"))
 	Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
         RegisterWidget(self, Anchor)
@@ -468,15 +498,15 @@ local ButtonRequiresReload = function(self, flag)
 end
 
 local ButtonEnable = function(self)
-	self.Button:EnableMouse(true)
+        self.Button:EnableMouse(true)
 
-	self.Button.MiddleText:SetTextColor(1, 1, 1)
+        self.Button.MiddleText:SetTextColor(WHITE_FONT_R, WHITE_FONT_G, WHITE_FONT_B)
 end
 
 local ButtonDisable = function(self)
-	self.Button:EnableMouse(false)
+        self.Button:EnableMouse(false)
 
-	self.Button.MiddleText:SetTextColor(HydraUI:HexToRGB("A5A5A5"))
+        self.Button.MiddleText:SetTextColor(DISABLED_FONT_R, DISABLED_FONT_G, DISABLED_FONT_B)
 end
 
 GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
@@ -506,13 +536,13 @@ GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
 	local Texture = Button:CreateTexture(nil, "BORDER")
 	Texture:SetPoint("TOPLEFT", Button, 1, -1)
 	Texture:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-	Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	local Highlight = Button:CreateTexture(nil, "ARTWORK")
 	Highlight:SetPoint("TOPLEFT", Button, 1, -1)
 	Highlight:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-	Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Highlight:SetTexture(GetTexture("Blank"))
 	Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Highlight:SetAlpha(0)
 
@@ -565,7 +595,7 @@ GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, labe
 	local BG = Backdrop:CreateTexture(nil, "ARTWORK")
 	BG:SetPoint("TOPLEFT", Backdrop, 1, -1)
 	BG:SetPoint("BOTTOMRIGHT", Backdrop, -1, 1)
-	BG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	BG:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	BG:SetVertexColor(GUI:GetColorRGB("ui-widget-bg-color"))
 
 	local Bar = CreateFrame("StatusBar", nil, Backdrop, "BackdropTemplate")
@@ -575,7 +605,7 @@ GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, labe
 	Bar:SetBackdrop(HydraUI.BackdropAndBorder)
 	Bar:SetBackdropColor(0, 0, 0, 0)
 	Bar:SetBackdropBorderColor(0, 0, 0, 0)
-	Bar:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Bar:SetStatusBarTexture(GetTexture(Settings["ui-widget-texture"]))
 	Bar:SetStatusBarColor(GUI:GetColorRGB("ui-widget-color"))
 	Bar:SetMinMaxValues(minvalue, maxvalue)
 	Bar:SetValue(value)
@@ -589,7 +619,7 @@ GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, labe
 	local Spark = Bar:CreateTexture(nil, "ARTWORK")
 	Spark:SetSize(1, WIDGET_HEIGHT - 2)
 	Spark:SetPoint("LEFT", Bar:GetStatusBarTexture(), "RIGHT", 0, 0)
-	Spark:SetTexture(Assets:GetTexture("Blank"))
+	Spark:SetTexture(GetTexture("Blank"))
 	Spark:SetVertexColor(0, 0, 0)
 
 	local MiddleText = Bar:CreateFontString(nil, "ARTWORK")
@@ -683,20 +713,20 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 	local BG = Checkbox:CreateTexture(nil, "ARTWORK")
 	BG:SetPoint("TOPLEFT", Checkbox, 1, -1)
 	BG:SetPoint("BOTTOMRIGHT", Checkbox, -1, 1)
-	BG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	BG:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	BG:SetVertexColor(GUI:GetColorRGB("ui-widget-bg-color"))
 
 	local Highlight = Checkbox:CreateTexture(nil, "OVERLAY")
 	Highlight:SetPoint("TOPLEFT", Checkbox, 1, -1)
 	Highlight:SetPoint("BOTTOMRIGHT", Checkbox, -1, 1)
-	Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Highlight:SetTexture(GetTexture("Blank"))
 	Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Highlight:SetAlpha(0)
 
 	local Texture = Checkbox:CreateTexture(nil, "ARTWORK")
 	Texture:SetPoint("TOPLEFT", Checkbox, 1, -1)
 	Texture:SetPoint("BOTTOMRIGHT", Checkbox, -1, 1)
-	Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 
 	local Text = Anchor:CreateFontString(nil, "OVERLAY")
@@ -710,7 +740,7 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 	Hover:SetPoint("TOPLEFT", Checkbox, 1, -1)
 	Hover:SetPoint("BOTTOMRIGHT", Checkbox, -1, 1)
 	Hover:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
-	Hover:SetTexture(Assets:GetTexture("RenHorizonUp"))
+	Hover:SetTexture(GetTexture("RenHorizonUp"))
 	Hover:SetAlpha(0)
 
 	local FadeIn = LibMotion:CreateAnimation(Texture, "Fade")
@@ -816,10 +846,10 @@ local SwitchEnable = function(self)
 end
 
 local SwitchDisable = function(self)
-	self.Switch:EnableMouse(false)
-	self.Switch:EnableMouseWheel(false)
+        self.Switch:EnableMouse(false)
+        self.Switch:EnableMouseWheel(false)
 
-	self.Switch.Flavor:SetVertexColor(HydraUI:HexToRGB("A5A5A5"))
+        self.Switch.Flavor:SetVertexColor(DISABLED_FONT_R, DISABLED_FONT_G, DISABLED_FONT_B)
 end
 
 local SwitchRequiresReload = function(self, flag)
@@ -863,7 +893,7 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	local BG = Switch:CreateTexture(nil, "ARTWORK")
 	BG:SetPoint("TOPLEFT", Switch, 1, -1)
 	BG:SetPoint("BOTTOMRIGHT", Switch, -1, 1)
-	BG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	BG:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	BG:SetVertexColor(GUI:GetColorRGB("ui-widget-bg-color"))
 
 	local Thumb = CreateFrame("Frame", nil, Switch, "BackdropTemplate")
@@ -877,13 +907,13 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	ThumbTexture:SetSize(WIDGET_HEIGHT - 2, WIDGET_HEIGHT - 2)
 	ThumbTexture:SetPoint("TOPLEFT", Thumb, 1, -1)
 	ThumbTexture:SetPoint("BOTTOMRIGHT", Thumb, -1, 1)
-	ThumbTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ThumbTexture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	ThumbTexture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	local Flavor = Switch:CreateTexture(nil, "ARTWORK")
 	Flavor:SetPoint("TOPLEFT", Switch, "TOPLEFT", 1, -1)
 	Flavor:SetPoint("BOTTOMRIGHT", Thumb, "BOTTOMLEFT", 0, 1)
-	Flavor:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Flavor:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Flavor:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 
 	local Text = Anchor:CreateFontString(nil, "OVERLAY")
@@ -896,7 +926,7 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	local Highlight = Switch:CreateTexture(nil, "HIGHLIGHT")
 	Highlight:SetPoint("TOPLEFT", Switch, 1, -1)
 	Highlight:SetPoint("BOTTOMRIGHT", Switch, -1, 1)
-	Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Highlight:SetTexture(GetTexture("Blank"))
 	Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Highlight:SetAlpha(0)
 
@@ -1006,7 +1036,7 @@ function GUI:CreateInputWindow()
 	Window.HeaderTexture = Window.Header:CreateTexture(nil, "OVERLAY")
 	Window.HeaderTexture:SetPoint("TOPLEFT", Window.Header, 1, -1)
 	Window.HeaderTexture:SetPoint("BOTTOMRIGHT", Window.Header, -1, 1)
-	Window.HeaderTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	Window.HeaderTexture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	Window.HeaderTexture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	Window.Header.Text = Window.Header:CreateFontString(nil, "OVERLAY")
@@ -1022,8 +1052,8 @@ function GUI:CreateInputWindow()
 	Window.CloseButton:SetBackdrop(HydraUI.BackdropAndBorder)
 	Window.CloseButton:SetBackdropColor(0, 0, 0, 0)
 	Window.CloseButton:SetBackdropBorderColor(0, 0, 0)
-	Window.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(HydraUI:HexToRGB("C0392B")) end)
-	Window.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE")) end)
+        Window.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_HOVER_R, CLOSE_BUTTON_HOVER_G, CLOSE_BUTTON_HOVER_B) end)
+        Window.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B) end)
 	Window.CloseButton:SetScript("OnMouseUp", function(self)
 		self.Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
@@ -1039,14 +1069,14 @@ function GUI:CreateInputWindow()
 	Window.CloseButton.Texture = Window.CloseButton:CreateTexture(nil, "ARTWORK")
 	Window.CloseButton.Texture:SetPoint("TOPLEFT", Window.CloseButton, 1, -1)
 	Window.CloseButton.Texture:SetPoint("BOTTOMRIGHT", Window.CloseButton, -1, 1)
-	Window.CloseButton.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	Window.CloseButton.Texture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	Window.CloseButton.Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	Window.CloseButton.Cross = Window.CloseButton:CreateTexture(nil, "OVERLAY")
 	Window.CloseButton.Cross:SetPoint("CENTER", Window.CloseButton, 0, 0)
 	Window.CloseButton.Cross:SetSize(16, 16)
-	Window.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
-	Window.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
+        Window.CloseButton.Cross:SetTexture(GetTexture("Close"))
+        Window.CloseButton.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B)
 
 	Window.Inner = CreateFrame("Frame", nil, Window, "BackdropTemplate")
 	Window.Inner:SetPoint("TOPLEFT", Window.Header, "BOTTOMLEFT", 0, -2)
@@ -1076,7 +1106,7 @@ function GUI:CreateInputWindow()
 	Window.BlackTexture = Window:CreateTexture(nil, "BACKGROUND", -7)
 	Window.BlackTexture:SetPoint("TOPLEFT", Window, 0, 0)
 	Window.BlackTexture:SetPoint("BOTTOMRIGHT", Window, 0, 0)
-	Window.BlackTexture:SetTexture(Assets:GetTexture("Blank"))
+	Window.BlackTexture:SetTexture(GetTexture("Blank"))
 	Window.BlackTexture:SetVertexColor(0, 0, 0, 0)]]
 
 	Window.FadeIn = LibMotion:CreateAnimation(Window, "Fade")
@@ -1154,20 +1184,20 @@ GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 	Input.Texture = Input:CreateTexture(nil, "ARTWORK")
 	Input.Texture:SetPoint("TOPLEFT", Input, 1, -1)
 	Input.Texture:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Input.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Input.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Input.Flash = Input:CreateTexture(nil, "OVERLAY")
 	Input.Flash:SetPoint("TOPLEFT", Input, 1, -1)
 	Input.Flash:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Flash:SetTexture(Assets:GetTexture("RenHorizonUp"))
+	Input.Flash:SetTexture(GetTexture("RenHorizonUp"))
 	Input.Flash:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 	Input.Flash:SetAlpha(0)
 
 	Input.Highlight = Input:CreateTexture(nil, "OVERLAY")
 	Input.Highlight:SetPoint("TOPLEFT", Input, 1, -1)
 	Input.Highlight:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Input.Highlight:SetTexture(GetTexture("Blank"))
 	Input.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Input.Highlight:SetAlpha(0)
 
@@ -1254,13 +1284,13 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 	Button.Texture = Button:CreateTexture(nil, "BORDER")
 	Button.Texture:SetPoint("TOPLEFT", Button, 1, -1)
 	Button.Texture:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-	Button.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Button.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Button.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Button.Highlight = Button:CreateTexture(nil, "ARTWORK")
 	Button.Highlight:SetPoint("TOPLEFT", Button, 1, -1)
 	Button.Highlight:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-	Button.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Button.Highlight:SetTexture(GetTexture("Blank"))
 	Button.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Button.Highlight:SetAlpha(0)
 
@@ -1280,20 +1310,20 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 	Input.Texture = Input:CreateTexture(nil, "ARTWORK")
 	Input.Texture:SetPoint("TOPLEFT", Input, 1, -1)
 	Input.Texture:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Input.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Input.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Input.Flash = Input:CreateTexture(nil, "OVERLAY")
 	Input.Flash:SetPoint("TOPLEFT", Input, 1, -1)
 	Input.Flash:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Flash:SetTexture(Assets:GetTexture("RenHorizonUp"))
+	Input.Flash:SetTexture(GetTexture("RenHorizonUp"))
 	Input.Flash:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 	Input.Flash:SetAlpha(0)
 
 	Input.Highlight = Input:CreateTexture(nil, "OVERLAY")
 	Input.Highlight:SetPoint("TOPLEFT", Input, 1, -1)
 	Input.Highlight:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Input.Highlight:SetTexture(GetTexture("Blank"))
 	Input.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Input.Highlight:SetAlpha(0)
 
@@ -1412,7 +1442,7 @@ function GUI:CreateExportWindow()
 	Window.HeaderTexture = Window.Header:CreateTexture(nil, "OVERLAY")
 	Window.HeaderTexture:SetPoint("TOPLEFT", Window.Header, 1, -1)
 	Window.HeaderTexture:SetPoint("BOTTOMRIGHT", Window.Header, -1, 1)
-	Window.HeaderTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	Window.HeaderTexture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	Window.HeaderTexture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	Window.Header.Text = Window.Header:CreateFontString(nil, "OVERLAY")
@@ -1425,15 +1455,15 @@ function GUI:CreateExportWindow()
 	Window.Header.CloseButton = CreateFrame("Frame", nil, Window.Header)
 	Window.Header.CloseButton:SetSize(HEADER_HEIGHT, HEADER_HEIGHT)
 	Window.Header.CloseButton:SetPoint("RIGHT", Window.Header, 0, 0)
-	Window.Header.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(1, 0, 0) end)
-	Window.Header.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(1, 1, 1) end)
+        Window.Header.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_HOVER_R, CLOSE_BUTTON_HOVER_G, CLOSE_BUTTON_HOVER_B) end)
+        Window.Header.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B) end)
 	Window.Header.CloseButton:SetScript("OnMouseUp", function() GUI.ExportWindow:Hide() end)
 
 	Window.Header.CloseButton.Cross = Window.Header.CloseButton:CreateTexture(nil, "OVERLAY")
 	Window.Header.CloseButton.Cross:SetPoint("CENTER", Window.Header.CloseButton, 0, 0)
 	Window.Header.CloseButton.Cross:SetSize(16, 16)
-	Window.Header.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
-	Window.Header.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
+        Window.Header.CloseButton.Cross:SetTexture(GetTexture("Close"))
+        Window.Header.CloseButton.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B)
 
 	Window.BG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
 	Window.BG:SetPoint("TOPLEFT", Window.Header, "BOTTOMLEFT", 0, -2)
@@ -1453,7 +1483,7 @@ function GUI:CreateExportWindow()
 	Window.InputTexture = Window.InputBG:CreateTexture(nil, "BACKGROUND")
 	Window.InputTexture:SetPoint("TOPLEFT", Window.InputBG, 1, -1)
 	Window.InputTexture:SetPoint("BOTTOMRIGHT", Window.InputBG, -1, 1)
-	Window.InputTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Window.InputTexture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Window.InputTexture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Window.Input = CreateFrame("EditBox", nil, Window.InputBG)
@@ -1584,7 +1614,7 @@ function GUI:CreateImportWindow()
 	Window.HeaderTexture = Window.Header:CreateTexture(nil, "OVERLAY")
 	Window.HeaderTexture:SetPoint("TOPLEFT", Window.Header, 1, -1)
 	Window.HeaderTexture:SetPoint("BOTTOMRIGHT", Window.Header, -1, 1)
-	Window.HeaderTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	Window.HeaderTexture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	Window.HeaderTexture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	Window.Header.Text = Window.Header:CreateFontString(nil, "OVERLAY")
@@ -1597,15 +1627,15 @@ function GUI:CreateImportWindow()
 	Window.Header.CloseButton = CreateFrame("Frame", nil, Window.Header)
 	Window.Header.CloseButton:SetSize(HEADER_HEIGHT, HEADER_HEIGHT)
 	Window.Header.CloseButton:SetPoint("RIGHT", Window.Header, 0, 0)
-	Window.Header.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(1, 0, 0) end)
-	Window.Header.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(1, 1, 1) end)
+        Window.Header.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_HOVER_R, CLOSE_BUTTON_HOVER_G, CLOSE_BUTTON_HOVER_B) end)
+        Window.Header.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B) end)
 	Window.Header.CloseButton:SetScript("OnMouseUp", function() GUI.ImportWindow:Hide() end)
 
 	Window.Header.CloseButton.Cross = Window.Header.CloseButton:CreateTexture(nil, "OVERLAY")
 	Window.Header.CloseButton.Cross:SetPoint("CENTER", Window.Header.CloseButton, 0, 0)
 	Window.Header.CloseButton.Cross:SetSize(16, 16)
-	Window.Header.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
-	Window.Header.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
+        Window.Header.CloseButton.Cross:SetTexture(GetTexture("Close"))
+        Window.Header.CloseButton.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B)
 
 	-- Background
 	Window.BG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
@@ -1626,7 +1656,7 @@ function GUI:CreateImportWindow()
 	Window.InputTexture = Window.InputBG:CreateTexture(nil, "BORDER")
 	Window.InputTexture:SetPoint("TOPLEFT", Window.InputBG, 1, -1)
 	Window.InputTexture:SetPoint("BOTTOMRIGHT", Window.InputBG, -1, 1)
-	Window.InputTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Window.InputTexture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Window.InputTexture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Window.Label = Window.BG:CreateFontString(nil, "OVERLAY")
@@ -1665,7 +1695,7 @@ local CloseLastDropdown = function(compare)
 	if (LAST_ACTIVE_DROPDOWN and LAST_ACTIVE_DROPDOWN.Menu:IsShown() and (LAST_ACTIVE_DROPDOWN ~= compare)) then
 		if (not LAST_ACTIVE_DROPDOWN.Menu.FadeOut:IsPlaying()) then
 			LAST_ACTIVE_DROPDOWN.Menu.FadeOut:Play()
-			LAST_ACTIVE_DROPDOWN.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+			LAST_ACTIVE_DROPDOWN.Arrow:SetTexture(GetTexture("Arrow Down"))
 		end
 	end
 end
@@ -1684,7 +1714,7 @@ local DropdownButtonOnMouseUp = function(self)
 
 	if self.Menu:IsVisible() then
 		self.Menu.FadeOut:Play()
-		self.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+		self.Arrow:SetTexture(GetTexture("Arrow Down"))
 	else
 		for i = 1, #self.Menu do
 			if self.Parent.SpecificType then
@@ -1705,7 +1735,7 @@ local DropdownButtonOnMouseUp = function(self)
 		CloseLastDropdown(self)
 		self.Menu:Show()
 		self.Menu.FadeIn:Play()
-		self.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+		self.Arrow:SetTexture(GetTexture("Arrow Up"))
 	end
 
 	LAST_ACTIVE_DROPDOWN = self
@@ -1722,7 +1752,7 @@ end
 
 local MenuItemOnMouseUp = function(self)
 	self.Parent.FadeOut:Play()
-	self.GrandParent.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+	self.GrandParent.Button.Arrow:SetTexture(GetTexture("Arrow Down"))
 
 	self.Highlight:SetAlpha(0)
 	self.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
@@ -1754,7 +1784,7 @@ local MenuItemOnMouseUp = function(self)
 	end
 
 	if (self.GrandParent.SpecificType == "Texture") then
-		self.GrandParent.Texture:SetTexture(Assets:GetTexture(self.Key))
+		self.GrandParent.Texture:SetTexture(GetTexture(self.Key))
 	elseif (self.GrandParent.SpecificType == "Font") then
 		HydraUI:SetFontInfo(self.GrandParent.Current, self.Key, Settings["ui-font-size"])
 	end
@@ -1789,19 +1819,19 @@ local MenuItemOnLeave = function(self)
 end
 
 local DropdownEnable = function(self)
-	self.Dropdown.Button:EnableMouse(true)
+        self.Dropdown.Button:EnableMouse(true)
 
-	self.Dropdown.Current:SetTextColor(HydraUI:HexToRGB("FFFFFF"))
+        self.Dropdown.Current:SetTextColor(WHITE_FONT_R, WHITE_FONT_G, WHITE_FONT_B)
 
-	self.Dropdown.Button.Arrow:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
+        self.Dropdown.Button.Arrow:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 end
 
 local DropdownDisable = function(self)
-	self.Dropdown.Button:EnableMouse(false)
+        self.Dropdown.Button:EnableMouse(false)
 
-	self.Dropdown.Current:SetTextColor(HydraUI:HexToRGB("A5A5A5"))
+        self.Dropdown.Current:SetTextColor(DISABLED_FONT_R, DISABLED_FONT_G, DISABLED_FONT_B)
 
-	self.Dropdown.Button.Arrow:SetVertexColor(HydraUI:HexToRGB("A5A5A5"))
+        self.Dropdown.Button.Arrow:SetVertexColor(DISABLED_FONT_R, DISABLED_FONT_G, DISABLED_FONT_B)
 end
 
 local DropdownRequiresReload = function(self, flag)
@@ -1881,7 +1911,7 @@ local AddDropdownScrollBar = function(self)
 	ScrollBar:SetPoint("TOPRIGHT", self, 0, 0)
 	ScrollBar:SetPoint("BOTTOMRIGHT", self, 0, 0)
 	ScrollBar:SetWidth(ScrollWidth)
-	ScrollBar:SetThumbTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ScrollBar:SetThumbTexture(GetTexture(Settings["ui-widget-texture"]))
 	ScrollBar:SetOrientation("VERTICAL")
 	ScrollBar:SetValueStep(1)
 	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
@@ -1895,25 +1925,25 @@ local AddDropdownScrollBar = function(self)
 
 	local Thumb = ScrollBar:GetThumbTexture()
 	Thumb:SetSize(ScrollWidth, WIDGET_HEIGHT)
-	Thumb:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Thumb:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Thumb:SetVertexColor(0, 0, 0)
 
 	ScrollBar.NewThumb = ScrollBar:CreateTexture(nil, "BORDER")
 	ScrollBar.NewThumb:SetPoint("TOPLEFT", Thumb, 0, 0)
 	ScrollBar.NewThumb:SetPoint("BOTTOMRIGHT", Thumb, 0, 0)
-	ScrollBar.NewThumb:SetTexture(Assets:GetTexture("Blank"))
+	ScrollBar.NewThumb:SetTexture(GetTexture("Blank"))
 	ScrollBar.NewThumb:SetVertexColor(0, 0, 0)
 
 	ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
 	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
 	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ScrollBar.NewThumb2:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	ScrollBar.NewThumb2:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
 	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
 	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
-	ScrollBar.Progress:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ScrollBar.Progress:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	ScrollBar.Progress:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 
 	self:EnableMouseWheel(true)
@@ -1937,13 +1967,13 @@ local AddDropdownScrollBar = function(self)
 end
 
 local DropdownSort = function(self)
-	tsort(self.Menu, function(a, b)
-		return TrimHex(a.Key) < TrimHex(b.Key)
-	end)
+        tsort(self.Menu, function(a, b)
+                return GetDropdownSortKey(a) < GetDropdownSortKey(b)
+        end)
 
-	for i = 1, #self.Menu do
-		if (i == 1) then
-			self.Menu[i]:SetPoint("TOP", self.Menu, 0, 0)
+        for i = 1, #self.Menu do
+                if (i == 1) then
+                        self.Menu[i]:SetPoint("TOP", self.Menu, 0, 0)
 		else
 			self.Menu[i]:SetPoint("TOP", self.Menu[i-1], "BOTTOM", 0, 1)
 		end
@@ -1962,29 +1992,30 @@ local DropdownCreateSelection = function(self, key, value)
 	MenuItem:SetScript("OnMouseUp", MenuItemOnMouseUp)
 	MenuItem:SetScript("OnEnter", MenuItemOnEnter)
 	MenuItem:SetScript("OnLeave", MenuItemOnLeave)
-	MenuItem.Parent = MenuItem:GetParent()
-	MenuItem.GrandParent = MenuItem.Parent:GetParent()
-	MenuItem.Key = key
-	MenuItem.Value = value
-	MenuItem.ID = self.ID
+        MenuItem.Parent = MenuItem:GetParent()
+        MenuItem.GrandParent = MenuItem.Parent:GetParent()
+        MenuItem.Key = key
+        MenuItem.Value = value
+        MenuItem.ID = self.ID
+        MenuItem.SortKey = GetDropdownSortKey(MenuItem)
 
 	MenuItem.Highlight = MenuItem:CreateTexture(nil, "OVERLAY")
 	MenuItem.Highlight:SetPoint("TOPLEFT", MenuItem, 1, -1)
 	MenuItem.Highlight:SetPoint("BOTTOMRIGHT", MenuItem, -1, 1)
-	MenuItem.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	MenuItem.Highlight:SetTexture(GetTexture("Blank"))
 	MenuItem.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	MenuItem.Highlight:SetAlpha(0)
 
 	MenuItem.Texture = MenuItem:CreateTexture(nil, "ARTWORK")
 	MenuItem.Texture:SetPoint("TOPLEFT", MenuItem, 1, -1)
 	MenuItem.Texture:SetPoint("BOTTOMRIGHT", MenuItem, -1, 1)
-	MenuItem.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	MenuItem.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	MenuItem.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	MenuItem.Selected = MenuItem:CreateTexture(nil, "OVERLAY")
 	MenuItem.Selected:SetPoint("TOPLEFT", MenuItem, 1, -1)
 	MenuItem.Selected:SetPoint("BOTTOMRIGHT", MenuItem, -1, 1)
-	MenuItem.Selected:SetTexture(Assets:GetTexture("RenHorizonUp"))
+	MenuItem.Selected:SetTexture(GetTexture("RenHorizonUp"))
 	MenuItem.Selected:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 	MenuItem.Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
@@ -2076,7 +2107,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Button.Highlight = Dropdown.Button:CreateTexture(nil, "OVERLAY")
 	Dropdown.Button.Highlight:SetPoint("TOPLEFT", Dropdown.Button, 1, -1)
 	Dropdown.Button.Highlight:SetPoint("BOTTOMRIGHT", Dropdown.Button, -1, 1)
-	Dropdown.Button.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Dropdown.Button.Highlight:SetTexture(GetTexture("Blank"))
 	Dropdown.Button.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Dropdown.Button.Highlight:SetAlpha(0)
 
@@ -2094,7 +2125,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Button.Arrow = Dropdown.Button:CreateTexture(nil, "OVERLAY")
 	Dropdown.Button.Arrow:SetPoint("CENTER", Dropdown.ArrowAnchor, 0, 0)
 	Dropdown.Button.Arrow:SetSize(16, 16)
-	Dropdown.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+	Dropdown.Button.Arrow:SetTexture(GetTexture("Arrow Down"))
 	Dropdown.Button.Arrow:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 	Dropdown.Button.Arrow:SetDrawLayer("OVERLAY", 7)
 
@@ -2137,7 +2168,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 		local MenuItem = Dropdown:CreateSelection(Key, Value)
 
 		if (specific == "Texture") then
-			MenuItem.Texture:SetTexture(Assets:GetTexture(Key))
+			MenuItem.Texture:SetTexture(GetTexture(Key))
 		elseif (specific == "Font") then
 			HydraUI:SetFontInfo(MenuItem.Text, Key, 12)
 		end
@@ -2162,12 +2193,12 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	end
 
 	if (specific == "Texture") then
-		Dropdown.Texture:SetTexture(Assets:GetTexture(value))
+		Dropdown.Texture:SetTexture(GetTexture(value))
 	elseif (specific == "Font") then
-		Dropdown.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+		Dropdown.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 		HydraUI:SetFontInfo(Dropdown.Current, Settings[id], Settings["ui-font-size"])
 	else
-		Dropdown.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+		Dropdown.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	end
 
 	if (#Dropdown.Menu > DROPDOWN_MAX_SHOWN) then
@@ -2347,24 +2378,24 @@ local SliderEnable = function(self)
 	self.Slider:EnableMouse(true)
 	self.Slider:EnableMouseWheel(true)
 
-	self.Slider.EditBox:EnableKeyboard(true)
-	self.Slider.EditBox:EnableMouse(true)
-	self.Slider.EditBox:EnableMouseWheel(true)
+        self.Slider.EditBox:EnableKeyboard(true)
+        self.Slider.EditBox:EnableMouse(true)
+        self.Slider.EditBox:EnableMouseWheel(true)
 
-	self.Slider.EditBox:SetTextColor(HydraUI:HexToRGB("FFFFFF"))
-	self.Slider.Progress:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
+        self.Slider.EditBox:SetTextColor(WHITE_FONT_R, WHITE_FONT_G, WHITE_FONT_B)
+        self.Slider.Progress:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 end
 
 local SliderDisable = function(self)
-	self.Slider:EnableMouse(false)
+        self.Slider:EnableMouse(false)
 	self.Slider:EnableMouseWheel(false)
 
-	self.Slider.EditBox:EnableKeyboard(false)
-	self.Slider.EditBox:EnableMouse(false)
-	self.Slider.EditBox:EnableMouseWheel(false)
+        self.Slider.EditBox:EnableKeyboard(false)
+        self.Slider.EditBox:EnableMouse(false)
+        self.Slider.EditBox:EnableMouseWheel(false)
 
-	self.Slider.EditBox:SetTextColor(HydraUI:HexToRGB("A5A5A5"))
-	self.Slider.Progress:SetVertexColor(HydraUI:HexToRGB("A5A5A5"))
+        self.Slider.EditBox:SetTextColor(DISABLED_FONT_R, DISABLED_FONT_G, DISABLED_FONT_B)
+        self.Slider.Progress:SetVertexColor(DISABLED_FONT_R, DISABLED_FONT_G, DISABLED_FONT_B)
 end
 
 local SliderRequiresReload = function(self, flag)
@@ -2407,13 +2438,13 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	EditBox.Texture = EditBox:CreateTexture(nil, "ARTWORK")
 	EditBox.Texture:SetPoint("TOPLEFT", EditBox, 1, -1)
 	EditBox.Texture:SetPoint("BOTTOMRIGHT", EditBox, -1, 1)
-	EditBox.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	EditBox.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	EditBox.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	EditBox.Highlight = EditBox:CreateTexture(nil, "OVERLAY")
 	EditBox.Highlight:SetPoint("TOPLEFT", EditBox, 1, -1)
 	EditBox.Highlight:SetPoint("BOTTOMRIGHT", EditBox, -1, 1)
-	EditBox.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	EditBox.Highlight:SetTexture(GetTexture("Blank"))
 	EditBox.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	EditBox.Highlight:SetAlpha(0)
 
@@ -2448,7 +2479,7 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	local Slider = CreateFrame("Slider", nil, Anchor, "BackdropTemplate")
 	Slider:SetPoint("RIGHT", EditBox, "LEFT", -2, 0)
 	Slider:SetSize(SLIDER_WIDTH, WIDGET_HEIGHT)
-	Slider:SetThumbTexture(Assets:GetTexture("Blank"))
+	Slider:SetThumbTexture(GetTexture("Blank"))
 	Slider:SetOrientation("HORIZONTAL")
 	Slider:SetValueStep(step)
 	Slider:SetBackdrop(HydraUI.BackdropAndBorder)
@@ -2479,12 +2510,12 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	Slider.TrackTexture = Slider:CreateTexture(nil, "ARTWORK")
 	Slider.TrackTexture:SetPoint("TOPLEFT", Slider, 1, -1)
 	Slider.TrackTexture:SetPoint("BOTTOMRIGHT", Slider, -1, 1)
-	Slider.TrackTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Slider.TrackTexture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Slider.TrackTexture:SetVertexColor(GUI:GetColorRGB("ui-widget-bg-color"))
 
 	local Thumb = Slider:GetThumbTexture()
 	Thumb:SetSize(8, WIDGET_HEIGHT)
-	Thumb:SetTexture(Assets:GetTexture("Blank"))
+	Thumb:SetTexture(GetTexture("Blank"))
 	Thumb:SetVertexColor(0, 0, 0)
 
 	Slider.NewThumb = CreateFrame("Frame", nil, Slider, "BackdropTemplate")
@@ -2497,19 +2528,19 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	Slider.NewThumb.Texture = Slider.NewThumb:CreateTexture(nil, "OVERLAY")
 	Slider.NewThumb.Texture:SetPoint("TOPLEFT", Slider.NewThumb, 1, 0)
 	Slider.NewThumb.Texture:SetPoint("BOTTOMRIGHT", Slider.NewThumb, -1, 0)
-	Slider.NewThumb.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Slider.NewThumb.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Slider.NewThumb.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Slider.Progress = Slider:CreateTexture(nil, "ARTWORK")
 	Slider.Progress:SetPoint("TOPLEFT", Slider, 1, -1)
 	Slider.Progress:SetPoint("BOTTOMRIGHT", Slider.NewThumb.Texture, "BOTTOMLEFT", 0, 0)
-	Slider.Progress:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Slider.Progress:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Slider.Progress:SetVertexColor(GUI:GetColorRGB("ui-widget-color"))
 
 	Slider.Highlight = Slider:CreateTexture(nil, "OVERLAY")
 	Slider.Highlight:SetPoint("TOPLEFT", Slider, 1, -1)
 	Slider.Highlight:SetPoint("BOTTOMRIGHT", Slider, -1, 1)
-	Slider.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Slider.Highlight:SetTexture(GetTexture("Blank"))
 	Slider.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Slider.Highlight:SetDrawLayer("OVERLAY", 7)
 	Slider.Highlight:SetAlpha(0)
@@ -2661,7 +2692,7 @@ local UpdateColorPalette = function(value)
 end
 
 local UpdateColorPickerTexture = function(value)
-	local Texture = Assets:GetTexture(value)
+	local Texture = GetTexture(value)
 
 	for i = 1, MAX_SWATCHES_Y do
 		for j = 1, MAX_SWATCHES_X do
@@ -2703,7 +2734,7 @@ local CreateColorPicker = function()
 	ColorPicker.HeaderTexture = ColorPicker.Header:CreateTexture(nil, "OVERLAY")
 	ColorPicker.HeaderTexture:SetPoint("TOPLEFT", ColorPicker.Header, 1, -1)
 	ColorPicker.HeaderTexture:SetPoint("BOTTOMRIGHT", ColorPicker.Header, -1, 1)
-	ColorPicker.HeaderTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	ColorPicker.HeaderTexture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	ColorPicker.HeaderTexture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	ColorPicker.Header.Text = ColorPicker.Header:CreateFontString(nil, "OVERLAY")
@@ -2719,8 +2750,8 @@ local CreateColorPicker = function()
 	ColorPicker.CloseButton:SetBackdrop(HydraUI.BackdropAndBorder)
 	ColorPicker.CloseButton:SetBackdropColor(0, 0, 0, 0)
 	ColorPicker.CloseButton:SetBackdropBorderColor(0, 0, 0)
-	ColorPicker.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(HydraUI:HexToRGB("C0392B")) end)
-	ColorPicker.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE")) end)
+        ColorPicker.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_HOVER_R, CLOSE_BUTTON_HOVER_G, CLOSE_BUTTON_HOVER_B) end)
+        ColorPicker.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B) end)
 	ColorPicker.CloseButton:SetScript("OnMouseUp", function(self)
 		self.Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
@@ -2736,14 +2767,14 @@ local CreateColorPicker = function()
 	ColorPicker.CloseButton.Texture = ColorPicker.CloseButton:CreateTexture(nil, "ARTWORK")
 	ColorPicker.CloseButton.Texture:SetPoint("TOPLEFT", ColorPicker.CloseButton, 1, -1)
 	ColorPicker.CloseButton.Texture:SetPoint("BOTTOMRIGHT", ColorPicker.CloseButton, -1, 1)
-	ColorPicker.CloseButton.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	ColorPicker.CloseButton.Texture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	ColorPicker.CloseButton.Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	ColorPicker.CloseButton.Cross = ColorPicker.CloseButton:CreateTexture(nil, "OVERLAY")
 	ColorPicker.CloseButton.Cross:SetPoint("CENTER", ColorPicker.CloseButton, 0, 0)
 	ColorPicker.CloseButton.Cross:SetSize(16, 16)
-	ColorPicker.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
-	ColorPicker.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
+        ColorPicker.CloseButton.Cross:SetTexture(GetTexture("Close"))
+        ColorPicker.CloseButton.Cross:SetVertexColor(CLOSE_BUTTON_DEFAULT_R, CLOSE_BUTTON_DEFAULT_G, CLOSE_BUTTON_DEFAULT_B)
 
 	-- Selection parent
 	ColorPicker.SwatchParent = CreateFrame("Frame", nil, ColorPicker, "BackdropTemplate")
@@ -2765,7 +2796,7 @@ local CreateColorPicker = function()
 	ColorPicker.CurrentTexture = ColorPicker.Current:CreateTexture(nil, "OVERLAY")
 	ColorPicker.CurrentTexture:SetPoint("TOPLEFT", ColorPicker.Current, 1, -1)
 	ColorPicker.CurrentTexture:SetPoint("BOTTOMRIGHT", ColorPicker.Current, -1, 1)
-	ColorPicker.CurrentTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	ColorPicker.CurrentTexture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	ColorPicker.CurrentTexture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	ColorPicker.CurrentText = ColorPicker.Current:CreateFontString(nil, "OVERLAY")
@@ -2785,7 +2816,7 @@ local CreateColorPicker = function()
 	ColorPicker.CurrentHexTexture = ColorPicker.CurrentHex:CreateTexture(nil, "OVERLAY")
 	ColorPicker.CurrentHexTexture:SetPoint("TOPLEFT", ColorPicker.CurrentHex, 1, -1)
 	ColorPicker.CurrentHexTexture:SetPoint("BOTTOMRIGHT", ColorPicker.CurrentHex, -1, 1)
-	ColorPicker.CurrentHexTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ColorPicker.CurrentHexTexture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	ColorPicker.CurrentHexTexture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	ColorPicker.CurrentHexText = ColorPicker.CurrentHex:CreateFontString(nil, "OVERLAY")
@@ -2803,7 +2834,7 @@ local CreateColorPicker = function()
 	ColorPicker.CompareCurrent = ColorPicker.CompareCurrentParent:CreateTexture(nil, "OVERLAY")
 	ColorPicker.CompareCurrent:SetPoint("TOPLEFT", ColorPicker.CompareCurrentParent, 1, -1)
 	ColorPicker.CompareCurrent:SetPoint("BOTTOMRIGHT", ColorPicker.CompareCurrentParent, -1, 1)
-	ColorPicker.CompareCurrent:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ColorPicker.CompareCurrent:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 
 	-- New
 	ColorPicker.New = CreateFrame("Frame", nil, ColorPicker, "BackdropTemplate")
@@ -2816,7 +2847,7 @@ local CreateColorPicker = function()
 	ColorPicker.NewTexture = ColorPicker.New:CreateTexture(nil, "OVERLAY")
 	ColorPicker.NewTexture:SetPoint("TOPLEFT", ColorPicker.New, 1, -1)
 	ColorPicker.NewTexture:SetPoint("BOTTOMRIGHT", ColorPicker.New, -1, 1)
-	ColorPicker.NewTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	ColorPicker.NewTexture:SetTexture(GetTexture(Settings["ui-header-texture"]))
 	ColorPicker.NewTexture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
 
 	ColorPicker.NewText = ColorPicker.New:CreateFontString(nil, "OVERLAY")
@@ -2836,7 +2867,7 @@ local CreateColorPicker = function()
 	ColorPicker.NewHexTexture = ColorPicker.NewHex:CreateTexture(nil, "OVERLAY")
 	ColorPicker.NewHexTexture:SetPoint("TOPLEFT", ColorPicker.NewHex, 1, -1)
 	ColorPicker.NewHexTexture:SetPoint("BOTTOMRIGHT", ColorPicker.NewHex, -1, 1)
-	ColorPicker.NewHexTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ColorPicker.NewHexTexture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	ColorPicker.NewHexTexture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	ColorPicker.NewHexText = CreateFrame("EditBox", nil, ColorPicker.NewHex)
@@ -2868,7 +2899,7 @@ local CreateColorPicker = function()
 	ColorPicker.CompareNew:SetSize(ColorPicker.CompareNewParent:GetWidth() - 2, 19)
 	ColorPicker.CompareNew:SetPoint("TOPLEFT", ColorPicker.CompareNewParent, 1, -1)
 	ColorPicker.CompareNew:SetPoint("BOTTOMRIGHT", ColorPicker.CompareNewParent, -1, 1)
-	ColorPicker.CompareNew:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ColorPicker.CompareNew:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 
 	ColorPicker.Transition = LibMotion:CreateAnimation(ColorPicker.CompareNew, "Color")
 	ColorPicker.Transition:SetColorType("vertex")
@@ -2890,13 +2921,13 @@ local CreateColorPicker = function()
 	ColorPicker.Accept.Texture = ColorPicker.Accept:CreateTexture(nil, "ARTWORK")
 	ColorPicker.Accept.Texture:SetPoint("TOPLEFT", ColorPicker.Accept, 1, -1)
 	ColorPicker.Accept.Texture:SetPoint("BOTTOMRIGHT", ColorPicker.Accept, -1, 1)
-	ColorPicker.Accept.Texture:SetTexture(Assets:GetTexture(Settings["ui-button-texture"]))
+	ColorPicker.Accept.Texture:SetTexture(GetTexture(Settings["ui-button-texture"]))
 	ColorPicker.Accept.Texture:SetVertexColor(GUI:GetColorRGB("ui-button-texture-color"))
 
 	ColorPicker.Accept.Highlight = ColorPicker.Accept:CreateTexture(nil, "OVERLAY")
 	ColorPicker.Accept.Highlight:SetPoint("TOPLEFT", ColorPicker.Accept, 1, -1)
 	ColorPicker.Accept.Highlight:SetPoint("BOTTOMRIGHT", ColorPicker.Accept, -1, 1)
-	ColorPicker.Accept.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	ColorPicker.Accept.Highlight:SetTexture(GetTexture("Blank"))
 	ColorPicker.Accept.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	ColorPicker.Accept.Highlight:SetAlpha(0)
 
@@ -2921,13 +2952,13 @@ local CreateColorPicker = function()
 	ColorPicker.Cancel.Texture = ColorPicker.Cancel:CreateTexture(nil, "ARTWORK")
 	ColorPicker.Cancel.Texture:SetPoint("TOPLEFT", ColorPicker.Cancel, 1, -1)
 	ColorPicker.Cancel.Texture:SetPoint("BOTTOMRIGHT", ColorPicker.Cancel, -1, 1)
-	ColorPicker.Cancel.Texture:SetTexture(Assets:GetTexture(Settings["ui-button-texture"]))
+	ColorPicker.Cancel.Texture:SetTexture(GetTexture(Settings["ui-button-texture"]))
 	ColorPicker.Cancel.Texture:SetVertexColor(GUI:GetColorRGB("ui-button-texture-color"))
 
 	ColorPicker.Cancel.Highlight = ColorPicker.Cancel:CreateTexture(nil, "OVERLAY")
 	ColorPicker.Cancel.Highlight:SetPoint("TOPLEFT", ColorPicker.Cancel, 1, -1)
 	ColorPicker.Cancel.Highlight:SetPoint("BOTTOMRIGHT", ColorPicker.Cancel, -1, 1)
-	ColorPicker.Cancel.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	ColorPicker.Cancel.Highlight:SetTexture(GetTexture("Blank"))
 	ColorPicker.Cancel.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	ColorPicker.Cancel.Highlight:SetAlpha(0)
 
@@ -3012,7 +3043,7 @@ local CreateColorPicker = function()
 			Swatch.Texture = Swatch:CreateTexture(nil, "OVERLAY")
 			Swatch.Texture:SetPoint("TOPLEFT", Swatch, 1, -1)
 			Swatch.Texture:SetPoint("BOTTOMRIGHT", Swatch, -1, 1)
-			Swatch.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+			Swatch.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 			Swatch.Texture:SetVertexColor(HydraUI:HexToRGB(Swatch.Value))
 
 			Swatch.Highlight = CreateFrame("Frame", nil, Swatch, "BackdropTemplate")
@@ -3124,7 +3155,7 @@ GUI.Widgets.CreateColorSelection = function(self, id, value, label, tooltip, hoo
 	Swatch.Texture = Swatch:CreateTexture(nil, "OVERLAY")
 	Swatch.Texture:SetPoint("TOPLEFT", Swatch, 1, -1)
 	Swatch.Texture:SetPoint("BOTTOMRIGHT", Swatch, -1, 1)
-	Swatch.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Swatch.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Swatch.Texture:SetVertexColor(HydraUI:HexToRGB(value))
 
 	local Button = CreateFrame("Frame", nil, Anchor, "BackdropTemplate")
@@ -3147,14 +3178,14 @@ GUI.Widgets.CreateColorSelection = function(self, id, value, label, tooltip, hoo
 	Button.Highlight = Button:CreateTexture(nil, "OVERLAY")
 	Button.Highlight:SetPoint("TOPLEFT", Button, 1, -1)
 	Button.Highlight:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-	Button.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Button.Highlight:SetTexture(GetTexture("Blank"))
 	Button.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Button.Highlight:SetAlpha(0)
 
 	Button.Texture = Button:CreateTexture(nil, "ARTWORK")
 	Button.Texture:SetPoint("TOPLEFT", Button, 1, -1)
 	Button.Texture:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-	Button.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Button.Texture:SetTexture(GetTexture(Settings["ui-widget-texture"]))
 	Button.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Button.Transition = LibMotion:CreateAnimation(Swatch.Texture, "color")

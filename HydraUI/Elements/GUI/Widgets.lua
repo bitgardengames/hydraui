@@ -123,6 +123,13 @@ GUI.Widgets.CreateLine = function(self, id, text)
         Text:SetText(FormatColor(Settings["ui-widget-font-color"], text))
 
         Anchor.Text = Text
+        Anchor.SetValue = function(self, newText)
+                self.Text:SetText(FormatColor(Settings["ui-widget-font-color"], newText))
+        end
+
+        Anchor.GetValue = function(self)
+                return TrimHex(self.Text:GetText() or "")
+        end
 
         return Text
 end
@@ -147,6 +154,19 @@ GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
 
         Anchor.Left = Left
         Anchor.Right = Right
+        Anchor.SetValue = function(self, leftText, rightText)
+                if (leftText ~= nil) then
+                        self.Left:SetText(FormatColor(Settings["ui-widget-font-color"], leftText))
+                end
+
+                if (rightText ~= nil) then
+                        self.Right:SetText(FormatColor(Settings["ui-widget-font-color"], rightText))
+                end
+        end
+
+        Anchor.GetValue = function(self)
+                return TrimHex(self.Left:GetText() or ""), TrimHex(self.Right:GetText() or "")
+        end
 
         return Left
 end
@@ -619,22 +639,54 @@ end
 -- Checkbox
 local CHECKBOX_WIDTH = 20
 
+local CheckboxCommitValue = function(self, newValue, skipHooks, skipSave, skipAnimation)
+        newValue = (newValue and true) or false
+
+        local changed = (self.Value ~= newValue)
+
+        if self.FadeIn and self.FadeIn:IsPlaying() then
+                self.FadeIn:Stop()
+        end
+
+        if self.FadeOut and self.FadeOut:IsPlaying() then
+                self.FadeOut:Stop()
+        end
+
+        self.Value = newValue
+
+        if newValue then
+                self.Texture:SetAlpha(1)
+
+                if (not skipAnimation) and self.FadeIn then
+                        self.FadeIn:Play()
+                end
+        else
+                self.Texture:SetAlpha(0)
+
+                if (not skipAnimation) and self.FadeOut then
+                        self.FadeOut:Play()
+                end
+        end
+
+        if changed and (not skipSave) then
+                SetVariable(self.ID, newValue)
+        end
+
+        if skipHooks or (not changed) then
+                return changed
+        end
+
+        if (self.ReloadFlag) then
+                HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, newValue, self.ID)
+        elseif self.Hook then
+                self.Hook(newValue, self.ID)
+        end
+
+        return changed
+end
+
 local CheckboxOnMouseUp = function(self)
-	if self.Value then
-		self.FadeOut:Play()
-		self.Value = false
-	else
-		self.FadeIn:Play()
-		self.Value = true
-	end
-
-	SetVariable(self.ID, self.Value)
-
-	if (self.ReloadFlag) then
-		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, self.Value, self.ID)
-	elseif self.Hook then
-		self.Hook(self.Value, self.ID)
-	end
+        CheckboxCommitValue(self, not self.Value)
 end
 
 local CheckboxOnEnter = function(self)
@@ -729,48 +781,80 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 		Checkbox.Texture:SetAlpha(0)
 	end
 
-	Checkbox.Highlight = Highlight
-	Checkbox.Texture = Texture
-	Checkbox.Text = Text
-	Checkbox.Hover = Hover
-	Checkbox.FadeIn = FadeIn
-	Checkbox.FadeOut = FadeOut
+        Checkbox.Highlight = Highlight
+        Checkbox.Texture = Texture
+        Checkbox.Text = Text
+        Checkbox.Hover = Hover
+        Checkbox.FadeIn = FadeIn
+        Checkbox.FadeOut = FadeOut
+
+        CheckboxCommitValue(Checkbox, value, true, true, true)
+
+        Anchor.Checkbox = Checkbox
 
         RegisterWidget(self, Anchor, id)
 
-	return Checkbox
+        Anchor.SetValue = function(self, newValue, skipHooks, skipSave, skipAnimation)
+                if self.Checkbox then
+                        return CheckboxCommitValue(self.Checkbox, newValue, skipHooks, skipSave, skipAnimation)
+                end
+        end
+
+        Anchor.GetValue = function(self)
+                return self.Checkbox and self.Checkbox.Value
+        end
+
+        return Checkbox
 end
 
 -- Switch
 local SWITCH_WIDTH = 50
 local SWITCH_TRAVEL = SWITCH_WIDTH - WIDGET_HEIGHT
 
+local SwitchCommitValue = function(self, newValue, skipHooks, skipSave, skipAnimation)
+        newValue = (newValue and true) or false
+
+        local changed = (self.Value ~= newValue)
+
+        if self.Move:IsPlaying() then
+                self.Move:Stop()
+        end
+
+        self.Thumb:ClearAllPoints()
+
+        if newValue then
+                self.Thumb:SetPoint("LEFT", self, 0, 0)
+                self.Move:SetOffset(SWITCH_TRAVEL, 0)
+        else
+                self.Thumb:SetPoint("RIGHT", self, 0, 0)
+                self.Move:SetOffset(-SWITCH_TRAVEL, 0)
+        end
+
+        self.Value = newValue
+
+        if (not skipAnimation) and changed then
+                self.Move:Play()
+        end
+
+        if changed and (not skipSave) then
+                SetVariable(self.ID, newValue)
+        end
+
+        if skipHooks or (not changed) then
+                return changed
+        end
+
+        if self.ReloadFlag then
+                HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, newValue, self.ID)
+        elseif self.Hook then
+                self.Hook(newValue, self.ID)
+        end
+
+        return changed
+end
+
 local SwitchOnMouseUp = function(self)
-	if self.Move:IsPlaying() then
-		return
-	end
-
-	self.Thumb:ClearAllPoints()
-
-	if self.Value then
-		self.Thumb:SetPoint("RIGHT", self, 0, 0)
-		self.Move:SetOffset(-SWITCH_TRAVEL, 0)
-		self.Value = false
-	else
-		self.Thumb:SetPoint("LEFT", self, 0, 0)
-		self.Move:SetOffset(SWITCH_TRAVEL, 0)
-		self.Value = true
-	end
-
-	self.Move:Play()
-
-	SetVariable(self.ID, self.Value)
-
-	if self.ReloadFlag then
-		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, self.Value, self.ID)
-	elseif self.Hook then
-		self.Hook(self.Value, self.ID)
-	end
+        SwitchCommitValue(self, not self.Value)
 end
 
 local SwitchOnMouseWheel = function(self, delta)
@@ -787,9 +871,9 @@ local SwitchOnMouseWheel = function(self, delta)
 		NewValue = true
 	end
 
-	if (CurrentValue ~= NewValue) then
-		SwitchOnMouseUp(self) -- This is already set up to handle everything, so just pass it along
-	end
+        if (CurrentValue ~= NewValue) then
+                SwitchCommitValue(self, NewValue)
+        end
 end
 
 local SwitchOnEnter = function(self)
@@ -904,16 +988,28 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	Move:SetEasing("in")
 	Move:SetDuration(0.1)
 
-	Switch.Thumb = Thumb
-	Switch.Text = Text
-	Switch.Highlight = Highlight
-	Switch.Move = Move
+        Switch.Thumb = Thumb
+        Switch.Text = Text
+        Switch.Highlight = Highlight
+        Switch.Move = Move
 
-	Anchor.Switch = Switch
+        SwitchCommitValue(Switch, value, true, true, true)
+
+        Anchor.Switch = Switch
 
         RegisterWidget(self, Anchor, id)
 
-	return Switch
+        Anchor.SetValue = function(self, newValue, skipHooks, skipSave, skipAnimation)
+                if self.Switch then
+                        return SwitchCommitValue(self.Switch, newValue, skipHooks, skipSave, skipAnimation)
+                end
+        end
+
+        Anchor.GetValue = function(self)
+                return self.Switch and self.Switch.Value
+        end
+
+        return Switch
 end
 
 -- Input
@@ -1199,9 +1295,16 @@ GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 
         RegisterWidget(self, Anchor, id)
 
-	Anchor.Input = Input
+        Anchor.Input = Input
+        Anchor.SetValue = function(self, newValue)
+                self.Input.ButtonText:SetText(newValue)
+        end
 
-	return Input
+        Anchor.GetValue = function(self)
+                return self.Input.ButtonText:GetText() or ""
+        end
+
+        return Input
 end
 
 local InputButtonOnMouseUp = function(self)
@@ -1338,9 +1441,16 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
         RegisterWidget(self, Anchor, id)
         RegisterWidget(self, Anchor2)
 
-	Anchor.Input = Input
+        Anchor.Input = Input
+        Anchor.SetValue = function(self, newValue)
+                self.Input.Box:SetText(newValue)
+        end
 
-	return Input
+        Anchor.GetValue = function(self)
+                return self.Input.Box:GetText() or ""
+        end
+
+        return Input
 end
 
 GUI.ToggleExportWindow = function(self)
@@ -1682,84 +1792,63 @@ local DropdownButtonOnMouseUp = function(self)
 	self.Parent.Current:ClearAllPoints()
 	self.Parent.Current:SetPoint("LEFT", self.Parent, HEADER_SPACING, 0)
 
-	if self.Menu:IsVisible() then
-		self.Menu.FadeOut:Play()
-		self.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-	else
-		for i = 1, #self.Menu do
-			if self.Parent.SpecificType then
-				if (self.Menu[i].Key == self.Parent.Value) then
-					self.Menu[i].Selected:Show()
-				else
-					self.Menu[i].Selected:Hide()
-				end
-			else
-				if (self.Menu[i].Value == self.Parent.Value) then
-					self.Menu[i].Selected:Show()
-				else
-					self.Menu[i].Selected:Hide()
-				end
-			end
-		end
+        if self.Menu:IsVisible() then
+                self.Menu.FadeOut:Play()
+                self.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+        else
+                DropdownUpdateSelectionState(self.Parent, self.Parent.Value)
 
-		CloseLastDropdown(self)
-		self.Menu:Show()
-		self.Menu.FadeIn:Play()
-		self.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+                CloseLastDropdown(self)
+                self.Menu:Show()
+                self.Menu.FadeIn:Play()
+                self.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
 	end
 
 	LAST_ACTIVE_DROPDOWN = self
 end
 
 local DropdownButtonOnMouseDown = function(self)
-	local R, G, B = GUI:GetColorRGB("ui-widget-bright-color")
+        local R, G, B = GUI:GetColorRGB("ui-widget-bright-color")
 
-	self.Parent.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
+        self.Parent.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
 
-	self.Parent.Current:ClearAllPoints()
-	self.Parent.Current:SetPoint("LEFT", self.Parent, HEADER_SPACING + 1, -1)
+        self.Parent.Current:ClearAllPoints()
+        self.Parent.Current:SetPoint("LEFT", self.Parent, HEADER_SPACING + 1, -1)
+end
+
+local DropdownUpdateSelectionState = function(self, storedValue)
+        if (not self.Menu) then
+                return
+        end
+
+        for i = 1, #self.Menu do
+                local menuItem = self.Menu[i]
+                local isSelected
+
+                if self.SpecificType then
+                        isSelected = (menuItem.Key == storedValue)
+                else
+                        isSelected = (menuItem.Value == storedValue)
+                end
+
+                if isSelected then
+                        menuItem.Selected:Show()
+                else
+                        menuItem.Selected:Hide()
+                end
+        end
 end
 
 local MenuItemOnMouseUp = function(self)
-	self.Parent.FadeOut:Play()
-	self.GrandParent.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+        self.Parent.FadeOut:Play()
+        self.GrandParent.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 
-	self.Highlight:SetAlpha(0)
-	self.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
+        self.Highlight:SetAlpha(0)
+        self.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
-	if self.GrandParent.SpecificType then
-		if (not self.GrandParent.IsSavingDisabled) then
-			SetVariable(self.ID, self.Key)
-		end
+        local value = self.GrandParent.SpecificType and self.Key or self.Value
 
-		self.GrandParent.Value = self.Key
-
-		if self.GrandParent.ReloadFlag then
-			HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.GrandParent.Hook, CANCEL, nil, self.Key, self.ID)
-		elseif self.GrandParent.Hook then
-			self.GrandParent.Hook(self.Key, self.ID)
-		end
-	else
-		if (not self.GrandParent.IsSavingDisabled) then
-			SetVariable(self.ID, self.Value)
-		end
-
-		self.GrandParent.Value = self.Value
-
-		if self.GrandParent.ReloadFlag then
-			HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.GrandParent.Hook, CANCEL, nil, self.Value, self.ID)
-		elseif self.GrandParent.Hook then
-			self.GrandParent.Hook(self.Value, self.ID)
-		end
-	end
-
-	if (self.GrandParent.SpecificType == "Texture") then
-		self.GrandParent.Texture:SetTexture(Assets:GetTexture(self.Key))
-	elseif (self.GrandParent.SpecificType == "Font") then
-		HydraUI:SetFontInfo(self.GrandParent.Current, self.Key, Settings["ui-font-size"])
-	end
-
-	self.GrandParent.Current:SetText(self.Key)
+        self.GrandParent:SetStoredValue(value)
 end
 
 local MenuItemOnMouseDown = function(self)
@@ -1772,8 +1861,50 @@ local DropdownUpdateList = function(self)
 
 end
 
+local DropdownSetStoredValue = function(self, storedValue, skipHooks, skipSave)
+        if (storedValue == nil) then
+                return
+        end
+
+        if (not skipSave) and (not self.IsSavingDisabled) then
+                SetVariable(self.ID, storedValue)
+        end
+
+        self.Value = storedValue
+
+        local displayKey
+
+        if self.DisplayKeys then
+                displayKey = self.DisplayKeys[storedValue]
+        end
+
+        if (not displayKey) then
+                displayKey = storedValue
+        end
+
+        if (self.SpecificType == "Texture") then
+                self.Texture:SetTexture(Assets:GetTexture(displayKey))
+        elseif (self.SpecificType == "Font") then
+                HydraUI:SetFontInfo(self.Current, displayKey, Settings["ui-font-size"])
+        end
+
+        self.Current:SetText(displayKey)
+
+        DropdownUpdateSelectionState(self, storedValue)
+
+        if skipHooks then
+                return
+        end
+
+        if self.ReloadFlag then
+                HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, storedValue, self.ID)
+        elseif self.Hook then
+                self.Hook(storedValue, self.ID)
+        end
+end
+
 local DropdownOnEnter = function(self)
-	self.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
+        self.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
 end
 
 local DropdownOnLeave = function(self)
@@ -2008,18 +2139,28 @@ local DropdownCreateSelection = function(self, key, value)
 end
 
 local DropdownRemoveSelection = function(self, key)
-	for i = 1, #self.Menu do
-		if (self.Menu[i].Key == key) then
-			self.Menu[i]:Hide() -- Handle this more thoroughly
-			self.Menu[i]:EnableMouse(false)
+        for i = 1, #self.Menu do
+                if (self.Menu[i].Key == key) then
+                        local menuItem = self.Menu[i]
 
-			tremove(self.Menu, i)
+                        menuItem:Hide() -- Handle this more thoroughly
+                        menuItem:EnableMouse(false)
 
-			self:Sort()
+                        if self.DisplayKeys then
+                                if self.SpecificType then
+                                        self.DisplayKeys[key] = nil
+                                else
+                                        self.DisplayKeys[menuItem.Value] = nil
+                                end
+                        end
 
-			return
-		end
-	end
+                        tremove(self.Menu, i)
+
+                        self:Sort()
+
+                        return
+                end
+        end
 end
 
 GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, hook, specific)
@@ -2051,17 +2192,19 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Hook = hook
 	Dropdown.Tooltip = tooltip
 	Dropdown.SpecificType = specific
-	Dropdown.RequiresReload = DropdownRequiresReload
-	Dropdown.DisableSaving = DropdownDisableSaving
+        Dropdown.RequiresReload = DropdownRequiresReload
+        Dropdown.DisableSaving = DropdownDisableSaving
 
-	Dropdown.Sort = DropdownSort
-	Dropdown.CreateSelection = DropdownCreateSelection
-	Dropdown.RemoveSelection = DropdownRemoveSelection
+        Dropdown.Sort = DropdownSort
+        Dropdown.CreateSelection = DropdownCreateSelection
+        Dropdown.RemoveSelection = DropdownRemoveSelection
+        Dropdown.SetStoredValue = DropdownSetStoredValue
 
-	Dropdown.Texture = Dropdown:CreateTexture(nil, "ARTWORK")
-	Dropdown.Texture:SetPoint("TOPLEFT", Dropdown, 1, -1)
-	Dropdown.Texture:SetPoint("BOTTOMRIGHT", Dropdown, -1, 1)
-	Dropdown.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
+        Dropdown.Texture = Dropdown:CreateTexture(nil, "ARTWORK")
+        Dropdown.Texture:SetPoint("TOPLEFT", Dropdown, 1, -1)
+        Dropdown.Texture:SetPoint("BOTTOMRIGHT", Dropdown, -1, 1)
+        Dropdown.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        Dropdown.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
 
 	Dropdown.Current = Dropdown:CreateFontString(nil, "ARTWORK")
 	Dropdown.Current:SetPoint("LEFT", Dropdown, HEADER_SPACING, 0)
@@ -2138,44 +2281,29 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Menu.BG:SetFrameLevel(Dropdown.Menu:GetFrameLevel() - 1)
 	Dropdown.Menu:EnableMouse(true)
 	Dropdown.Menu.BG:EnableMouse(true)
-	Dropdown.Menu.BG:SetScript("OnMouseWheel", function() end)
+        Dropdown.Menu.BG:SetScript("OnMouseWheel", function() end)
 
-	for Key, Value in next, values do
-		local MenuItem = Dropdown:CreateSelection(Key, Value)
+        Dropdown.DisplayKeys = {}
 
-		if (specific == "Texture") then
-			MenuItem.Texture:SetTexture(Assets:GetTexture(Key))
-		elseif (specific == "Font") then
-			HydraUI:SetFontInfo(MenuItem.Text, Key, 12)
-		end
+        for Key, Value in next, values do
+                local MenuItem = Dropdown:CreateSelection(Key, Value)
 
-		if specific then
-			if (MenuItem.Key == MenuItem.GrandParent.Value) then
-				MenuItem.Selected:Show()
-				MenuItem.GrandParent.Current:SetText(Key)
-			else
-				MenuItem.Selected:Hide()
-			end
-		else
-			if (MenuItem.Value == MenuItem.GrandParent.Value) then
-				MenuItem.Selected:Show()
-				MenuItem.GrandParent.Current:SetText(Key)
-			else
-				MenuItem.Selected:Hide()
-			end
-		end
+                if (specific == "Texture") then
+                        MenuItem.Texture:SetTexture(Assets:GetTexture(Key))
+                elseif (specific == "Font") then
+                        HydraUI:SetFontInfo(MenuItem.Text, Key, 12)
+                end
 
-		Dropdown:Sort()
-	end
+                if specific then
+                        Dropdown.DisplayKeys[Key] = Key
+                else
+                        Dropdown.DisplayKeys[Value] = Key
+                end
 
-	if (specific == "Texture") then
-		Dropdown.Texture:SetTexture(Assets:GetTexture(value))
-	elseif (specific == "Font") then
-		Dropdown.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-		HydraUI:SetFontInfo(Dropdown.Current, Settings[id], Settings["ui-font-size"])
-	else
-		Dropdown.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	end
+                Dropdown:Sort()
+        end
+
+        Dropdown:SetStoredValue(Dropdown.Value, true, true)
 
 	if (#Dropdown.Menu > DROPDOWN_MAX_SHOWN) then
 		AddDropdownScrollBar(Dropdown.Menu)
@@ -2183,7 +2311,18 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 		Dropdown.Menu:SetHeight(((WIDGET_HEIGHT - 1) * #Dropdown.Menu) + 1)
 	end
 
-	Anchor.Dropdown = Dropdown
+        Anchor.Dropdown = Dropdown
+        Anchor.SetValue = function(self, newValue, skipHooks, skipSave)
+                if self.Dropdown then
+                        self.Dropdown:SetStoredValue(newValue, skipHooks, skipSave)
+                end
+        end
+
+        Anchor.GetValue = function(self)
+                if self.Dropdown then
+                        return self.Dropdown.Value
+                end
+        end
 
         if self.Widgets then
                 RegisterWidget(self, Anchor, id)
@@ -2199,24 +2338,36 @@ local SLIDER_WIDTH = 80
 local EDITBOX_WIDTH = 48
 
 local SliderOnValueChanged = function(self)
-	local Value = self:GetValue()
+        local Value = self:GetValue()
 
-	if (self.EditBox.StepValue >= 1) then
-		Value = floor(Value)
-	else
-		Value = Round(Value, (self.EditBox.StepValue <= 0.01 and 2 or 1))
-	end
+        if (self.EditBox.StepValue >= 1) then
+                Value = floor(Value)
+        else
+                Value = Round(Value, (self.EditBox.StepValue <= 0.01 and 2 or 1))
+        end
 
-	self.EditBox.Value = Value
-	self.EditBox:SetText(self.Prefix..Value..self.Postfix)
+        self.EditBox.Value = Value
+        self.EditBox:SetText(self.Prefix..Value..self.Postfix)
 
-	SetVariable(self.ID, Value)
+        local skipHooks = self.SuppressHooks
+        local skipSave = self.SuppressSaving
 
-	if self.ReloadFlag then
-		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, Value, self.ID)
-	elseif self.Hook then
-		self.Hook(Value, self.ID)
-	end
+        self.SuppressHooks = nil
+        self.SuppressSaving = nil
+
+        if (not skipSave) then
+                SetVariable(self.ID, Value)
+        end
+
+        if skipHooks then
+                return
+        end
+
+        if self.ReloadFlag then
+                HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, Value, self.ID)
+        elseif self.Hook then
+                self.Hook(Value, self.ID)
+        end
 end
 
 local SliderOnMouseWheel = function(self, delta)
@@ -2519,12 +2670,35 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	Slider.Highlight:SetTexture(Assets:GetTexture("Blank"))
 	Slider.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Slider.Highlight:SetDrawLayer("OVERLAY", 7)
-	Slider.Highlight:SetAlpha(0)
+        Slider.Highlight:SetAlpha(0)
 
-	EditBox.Box.Slider = Slider
-	Anchor.Slider = Slider
+        EditBox.Box.Slider = Slider
+        Anchor.Slider = Slider
+        Anchor.SetValue = function(self, newValue, skipHooks, skipSave)
+                if self.Slider then
+                        if skipHooks then
+                                self.Slider.SuppressHooks = true
+                        end
 
-	Slider:Show()
+                        if skipSave then
+                                self.Slider.SuppressSaving = true
+                        end
+
+                        self.Slider:SetValue(newValue)
+                end
+        end
+
+        Anchor.GetValue = function(self)
+                if self.Slider then
+                        if self.Slider.EditBox and (self.Slider.EditBox.Value ~= nil) then
+                                return self.Slider.EditBox.Value
+                        end
+
+                        return self.Slider:GetValue()
+                end
+        end
+
+        Slider:Show()
 
         RegisterWidget(self, Anchor, id)
 

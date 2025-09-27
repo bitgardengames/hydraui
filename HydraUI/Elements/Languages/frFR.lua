@@ -1623,6 +1623,10 @@ L['Are you sure you would like to change to the current profile to "%s"?'] = 'Vo
 L["Are you sure you would like to copy %s to %s?"] = "Voulez-vous vraiment copier %s vers %s ?"
 L["All"] = "Tous"
 
+L["Failure decoding"] = "Échec du décodage"
+L["Failure decompressing"] = "Échec de la décompression"
+L["Failure deserializing"] = "Échec de la désérialisation"
+
 -- Reputation Options
 L["Reputation"] = "Réputation"
 L["Enable Reputation Module"] = "Activer le module de réputation"
@@ -2269,4 +2273,9 @@ L["Width"] = "Width"
 L["Your equipped items have been repaired for %s using guild funds"] = "Your equipped items have been repaired for %s using guild funds"
 L["Zone Colors"] = "Zone Colors"
 L["|cFF%sHydraUI|r Commands"] = "|cFF%sHydraUI|r Commands"
+L["|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window"] = "|Hcommand:/hui|h|cFF%s/hui|r|h - Affiche ou masque la fenêtre des options"
+L["|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen"] = "|Hcommand:/hui move|h|cFF%s/hui move|r|h - Déplace les éléments de l'interface sur l'écran"
+L["|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Replace tous les cadres mobiles à leur position par défaut"
+L["|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Active/désactive l'association de touches au survol"
+L["|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Réinitialise toutes les informations et options d'interface enregistrées"
 L["|cff%s%s|r is ready!"] = "|cff%s%s|r is ready!"

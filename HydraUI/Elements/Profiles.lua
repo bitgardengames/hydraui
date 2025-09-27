@@ -609,19 +609,19 @@ function HydraUI:DecodeProfile(encoded)
 	local Decoded = LibDeflate:DecodeForPrint(encoded)
 
 	if (not Decoded) then
-		return self:print("Failure decoding")
+		return self:print(Language["Failure decoding"])
 	end
 
 	local Decompressed = LibDeflate:DecompressDeflate(Decoded)
 
 	if (not Decompressed) then
-		return self:print("Failure decompressing")
+		return self:print(Language["Failure decompressing"])
 	end
 
 	local Success, Deserialized = AceSerializer:Deserialize(Decompressed)
 
 	if (not Success) then
-		return self:print("Failure deserializing")
+		return self:print(Language["Failure deserializing"])
 	end
 
 	-- Check for migrated values

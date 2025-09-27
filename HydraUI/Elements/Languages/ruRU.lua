@@ -321,11 +321,11 @@ L["Uninterruptible"] = "Непрерываемо"
 
 -- Commands
 L["|cFF%sHydraUI|r Commands"] = "Команды |cFF%sHydraUI|r"
-L["|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Toggle the settings window"] = "|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Открыть окно настроек"
-L["|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Drag UI elements around the screen"] = "|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Перемещать элементы интерфейса по экрану"
-L["|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Сбросить все перемещения в позиции по умолчанию"
-L["|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Настроить назначение клавиш при наведении"
-L["|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Сбросить все сохранённые данные интерфейса"
+L["|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window"] = "|Hcommand:/hui|h|cFF%s/hui|r|h - Открыть или закрыть окно настроек"
+L["|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen"] = "|Hcommand:/hui move|h|cFF%s/hui move|r|h - Перемещать элементы интерфейса по экрану"
+L["|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Вернуть все фиксаторы в позиции по умолчанию"
+L["|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Включить или отключить назначение клавиш при наведении"
+L["|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Сбросить все сохранённые данные интерфейса"
 
 -- Cooldowns
 L["|cff%s%s|r is ready!"] = "|cff%s%s|r готов(о)!"
@@ -633,6 +633,9 @@ L['Profile "%s" has been copied from "%s".'] = 'Профиль "%s" скопир
 L['Are you sure you would like to change to the current profile to "%s"?'] = 'Вы действительно хотите сменить текущий профиль на "%s"?'
 L["Are you sure you would like to copy %s to %s?"] = "Скопировать %s в %s?"
 L["All"] = "Все"
+L["Failure decoding"] = "Не удалось декодировать"
+L["Failure decompressing"] = "Не удалось распаковать"
+L["Failure deserializing"] = "Не удалось десериализовать"
 
 -- Reputation
 L["Reputation"] = "Репутация"

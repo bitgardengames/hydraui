@@ -322,11 +322,11 @@ L["Uninterruptible"] = "Ininterrupto"
 
 -- Commands
 L["|cFF%sHydraUI|r Commands"] = "Comandos do |cFF%sHydraUI|r"
-L["|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Toggle the settings window"] = "|Hcommand:/HydraUI|h|cFF%s/HydraUI|r|h - Alterna a janela de configurações"
-L["|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Drag UI elements around the screen"] = "|Hcommand:/HydraUI move|h|cFF%s/HydraUI move|r|h - Arrasta elementos da interface pela tela"
-L["|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/HydraUI movereset|h|cFF%s/HydraUI movereset|r|h - Reposiciona todos os quadros móveis para as posições padrão"
-L["|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/HydraUI keybind|h|cFF%s/HydraUI keybind|r|h - Alterna a configuração de atalhos ao passar o mouse"
-L["|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/HydraUI reset|h|cFF%s/HydraUI reset|r|h - Redefine todas as informações e configurações salvas da interface"
+L["|Hcommand:/hui|h|cFF%s/hui|r|h - Toggle the settings window"] = "|Hcommand:/hui|h|cFF%s/hui|r|h - Alterna a janela de configurações"
+L["|Hcommand:/hui move|h|cFF%s/hui move|r|h - Drag UI elements around the screen"] = "|Hcommand:/hui move|h|cFF%s/hui move|r|h - Arrasta elementos da interface pela tela"
+L["|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposition all movers to their default locations"] = "|Hcommand:/hui movereset|h|cFF%s/hui movereset|r|h - Reposiciona todos os quadros móveis para as posições padrão"
+L["|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Toggle mouseover keybinding"] = "|Hcommand:/hui keybind|h|cFF%s/hui keybind|r|h - Alterna a configuração de atalhos ao passar o mouse"
+L["|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Reset all stored UI information and settings"] = "|Hcommand:/hui reset|h|cFF%s/hui reset|r|h - Redefine todas as informações e configurações salvas da interface"
 
 -- Cooldowns
 L["|cff%s%s|r is ready!"] = "|cff%s%s|r está pronto!"
@@ -634,6 +634,9 @@ L['Profile "%s" has been copied from "%s".'] = 'O perfil "%s" foi copiado de "%s
 L['Are you sure you would like to change to the current profile to "%s"?'] = 'Tem certeza de que deseja alterar o perfil atual para "%s"?'
 L["Are you sure you would like to copy %s to %s?"] = "Tem certeza de que deseja copiar %s para %s?"
 L["All"] = "Tudo"
+L["Failure decoding"] = "Falha ao decodificar"
+L["Failure decompressing"] = "Falha ao descompactar"
+L["Failure deserializing"] = "Falha ao desserializar"
 
 -- Reputation
 L["Reputation"] = "Reputação"

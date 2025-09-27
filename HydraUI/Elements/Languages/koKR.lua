@@ -779,5 +779,6 @@ L["Display the timer on unit frame auras"] = "유닛 프레임 오라에 타이�
 
 -- Update
 L["You can get an updated version of HydraUI at https://www.curseforge.com/wow/addons/hydraui"] = "https://www.curseforge.com/wow/addons/hydraui에서 최신 버전의 HydraUI를 받을 수 있습니다"
+L["Update available"] = "업데이트 가능"
 L["New Version!"] = "새 버전!"
 L["Update to version |cFF%s%s|r"] = "|cFF%s%s|r 버전으로 업데이트"

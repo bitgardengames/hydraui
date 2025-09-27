@@ -1196,7 +1196,7 @@ function GUI:CreateUpdateAlert()
 	HydraUI:SetFontInfo(self.Alert.Text, Settings["ui-header-font"], Settings["ui-font-size"])
 	self.Alert.Text:SetJustifyH("LEFT")
 	self.Alert.Text:SetTextColor(GetColorRGB("ui-widget-color"))
-	self.Alert.Text:SetText("Update available") -- localize
+        self.Alert.Text:SetText(Language["Update available"])
 
 	self.Alert:SetWidth(self.Alert.Text:GetStringWidth() + 32)
 

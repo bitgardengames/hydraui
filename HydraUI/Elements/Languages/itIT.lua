@@ -777,5 +777,6 @@ L["Display the timer on unit frame auras"] = "Mostra il timer sulle aure dei riq
 
 -- Update
 L["You can get an updated version of HydraUI at https://www.curseforge.com/wow/addons/hydraui"] = "Puoi scaricare una versione aggiornata di HydraUI su https://www.curseforge.com/wow/addons/hydraui"
+L["Update available"] = "Aggiornamento disponibile"
 L["New Version!"] = "Nuova versione!"
 L["Update to version |cFF%s%s|r"] = "Aggiorna alla versione |cFF%s%s|r"

@@ -1771,6 +1771,8 @@ local DROPDOWN_HEIGHT = 20
 local DROPDOWN_FADE_DELAY = 3 -- To be implemented
 local DROPDOWN_MAX_SHOWN = 8
 
+local DropdownUpdateSelectionState
+
 local CloseLastDropdown = function(compare)
 	if (LAST_ACTIVE_DROPDOWN and LAST_ACTIVE_DROPDOWN.Menu:IsShown() and (LAST_ACTIVE_DROPDOWN ~= compare)) then
 		if (not LAST_ACTIVE_DROPDOWN.Menu.FadeOut:IsPlaying()) then
@@ -1816,7 +1818,7 @@ local DropdownButtonOnMouseDown = function(self)
         self.Parent.Current:SetPoint("LEFT", self.Parent, HEADER_SPACING + 1, -1)
 end
 
-local DropdownUpdateSelectionState = function(self, storedValue)
+DropdownUpdateSelectionState = function(self, storedValue)
         if (not self.Menu) then
                 return
         end

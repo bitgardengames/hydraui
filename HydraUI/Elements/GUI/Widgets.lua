@@ -48,10 +48,37 @@ local RegisterWidget = function(self, widget, id)
         end
 end
 
+local AnchorRegisterThemeUpdater = function(self, func)
+        if (not func) then
+                return
+        end
+
+        if self.ThemeUpdaters then
+                self.ThemeUpdaters[#self.ThemeUpdaters + 1] = func
+        else
+                self.ThemeUpdaters = {func}
+        end
+end
+
+local AnchorUpdateTheme = function(self)
+        local updaters = self.ThemeUpdaters
+
+        if (not updaters) then
+                return
+        end
+
+        for i = 1, #updaters do
+                updaters[i](self)
+        end
+end
+
 local CreateAnchor = function(self, id)
         local anchor = CreateFrame("Frame", nil, self)
         anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
         anchor:Hide()
+
+        anchor.RegisterThemeUpdater = AnchorRegisterThemeUpdater
+        anchor.UpdateTheme = AnchorUpdateTheme
 
         RegisterWidget(self, anchor, id)
 
@@ -65,19 +92,23 @@ local Ignore = {
 
 -- Functions
 local SetVariable = function(id, value)
-	if Ignore[id] then
-		return
-	end
+        if Ignore[id] then
+                return
+        end
 
-	local Name = HydraUI:GetActiveProfileName()
+        local Name = HydraUI:GetActiveProfileName()
 
 	if Name then
 		HydraUI:SetProfileValue(Name, id, value)
 	end
 
-	Settings[id] = value
+        Settings[id] = value
 
-	GUI:ClearColorCache(id)
+        GUI:ClearColorCache(id)
+
+        if GUI.HandleSettingUpdate then
+                GUI:HandleSettingUpdate(id)
+        end
 end
 
 local Round = function(num, dec)
@@ -123,13 +154,22 @@ GUI.Widgets.CreateLine = function(self, id, text)
         Text:SetText(FormatColor(Settings["ui-widget-font-color"], text))
 
         Anchor.Text = Text
+        Text.RawText = text
         Anchor.SetValue = function(self, newText)
+                self.Text.RawText = newText
                 self.Text:SetText(FormatColor(Settings["ui-widget-font-color"], newText))
         end
 
         Anchor.GetValue = function(self)
                 return TrimHex(self.Text:GetText() or "")
         end
+
+        Anchor:RegisterThemeUpdater(function(self)
+                local label = self.Text.RawText or TrimHex(self.Text:GetText() or "")
+
+                HydraUI:SetFontInfo(self.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+                self.Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
+        end)
 
         return Text
 end
@@ -142,11 +182,11 @@ GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
         Left:SetPoint("LEFT", Anchor, HEADER_SPACING, 0)
         Left:SetSize((GROUP_WIDTH / 2) - 6, WIDGET_HEIGHT)
         HydraUI:SetFontInfo(Left, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Left:SetJustifyH("LEFT")
+        Left:SetJustifyH("LEFT")
         Left:SetText(FormatColor(Settings["ui-widget-font-color"], left))
 
-	local Right = Anchor:CreateFontString(nil, "OVERLAY")
-	Right:SetPoint("RIGHT", Anchor, -HEADER_SPACING, 0)
+        local Right = Anchor:CreateFontString(nil, "OVERLAY")
+        Right:SetPoint("RIGHT", Anchor, -HEADER_SPACING, 0)
 	Right:SetSize((GROUP_WIDTH / 2) - 6, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Right, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Right:SetJustifyH("RIGHT")
@@ -156,10 +196,12 @@ GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
         Anchor.Right = Right
         Anchor.SetValue = function(self, leftText, rightText)
                 if (leftText ~= nil) then
+                        self.Left.RawText = leftText
                         self.Left:SetText(FormatColor(Settings["ui-widget-font-color"], leftText))
                 end
 
                 if (rightText ~= nil) then
+                        self.Right.RawText = rightText
                         self.Right:SetText(FormatColor(Settings["ui-widget-font-color"], rightText))
                 end
         end
@@ -167,6 +209,20 @@ GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
         Anchor.GetValue = function(self)
                 return TrimHex(self.Left:GetText() or ""), TrimHex(self.Right:GetText() or "")
         end
+
+        Left.RawText = left
+        Right.RawText = right
+
+        Anchor:RegisterThemeUpdater(function(self)
+                local leftText = self.Left.RawText or TrimHex(self.Left:GetText() or "")
+                local rightText = self.Right.RawText or TrimHex(self.Right:GetText() or "")
+
+                HydraUI:SetFontInfo(self.Left, Settings["ui-widget-font"], Settings["ui-font-size"])
+                self.Left:SetText(FormatColor(Settings["ui-widget-font-color"], leftText))
+
+                HydraUI:SetFontInfo(self.Right, Settings["ui-widget-font"], Settings["ui-font-size"])
+                self.Right:SetText(FormatColor(Settings["ui-widget-font-color"], rightText))
+        end)
 
         return Left
 end
@@ -408,22 +464,37 @@ GUI.Widgets.CreateHeader = function(self, text)
         Anchor.IsHeader = true
         Anchor:Hide()
 
-	local Text = Anchor:CreateFontString(nil, "OVERLAY")
-	Text:SetPoint("CENTER", Anchor, 0, 0)
-	Text:SetHeight(WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(Text, Settings["ui-header-font"], 12)
-	Text:SetJustifyH("CENTER")
+        Anchor.RegisterThemeUpdater = AnchorRegisterThemeUpdater
+        Anchor.UpdateTheme = AnchorUpdateTheme
+
+        local Text = Anchor:CreateFontString(nil, "OVERLAY")
+        Text:SetPoint("CENTER", Anchor, 0, 0)
+        Text:SetHeight(WIDGET_HEIGHT)
+        HydraUI:SetFontInfo(Text, Settings["ui-header-font"], 12)
+        Text:SetJustifyH("CENTER")
         Text:SetText(FormatColor(Settings["ui-header-font-color"], text))
+        Text.RawText = text
 
-	local BG = Anchor:CreateTexture(nil, "BORDER")
-	BG:SetAllPoints()
-	BG:SetColorTexture(0, 0, 0)
+        local BG = Anchor:CreateTexture(nil, "BORDER")
+        BG:SetAllPoints()
+        BG:SetColorTexture(0, 0, 0)
 
-	local Texture = Anchor:CreateTexture(nil, "ARTWORK")
-	Texture:SetPoint("TOPLEFT", Anchor, 1, -1)
-	Texture:SetPoint("BOTTOMRIGHT", Anchor, -1, 1)
-	Texture:SetTexture(Assets:GetTexture("Blank"))
-	Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
+        local Texture = Anchor:CreateTexture(nil, "ARTWORK")
+        Texture:SetPoint("TOPLEFT", Anchor, 1, -1)
+        Texture:SetPoint("BOTTOMRIGHT", Anchor, -1, 1)
+        Texture:SetTexture(Assets:GetTexture("Blank"))
+        Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
+
+        Anchor.Text = Text
+        Anchor.Texture = Texture
+
+        Anchor:RegisterThemeUpdater(function(self)
+                local label = self.Text.RawText or TrimHex(self.Text:GetText() or "")
+
+                HydraUI:SetFontInfo(self.Text, Settings["ui-header-font"], 12)
+                self.Text:SetText(FormatColor(Settings["ui-header-font-color"], label))
+                self.Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
+        end)
 
         RegisterWidget(self, Anchor)
 
@@ -437,15 +508,24 @@ GUI.Widgets.CreateFooter = function(self)
         Anchor.IsHeader = true
         Anchor:Hide()
 
-	local BG = Anchor:CreateTexture(nil, "BORDER")
-	BG:SetAllPoints()
-	BG:SetColorTexture(0, 0, 0)
+        Anchor.RegisterThemeUpdater = AnchorRegisterThemeUpdater
+        Anchor.UpdateTheme = AnchorUpdateTheme
 
-	local Texture = Anchor:CreateTexture(nil, "ARTWORK")
-	Texture:SetPoint("TOPLEFT", Anchor, 1, -1)
-	Texture:SetPoint("BOTTOMRIGHT", Anchor, -1, 1)
-	Texture:SetTexture(Assets:GetTexture("Blank"))
-	Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
+        local BG = Anchor:CreateTexture(nil, "BORDER")
+        BG:SetAllPoints()
+        BG:SetColorTexture(0, 0, 0)
+
+        local Texture = Anchor:CreateTexture(nil, "ARTWORK")
+        Texture:SetPoint("TOPLEFT", Anchor, 1, -1)
+        Texture:SetPoint("BOTTOMRIGHT", Anchor, -1, 1)
+        Texture:SetTexture(Assets:GetTexture("Blank"))
+        Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
+
+        Anchor.Texture = Texture
+
+        Anchor:RegisterThemeUpdater(function(self)
+                self.Texture:SetVertexColor(GUI:GetColorRGB("ui-header-texture-color"))
+        end)
 
         RegisterWidget(self, Anchor)
 end
@@ -500,13 +580,14 @@ local ButtonDisable = function(self)
 end
 
 GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
-	Anchor.Enable = ButtonEnable
-	Anchor.Disable = ButtonDisable
-	Anchor.RequiresReload = ButtonRequiresReload
+        local Anchor = CreateFrame("Frame", nil, self)
+        Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+        Anchor.Text = label
+        Anchor.LabelText = label
+        Anchor.Tooltip = tooltip
+        Anchor.Enable = ButtonEnable
+        Anchor.Disable = ButtonDisable
+        Anchor.RequiresReload = ButtonRequiresReload
 
 	Anchor:SetScript("OnEnter", AnchorOnEnter)
 	Anchor:SetScript("OnLeave", AnchorOnLeave)
@@ -536,71 +617,96 @@ GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
 	Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Highlight:SetAlpha(0)
 
-	local MiddleText = Button:CreateFontString(nil, "OVERLAY")
-	MiddleText:SetPoint("CENTER", Button, 0, 0)
-	MiddleText:SetSize(BUTTON_WIDTH - 6, WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(MiddleText, Settings["ui-widget-font"], Settings["ui-font-size"])
-	MiddleText:SetJustifyH("CENTER")
-	MiddleText:SetText(value)
+        local MiddleText = Button:CreateFontString(nil, "OVERLAY")
+        MiddleText:SetPoint("CENTER", Button, 0, 0)
+        MiddleText:SetSize(BUTTON_WIDTH - 6, WIDGET_HEIGHT)
+        HydraUI:SetFontInfo(MiddleText, Settings["ui-widget-font"], Settings["ui-font-size"])
+        MiddleText:SetJustifyH("CENTER")
+        MiddleText:SetText(value)
+        MiddleText.RawText = value
 
-	local Text = Button:CreateFontString(nil, "OVERLAY")
-	Text:SetPoint("LEFT", Anchor, LABEL_SPACING, 0)
-	Text:SetSize(GROUP_WIDTH - BUTTON_WIDTH - 6, WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Text:SetJustifyH("LEFT")
+        local Text = Button:CreateFontString(nil, "OVERLAY")
+        Text:SetPoint("LEFT", Anchor, LABEL_SPACING, 0)
+        Text:SetSize(GROUP_WIDTH - BUTTON_WIDTH - 6, WIDGET_HEIGHT)
+        HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+        Text:SetJustifyH("LEFT")
         Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
+        Text.RawText = label
 
-	Button.Texture = Texture
-	Button.Highlight = Highlight
-	Button.MiddleText = MiddleText
-	Button.Text = Text
+        Button.Texture = Texture
+        Button.Highlight = Highlight
+        Button.MiddleText = MiddleText
+        Button.Text = Text
 
-	Anchor.Button = Button
+        Anchor.Button = Button
+
+        Anchor.RegisterThemeUpdater = AnchorRegisterThemeUpdater
+        Anchor.UpdateTheme = AnchorUpdateTheme
+
+        Anchor:RegisterThemeUpdater(function(self)
+                local button = self.Button
+                local middle = button.MiddleText
+                local labelText = button.Text
+                local middleValue = middle.RawText or middle:GetText()
+                local labelValue = labelText.RawText or TrimHex(labelText:GetText() or "")
+
+                button:SetBackdropColor(GUI:GetColorRGB("ui-widget-bright-color"))
+                button.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+                button.Texture:SetVertexColor(GUI:GetColorRGB("ui-widget-bright-color"))
+
+                HydraUI:SetFontInfo(middle, Settings["ui-widget-font"], Settings["ui-font-size"])
+                middle:SetText(middleValue)
+
+                HydraUI:SetFontInfo(labelText, Settings["ui-widget-font"], Settings["ui-font-size"])
+                labelText:SetText(FormatColor(Settings["ui-widget-font-color"], labelValue))
+        end)
 
         RegisterWidget(self, Anchor, id)
 
-	return Anchor
+        return Anchor
 end
 
 -- StatusBar
 local STATUSBAR_WIDTH = 100
 
 GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, label, tooltip, hook)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
+        local Anchor = CreateFrame("Frame", nil, self)
+        Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+        Anchor.Text = label
+        Anchor.Tooltip = tooltip
 
 	Anchor:SetScript("OnEnter", AnchorOnEnter)
 	Anchor:SetScript("OnLeave", AnchorOnLeave)
 
-	local Backdrop = CreateFrame("Frame", nil, Anchor, "BackdropTemplate")
-	Backdrop:SetSize(STATUSBAR_WIDTH, WIDGET_HEIGHT)
-	Backdrop:SetPoint("RIGHT", Anchor, 0, 0)
-	Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	Backdrop:SetBackdropColor(GUI:GetColorRGB("ui-window-main-color"))
-	Backdrop:SetBackdropBorderColor(0, 0, 0)
-	Backdrop.Value = value
+        local Backdrop = CreateFrame("Frame", nil, Anchor, "BackdropTemplate")
+        Backdrop:SetSize(STATUSBAR_WIDTH, WIDGET_HEIGHT)
+        Backdrop:SetPoint("RIGHT", Anchor, 0, 0)
+        Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
+        Backdrop:SetBackdropColor(GUI:GetColorRGB("ui-window-main-color"))
+        Backdrop:SetBackdropBorderColor(0, 0, 0)
+        Backdrop.Value = value
+        Anchor.Backdrop = Backdrop
 
-	local BG = Backdrop:CreateTexture(nil, "ARTWORK")
-	BG:SetPoint("TOPLEFT", Backdrop, 1, -1)
-	BG:SetPoint("BOTTOMRIGHT", Backdrop, -1, 1)
-	BG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	BG:SetVertexColor(GUI:GetColorRGB("ui-widget-bg-color"))
+        local BG = Backdrop:CreateTexture(nil, "ARTWORK")
+        BG:SetPoint("TOPLEFT", Backdrop, 1, -1)
+        BG:SetPoint("BOTTOMRIGHT", Backdrop, -1, 1)
+        BG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        BG:SetVertexColor(GUI:GetColorRGB("ui-widget-bg-color"))
+        Anchor.BackdropTexture = BG
 
-	local Bar = CreateFrame("StatusBar", nil, Backdrop, "BackdropTemplate")
-	Bar:SetSize(STATUSBAR_WIDTH, WIDGET_HEIGHT)
-	Bar:SetPoint("TOPLEFT", Backdrop, 1, -1)
-	Bar:SetPoint("BOTTOMRIGHT", Backdrop, -1, 1)
+        local Bar = CreateFrame("StatusBar", nil, Backdrop, "BackdropTemplate")
+        Bar:SetSize(STATUSBAR_WIDTH, WIDGET_HEIGHT)
+        Bar:SetPoint("TOPLEFT", Backdrop, 1, -1)
+        Bar:SetPoint("BOTTOMRIGHT", Backdrop, -1, 1)
 	Bar:SetBackdrop(HydraUI.BackdropAndBorder)
 	Bar:SetBackdropColor(0, 0, 0, 0)
 	Bar:SetBackdropBorderColor(0, 0, 0, 0)
 	Bar:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	Bar:SetStatusBarColor(GUI:GetColorRGB("ui-widget-color"))
-	Bar:SetMinMaxValues(minvalue, maxvalue)
-	Bar:SetValue(value)
-	Bar.Hook = hook
-	Bar.Tooltip = tooltip
+        Bar:SetStatusBarColor(GUI:GetColorRGB("ui-widget-color"))
+        Bar:SetMinMaxValues(minvalue, maxvalue)
+        Bar:SetValue(value)
+        Bar.Hook = hook
+        Bar.Tooltip = tooltip
 
 	local Anim = LibMotion:CreateAnimation(Bar, "Progress")
 	Anim:SetEasing("in")
@@ -612,24 +718,48 @@ GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, labe
 	Spark:SetTexture(Assets:GetTexture("Blank"))
 	Spark:SetVertexColor(0, 0, 0)
 
-	local MiddleText = Bar:CreateFontString(nil, "ARTWORK")
-	MiddleText:SetPoint("CENTER", Bar, "CENTER", 0, 0)
-	MiddleText:SetSize(STATUSBAR_WIDTH - 6, WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(MiddleText, Settings["ui-widget-font"], Settings["ui-font-size"])
-	MiddleText:SetJustifyH("CENTER")
-	MiddleText:SetText(value)
+        local MiddleText = Bar:CreateFontString(nil, "ARTWORK")
+        MiddleText:SetPoint("CENTER", Bar, "CENTER", 0, 0)
+        MiddleText:SetSize(STATUSBAR_WIDTH - 6, WIDGET_HEIGHT)
+        HydraUI:SetFontInfo(MiddleText, Settings["ui-widget-font"], Settings["ui-font-size"])
+        MiddleText:SetJustifyH("CENTER")
+        MiddleText:SetText(value)
+        MiddleText.RawText = value
 
-	local Text = Bar:CreateFontString(nil, "OVERLAY")
-	Text:SetPoint("LEFT", Anchor, LABEL_SPACING, 0)
-	Text:SetSize(GROUP_WIDTH - STATUSBAR_WIDTH - 6, WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Text:SetJustifyH("LEFT")
+        local Text = Bar:CreateFontString(nil, "OVERLAY")
+        Text:SetPoint("LEFT", Anchor, LABEL_SPACING, 0)
+        Text:SetSize(GROUP_WIDTH - STATUSBAR_WIDTH - 6, WIDGET_HEIGHT)
+        HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+        Text:SetJustifyH("LEFT")
         Text:SetText(FormatColor(Settings["ui-widget-font-color"], label))
+        Text.RawText = label
 
-	Bar.Anim = Anim
-	Bar.Spark = Spark
-	Bar.MiddleText = MiddleText
-	Bar.Text = Text
+        Bar.Anim = Anim
+        Bar.Spark = Spark
+        Bar.MiddleText = MiddleText
+        Bar.Text = Text
+
+        Anchor.StatusBar = Bar
+
+        Anchor.RegisterThemeUpdater = AnchorRegisterThemeUpdater
+        Anchor.UpdateTheme = AnchorUpdateTheme
+
+        Anchor:RegisterThemeUpdater(function(self)
+                self.Backdrop:SetBackdropColor(GUI:GetColorRGB("ui-window-main-color"))
+                self.BackdropTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+                self.BackdropTexture:SetVertexColor(GUI:GetColorRGB("ui-widget-bg-color"))
+
+                local bar = self.StatusBar
+                bar:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+                bar:SetStatusBarColor(GUI:GetColorRGB("ui-widget-color"))
+
+                HydraUI:SetFontInfo(bar.MiddleText, Settings["ui-widget-font"], Settings["ui-font-size"])
+                bar.MiddleText:SetText(bar.MiddleText.RawText or bar.MiddleText:GetText())
+
+                HydraUI:SetFontInfo(bar.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+                local labelValue = bar.Text.RawText or TrimHex(bar.Text:GetText() or "")
+                bar.Text:SetText(FormatColor(Settings["ui-widget-font-color"], labelValue))
+        end)
 
         RegisterWidget(self, Anchor, id)
 

@@ -55,6 +55,7 @@ GUI.MenuDirty = true
 GUI.SortDirty = true
 GUI.SearchTokens = {}
 GUI.SearchQuery = ""
+GUI.ThemeRefreshQueued = false
 
 local ClearTable = function(tbl)
         if wipe then
@@ -128,6 +129,28 @@ local AppendSearchKeywords = function(existing, ...)
         return tconcat(keywords, " ")
 end
 
+local ThemeSensitiveSettings = {
+        ["ui-header-font"] = true,
+        ["ui-header-font-color"] = true,
+        ["ui-header-font-size"] = true,
+        ["ui-header-texture"] = true,
+        ["ui-header-texture-color"] = true,
+        ["ui-title-font-size"] = true,
+        ["ui-widget-font"] = true,
+        ["ui-widget-font-color"] = true,
+        ["ui-widget-color"] = true,
+        ["ui-widget-bright-color"] = true,
+        ["ui-widget-texture"] = true,
+        ["ui-widget-bg-color"] = true,
+        ["ui-window-bg-color"] = true,
+        ["ui-window-main-color"] = true,
+        ["ui-font-size"] = true,
+        ["ui-button-texture"] = true,
+        ["ui-button-texture-color"] = true,
+        ["ui-button-font"] = true,
+        ["ui-button-font-color"] = true,
+}
+
 local FrameMatchesSearch = function(frame, tokens)
         if (not frame) then
                 return false
@@ -193,6 +216,133 @@ local SearchBoxOnEditFocusLost = function(self)
         end
 
         SearchBoxUpdateState(self)
+end
+
+local RefreshWidgetList = function(widgets)
+        if (not widgets) then
+                return
+        end
+
+        for index = 1, #widgets do
+                local widget = widgets[index]
+
+                if widget and widget.UpdateTheme then
+                        widget:UpdateTheme()
+                end
+        end
+end
+
+function GUI:RefreshWidgetWindow(window)
+        if (not window) then
+                return
+        end
+
+        local windowColorR, windowColorG, windowColorB = GetColorRGB("ui-window-main-color")
+        local widgetTexture = Assets:GetTexture(Settings["ui-widget-texture"])
+        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
+
+        window.LeftWidgetsBG:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+        window.RightWidgetsBG:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+
+        if window.ScrollBar then
+                local scrollBar = window.ScrollBar
+                local thumb = scrollBar:GetThumbTexture()
+
+                scrollBar:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+
+                if thumb then
+                        thumb:SetTexture(widgetTexture)
+                end
+
+                if scrollBar.NewThumb2 then
+                        scrollBar.NewThumb2:SetTexture(widgetTexture)
+                        scrollBar.NewThumb2:SetVertexColor(brightR, brightG, brightB)
+                end
+
+                if scrollBar.Highlight then
+                        scrollBar.Highlight:SetTexture(widgetTexture)
+                end
+
+                if scrollBar.Progress then
+                        scrollBar.Progress:SetVertexColor(brightR, brightG, brightB)
+                end
+        elseif window.ScrollFiller then
+                window.ScrollFiller:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+        end
+
+        RefreshWidgetList(window.LeftWidgets)
+        RefreshWidgetList(window.RightWidgets)
+end
+
+function GUI:RefreshMenuButton(button)
+        if (not button) then
+                return
+        end
+
+        if button.Parent then
+                button.Selected:SetVertexColor(GetColorRGB("ui-widget-color"))
+                HydraUI:SetFontInfo(button.Text, Settings["ui-widget-font"], 12)
+                button.Text:SetText("|cFF" .. Settings["ui-widget-font-color"] .. button.Name .. "|r")
+        else
+                button.Selected:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+                HydraUI:SetFontInfo(button.Text, Settings["ui-widget-font"], Settings["ui-header-font-size"])
+                button.Text:SetText("|cFF" .. Settings["ui-button-font-color"] .. button.Name .. "|r")
+        end
+
+        if button.Arrow then
+                if button.ChildrenShown or button.SearchExpanded then
+                        button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+                else
+                        button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+                end
+
+                button.Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
+        end
+
+        if button.Window then
+                self:RefreshWidgetWindow(button.Window)
+        end
+
+        if button.Children then
+                for i = 1, #button.Children do
+                        self:RefreshMenuButton(button.Children[i])
+                end
+        end
+end
+
+function GUI:RefreshCategoryTheme(category)
+        if (not category) then
+                return
+        end
+
+        HydraUI:SetFontInfo(category.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+        category.Text:SetText(format("|cFF%s%s|r", Settings["ui-header-font-color"], category.Name))
+        category.Texture:SetTexture(Assets:GetTexture("Blank"))
+        category.Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
+end
+
+function GUI:QueueThemeRefresh()
+        if self.ThemeRefreshQueued then
+                return
+        end
+
+        self.ThemeRefreshQueued = true
+
+        if C_Timer and C_Timer.After then
+                C_Timer.After(0.05, function()
+                        self.ThemeRefreshQueued = false
+                        self:RefreshTheme()
+                end)
+        else
+                self.ThemeRefreshQueued = false
+                self:RefreshTheme()
+        end
+end
+
+function GUI:HandleSettingUpdate(id)
+        if ThemeSensitiveSettings[id] then
+                self:QueueThemeRefresh()
+        end
 end
 
 function GUI:MarkMenuDirty(needsSort)
@@ -1545,6 +1695,151 @@ function GUI:ClearSearch()
         if self.MenuSearch then
                 self.MenuSearch:SetText("")
                 self.MenuSearch:ClearFocus()
+        end
+end
+
+function GUI:RefreshTheme()
+        self:ClearColorCache()
+
+        if (not self.Loaded) then
+                return
+        end
+
+        local windowBgR, windowBgG, windowBgB = GetColorRGB("ui-window-bg-color")
+        local windowMainR, windowMainG, windowMainB = GetColorRGB("ui-window-main-color")
+        local widgetTexture = Assets:GetTexture(Settings["ui-widget-texture"])
+        local headerTexture = Assets:GetTexture(Settings["ui-header-texture"])
+        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
+        local widgetR, widgetG, widgetB = GetColorRGB("ui-widget-color")
+
+        self:SetBackdropColor(windowBgR, windowBgG, windowBgB)
+
+        if self.Header and self.Header.Texture then
+                self.Header.Texture:SetTexture(headerTexture)
+                self.Header.Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
+
+                if self.Header.Text then
+                        HydraUI:SetFontInfo(self.Header.Text, Settings["ui-header-font"], Settings["ui-title-font-size"])
+                        self.Header.Text:SetTextColor(GetColorRGB("ui-widget-color"))
+                end
+        end
+
+        if self.MenuParent then
+                self.MenuParent:SetBackdropColor(windowMainR, windowMainG, windowMainB)
+        end
+
+        if self.MenuSearchBG then
+                self.MenuSearchBG:SetBackdropColor(windowBgR, windowBgG, windowBgB)
+                self.MenuSearchBG.Texture:SetTexture(widgetTexture)
+                self.MenuSearchBG.Texture:SetVertexColor(brightR, brightG, brightB)
+        end
+
+        if self.MenuSearch then
+                HydraUI:SetFontInfo(self.MenuSearch, Settings["ui-widget-font"], Settings["ui-font-size"])
+                self.MenuSearch:SetTextColor(widgetR, widgetG, widgetB)
+        end
+
+        if self.MenuSearch and self.MenuSearch.Instructions then
+                HydraUI:SetFontInfo(self.MenuSearch.Instructions, Settings["ui-widget-font"], Settings["ui-font-size"])
+        end
+
+        if self.EmptyResults then
+                HydraUI:SetFontInfo(self.EmptyResults, Settings["ui-widget-font"], Settings["ui-font-size"])
+                self.EmptyResults:SetTextColor(widgetR, widgetG, widgetB)
+        end
+
+        if self.ScrollUp then
+                self.ScrollUp.Texture:SetTexture(headerTexture)
+                self.ScrollUp.Texture:SetVertexColor(brightR, brightG, brightB)
+        end
+
+        if self.ScrollDown then
+                self.ScrollDown.Texture:SetTexture(headerTexture)
+                self.ScrollDown.Texture:SetVertexColor(brightR, brightG, brightB)
+                self.ScrollDown.Arrow:SetVertexColor(widgetR, widgetG, widgetB)
+        end
+
+        if self.ScrollBar then
+                local scrollBar = self.ScrollBar
+                local thumb = scrollBar:GetThumbTexture()
+
+                scrollBar:SetBackdropColor(windowMainR, windowMainG, windowMainB)
+
+                if thumb then
+                        thumb:SetTexture(widgetTexture)
+                end
+
+                if scrollBar.NewThumb2 then
+                        scrollBar.NewThumb2:SetTexture(widgetTexture)
+                        scrollBar.NewThumb2:SetVertexColor(brightR, brightG, brightB)
+                end
+
+                if scrollBar.Highlight then
+                        scrollBar.Highlight:SetTexture(widgetTexture)
+                end
+
+                if scrollBar.Progress then
+                        scrollBar.Progress:SetVertexColor(brightR, brightG, brightB)
+                end
+        end
+
+        if self.Alert and self.Alert.Text then
+                HydraUI:SetFontInfo(self.Alert.Text, Settings["ui-header-font"], Settings["ui-font-size"])
+                self.Alert.Text:SetTextColor(widgetR, widgetG, widgetB)
+        end
+
+        if self.UpdateWindow then
+                self.UpdateWindow:SetBackdropColor(GetColorRGB("ui-window-bg-color"))
+
+                if self.UpdateWindow.Header and self.UpdateWindow.Header.Texture then
+                        self.UpdateWindow.Header.Texture:SetTexture(headerTexture)
+                        self.UpdateWindow.Header.Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
+                end
+
+                if self.UpdateWindow.Header and self.UpdateWindow.Header.Text then
+                        HydraUI:SetFontInfo(self.UpdateWindow.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
+                        self.UpdateWindow.Header.Text:SetTextColor(GetColorRGB("ui-header-font-color"))
+                end
+
+                if self.UpdateWindow.Text then
+                        HydraUI:SetFontInfo(self.UpdateWindow.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+                        self.UpdateWindow.Text:SetTextColor(widgetR, widgetG, widgetB)
+                end
+
+                if self.UpdateWindow.WidgetsBG and self.UpdateWindow.WidgetsBG.Backdrop then
+                        self.UpdateWindow.WidgetsBG.Backdrop:SetBackdropColor(windowMainR, windowMainG, windowMainB)
+                end
+        end
+
+        for i = 1, #self.Categories do
+                local category = self.Categories[i]
+
+                if category then
+                        self:RefreshCategoryTheme(category)
+
+                        if category.Buttons then
+                                for j = 1, #category.Buttons do
+                                        self:RefreshMenuButton(category.Buttons[j])
+                                end
+                        end
+                end
+        end
+
+        for _, categoryButtons in pairs(self.Buttons) do
+                if type(categoryButtons) == "table" then
+                        for _, button in pairs(categoryButtons) do
+                                if button and button.GetObjectType and button:GetObjectType() then
+                                        self:RefreshMenuButton(button)
+                                end
+                        end
+                end
+        end
+
+        if self.ScrollUp and self.ScrollDown then
+                local total = self.TotalSelections or 0
+                local maxOffset = max((total - MAX_MENU_BUTTONS_SHOWN) + 1, 1)
+
+                UpdateArrows(self.ScrollUp, self.ScrollDown, self.Offset or 1, maxOffset)
         end
 end
 

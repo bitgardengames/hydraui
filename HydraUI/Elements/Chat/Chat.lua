@@ -1656,7 +1656,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Right"], Lang
 	local Left = left:CreateSlider("right-window-left-fill", Settings["right-window-left-fill"], 0, 100, 5, Language["Left Opacity"], Language["Set the opacity of the left window background"], UpdateLeftOpacity, nil, "%")
 	local Right = left:CreateSlider("right-window-right-fill", Settings["right-window-right-fill"], 0, 100, 5, Language["Right Opacity"], Language["Set the opacity of the right window background"], UpdateRightOpacity, nil, "%")
 
-	left:CreateSlider("right-window-middle-pos", Settings["right-window-middle-pos"], 1, 99, 1, "Set divider", "blah", UpdateSplitPosition, nil, "%")
+left:CreateSlider("right-window-middle-pos", Settings["right-window-middle-pos"], 1, 99, 1, Language["Divider Position"], Language["Set the position of the divider between chat windows"], UpdateSplitPosition, nil, "%")
 
 	if (Settings["right-window-size"] == "SINGLE") then
 		Left:GetParent():Disable()
@@ -1665,9 +1665,9 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Right"], Lang
 		Single:GetParent():Disable()
 	end
 
-	right:CreateHeader("Window Style")
+right:CreateHeader(Language["Window Style"])
 	right:CreateDropdown("right-window-size", Settings["right-window-size"], {[Language["Single"]] = "SINGLE", [Language["Double"]] = "DOUBLE"}, Language["Set Window Size"], Language["Set the number of windows to be displayed"], ReloadUI):RequiresReload(true)
 
-	right:CreateHeader("Single Window Embed")
+right:CreateHeader(Language["Single Window Embed"])
 	right:CreateDropdown("rw-single-embed", Settings["rw-single-embed"], GetChatFrameList(), Language["Select Chat"], Language["Set which chat frame should be in the right window"], UpdateRightChatWindow)
 end)

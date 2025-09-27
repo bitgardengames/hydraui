@@ -675,6 +675,10 @@ L["Window Width"] = "Ширина окна"
 L["Set the width of the window"] = "Задать ширину окна"
 L["Window Height"] = "Высота окна"
 L["Set the height of the window"] = "Задать высоту окна"
+L["Window Style"] = "Стиль окна"
+L["Single Window Embed"] = "Встраивание одиночного окна"
+L["Divider Position"] = "Положение разделителя"
+L["Set the position of the divider between chat windows"] = "Задает положение разделителя между окнами чата"
 L["Set the opacity of the window background"] = "Задать прозрачность фона окна"
 L["Right Window Texts"] = "Инфотексты правого окна"
 
@@ -771,5 +775,6 @@ L["Display the timer on unit frame auras"] = "Показывать таймер 
 
 -- Update
 L["You can get an updated version of HydraUI at https://www.curseforge.com/wow/addons/hydraui"] = "Получите последнюю версию HydraUI на https://www.curseforge.com/wow/addons/hydraui"
+L["Update available"] = "Доступно обновление"
 L["New Version!"] = "Новая версия!"
 L["Update to version |cFF%s%s|r"] = "Обновитесь до версии |cFF%s%s|r"

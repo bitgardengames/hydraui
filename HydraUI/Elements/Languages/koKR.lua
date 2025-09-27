@@ -676,6 +676,10 @@ L["Window Width"] = "창 너비"
 L["Set the width of the window"] = "창의 너비를 설정합니다"
 L["Window Height"] = "창 높이"
 L["Set the height of the window"] = "창의 높이를 설정합니다"
+L["Window Style"] = "창 스타일"
+L["Single Window Embed"] = "단일 창 임베드"
+L["Divider Position"] = "구분선 위치"
+L["Set the position of the divider between chat windows"] = "채팅 창 사이의 구분선 위치를 설정합니다"
 L["Set the opacity of the window background"] = "창 배경의 불투명도를 설정합니다"
 L["Right Window Texts"] = "오른쪽 창 텍스트"
 
@@ -779,5 +783,6 @@ L["Display the timer on unit frame auras"] = "유닛 프레임 오라에 타이�
 
 -- Update
 L["You can get an updated version of HydraUI at https://www.curseforge.com/wow/addons/hydraui"] = "https://www.curseforge.com/wow/addons/hydraui에서 최신 버전의 HydraUI를 받을 수 있습니다"
+L["Update available"] = "업데이트 가능"
 L["New Version!"] = "새 버전!"
 L["Update to version |cFF%s%s|r"] = "|cFF%s%s|r 버전으로 업데이트"

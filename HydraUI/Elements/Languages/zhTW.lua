@@ -676,6 +676,10 @@ L["Window Width"] = "視窗寬度"
 L["Set the width of the window"] = "設定視窗寬度"
 L["Window Height"] = "視窗高度"
 L["Set the height of the window"] = "設定視窗高度"
+L["Window Style"] = "視窗樣式"
+L["Single Window Embed"] = "單一視窗嵌入"
+L["Divider Position"] = "分隔線位置"
+L["Set the position of the divider between chat windows"] = "設定聊天視窗之間分隔線的位置"
 L["Set the opacity of the window background"] = "設定視窗背景不透明度"
 L["Right Window Texts"] = "右側視窗文字"
 
@@ -779,5 +783,6 @@ L["Display the timer on unit frame auras"] = "在單位框架光環上顯示計�
 
 -- Update
 L["You can get an updated version of HydraUI at https://www.curseforge.com/wow/addons/hydraui"] = "可於 https://www.curseforge.com/wow/addons/hydraui 取得 HydraUI 最新版本"
+L["Update available"] = "有可用的更新"
 L["New Version!"] = "新版本！"
 L["Update to version |cFF%s%s|r"] = "更新至版本 |cFF%s%s|r"

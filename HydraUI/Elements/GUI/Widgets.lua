@@ -811,30 +811,49 @@ end
 local SWITCH_WIDTH = 50
 local SWITCH_TRAVEL = SWITCH_WIDTH - WIDGET_HEIGHT
 
+local SwitchMoveFinished = function(animation)
+        local Switch = animation.Switch
+
+        if (not Switch) then
+                return
+        end
+
+        local TargetOffset = Switch.TargetOffset or 0
+
+        Switch.Thumb:ClearAllPoints()
+        Switch.Thumb:SetPoint("LEFT", Switch, TargetOffset, 0)
+        animation:SetOffset(0, 0)
+end
+
 local SwitchCommitValue = function(self, newValue, skipHooks, skipSave, skipAnimation)
         newValue = (newValue and true) or false
 
         local changed = (self.Value ~= newValue)
+        local endOffset = (newValue and SWITCH_TRAVEL) or 0
 
         if self.Move:IsPlaying() then
                 self.Move:Stop()
         end
 
+        self.TargetOffset = endOffset
         self.Thumb:ClearAllPoints()
 
-        if newValue then
-                self.Thumb:SetPoint("LEFT", self, 0, 0)
-                self.Move:SetOffset(SWITCH_TRAVEL, 0)
+        if (not skipAnimation) and changed then
+                if self.Value then
+                        self.Thumb:SetPoint("RIGHT", self, 0, 0)
+                        self.Move:SetOffset(-SWITCH_TRAVEL, 0)
+                else
+                        self.Thumb:SetPoint("LEFT", self, 0, 0)
+                        self.Move:SetOffset(SWITCH_TRAVEL, 0)
+                end
+
+                self.Move:Play()
         else
-                self.Thumb:SetPoint("RIGHT", self, 0, 0)
-                self.Move:SetOffset(-SWITCH_TRAVEL, 0)
+                self.Thumb:SetPoint("LEFT", self, endOffset, 0)
+                self.Move:SetOffset(0, 0)
         end
 
         self.Value = newValue
-
-        if (not skipAnimation) and changed then
-                self.Move:Play()
-        end
 
         if changed and (not skipSave) then
                 SetVariable(self.ID, newValue)
@@ -985,8 +1004,10 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	Highlight:SetAlpha(0)
 
 	local Move = LibMotion:CreateAnimation(Thumb, "Move")
-	Move:SetEasing("in")
-	Move:SetDuration(0.1)
+        Move:SetEasing("in")
+        Move:SetDuration(0.1)
+        Move.Switch = Switch
+        Move:SetScript("onfinished", SwitchMoveFinished)
 
         Switch.Thumb = Thumb
         Switch.Text = Text

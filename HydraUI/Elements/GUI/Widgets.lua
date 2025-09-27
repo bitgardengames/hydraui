@@ -1937,13 +1937,19 @@ local AddDropdownScrollBar = function(self)
 end
 
 local DropdownSort = function(self)
-	tsort(self.Menu, function(a, b)
-		return TrimHex(a.Key) < TrimHex(b.Key)
-	end)
+        tsort(self.Menu, function(a, b)
+                local aKey = a.SortKey or TrimHex(a.Key)
+                local bKey = b.SortKey or TrimHex(b.Key)
 
-	for i = 1, #self.Menu do
-		if (i == 1) then
-			self.Menu[i]:SetPoint("TOP", self.Menu, 0, 0)
+                a.SortKey = aKey
+                b.SortKey = bKey
+
+                return aKey < bKey
+        end)
+
+        for i = 1, #self.Menu do
+                if (i == 1) then
+                        self.Menu[i]:SetPoint("TOP", self.Menu, 0, 0)
 		else
 			self.Menu[i]:SetPoint("TOP", self.Menu[i-1], "BOTTOM", 0, 1)
 		end
@@ -1962,11 +1968,12 @@ local DropdownCreateSelection = function(self, key, value)
 	MenuItem:SetScript("OnMouseUp", MenuItemOnMouseUp)
 	MenuItem:SetScript("OnEnter", MenuItemOnEnter)
 	MenuItem:SetScript("OnLeave", MenuItemOnLeave)
-	MenuItem.Parent = MenuItem:GetParent()
-	MenuItem.GrandParent = MenuItem.Parent:GetParent()
-	MenuItem.Key = key
-	MenuItem.Value = value
-	MenuItem.ID = self.ID
+        MenuItem.Parent = MenuItem:GetParent()
+        MenuItem.GrandParent = MenuItem.Parent:GetParent()
+        MenuItem.Key = key
+        MenuItem.Value = value
+        MenuItem.ID = self.ID
+        MenuItem.SortKey = TrimHex(key)
 
 	MenuItem.Highlight = MenuItem:CreateTexture(nil, "OVERLAY")
 	MenuItem.Highlight:SetPoint("TOPLEFT", MenuItem, 1, -1)

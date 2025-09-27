@@ -1069,7 +1069,10 @@ Update.move = function(self, elapsed)
             self.YOffset = self.StartY + self.YChange * EasingValue
         end
 
-        self.Parent:SetPoint(self.A1, self.P, self.A2, (self.EndX ~= 0 and self.XOffset or self.StartX), (self.EndY ~= 0 and self.YOffset or self.StartY))
+        local HasXChange = (self.XChange ~= 0)
+        local HasYChange = (self.YChange ~= 0)
+
+        self.Parent:SetPoint(self.A1, self.P, self.A2, (HasXChange and self.XOffset or self.StartX), (HasYChange and self.YOffset or self.StartY))
     end
 end
 

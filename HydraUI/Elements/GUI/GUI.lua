@@ -1,5 +1,10 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
+local find = string.find
+local gmatch = string.gmatch
+local lower = string.lower
+local match = string.match
+
 -- Constants
 local SPACING = 3
 local WIDGET_HEIGHT = 20
@@ -15,8 +20,12 @@ local GROUP_WIDTH = ((PARENT_WIDTH / 2) - (SPACING * 4) - 8) + 1
 local MENU_BUTTON_WIDTH = BUTTON_LIST_WIDTH - (SPACING * 2)
 local SELECTED_HIGHLIGHT_ALPHA = 0.25
 local MOUSEOVER_HIGHLIGHT_ALPHA = 0.1
-local MAX_WIDGETS_SHOWN = floor(GUI_HEIGHT / (WIDGET_HEIGHT + SPACING))
+local MAX_WINDOW_WIDGETS_SHOWN = floor(GUI_HEIGHT / (WIDGET_HEIGHT + SPACING))
+local MAX_MENU_BUTTONS_SHOWN = math.max(MAX_WINDOW_WIDGETS_SHOWN - 1, 1)
 local DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B = 0.65, 0.65, 0.65
+local SEARCH_PROMPT = (Language["Search"] and (Language["Search"] .. "...")) or "Search..."
+local NO_RESULTS_PROMPT = Language["No matches found"] or "No matches found"
+local NO_OPTIONS_PROMPT = Language["No options available"] or "No options available"
 
 -- Locals
 local floor = math.floor
@@ -25,6 +34,7 @@ local min = math.min
 local type = type
 local wipe = wipe
 local tinsert = table.insert
+local tconcat = table.concat
 local tsort = table.sort
 
 local GUI = HydraUI:NewModule("GUI")
@@ -43,6 +53,8 @@ GUI.ActiveChildButton = nil
 GUI.ColorCache = {}
 GUI.MenuDirty = true
 GUI.SortDirty = true
+GUI.SearchTokens = {}
+GUI.SearchQuery = ""
 
 local ClearTable = function(tbl)
         if wipe then
@@ -52,6 +64,135 @@ local ClearTable = function(tbl)
                         tbl[key] = nil
                 end
         end
+end
+
+local TrimWhitespace = function(text)
+        if (not text) then
+                return ""
+        end
+
+        return match(text, "^%s*(.-)%s*$") or ""
+end
+
+local BuildSearchKeywords = function(...)
+        local keywords
+
+        for i = 1, select("#", ...) do
+                local value = select(i, ...)
+
+                if value and (value ~= "") then
+                        if keywords then
+                                keywords = keywords .. " " .. lower(value)
+                        else
+                                keywords = lower(value)
+                        end
+                end
+        end
+
+        return keywords or ""
+end
+
+local AppendSearchKeywords = function(existing, ...)
+        if (not existing or existing == "") and (select("#", ...) > 0) then
+                return BuildSearchKeywords(...)
+        end
+
+        local keywords = {}
+        local seen = {}
+        local count = 0
+
+        if existing and (existing ~= "") then
+                for word in gmatch(existing, "%S+") do
+                        if (word ~= "") and (not seen[word]) then
+                                count = count + 1
+                                keywords[count] = word
+                                seen[word] = true
+                        end
+                end
+        end
+
+        for i = 1, select("#", ...) do
+                local value = lower(TrimWhitespace(select(i, ...) or ""))
+
+                if (value ~= "") and (not seen[value]) then
+                        count = count + 1
+                        keywords[count] = value
+                        seen[value] = true
+                end
+        end
+
+        if (count == 0) then
+                return existing or ""
+        end
+
+        return tconcat(keywords, " ")
+end
+
+local FrameMatchesSearch = function(frame, tokens)
+        if (not frame) then
+                return false
+        end
+
+        if (not tokens) or (#tokens == 0) then
+                return true
+        end
+
+        local keywords = frame.SearchKeywords
+
+        if (not keywords) or (keywords == "") then
+                return false
+        end
+
+        for i = 1, #tokens do
+                if (not find(keywords, tokens[i], 1, true)) then
+                        return false
+                end
+        end
+
+        return true
+end
+
+local SearchBoxUpdateState = function(self)
+        local hasText = TrimWhitespace(self:GetText() or "") ~= ""
+
+        if self.Instructions then
+                if (not hasText) and (not self:HasFocus()) then
+                        self.Instructions:Show()
+                else
+                        self.Instructions:Hide()
+                end
+        end
+
+        if self.ClearButton then
+                if hasText then
+                        self.ClearButton:Show()
+                else
+                        self.ClearButton:Hide()
+                end
+        end
+end
+
+local SearchBoxOnTextChanged = function(self)
+        SearchBoxUpdateState(self)
+        GUI:SetSearchQuery(self:GetText())
+end
+
+local SearchBoxOnEditFocusGained = function(self)
+        if self.Background and self.Background.Highlight then
+                self.Background.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+        end
+
+        if self.Instructions then
+                self.Instructions:Hide()
+        end
+end
+
+local SearchBoxOnEditFocusLost = function(self)
+        if self.Background and self.Background.Highlight then
+                self.Background.Highlight:SetAlpha(0)
+        end
+
+        SearchBoxUpdateState(self)
 end
 
 function GUI:MarkMenuDirty(needsSort)
@@ -212,7 +353,7 @@ local LayoutWidgetColumn = function(frame, widgets, offset, anchorPoint, anchorX
         end
 
         local startIndex = frame.ScrollingDisabled and 1 or (offset or 1)
-        local lastVisible = frame.ScrollingDisabled and #widgets or min(startIndex + MAX_WIDGETS_SHOWN - 1, #widgets)
+        local lastVisible = frame.ScrollingDisabled and #widgets or min(startIndex + MAX_WINDOW_WIDGETS_SHOWN - 1, #widgets)
 
         if (lastVisible < startIndex) then
                 return
@@ -462,15 +603,16 @@ function GUI:SortMenuButtons()
 end
 
 function GUI:CreateCategory(name)
-	local Category = CreateFrame("Frame", nil, self)
-	Category:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
-	Category:SetFrameLevel(self:GetFrameLevel() + 2)
-	Category.SortName = name
-	Category.Name = name
-	Category.Buttons = {}
+        local Category = CreateFrame("Frame", nil, self)
+        Category:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
+        Category:SetFrameLevel(self:GetFrameLevel() + 2)
+        Category.SortName = name
+        Category.Name = name
+        Category.Buttons = {}
+        Category.SearchKeywords = BuildSearchKeywords(name)
 
-	local Text = Category:CreateFontString(nil, "OVERLAY")
-	Text:SetPoint("CENTER", Category, 0, 0)
+        local Text = Category:CreateFontString(nil, "OVERLAY")
+        Text:SetPoint("CENTER", Category, 0, 0)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("CENTER")
 	Text:SetText(format("|cFF%s%s|r", Settings["ui-header-font-color"], name))
@@ -579,7 +721,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG:CreateFooter()
 	end
 
-	Window.MaxScroll = max((#Window.LeftWidgets - (MAX_WIDGETS_SHOWN - 1)), (#Window.RightWidgets - (MAX_WIDGETS_SHOWN - 1)), 1)
+        Window.MaxScroll = max((#Window.LeftWidgets - (MAX_WINDOW_WIDGETS_SHOWN - 1)), (#Window.RightWidgets - (MAX_WINDOW_WIDGETS_SHOWN - 1)), 1)
 	Window.WidgetCount = max(#Window.LeftWidgets, #Window.RightWidgets)
 
         if (Window.MaxScroll > 1) then
@@ -758,6 +900,7 @@ function GUI:CreateWindow(category, name, parent)
         Button:SetFrameLevel(self:GetFrameLevel() + 2)
         Button.Name = name
         Button.Category = category
+        Button.SearchKeywords = BuildSearchKeywords(category, parent or "", name)
         Button:SetScript("OnEnter", WindowButtonOnEnter)
         Button:SetScript("OnLeave", WindowButtonOnLeave)
 
@@ -932,9 +1075,136 @@ function GUI:AddWidgets(category, name, arg1, arg2)
 end
 
 function GUI:GetWidget(id)
-	if self.WidgetID[id] then
-		return self.WidgetID[id]
-	end
+        if self.WidgetID[id] then
+                return self.WidgetID[id]
+        end
+end
+
+function GUI:SetWidgetValue(id, ...)
+        local widget = self.WidgetID[id]
+
+        if widget and widget.SetValue then
+                widget:SetValue(...)
+
+                return true
+        end
+
+        return false
+end
+
+function GUI:GetWidgetValue(id, ...)
+        local widget = self.WidgetID[id]
+
+        if widget and widget.GetValue then
+                return widget:GetValue(...)
+        end
+end
+
+function GUI:SetWidgetEnabled(id, enabled)
+        local widget = self.WidgetID[id]
+
+        if (not widget) then
+                return false
+        end
+
+        if (enabled == false) then
+                if widget.Disable then
+                        widget:Disable()
+                end
+
+                widget.Disabled = true
+
+                return widget.Disable ~= nil
+        end
+
+        if widget.Enable then
+                widget:Enable()
+                widget.Disabled = false
+
+                return true
+        end
+
+        widget.Disabled = false
+
+        return false
+end
+
+function GUI:IsWidgetEnabled(id)
+        local widget = self.WidgetID[id]
+
+        if (not widget) then
+                return false
+        end
+
+        if (widget.Disabled ~= nil) then
+                return not widget.Disabled
+        end
+
+        return true
+end
+
+function GUI:ToggleWidgetEnabled(id)
+        if self:IsWidgetEnabled(id) then
+                return self:SetWidgetEnabled(id, false)
+        end
+
+        return self:SetWidgetEnabled(id, true)
+end
+
+function GUI:SetCategorySearchKeywords(name, ...)
+        local category = self.Categories[name]
+
+        if (not category) then
+                return false
+        end
+
+        category.SearchKeywords = BuildSearchKeywords(name, ...)
+
+        self:MarkMenuDirty(false)
+
+        return true
+end
+
+function GUI:AddCategorySearchKeywords(name, ...)
+        local category = self.Categories[name]
+
+        if (not category) then
+                return false
+        end
+
+        category.SearchKeywords = AppendSearchKeywords(category.SearchKeywords, ...)
+
+        self:MarkMenuDirty(false)
+
+        return true
+end
+
+function GUI:SetButtonSearchKeywords(category, name, parent, ...)
+        local button = self:GetButton(category, name, parent)
+
+        if (not button) then
+                return false
+        end
+
+        button.SearchKeywords = BuildSearchKeywords(category, parent or "", name, ...)
+
+        self:MarkMenuDirty(false)
+
+        return true
+end
+
+function GUI:AddButtonSearchKeywords(category, name, parent, ...)
+        local button = self:GetButton(category, name, parent)
+
+        if (not button) then
+                return false
+        end
+
+        button.SearchKeywords = AppendSearchKeywords(button.SearchKeywords or "", category, parent or "", name, ...)
+
+        self:MarkMenuDirty(false)
+
+        return true
 end
 
 function GUI:RebuildVisibleMenu()
@@ -955,37 +1225,142 @@ function GUI:RebuildVisibleMenu()
 
         local total = 0
         local categories = self.Categories
+        local tokens = self.SearchTokens
+        local hasSearch = tokens and (#tokens > 0)
 
         for i = 1, #categories do
                 local category = categories[i]
+                local categoryAdded = false
 
-                visible[#visible + 1] = category
-                total = total + 1
                 category:Hide()
 
-                local buttons = category.Buttons
-
-                for j = 1, #buttons do
-                        local button = buttons[j]
-
-                        visible[#visible + 1] = button
+                if not hasSearch then
+                        visible[#visible + 1] = category
                         total = total + 1
-                        button:Hide()
 
-                        local children = button.Children
+                        local buttons = category.Buttons
 
-                        if children then
-                                if button.ChildrenShown then
+                        for j = 1, #buttons do
+                                local button = buttons[j]
+
+                                button:Hide()
+                                visible[#visible + 1] = button
+                                total = total + 1
+
+                                if button.SearchExpanded then
+                                        button.SearchExpanded = nil
+                                end
+
+                                if button.Arrow then
+                                        if button.ChildrenShown then
+                                                button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+                                        else
+                                                button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+                                        end
+                                end
+
+                                local children = button.Children
+
+                                if children then
+                                        if button.ChildrenShown then
+                                                for childIndex = 1, #children do
+                                                        local child = children[childIndex]
+
+                                                        child:Hide()
+                                                        visible[#visible + 1] = child
+                                                        total = total + 1
+                                                end
+                                        else
+                                                for childIndex = 1, #children do
+                                                        children[childIndex]:Hide()
+                                                end
+                                        end
+                                end
+                        end
+                else
+                        local buttons = category.Buttons
+                        local categoryMatches = FrameMatchesSearch(category, tokens)
+
+                        local function AddCategory()
+                                if (not categoryAdded) then
+                                        visible[#visible + 1] = category
+                                        total = total + 1
+                                        categoryAdded = true
+                                end
+                        end
+
+                        for j = 1, #buttons do
+                                local button = buttons[j]
+                                local buttonMatches = FrameMatchesSearch(button, tokens)
+                                local matchedChildren
+
+                                button:Hide()
+
+                                local children = button.Children
+
+                                if children then
                                         for childIndex = 1, #children do
                                                 local child = children[childIndex]
+                                                local childMatches = FrameMatchesSearch(child, tokens)
 
-                                                visible[#visible + 1] = child
-                                                total = total + 1
                                                 child:Hide()
+
+                                                if childMatches then
+                                                        if not matchedChildren then
+                                                                matchedChildren = {}
+                                                        end
+
+                                                        matchedChildren[#matchedChildren + 1] = child
+                                                end
                                         end
-                                else
-                                        for childIndex = 1, #children do
-                                                children[childIndex]:Hide()
+                                end
+
+                                if button.Arrow then
+                                        if matchedChildren and (#matchedChildren > 0) then
+                                                button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+                                                button.SearchExpanded = true
+                                        else
+                                                button.SearchExpanded = nil
+
+                                                if button.ChildrenShown then
+                                                        button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+                                                else
+                                                        button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+                                                end
+                                        end
+                                end
+
+                                if buttonMatches or (matchedChildren and (#matchedChildren > 0)) then
+                                        AddCategory()
+
+                                        visible[#visible + 1] = button
+                                        total = total + 1
+
+                                        if matchedChildren then
+                                                for k = 1, #matchedChildren do
+                                                        visible[#visible + 1] = matchedChildren[k]
+                                                        total = total + 1
+                                                end
+                                        end
+                                end
+                        end
+
+                        if categoryMatches and (not categoryAdded) then
+                                AddCategory()
+                        end
+
+                        if (not categoryAdded) then
+                                if buttons then
+                                        for j = 1, #buttons do
+                                                local button = buttons[j]
+
+                                                button:Hide()
+
+                                                if button.Children then
+                                                        for childIndex = 1, #button.Children do
+                                                                button.Children[childIndex]:Hide()
+                                                        end
+                                                end
                                         end
                                 end
                         end
@@ -1001,21 +1376,6 @@ function GUI:ScrollSelections()
 
         local visible = self.VisibleMenu
         local total = self.TotalSelections or 0
-
-        if (total == 0) then
-                return
-        end
-
-        self.Offset = self:ClampSelectionOffset(self.Offset or 1)
-
-        local offset = self.Offset
-        local lastVisible = min(offset + MAX_WIDGETS_SHOWN - 1, total)
-        local maxOffset = max((total - MAX_WIDGETS_SHOWN) + 1, 1)
-
-        if self.ScrollBar then
-                self.ScrollBar:SetMinMaxValues(1, maxOffset)
-        end
-
         local scrollButtons = self.ScrollButtons
 
         for index = #scrollButtons, 1, -1 do
@@ -1027,7 +1387,43 @@ function GUI:ScrollSelections()
                 end
         end
 
+        if self.EmptyResults then
+                self.EmptyResults:Hide()
+        end
+
+        if (total == 0) then
+                if self.EmptyResults then
+                        if (self.SearchQuery and self.SearchQuery ~= "") then
+                                self.EmptyResults:SetText(NO_RESULTS_PROMPT)
+                        else
+                                self.EmptyResults:SetText(NO_OPTIONS_PROMPT)
+                        end
+
+                        self.EmptyResults:Show()
+                end
+
+                if self.ScrollBar then
+                        self.ScrollBar:SetMinMaxValues(1, 1)
+                        self.ScrollBar:SetValue(1)
+                end
+
+                UpdateArrows(self.ScrollUp, self.ScrollDown, 1, 1)
+
+                return
+        end
+
+        self.Offset = self:ClampSelectionOffset(self.Offset or 1)
+
+        local offset = self.Offset
+        local lastVisible = min(offset + MAX_MENU_BUTTONS_SHOWN - 1, total)
+        local maxOffset = max((total - MAX_MENU_BUTTONS_SHOWN) + 1, 1)
+
+        if self.ScrollBar then
+                self.ScrollBar:SetMinMaxValues(1, maxOffset)
+        end
+
         local anchor
+        local topOffset = self.MenuListOffset or ((SPACING * 2) + WIDGET_HEIGHT)
 
         for index = offset, lastVisible do
                 local button = visible[index]
@@ -1038,7 +1434,7 @@ function GUI:ScrollSelections()
                         if anchor then
                                 button:SetPoint("TOP", anchor, "BOTTOM", 0, -2)
                         else
-                                button:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
+                                button:SetPoint("TOPLEFT", self.MenuParent, SPACING, -topOffset)
                         end
 
                         button:Show()
@@ -1056,7 +1452,7 @@ function GUI:ClampSelectionOffset(offset)
         end
 
         local total = self.TotalSelections or 1
-        local maxOffset = max((total - MAX_WIDGETS_SHOWN) + 1, 1)
+        local maxOffset = max((total - MAX_MENU_BUTTONS_SHOWN) + 1, 1)
 
         if (offset > maxOffset) then
                 return maxOffset
@@ -1084,9 +1480,11 @@ function GUI:SetSelectionOffsetByDelta(delta)
 end
 
 local SelectionOnMouseWheel = function(self, delta)
-	self:SetSelectionOffsetByDelta(delta)
-	self:ScrollSelections()
-	self.ScrollBar:SetValue(self.Offset)
+        self:SetSelectionOffsetByDelta(delta)
+        self:ScrollSelections()
+        if self.ScrollBar then
+                self.ScrollBar:SetValue(self.Offset)
+        end
 end
 
 local Round = function(num, dec)
@@ -1106,11 +1504,52 @@ local MenuParentOnMouseWheel = function(self, delta)
 end
 
 local SelectionScrollBarOnMouseWheel = function(self, delta)
-	SelectionOnMouseWheel(self:GetParent():GetParent(), delta)
+        SelectionOnMouseWheel(self:GetParent():GetParent(), delta)
+end
+
+function GUI:SetSearchQuery(text)
+        local query = lower(TrimWhitespace(text or ""))
+
+        if (self.SearchQuery == query) then
+                return
+        end
+
+        self.SearchQuery = query
+
+        local tokens = self.SearchTokens
+
+        if tokens then
+                ClearTable(tokens)
+
+                if (query ~= "") then
+                        for word in gmatch(query, "%S+") do
+                                tokens[#tokens + 1] = word
+                        end
+                end
+        end
+
+        self.Offset = 1
+        self:MarkMenuDirty(false)
+        self:ScrollSelections()
+
+        if self.ScrollBar then
+                self.ScrollBar:SetValue(1)
+        end
+
+        if self.MenuSearch then
+                SearchBoxUpdateState(self.MenuSearch)
+        end
+end
+
+function GUI:ClearSearch()
+        if self.MenuSearch then
+                self.MenuSearch:SetText("")
+                self.MenuSearch:ClearFocus()
+        end
 end
 
 local FadeOnFinished = function(self)
-	self.Parent:Hide()
+        self.Parent:Hide()
 end
 
 function GUI:CreateUpdateWindow()
@@ -1401,24 +1840,130 @@ function GUI:CreateGUI()
 	self.Header.Text:SetText("Hydra|cFFEAEAEAUI|r")
 
 	-- Menu parent
-	self.MenuParent = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.MenuParent:SetWidth(BUTTON_LIST_WIDTH)
-	self.MenuParent:SetPoint("BOTTOMLEFT", self, SPACING, SPACING)
-	self.MenuParent:SetPoint("TOPLEFT", self.Header, "BOTTOMLEFT", 0, -2)
-	self.MenuParent:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.MenuParent:SetBackdropColor(GetColorRGB("ui-window-main-color"))
-	self.MenuParent:SetBackdropBorderColor(0, 0, 0)
-	self.MenuParent:SetScript("OnMouseWheel", MenuParentOnMouseWheel)
+        self.MenuParent = CreateFrame("Frame", nil, self, "BackdropTemplate")
+        self.MenuParent:SetWidth(BUTTON_LIST_WIDTH)
+        self.MenuParent:SetPoint("BOTTOMLEFT", self, SPACING, SPACING)
+        self.MenuParent:SetPoint("TOPLEFT", self.Header, "BOTTOMLEFT", 0, -2)
+        self.MenuParent:SetBackdrop(HydraUI.BackdropAndBorder)
+        self.MenuParent:SetBackdropColor(GetColorRGB("ui-window-main-color"))
+        self.MenuParent:SetBackdropBorderColor(0, 0, 0)
+        self.MenuParent:SetScript("OnMouseWheel", MenuParentOnMouseWheel)
 
-	-- Scroll up
-	self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
-	self.ScrollUp:SetPoint("TOPLEFT", self.MenuParent, "TOPRIGHT", 2, 0)
-	self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
-	self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
-	self.ScrollUp:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+        self.MenuSearchBG = CreateFrame("Frame", nil, self.MenuParent, "BackdropTemplate")
+        self.MenuSearchBG:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
+        self.MenuSearchBG:SetPoint("TOPRIGHT", self.MenuParent, -SPACING, -SPACING)
+        self.MenuSearchBG:SetHeight(WIDGET_HEIGHT)
+        self.MenuSearchBG:SetBackdrop(HydraUI.BackdropAndBorder)
+        self.MenuSearchBG:SetBackdropColor(GetColorRGB("ui-window-bg-color"))
+        self.MenuSearchBG:SetBackdropBorderColor(0, 0, 0)
+
+        self.MenuSearchBG.Texture = self.MenuSearchBG:CreateTexture(nil, "ARTWORK")
+        self.MenuSearchBG.Texture:SetPoint("TOPLEFT", self.MenuSearchBG, 1, -1)
+        self.MenuSearchBG.Texture:SetPoint("BOTTOMRIGHT", self.MenuSearchBG, -1, 1)
+        self.MenuSearchBG.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+        self.MenuSearchBG.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+
+        self.MenuSearchBG.Highlight = self.MenuSearchBG:CreateTexture(nil, "OVERLAY")
+        self.MenuSearchBG.Highlight:SetPoint("TOPLEFT", self.MenuSearchBG, 1, -1)
+        self.MenuSearchBG.Highlight:SetPoint("BOTTOMRIGHT", self.MenuSearchBG, -1, 1)
+        self.MenuSearchBG.Highlight:SetTexture(Assets:GetTexture("Blank"))
+        self.MenuSearchBG.Highlight:SetVertexColor(1, 1, 1)
+        self.MenuSearchBG.Highlight:SetAlpha(0)
+
+        self.MenuSearch = CreateFrame("EditBox", nil, self.MenuSearchBG)
+        HydraUI:SetFontInfo(self.MenuSearch, Settings["ui-widget-font"], Settings["ui-font-size"])
+        self.MenuSearch:SetPoint("LEFT", self.MenuSearchBG, 6, 0)
+        self.MenuSearch:SetPoint("RIGHT", self.MenuSearchBG, -24, 0)
+        self.MenuSearch:SetHeight(WIDGET_HEIGHT)
+        self.MenuSearch:SetJustifyH("LEFT")
+        self.MenuSearch:SetAutoFocus(false)
+        self.MenuSearch:EnableKeyboard(true)
+        self.MenuSearch:EnableMouse(true)
+        self.MenuSearch:SetMaxLetters(48)
+        self.MenuSearch:SetTextColor(GetColorRGB("ui-widget-color"))
+        self.MenuSearch:SetScript("OnTextChanged", SearchBoxOnTextChanged)
+        self.MenuSearch:SetScript("OnEditFocusGained", SearchBoxOnEditFocusGained)
+        self.MenuSearch:SetScript("OnEditFocusLost", SearchBoxOnEditFocusLost)
+        self.MenuSearch:SetScript("OnEscapePressed", function(self)
+                self:SetText("")
+                self:ClearFocus()
+        end)
+        self.MenuSearch:SetScript("OnEnterPressed", function(self)
+                self:ClearFocus()
+        end)
+
+        self.MenuSearch.Instructions = self.MenuSearchBG:CreateFontString(nil, "OVERLAY")
+        self.MenuSearch.Instructions:SetPoint("LEFT", self.MenuSearchBG, 8, 0)
+        self.MenuSearch.Instructions:SetJustifyH("LEFT")
+        HydraUI:SetFontInfo(self.MenuSearch.Instructions, Settings["ui-widget-font"], Settings["ui-font-size"])
+        self.MenuSearch.Instructions:SetTextColor(0.7, 0.7, 0.7)
+        self.MenuSearch.Instructions:SetText(SEARCH_PROMPT)
+
+        self.MenuSearch.ClearButton = CreateFrame("Frame", nil, self.MenuSearchBG)
+        self.MenuSearch.ClearButton:SetSize(16, 16)
+        self.MenuSearch.ClearButton:SetPoint("RIGHT", self.MenuSearchBG, -4, 0)
+        self.MenuSearch.ClearButton:EnableMouse(true)
+
+        local clearDefaultR, clearDefaultG, clearDefaultB = HydraUI:HexToRGB("EEEEEE")
+        local clearActiveR, clearActiveG, clearActiveB = HydraUI:HexToRGB("C0392B")
+
+        self.MenuSearch.ClearButton.Icon = self.MenuSearch.ClearButton:CreateTexture(nil, "ARTWORK")
+        self.MenuSearch.ClearButton.Icon:SetPoint("CENTER", self.MenuSearch.ClearButton, 0, 0)
+        self.MenuSearch.ClearButton.Icon:SetSize(12, 12)
+        self.MenuSearch.ClearButton.Icon:SetTexture(Assets:GetTexture("Close"))
+        self.MenuSearch.ClearButton.Icon:SetVertexColor(clearDefaultR, clearDefaultG, clearDefaultB)
+
+        self.MenuSearch.ClearButton.Highlight = self.MenuSearch.ClearButton:CreateTexture(nil, "HIGHLIGHT")
+        self.MenuSearch.ClearButton.Highlight:SetPoint("TOPLEFT", self.MenuSearch.ClearButton, -2, 2)
+        self.MenuSearch.ClearButton.Highlight:SetPoint("BOTTOMRIGHT", self.MenuSearch.ClearButton, 2, -2)
+        self.MenuSearch.ClearButton.Highlight:SetTexture(Assets:GetTexture("Blank"))
+        self.MenuSearch.ClearButton.Highlight:SetVertexColor(1, 1, 1)
+        self.MenuSearch.ClearButton.Highlight:SetAlpha(0)
+
+        self.MenuSearch.ClearButton:SetScript("OnEnter", function(self)
+                self.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
+        end)
+
+        self.MenuSearch.ClearButton:SetScript("OnLeave", function(self)
+                self.Highlight:SetAlpha(0)
+                self.Icon:SetVertexColor(clearDefaultR, clearDefaultG, clearDefaultB)
+        end)
+
+        self.MenuSearch.ClearButton:SetScript("OnMouseDown", function(self)
+                self.Icon:SetVertexColor(clearActiveR, clearActiveG, clearActiveB)
+        end)
+
+        self.MenuSearch.ClearButton:SetScript("OnMouseUp", function(self)
+                self.Icon:SetVertexColor(clearDefaultR, clearDefaultG, clearDefaultB)
+                GUI:ClearSearch()
+        end)
+
+        self.MenuSearch.Background = self.MenuSearchBG
+        self.MenuSearch.ClearButton:Hide()
+
+        self.MenuSearch:SetText("")
+        SearchBoxUpdateState(self.MenuSearch)
+
+        local menuListOffset = WIDGET_HEIGHT + (SPACING * 2)
+        self.MenuListOffset = menuListOffset
+
+        self.EmptyResults = self.MenuParent:CreateFontString(nil, "OVERLAY")
+        self.EmptyResults:SetPoint("TOPLEFT", self.MenuParent, SPACING + 4, -menuListOffset)
+        self.EmptyResults:SetPoint("RIGHT", self.MenuParent, -SPACING - 4, 0)
+        HydraUI:SetFontInfo(self.EmptyResults, Settings["ui-widget-font"], Settings["ui-font-size"])
+        self.EmptyResults:SetJustifyH("LEFT")
+        self.EmptyResults:SetTextColor(GetColorRGB("ui-widget-color"))
+        self.EmptyResults:Hide()
+
+        -- Scroll up
+        self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
+        self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
+        self.ScrollUp:SetPoint("TOPLEFT", self.MenuParent, "TOPRIGHT", 2, -menuListOffset)
+        self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
+        self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
+        self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
+        self.ScrollUp:SetScript("OnMouseUp", function(self)
+                self.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
 
 		SelectionOnMouseWheel(self:GetParent(), 1)
 	end)
@@ -1558,7 +2103,7 @@ function GUI:CreateGUI()
         self:MarkMenuDirty()
         self:RebuildVisibleMenu()
 
-        local maxOffset = max(((self.TotalSelections or 0) - MAX_WIDGETS_SHOWN) + 1, 1)
+        local maxOffset = max(((self.TotalSelections or 0) - MAX_MENU_BUTTONS_SHOWN) + 1, 1)
 
         self.ScrollBar:SetMinMaxValues(1, maxOffset)
         self.ScrollBar:SetValue(1)

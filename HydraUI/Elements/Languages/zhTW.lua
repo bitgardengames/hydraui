@@ -779,5 +779,6 @@ L["Display the timer on unit frame auras"] = "在單位框架光環上顯示計�
 
 -- Update
 L["You can get an updated version of HydraUI at https://www.curseforge.com/wow/addons/hydraui"] = "可於 https://www.curseforge.com/wow/addons/hydraui 取得 HydraUI 最新版本"
+L["Update available"] = "有可用的更新"
 L["New Version!"] = "新版本！"
 L["Update to version |cFF%s%s|r"] = "更新至版本 |cFF%s%s|r"

@@ -127,7 +127,7 @@ L["Group"] = "Groupe"
 L["Emote"] = "Emote"
 
 -- Assets
-L['No style exists with the name "%s"'] = 'Aucun style portant le nom "%s" n'existe'
+L['No style exists with the name "%s"'] = [[Aucun style portant le nom "%s" n'existe]]
 
 -- Auras
 L["Auras"] = "Auras"

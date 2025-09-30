@@ -25,8 +25,6 @@ Defaults["chat-enable-fading"] = false
 Defaults["chat-fade-time"] = 15
 Defaults["chat-link-tooltip"] = true
 Defaults["chat-shorten-channels"] = true
-Defaults["chat-highlight-player-mentions"] = true
-Defaults["chat-highlight-player-mention-color"] = "FFCE54"
 
 Defaults["right-window-enable"] = true
 Defaults["right-window-size"] = "SINGLE"
@@ -48,7 +46,6 @@ local format = string.format
 local sub = string.sub
 local gsub = string.gsub
 local match = string.match
-local find = string.find
 
 local NoCall = function() end
 local DT
@@ -62,32 +59,6 @@ local CHAT_LABEL = CHAT_LABEL
 
 local Window = HydraUI:NewModule("Right Window")
 local Chat = HydraUI:NewModule("Chat")
-
-local UnitFullName = UnitFullName
-local UnitName = UnitName
-local GetRealmName = GetRealmName
-
-local EscapePattern = function(text)
-        return gsub(text, "([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
-end
-
-local PlayerName, PlayerRealm
-
-if UnitFullName then
-        PlayerName, PlayerRealm = UnitFullName("player")
-else
-        PlayerName = UnitName and UnitName("player")
-        PlayerRealm = GetRealmName and GetRealmName()
-end
-
-local PlayerNameWithRealm
-
-if PlayerName and PlayerRealm and (PlayerRealm ~= "") then
-        PlayerNameWithRealm = format("%s-%s", PlayerName, gsub(PlayerRealm, "%s", ""))
-end
-
-local PlayerNamePattern = PlayerName and EscapePattern(PlayerName)
-local PlayerNameWithRealmPattern = PlayerNameWithRealm and EscapePattern(PlayerNameWithRealm)
 
 -- When hovering over a chat frame, fade in the scroll controls
 
@@ -108,75 +79,60 @@ local FormatFriendHyperlink = function(tag) -- /run print("Player#1111")
 	return format("|cFF00AAFF|Hfriend:%s|h[%s]|h|r", tag, tag)
 end
 
-local HighlightPlayerMention = function(message)
-        if (not message) or (message == "") or (not Settings["chat-highlight-player-mentions"]) or (not PlayerNamePattern) then
-                return message
-        end
-
-        local Color = Settings["chat-highlight-player-mention-color"] or "FFFFFF"
-        local Original = message
-
-        message = gsub(message, "()(@" .. PlayerNamePattern .. ")", function(index, mention)
-                if PlayerNameWithRealmPattern then
-                        local Next = sub(Original, index + #mention, index + #mention)
-
-                        if (Next == "-") then
-                                return mention
-                        end
-                end
-
-                return format("|cFF%s%s|r", Color, mention)
-        end)
-
-        if PlayerNameWithRealmPattern then
-                message = gsub(message, "(@" .. PlayerNameWithRealmPattern .. ")", function(mention)
-                        return format("|cFF%s%s|r", Color, mention)
-                end)
-        end
-
-        return message
-end
-
 local FormatLinks = function(message)
-        if (not message) then
-                return
-        end
+	if (not message) then
+		return
+	end
 
-        if (message == "") then
-                return message
-        end
+	if Settings["chat-enable-discord-links"] then
+		local NewMessage, Subs = gsub(message, "https://discord.gg/(%S+)", FormatDiscordHyperlink("%1"))
 
-        if Settings["chat-enable-discord-links"] and find(message, "discord", 1, true) then
-                if find(message, "https://discord.gg/", 1, true) then
-                        message = gsub(message, "https://discord.gg/(%S+)", FormatDiscordHyperlink("%1"))
-                end
+		if (Subs > 0) then
+			return NewMessage
+		end
 
-                if find(message, "discord.gg/", 1, true) then
-                        message = gsub(message, "discord.gg/(%S+)", FormatDiscordHyperlink("%1"))
-                end
-        end
+		NewMessage, Subs = gsub(message, "discord.gg/(%S+)", FormatDiscordHyperlink("%1"))
 
-        if Settings["chat-enable-url-links"] then
-                if Settings["chat-enable-discord-links"] or (match(message, "%a+://(%S+)%.%a+/%S+") ~= "discord") then
-                        if find(message, "://", 1, true) then
-                                message = gsub(message, "(%a+)://(%S+)", FormatURLHyperlink("%1://%2"))
-                        end
+		if (Subs > 0) then
+			return NewMessage
+		end
+	end
 
-                        if find(message, "www.", 1, true) then
-                                message = gsub(message, "www%.([_A-Za-z0-9-]+)%.(%S+)", FormatURLHyperlink("www.%1.%2"))
-                        end
-                end
-        end
+	if Settings["chat-enable-url-links"] then
+		if (match(message, "%a+://(%S+)%.%a+/%S+") == "discord") and (not Settings["chat-enable-discord-links"]) then
+			return message
+		end
 
-        if Settings["chat-enable-email-links"] and find(message, "@", 1, true) then
-                message = gsub(message, "([_A-Za-z0-9-%.]+)@([_A-Za-z0-9-]+)(%.+)([_A-Za-z0-9-%.]+)", FormatEmailHyperlink("%1@%2%3%4"))
-        end
+		local NewMessage, Subs = gsub(message, "(%a+)://(%S+)", FormatURLHyperlink("%1://%2"))
 
-        if Settings["chat-enable-friend-links"] and find(message, "#", 1, true) then
-                message = gsub(message, "(%a+)#(%d+)", FormatFriendHyperlink("%1#%2"))
-        end
+		if (Subs > 0) then
+			return NewMessage
+		end
 
-        return message
+		NewMessage, Subs = gsub(message, "www%.([_A-Za-z0-9-]+)%.(%S+)", FormatURLHyperlink("www.%1.%2"))
+
+		if (Subs > 0) then
+			return NewMessage
+		end
+	end
+
+	if Settings["chat-enable-email-links"] then
+		local NewMessage, Subs = gsub(message, "([_A-Za-z0-9-%.]+)@([_A-Za-z0-9-]+)(%.+)([_A-Za-z0-9-%.]+)", FormatEmailHyperlink("%1@%2%3%4"))
+
+		if (Subs > 0) then
+			return NewMessage
+		end
+	end
+
+	if Settings["chat-enable-friend-links"] then
+		local NewMessage, Subs = gsub(message, "(%a+)#(%d+)", FormatFriendHyperlink("%1#%2"))
+
+		if (Subs > 0) then
+			return NewMessage
+		end
+	end
+
+	return message
 end
 
 local FindLinks = function(self, event, msg, ...)
@@ -672,11 +628,9 @@ local OnHyperlinkLeave = function(self)
 end
 
 function Chat:OverrideAddMessage(msg, ...)
-        msg = gsub(msg, "|h%[(%d+)%.%s.-%]|h", "|h[%1]|h")
+	msg = gsub(msg, "|h%[(%d+)%.%s.-%]|h", "|h[%1]|h")
 
-        msg = HighlightPlayerMention(msg)
-
-        self.OldAddMessage(self, msg, ...)
+	self.OldAddMessage(self, msg, ...)
 end
 
 function Chat:StyleChatFrame(frame)
@@ -1398,11 +1352,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Chat"], funct
 	left:CreateSwitch("chat-enable-url-links", Settings["chat-enable-url-links"], Language["Enable URL Links"], Language["Enable URL links in the chat frame"])
 	left:CreateSwitch("chat-enable-discord-links", Settings["chat-enable-discord-links"], Language["Enable Discord Links"], Language["Enable Discord links in the chat frame"])
 	left:CreateSwitch("chat-enable-email-links", Settings["chat-enable-email-links"], Language["Enable Email Links"], Language["Enable email links in the chat frame"])
-        left:CreateSwitch("chat-enable-friend-links", Settings["chat-enable-friend-links"], Language["Enable Friend Tag Links"], Language["Enable friend tag links in the chat frame"])
-
-        left:CreateHeader(Language["Mentions"])
-        left:CreateSwitch("chat-highlight-player-mentions", Settings["chat-highlight-player-mentions"], Language["Highlight Mentions"], Language["Highlight chat mentions of your character"])
-        left:CreateColorSelection("chat-highlight-player-mention-color", Settings["chat-highlight-player-mention-color"], Language["Mention Color"], Language["Set the color used when highlighting mentions of your character"])
+	left:CreateSwitch("chat-enable-friend-links", Settings["chat-enable-friend-links"], Language["Enable Friend Tag Links"], Language["Enable friend tag links in the chat frame"])
 
 	right:CreateHeader(Language["Chat Frame Font"])
 	right:CreateDropdown("chat-font", Settings["chat-font"], Assets:GetFontList(), Language["Font"], Language["Set the font of the chat frame"], UpdateChatFont, "Font")
@@ -1656,7 +1606,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Right"], Lang
 	local Left = left:CreateSlider("right-window-left-fill", Settings["right-window-left-fill"], 0, 100, 5, Language["Left Opacity"], Language["Set the opacity of the left window background"], UpdateLeftOpacity, nil, "%")
 	local Right = left:CreateSlider("right-window-right-fill", Settings["right-window-right-fill"], 0, 100, 5, Language["Right Opacity"], Language["Set the opacity of the right window background"], UpdateRightOpacity, nil, "%")
 
-left:CreateSlider("right-window-middle-pos", Settings["right-window-middle-pos"], 1, 99, 1, Language["Divider Position"], Language["Set the position of the divider between chat windows"], UpdateSplitPosition, nil, "%")
+	left:CreateSlider("right-window-middle-pos", Settings["right-window-middle-pos"], 1, 99, 1, "Set divider", "blah", UpdateSplitPosition, nil, "%")
 
 	if (Settings["right-window-size"] == "SINGLE") then
 		Left:GetParent():Disable()
@@ -1665,9 +1615,9 @@ left:CreateSlider("right-window-middle-pos", Settings["right-window-middle-pos"]
 		Single:GetParent():Disable()
 	end
 
-right:CreateHeader(Language["Window Style"])
+	right:CreateHeader("Window Style")
 	right:CreateDropdown("right-window-size", Settings["right-window-size"], {[Language["Single"]] = "SINGLE", [Language["Double"]] = "DOUBLE"}, Language["Set Window Size"], Language["Set the number of windows to be displayed"], ReloadUI):RequiresReload(true)
 
-right:CreateHeader(Language["Single Window Embed"])
+	right:CreateHeader("Single Window Embed")
 	right:CreateDropdown("rw-single-embed", Settings["rw-single-embed"], GetChatFrameList(), Language["Select Chat"], Language["Set which chat frame should be in the right window"], UpdateRightChatWindow)
 end)

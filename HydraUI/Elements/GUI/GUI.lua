@@ -1,10 +1,5 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
-local find = string.find
-local gmatch = string.gmatch
-local lower = string.lower
-local match = string.match
-
 -- Constants
 local SPACING = 3
 local WIDGET_HEIGHT = 20
@@ -20,22 +15,14 @@ local GROUP_WIDTH = ((PARENT_WIDTH / 2) - (SPACING * 4) - 8) + 1
 local MENU_BUTTON_WIDTH = BUTTON_LIST_WIDTH - (SPACING * 2)
 local SELECTED_HIGHLIGHT_ALPHA = 0.25
 local MOUSEOVER_HIGHLIGHT_ALPHA = 0.1
-local MAX_WINDOW_WIDGETS_SHOWN = floor(GUI_HEIGHT / (WIDGET_HEIGHT + SPACING))
-local MAX_MENU_BUTTONS_SHOWN = math.max(MAX_WINDOW_WIDGETS_SHOWN - 1, 1)
-local DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B = 0.65, 0.65, 0.65
-local SEARCH_PROMPT = (Language["Search"] and (Language["Search"] .. "...")) or "Search..."
-local NO_RESULTS_PROMPT = Language["No matches found"] or "No matches found"
-local NO_OPTIONS_PROMPT = Language["No options available"] or "No options available"
+local MAX_WIDGETS_SHOWN = floor(GUI_HEIGHT / (WIDGET_HEIGHT + SPACING))
 
 -- Locals
-local floor = math.floor
-local max = math.max
-local min = math.min
 local type = type
-local wipe = wipe
 local tinsert = table.insert
-local tconcat = table.concat
+local tremove = table.remove
 local tsort = table.sort
+local floor = math.floor
 
 local GUI = HydraUI:NewModule("GUI")
 
@@ -47,481 +34,203 @@ GUI.LoadCalls = {}
 GUI.Buttons = {}
 GUI.ButtonQueue = {}
 GUI.ScrollButtons = {}
-GUI.VisibleMenu = {}
-GUI.ActiveTopButton = nil
-GUI.ActiveChildButton = nil
-GUI.ColorCache = {}
-GUI.MenuDirty = true
-GUI.SortDirty = true
-GUI.SearchTokens = {}
-GUI.SearchQuery = ""
-
-local ClearTable = function(tbl)
-        if wipe then
-                wipe(tbl)
-        else
-                for key in pairs(tbl) do
-                        tbl[key] = nil
-                end
-        end
-end
-
-local TrimWhitespace = function(text)
-        if (not text) then
-                return ""
-        end
-
-        return match(text, "^%s*(.-)%s*$") or ""
-end
-
-local BuildSearchKeywords = function(...)
-        local keywords
-
-        for i = 1, select("#", ...) do
-                local value = select(i, ...)
-
-                if value and (value ~= "") then
-                        if keywords then
-                                keywords = keywords .. " " .. lower(value)
-                        else
-                                keywords = lower(value)
-                        end
-                end
-        end
-
-        return keywords or ""
-end
-
-local AppendSearchKeywords = function(existing, ...)
-        if (not existing or existing == "") and (select("#", ...) > 0) then
-                return BuildSearchKeywords(...)
-        end
-
-        local keywords = {}
-        local seen = {}
-        local count = 0
-
-        if existing and (existing ~= "") then
-                for word in gmatch(existing, "%S+") do
-                        if (word ~= "") and (not seen[word]) then
-                                count = count + 1
-                                keywords[count] = word
-                                seen[word] = true
-                        end
-                end
-        end
-
-        for i = 1, select("#", ...) do
-                local value = lower(TrimWhitespace(select(i, ...) or ""))
-
-                if (value ~= "") and (not seen[value]) then
-                        count = count + 1
-                        keywords[count] = value
-                        seen[value] = true
-                end
-        end
-
-        if (count == 0) then
-                return existing or ""
-        end
-
-        return tconcat(keywords, " ")
-end
-
-local FrameMatchesSearch = function(frame, tokens)
-        if (not frame) then
-                return false
-        end
-
-        if (not tokens) or (#tokens == 0) then
-                return true
-        end
-
-        local keywords = frame.SearchKeywords
-
-        if (not keywords) or (keywords == "") then
-                return false
-        end
-
-        for i = 1, #tokens do
-                if (not find(keywords, tokens[i], 1, true)) then
-                        return false
-                end
-        end
-
-        return true
-end
-
-local SearchBoxUpdateState = function(self)
-        local hasText = TrimWhitespace(self:GetText() or "") ~= ""
-
-        if self.Instructions then
-                if (not hasText) and (not self:HasFocus()) then
-                        self.Instructions:Show()
-                else
-                        self.Instructions:Hide()
-                end
-        end
-
-        if self.ClearButton then
-                if hasText then
-                        self.ClearButton:Show()
-                else
-                        self.ClearButton:Hide()
-                end
-        end
-end
-
-local SearchBoxOnTextChanged = function(self)
-        SearchBoxUpdateState(self)
-        GUI:SetSearchQuery(self:GetText())
-end
-
-local SearchBoxOnEditFocusGained = function(self)
-        if self.Background and self.Background.Highlight then
-                self.Background.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-        end
-
-        if self.Instructions then
-                self.Instructions:Hide()
-        end
-end
-
-local SearchBoxOnEditFocusLost = function(self)
-        if self.Background and self.Background.Highlight then
-                self.Background.Highlight:SetAlpha(0)
-        end
-
-        SearchBoxUpdateState(self)
-end
-
-function GUI:MarkMenuDirty(needsSort)
-        self.MenuDirty = true
-
-        if (needsSort ~= false) then
-                self.SortDirty = true
-        end
-end
-
-function GUI:GetColorRGB(key)
-	local color = self.ColorCache[key]
-	local value = Settings[key]
-
-	if (value == nil) then
-		return 1, 1, 1
-	end
-
-	if (color and color.Hex == value) then
-		return color.R, color.G, color.B
-	end
-
-	local r, g, b = HydraUI:HexToRGB(value)
-
-	if color then
-		color.R, color.G, color.B = r, g, b
-		color.Hex = value
-	else
-		self.ColorCache[key] = {R = r, G = g, B = b, Hex = value}
-	end
-
-	return r, g, b
-end
-
-function GUI:ClearColorCache(key)
-	if key then
-		self.ColorCache[key] = nil
-	else
-		ClearTable(self.ColorCache)
-	end
-end
-
-local GetColorRGB = function(key)
-	return GUI:GetColorRGB(key)
-end
-
-local DeselectButton = function(button)
-        if (not button) then
-                return
-        end
-
-        if button.Window then
-                button.Window:Hide()
-        end
-
-        if button.Selected and (button.Selected:GetAlpha() > 0) then
-                button.Selected:SetAlpha(0)
-        end
-end
-
-local CollapseChildren = function(self, button)
-        if (not button or not button.Children or not button.ChildrenShown) then
-                return false
-        end
-
-        button.ChildrenShown = false
-
-        if button.Arrow then
-                button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-        end
-
-        for i = 1, #button.Children do
-                local child = button.Children[i]
-
-                if (self.ActiveChildButton == child) then
-                        self.ActiveChildButton = nil
-                end
-
-                DeselectButton(child)
-                child:Hide()
-        end
-
-        self:MarkMenuDirty(false)
-
-        return true
-end
-
-local ExpandChildren = function(self, button)
-        if (not button or not button.Children or button.ChildrenShown) then
-                return false
-        end
-
-        button.ChildrenShown = true
-
-        if button.Arrow then
-                button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-        end
-
-        for i = 1, #button.Children do
-                local child = button.Children[i]
-
-                DeselectButton(child)
-                child:Hide()
-        end
-
-        self.ActiveChildButton = nil
-        self:MarkMenuDirty(false)
-
-        return true
-end
-
-local EnsureWindow = function(self, button)
-        if (not button) then
-                return
-        end
-
-        if (not button.Window) then
-                button.Window = self:CreateWidgetWindow(button.Category, button.Name, button.Parent)
-        end
-
-        return button.Window
-end
-
-local UpdateArrows = function(scrollUp, scrollDown, offset, maxOffset)
-        if (not scrollUp or not scrollDown) then
-                return
-        end
-
-        local enabledR, enabledG, enabledB = GetColorRGB("ui-widget-color")
-
-        if (offset <= 1) then
-                scrollUp.Arrow:SetVertexColor(DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B)
-        else
-                scrollUp.Arrow:SetVertexColor(enabledR, enabledG, enabledB)
-        end
-
-        if (offset >= maxOffset) then
-                scrollDown.Arrow:SetVertexColor(DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B)
-        else
-                scrollDown.Arrow:SetVertexColor(enabledR, enabledG, enabledB)
-        end
-end
-
-local LayoutWidgetColumn = function(frame, widgets, offset, anchorPoint, anchorX)
-        if (not widgets) or (#widgets == 0) then
-                if frame.VisibleWidgets then
-                        for index = #frame.VisibleWidgets, 1, -1 do
-                                local widget = frame.VisibleWidgets[index]
-
-                                if widget then
-                                        widget:Hide()
-                                        frame.VisibleWidgets[index] = nil
-                                end
-                        end
-                end
-
-                return
-        end
-
-        local startIndex = frame.ScrollingDisabled and 1 or (offset or 1)
-        local lastVisible = frame.ScrollingDisabled and #widgets or min(startIndex + MAX_WINDOW_WIDGETS_SHOWN - 1, #widgets)
-
-        if (lastVisible < startIndex) then
-                return
-        end
-
-        local visibleWidgets = frame.VisibleWidgets or {}
-
-        for index = #visibleWidgets, 1, -1 do
-                local widget = visibleWidgets[index]
-
-                if widget then
-                        widget:Hide()
-                        visibleWidgets[index] = nil
-                end
-        end
-
-        local previous
-        local visibleIndex = 0
-
-        for index = startIndex, lastVisible do
-                local widget = widgets[index]
-
-                if widget then
-                        widget:ClearAllPoints()
-
-                        if previous then
-                                widget:SetPoint("TOP", previous, "BOTTOM", 0, -2)
-                        else
-                                widget:SetPoint(anchorPoint, frame, anchorX, -SPACING)
-                        end
-
-                        widget:Show()
-
-                        previous = widget
-                        visibleIndex = visibleIndex + 1
-                        visibleWidgets[visibleIndex] = widget
-                end
-        end
-
-        frame.VisibleWidgets = visibleWidgets
-end
-
-local UpdateScrollArrows = function(window)
-        UpdateArrows(window.ScrollUp, window.ScrollDown, window.Offset, window.MaxScroll or 1)
-end
-
-local ClampOffset = function(window, offset)
-        if (offset <= 1) then
-                return 1
-        end
-
-        local maxScroll = window.MaxScroll or 1
-
-        if (offset > maxScroll) then
-                return maxScroll
-        end
-
-        return offset
-end
 
 local Scroll = function(self)
-        LayoutWidgetColumn(self.LeftWidgetsBG, self.LeftWidgets, self.Offset, "TOPLEFT", SPACING)
-        LayoutWidgetColumn(self.RightWidgetsBG, self.RightWidgets, self.Offset, "TOPRIGHT", -SPACING)
+	local FirstLeft
+	local FirstRight
+	local Offset = self.LeftWidgetsBG.ScrollingDisabled and 1 or self.Offset
+	local LeftWidgets = self.LeftWidgets
+	local RightWidgets = self.RightWidgets
 
-        UpdateScrollArrows(self)
+	for i = 1, self.WidgetCount do
+		if LeftWidgets[i] then
+			LeftWidgets[i]:ClearAllPoints()
+
+			if (i >= Offset) and (i <= Offset + MAX_WIDGETS_SHOWN - 1) then
+				if (not FirstLeft) then
+					LeftWidgets[i]:SetPoint("TOPLEFT", self.LeftWidgetsBG, SPACING, -SPACING)
+					FirstLeft = i
+				else
+					LeftWidgets[i]:SetPoint("TOP", LeftWidgets[i-1], "BOTTOM", 0, -2)
+				end
+
+				LeftWidgets[i]:Show()
+			else
+				LeftWidgets[i]:Hide()
+			end
+		end
+	end
+
+	Offset = self.RightWidgetsBG.ScrollingDisabled and 1 or self.Offset
+
+	for i = 1, self.WidgetCount do
+		if RightWidgets[i] then
+			RightWidgets[i]:ClearAllPoints()
+
+			if (i >= Offset) and (i <= Offset + MAX_WIDGETS_SHOWN - 1) then
+				if (not FirstRight) then
+					RightWidgets[i]:SetPoint("TOPRIGHT", self.RightWidgetsBG, -SPACING, -SPACING)
+					FirstRight = i
+				else
+					RightWidgets[i]:SetPoint("TOP", RightWidgets[i-1], "BOTTOM", 0, -2)
+				end
+
+				RightWidgets[i]:Show()
+			else
+				RightWidgets[i]:Hide()
+			end
+		end
+	end
 end
 
 local NoScroll = function() end
 
-local SetWindowOffset = function(self, offset)
-        local newOffset = ClampOffset(self, offset)
-
-        if (self.Offset == newOffset) then
-                return false
-        end
-
-        self.Offset = newOffset
-
-        Scroll(self)
-
-        return true
-end
-
 local SetOffsetByDelta = function(self, delta)
-        local direction = (delta > 0) and -1 or 1
+	if (delta == 1) then -- Up
+		self.Offset = self.Offset - 1
 
-        return SetWindowOffset(self, (self.Offset or 1) + direction)
+		if (self.Offset <= 1) then
+			self.Offset = 1
+		end
+	else -- Down
+		self.Offset = self.Offset + 1
+
+		if (self.Offset > (self.WidgetCount - (MAX_WIDGETS_SHOWN - 1))) then
+			self.Offset = self.Offset - 1
+		end
+	end
 end
 
 local WindowOnMouseWheel = function(self, delta)
-        if SetOffsetByDelta(self, delta) and self.ScrollBar then
-                self.ScrollBar:SetValue(self.Offset)
-        end
+	SetOffsetByDelta(self, delta)
+	Scroll(self)
+	self.ScrollBar:SetValue(self.Offset)
+
+	if (self.Offset == 1) then
+		self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+	else
+		self.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	end
+
+	if (self.Offset == self.MaxScroll) then
+		self.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+	else
+		self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	end
+end
+
+local SetWindowOffset = function(self, offset)
+	self.Offset = offset
+
+	if (self.Offset <= 1) then
+		self.Offset = 1
+	elseif (self.Offset > (self.WidgetCount - MAX_WIDGETS_SHOWN - 1)) then
+		self.Offset = self.Offset - 1
+	end
+
+	Scroll(self)
 end
 
 local WindowScrollBarOnValueChanged = function(self)
-        SetWindowOffset(self:GetParent(), Round(self:GetValue()))
+	local Parent = self:GetParent()
+
+	Parent.Offset = Round(self:GetValue())
+
+	Scroll(Parent)
 end
 
 local WindowScrollBarOnMouseWheel = function(self, delta)
 	WindowOnMouseWheel(self:GetParent(), delta)
 end
 
-local StyleScrollButton = function(button, arrowTexture, headerTexture, widgetTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB, arrowR, arrowG, arrowB)
-        button:SetBackdrop(HydraUI.BackdropAndBorder)
-        button:SetBackdropColor(0, 0, 0, 0)
-        button:SetBackdropBorderColor(0, 0, 0)
+local WindowScrollBarOnMouseUp = function(self)
+	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
-        button.Texture = button:CreateTexture(nil, "ARTWORK")
-        button.Texture:SetPoint("TOPLEFT", button, 1, -1)
-        button.Texture:SetPoint("BOTTOMRIGHT", button, -1, 1)
-        button.Texture:SetTexture(headerTexture)
-        button.Texture:SetVertexColor(brightR, brightG, brightB)
-
-        button.Highlight = button:CreateTexture(nil, "HIGHLIGHT")
-        button.Highlight:SetPoint("TOPLEFT", button, 1, -1)
-        button.Highlight:SetPoint("BOTTOMRIGHT", button, -1, 1)
-        button.Highlight:SetTexture(widgetTexture)
-        button.Highlight:SetVertexColor(1, 1, 1)
-        button.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-
-        button.Arrow = button:CreateTexture(nil, "OVERLAY")
-        button.Arrow:SetPoint("CENTER", button, 0, 0)
-        button.Arrow:SetSize(16, 16)
-        button.Arrow:SetTexture(Assets:GetTexture(arrowTexture))
-
-        if arrowR then
-                button.Arrow:SetVertexColor(arrowR, arrowG, arrowB)
-        else
-                button.Arrow:SetVertexColor(widgetColorR, widgetColorG, widgetColorB)
-        end
+	WindowOnMouseWheel(self:GetParent(), 1)
 end
 
-local AttachScrollScripts = function(button, delta, brightR, brightG, brightB)
-        button:SetScript("OnMouseUp", function(self)
-                self.Texture:SetVertexColor(brightR, brightG, brightB)
+local WindowScrollBarOnMouseDown = function(self)
+	local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
 
-                WindowOnMouseWheel(self:GetParent(), delta)
-        end)
-
-        button:SetScript("OnMouseDown", function(self)
-                self.Texture:SetVertexColor(brightR * 0.85, brightG * 0.85, brightB * 0.85)
-        end)
+	self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
 end
 
-local AddWindowScrollBar = function(self, windowColorR, windowColorG, windowColorB, widgetTexture, headerTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB)
-        -- Scroll up
-        self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
-        self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
-        self.ScrollUp:SetPoint("TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1))
-        StyleScrollButton(self.ScrollUp, "Arrow Up", headerTexture, widgetTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB, DISABLED_SCROLL_R, DISABLED_SCROLL_G, DISABLED_SCROLL_B)
-        AttachScrollScripts(self.ScrollUp, 1, brightR, brightG, brightB)
+local AddWindowScrollBar = function(self)
+	-- Scroll up
+	self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
+	self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
+	self.ScrollUp:SetPoint("TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1))
+	self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
+	self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
+	self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
+	self.ScrollUp:SetScript("OnMouseUp", WindowScrollBarOnMouseUp)
+	self.ScrollUp:SetScript("OnMouseDown", WindowScrollBarOnMouseDown)
 
-        -- Scroll down
-        self.ScrollDown = CreateFrame("Frame", nil, self, "BackdropTemplate")
-        self.ScrollDown:SetSize(16, WIDGET_HEIGHT)
-        self.ScrollDown:SetPoint("BOTTOMRIGHT", GUI, -SPACING, SPACING)
-        StyleScrollButton(self.ScrollDown, "Arrow Down", headerTexture, widgetTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB)
-        AttachScrollScripts(self.ScrollDown, -1, brightR, brightG, brightB)
+	self.ScrollUp.Texture = self.ScrollUp:CreateTexture(nil, "ARTWORK")
+	self.ScrollUp.Texture:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
+	self.ScrollUp.Texture:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
+	self.ScrollUp.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	self.ScrollUp.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+
+	self.ScrollUp.Highlight = self.ScrollUp:CreateTexture(nil, "HIGHLIGHT")
+	self.ScrollUp.Highlight:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
+	self.ScrollUp.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
+	self.ScrollUp.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	self.ScrollUp.Highlight:SetVertexColor(1, 1, 1)
+	self.ScrollUp.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+
+	self.ScrollUp.Arrow = self.ScrollUp:CreateTexture(nil, "OVERLAY")
+	self.ScrollUp.Arrow:SetPoint("CENTER", self.ScrollUp, 0, 0)
+	self.ScrollUp.Arrow:SetSize(16, 16)
+	self.ScrollUp.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
+	self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+
+	-- Scroll down
+	self.ScrollDown = CreateFrame("Frame", nil, self, "BackdropTemplate")
+	self.ScrollDown:SetSize(16, WIDGET_HEIGHT)
+	self.ScrollDown:SetPoint("BOTTOMRIGHT", GUI, -SPACING, SPACING)
+	self.ScrollDown:SetBackdrop(HydraUI.BackdropAndBorder)
+	self.ScrollDown:SetBackdropColor(0, 0, 0, 0)
+	self.ScrollDown:SetBackdropBorderColor(0, 0, 0)
+	self.ScrollDown:SetScript("OnMouseUp", function(self)
+		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+
+		WindowOnMouseWheel(self:GetParent(), -1)
+	end)
+
+	self.ScrollDown:SetScript("OnMouseDown", function(self)
+		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
+
+		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
+	end)
+
+	self.ScrollDown.Texture = self.ScrollDown:CreateTexture(nil, "ARTWORK")
+	self.ScrollDown.Texture:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
+	self.ScrollDown.Texture:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
+	self.ScrollDown.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+	self.ScrollDown.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+
+	self.ScrollDown.Highlight = self.ScrollDown:CreateTexture(nil, "HIGHLIGHT")
+	self.ScrollDown.Highlight:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
+	self.ScrollDown.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
+	self.ScrollDown.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	self.ScrollDown.Highlight:SetVertexColor(1, 1, 1)
+	self.ScrollDown.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+
+	self.ScrollDown.Arrow = self.ScrollDown:CreateTexture(nil, "OVERLAY")
+	self.ScrollDown.Arrow:SetPoint("CENTER", self.ScrollDown, 0, 0)
+	self.ScrollDown.Arrow:SetSize(16, 16)
+	self.ScrollDown.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+	self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 
 	local ScrollBar = CreateFrame("Slider", nil, self, "BackdropTemplate")
 	ScrollBar:SetPoint("TOPLEFT", self.ScrollUp, "BOTTOMLEFT", 0, -2)
 	ScrollBar:SetPoint("BOTTOMRIGHT", self.ScrollDown, "TOPRIGHT", 0, 2)
-        ScrollBar:SetThumbTexture(widgetTexture)
+	ScrollBar:SetThumbTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
 	ScrollBar:SetOrientation("VERTICAL")
 	ScrollBar:SetValueStep(1)
 	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-        ScrollBar:SetBackdropColor(windowColorR, windowColorG, windowColorB)
+	ScrollBar:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
 	ScrollBar:SetBackdropBorderColor(0, 0, 0)
 	ScrollBar:SetMinMaxValues(1, self.MaxScroll)
 	ScrollBar:SetValue(1)
@@ -533,7 +242,7 @@ local AddWindowScrollBar = function(self, windowColorR, windowColorG, windowColo
 
 	local Thumb = ScrollBar:GetThumbTexture()
 	Thumb:SetSize(ScrollBar:GetWidth(), WIDGET_HEIGHT)
-        Thumb:SetTexture(widgetTexture)
+	Thumb:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
 	Thumb:SetVertexColor(0, 0, 0)
 
 	ScrollBar.NewThumb = ScrollBar:CreateTexture(nil, "BORDER")
@@ -542,24 +251,24 @@ local AddWindowScrollBar = function(self, windowColorR, windowColorG, windowColo
 	ScrollBar.NewThumb:SetTexture(Assets:GetTexture("Blank"))
 	ScrollBar.NewThumb:SetVertexColor(0, 0, 0)
 
-        ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
-        ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
-        ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-        ScrollBar.NewThumb2:SetTexture(widgetTexture)
-        ScrollBar.NewThumb2:SetVertexColor(brightR, brightG, brightB)
+	ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
+	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
+	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
+	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	ScrollBar.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
 	ScrollBar.Highlight = ScrollBar:CreateTexture(nil, "HIGHLIGHT")
 	ScrollBar.Highlight:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
 	ScrollBar.Highlight:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-        ScrollBar.Highlight:SetTexture(widgetTexture)
+	ScrollBar.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
 	ScrollBar.Highlight:SetVertexColor(1, 1, 1)
 	ScrollBar.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
 	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
 	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
 	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
-        ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
-        ScrollBar.Progress:SetVertexColor(brightR, brightG, brightB)
+	ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
+	ScrollBar.Progress:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 	ScrollBar.Progress:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
 	self:EnableMouseWheel(true)
@@ -571,48 +280,51 @@ local AddWindowScrollBar = function(self, windowColorR, windowColorG, windowColo
 end
 
 function GUI:SortMenuButtons()
-        if (not self.SortDirty) then
-                return
-        end
+	tsort(self.Categories, function(a, b)
+		return a.Name < b.Name
+	end)
 
-        tsort(self.Categories, function(a, b)
-                return a.Name < b.Name
-        end)
+	self.NumShownButtons = 0
 
-        local Categories = self.Categories
+	local Categories = self.Categories
 
-        for i = 1, #Categories do
-                local buttons = Categories[i].Buttons
+	for i = 1, #Categories do
+		tsort(Categories[i].Buttons, function(a, b)
+			return a.Name < b.Name
+		end)
 
-                tsort(buttons, function(a, b)
-                        return a.Name < b.Name
-                end)
+		for j = 1, #Categories[i].Buttons do
+			if (j == 1) then
+				Categories[i].Buttons[j]:SetPoint("TOPLEFT", Categories[i], "BOTTOMLEFT", 0, -2)
+			else
+				Categories[i].Buttons[j]:SetPoint("TOPLEFT", Categories[i].Buttons[j-1], "BOTTOMLEFT", 0, -2)
+			end
 
-                for j = 1, #buttons do
-                        local children = buttons[j].Children
+			self.NumShownButtons = self.NumShownButtons + 1
+		end
 
-                        if (children and #children > 1) then
-                                tsort(children, function(a, b)
-                                        return a.Name < b.Name
-                                end)
-                        end
-                end
-        end
+		if (i == 1) then
+			Categories[i]:SetPoint("TOPLEFT", self.MenuParent, "TOPLEFT", SPACING, -SPACING)
+		elseif #Categories[i-1].Buttons then
+			Categories[i]:SetPoint("TOPLEFT", Categories[i-1].Buttons[#Categories[i-1].Buttons], "BOTTOMLEFT", 0, -2)
+		else
+			Categories[i]:SetPoint("TOPLEFT", Categories[i-1], "BOTTOMLEFT", 0, -2)
+		end
 
-        self.SortDirty = false
+		self.NumShownButtons = self.NumShownButtons + 1
+	end
 end
 
 function GUI:CreateCategory(name)
-        local Category = CreateFrame("Frame", nil, self)
-        Category:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
-        Category:SetFrameLevel(self:GetFrameLevel() + 2)
-        Category.SortName = name
-        Category.Name = name
-        Category.Buttons = {}
-        Category.SearchKeywords = BuildSearchKeywords(name)
+	local Category = CreateFrame("Frame", nil, self)
+	Category:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
+	Category:SetFrameLevel(self:GetFrameLevel() + 2)
+	Category.SortName = name
+	Category.Name = name
+	Category.Buttons = {}
 
-        local Text = Category:CreateFontString(nil, "OVERLAY")
-        Text:SetPoint("CENTER", Category, 0, 0)
+	local Text = Category:CreateFontString(nil, "OVERLAY")
+	Text:SetPoint("CENTER", Category, 0, 0)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("CENTER")
 	Text:SetText(format("|cFF%s%s|r", Settings["ui-header-font-color"], name))
@@ -625,43 +337,19 @@ function GUI:CreateCategory(name)
 	Texture:SetPoint("TOPLEFT", Category, 1, -1)
 	Texture:SetPoint("BOTTOMRIGHT", Category, -1, 1)
 	Texture:SetTexture(Assets:GetTexture("Blank"))
-	Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
+	Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
 	Category.Text = Text
 	Category.Texture = Texture
 
-        self.Categories[#self.Categories + 1] = Category
-        self.Categories[name] = Category
+	self.TotalSelections = (self.TotalSelections or 0) + 1
 
-        self:MarkMenuDirty()
+	self.Categories[#self.Categories + 1] = Category
+	self.Categories[name] = Category
 end
 
 local DisableScrolling = function(self)
-        self.ScrollingDisabled = true
-end
-
-local RunLoadCalls = function(self, category, name, parent, leftColumn, rightColumn)
-        local queue
-
-        if parent then
-                local categoryData = self.LoadCalls[category]
-                local parentData = categoryData and categoryData[parent]
-                local children = parentData and parentData.Children
-                queue = children and children[name] and children[name].Calls
-        else
-                local categoryData = self.LoadCalls[category]
-                queue = categoryData and categoryData[name] and categoryData[name].Calls
-        end
-
-        if (not queue or #queue == 0) then
-                return
-        end
-
-        for i = 1, #queue do
-                queue[i](leftColumn, rightColumn)
-        end
-
-        ClearTable(queue)
+	self.ScrollingDisabled = true
 end
 
 function GUI:CreateWidgetWindow(category, name, parent)
@@ -673,27 +361,31 @@ function GUI:CreateWidgetWindow(category, name, parent)
 	Window:SetPoint("BOTTOMRIGHT", self, -SPACING, SPACING)
 	Window:Hide()
 
-        local windowColorR, windowColorG, windowColorB = GetColorRGB("ui-window-main-color")
-        local widgetTexture = Assets:GetTexture(Settings["ui-widget-texture"])
-        local headerTexture = Assets:GetTexture(Settings["ui-header-texture"])
-        local brightR, brightG, brightB = GetColorRGB("ui-widget-bright-color")
-        local widgetColorR, widgetColorG, widgetColorB = GetColorRGB("ui-widget-color")
+	Window.LeftWidgetsBG = CreateFrame("Frame", nil, Window)
+	Window.LeftWidgetsBG:SetWidth(GROUP_WIDTH)
+	Window.LeftWidgetsBG:SetPoint("TOPLEFT", Window, 0, 0)
+	Window.LeftWidgetsBG:SetPoint("BOTTOMLEFT", Window, 0, 0)
 
-        Window.LeftWidgetsBG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-        Window.LeftWidgetsBG:SetWidth(GROUP_WIDTH)
-        Window.LeftWidgetsBG:SetPoint("TOPLEFT", Window, 0, 0)
-        Window.LeftWidgetsBG:SetPoint("BOTTOMLEFT", Window, 0, 0)
-        Window.LeftWidgetsBG:SetBackdrop(HydraUI.BackdropAndBorder)
-        Window.LeftWidgetsBG:SetBackdropColor(windowColorR, windowColorG, windowColorB)
-        Window.LeftWidgetsBG:SetBackdropBorderColor(0, 0, 0)
+	Window.LeftWidgetsBG.Backdrop = CreateFrame("Frame", nil, Window, "BackdropTemplate")
+	Window.LeftWidgetsBG.Backdrop:SetWidth(GROUP_WIDTH)
+	Window.LeftWidgetsBG.Backdrop:SetPoint("TOPLEFT", Window.LeftWidgetsBG, 0, 0)
+	Window.LeftWidgetsBG.Backdrop:SetPoint("BOTTOMLEFT", Window.LeftWidgetsBG, 0, 0)
+	Window.LeftWidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
+	Window.LeftWidgetsBG.Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	Window.LeftWidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
-        Window.RightWidgetsBG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-        Window.RightWidgetsBG:SetWidth(GROUP_WIDTH)
-        Window.RightWidgetsBG:SetPoint("TOPLEFT", Window.LeftWidgetsBG, "TOPRIGHT", 2, 0)
-        Window.RightWidgetsBG:SetPoint("BOTTOMLEFT", Window.LeftWidgetsBG, "BOTTOMRIGHT", 2, 0)
-        Window.RightWidgetsBG:SetBackdrop(HydraUI.BackdropAndBorder)
-        Window.RightWidgetsBG:SetBackdropColor(windowColorR, windowColorG, windowColorB)
-        Window.RightWidgetsBG:SetBackdropBorderColor(0, 0, 0)
+	Window.RightWidgetsBG = CreateFrame("Frame", nil, Window)
+	Window.RightWidgetsBG:SetWidth(GROUP_WIDTH)
+	Window.RightWidgetsBG:SetPoint("TOPLEFT", Window.LeftWidgetsBG, "TOPRIGHT", 2, 0)
+	Window.RightWidgetsBG:SetPoint("BOTTOMLEFT", Window.LeftWidgetsBG, "BOTTOMRIGHT", 2, 0)
+
+	Window.RightWidgetsBG.Backdrop = CreateFrame("Frame", nil, Window, "BackdropTemplate")
+	Window.RightWidgetsBG.Backdrop:SetWidth(GROUP_WIDTH)
+	Window.RightWidgetsBG.Backdrop:SetPoint("TOPLEFT", Window.RightWidgetsBG, 0, 0)
+	Window.RightWidgetsBG.Backdrop:SetPoint("BOTTOMLEFT", Window.RightWidgetsBG, 0, 0)
+	Window.RightWidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
+	Window.RightWidgetsBG.Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	Window.RightWidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
 	Window.Category = category
 	Window.Name = name
@@ -711,7 +403,19 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG[Name] = Function
 	end
 
-        RunLoadCalls(self, category, name, parent, Window.LeftWidgetsBG, Window.RightWidgetsBG)
+	if (parent and self.LoadCalls[category][parent].Children) then
+		for i = 1, #self.LoadCalls[category][parent].Children[name].Calls do
+			self.LoadCalls[category][parent].Children[name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
+
+			tremove(self.LoadCalls[category][parent].Children[name].Calls, 1)
+		end
+	else
+		for i = 1, #self.LoadCalls[category][name].Calls do
+			self.LoadCalls[category][name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
+
+			tremove(self.LoadCalls[category][name].Calls, 1)
+		end
+	end
 
 	if (#Window.LeftWidgetsBG.Widgets > 0) then
 		Window.LeftWidgetsBG:CreateFooter()
@@ -721,19 +425,19 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG:CreateFooter()
 	end
 
-        Window.MaxScroll = max((#Window.LeftWidgets - (MAX_WINDOW_WIDGETS_SHOWN - 1)), (#Window.RightWidgets - (MAX_WINDOW_WIDGETS_SHOWN - 1)), 1)
+	Window.MaxScroll = max((#Window.LeftWidgets - (MAX_WIDGETS_SHOWN - 1)), (#Window.RightWidgets - (MAX_WIDGETS_SHOWN - 1)), 1)
 	Window.WidgetCount = max(#Window.LeftWidgets, #Window.RightWidgets)
 
-        if (Window.MaxScroll > 1) then
-                AddWindowScrollBar(Window, windowColorR, windowColorG, windowColorB, widgetTexture, headerTexture, brightR, brightG, brightB, widgetColorR, widgetColorG, widgetColorB)
-        else
-                Window.ScrollFiller = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-                Window.ScrollFiller:SetPoint("TOPRIGHT", Window, 0, 0)
-                Window.ScrollFiller:SetPoint("BOTTOMRIGHT", Window, 0, 0)
-                Window.ScrollFiller:SetWidth(16)
-                Window.ScrollFiller:SetBackdrop(HydraUI.BackdropAndBorder)
-                Window.ScrollFiller:SetBackdropColor(windowColorR, windowColorG, windowColorB)
-                Window.ScrollFiller:SetBackdropBorderColor(0, 0, 0)
+	if (Window.MaxScroll > 1) then
+		AddWindowScrollBar(Window)
+	else
+		Window.ScrollFiller = CreateFrame("Frame", nil, Window, "BackdropTemplate")
+		Window.ScrollFiller:SetPoint("TOPRIGHT", Window, 0, 0)
+		Window.ScrollFiller:SetPoint("BOTTOMRIGHT", Window, 0, 0)
+		Window.ScrollFiller:SetWidth(16)
+		Window.ScrollFiller:SetBackdrop(HydraUI.BackdropAndBorder)
+		Window.ScrollFiller:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+		Window.ScrollFiller:SetBackdropBorderColor(0, 0, 0)
 
 		Window:SetScript("OnMouseWheel", NoScroll)
 	end
@@ -744,84 +448,109 @@ function GUI:CreateWidgetWindow(category, name, parent)
 end
 
 function GUI:ShowWindow(category, name, parent)
-        local button, parentButton = self:GetButton(category, name, parent)
+	local Categories = self.Categories
 
-        if (not button) then
-                return
-        end
+	for i = 1, #Categories do
+		for j = 1, #Categories[i].Buttons do
+			if parent then
+				if (Categories[i].Buttons[j].Name == parent and Categories[i].Buttons[j].Children) then
+					for o = 1, #Categories[i].Buttons[j].Children do
+						if (Categories[i].Buttons[j].Children[o].Name == name) then
+							if (not Categories[i].Buttons[j].Children[o].Window) then
+								Categories[i].Buttons[j].Children[o].Window = self:CreateWidgetWindow(category, name, parent)
+							end
 
-        if parent and (not parentButton) then
-                return
-        end
+							Categories[i].Buttons[j].Window:Hide()
 
-        local requiresScroll = false
+							Categories[i].Buttons[j].Children[o].Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+							Categories[i].Buttons[j].Children[o].Window:Show()
+						elseif Categories[i].Buttons[j].Children[o].Window then
+							Categories[i].Buttons[j].Children[o].Window:Hide()
 
-        if parent then
-                if self.ActiveChildButton and (self.ActiveChildButton ~= button) then
-                        DeselectButton(self.ActiveChildButton)
-                end
+							if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
+								Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
+							end
+						end
+					end
 
-                if self.ActiveTopButton and (self.ActiveTopButton ~= parentButton) then
-                        DeselectButton(self.ActiveTopButton)
+					if (Categories[i].Buttons[j].Selected:GetAlpha() > 0) then
+						Categories[i].Buttons[j].Selected:SetAlpha(0)
+					end
+				elseif Categories[i].Buttons[j].Window then
+					Categories[i].Buttons[j].Window:Hide()
+				end
+			elseif (Categories[i].Name == category) and (Categories[i].Buttons[j].Name == name) then
+				if (not Categories[i].Buttons[j].Window) then
+					Categories[i].Buttons[j].Window = self:CreateWidgetWindow(category, name, parent)
+				end
 
-                        if CollapseChildren(self, self.ActiveTopButton) then
-                                requiresScroll = true
-                        end
-                end
+				Categories[i].Buttons[j].Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+				Categories[i].Buttons[j].Window:Show()
 
-                self.ActiveTopButton = parentButton
-                self.ActiveChildButton = button
+				if Categories[i].Buttons[j].Children then
+					if Categories[i].Buttons[j].ChildrenShown then
+						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 
-                if parentButton then
-                        if ExpandChildren(self, parentButton) then
-                                requiresScroll = true
-                        end
+						for o = 1, #Categories[i].Buttons[j].Children do
+							if Categories[i].Buttons[j].Children[o].Window then
+								Categories[i].Buttons[j].Children[o].Window:Hide()
 
-                        if parentButton.Window then
-                                parentButton.Window:Hide()
-                        end
+								if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
+									Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
+								end
+							end
 
-                        if parentButton.Selected and (parentButton.Selected:GetAlpha() > 0) then
-                                parentButton.Selected:SetAlpha(0)
-                        end
-                end
-        else
-                if self.ActiveChildButton then
-                        DeselectButton(self.ActiveChildButton)
-                        self.ActiveChildButton = nil
-                end
+							Categories[i].Buttons[j].Children[o]:Hide()
+						end
 
-                if self.ActiveTopButton and (self.ActiveTopButton ~= button) then
-                        DeselectButton(self.ActiveTopButton)
+						Categories[i].Buttons[j].ChildrenShown = false
+					else
+						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
 
-                        if CollapseChildren(self, self.ActiveTopButton) then
-                                requiresScroll = true
-                        end
-                end
+						for o = 1, #Categories[i].Buttons[j].Children do
+							if Categories[i].Buttons[j].Children[o].Window then
+								Categories[i].Buttons[j].Children[o].Window:Hide()
 
-                self.ActiveTopButton = button
+								if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
+									Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
+								end
+							end
 
-                if button.Children then
-                        if button.ChildrenShown then
-                                if CollapseChildren(self, button) then
-                                        requiresScroll = true
-                                end
-                        else
-                                if ExpandChildren(self, button) then
-                                        requiresScroll = true
-                                end
-                        end
-                end
-        end
+							Categories[i].Buttons[j].Children[o]:Hide()
+						end
 
-        EnsureWindow(self, button)
+						Categories[i].Buttons[j].ChildrenShown = true
+					end
+				end
+			else
+				if Categories[i].Buttons[j].Window then
+					Categories[i].Buttons[j].Window:Hide()
 
-        button.Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-        button.Window:Show()
+					if (Categories[i].Buttons[j].Selected:GetAlpha() > 0) then
+						Categories[i].Buttons[j].Selected:SetAlpha(0)
+					end
 
-        if requiresScroll then
-                self:ScrollSelections()
-        end
+					if Categories[i].Buttons[j].Children then
+						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+
+						for o = 1, #Categories[i].Buttons[j].Children do
+							if Categories[i].Buttons[j].Children[o].Window then
+								Categories[i].Buttons[j].Children[o].Window:Hide()
+							end
+
+							Categories[i].Buttons[j].Children[o]:Hide()
+						end
+
+						Categories[i].Buttons[j].ChildrenShown = false
+					end
+				end
+			end
+		end
+	end
+
+	self:ScrollSelections()
+
+	--CloseLastDropdown()
 end
 
 local WindowButtonOnEnter = function(self)
@@ -857,197 +586,118 @@ local WindowSubButtonOnMouseDown = function(self)
 end
 
 function GUI:HasButton(category, name, parent)
-        if parent then
-                if (self.Buttons[category] and self.Buttons[category][parent]) then
-                        return self.Buttons[category][parent][name]
-                end
-        else
-                return (self.Buttons[category] and self.Buttons[category][name])
-        end
-end
-
-function GUI:GetButton(category, name, parent)
-        local categoryButtons = self.Buttons[category]
-
-        if (not categoryButtons) then
-                return
-        end
-
-        if parent then
-                local parentButton = categoryButtons[parent]
-
-                if parentButton then
-                        return parentButton[name], parentButton
-                end
-        else
-                return categoryButtons[name]
-        end
+	if parent then
+		if (self.Buttons[category] and self.Buttons[category][parent]) then
+			return self.Buttons[category][parent][name]
+		end
+	else
+		return (self.Buttons[category] and self.Buttons[category][name])
+	end
 end
 
 function GUI:CreateWindow(category, name, parent)
-        if self:HasButton(category, name, parent) then
-                return
-        end
+	if self:HasButton(category, name, parent) then
+		return
+	end
 
-        if (not self.Categories[category]) then
-                self:CreateCategory(category)
-        end
+	if (not self.Categories[category]) then
+		self:CreateCategory(category)
+	end
 
-        local Category = self.Categories[category]
+	local Category = self.Categories[category]
 
-        local Button = CreateFrame("Frame", nil, self)
-        Button:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
-        Button:SetFrameLevel(self:GetFrameLevel() + 2)
-        Button.Name = name
-        Button.Category = category
-        Button.SearchKeywords = BuildSearchKeywords(category, parent or "", name)
-        Button:SetScript("OnEnter", WindowButtonOnEnter)
-        Button:SetScript("OnLeave", WindowButtonOnLeave)
+	local Button = CreateFrame("Frame", nil, self)
+	Button:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
+	Button:SetFrameLevel(self:GetFrameLevel() + 2)
+	Button.Name = name
+	Button.Category = category
+	Button:SetScript("OnEnter", WindowButtonOnEnter)
+	Button:SetScript("OnLeave", WindowButtonOnLeave)
 
-        Button.Selected = Button:CreateTexture(nil, "ARTWORK")
-        Button.Selected:SetPoint("TOPLEFT", Button, 1, -1)
-        Button.Selected:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-        Button.Selected:SetTexture(Assets:GetTexture("Blank"))
-        Button.Selected:SetAlpha(0)
+	Button.Selected = Button:CreateTexture(nil, "ARTWORK")
+	Button.Selected:SetPoint("TOPLEFT", Button, 1, -1)
+	Button.Selected:SetPoint("BOTTOMRIGHT", Button, -1, 1)
+	Button.Selected:SetTexture(Assets:GetTexture("Blank"))
+	Button.Selected:SetAlpha(0)
 
-        Button.Highlight = Button:CreateTexture(nil, "ARTWORK")
-        Button.Highlight:SetPoint("TOPLEFT", Button, 1, -1)
-        Button.Highlight:SetPoint("BOTTOMRIGHT", Button, -1, 1)
-        Button.Highlight:SetTexture(Assets:GetTexture("Blank"))
-        Button.Highlight:SetVertexColor(1, 1, 1, 0.4)
-        Button.Highlight:SetAlpha(0)
+	Button.Highlight = Button:CreateTexture(nil, "ARTWORK")
+	Button.Highlight:SetPoint("TOPLEFT", Button, 1, -1)
+	Button.Highlight:SetPoint("BOTTOMRIGHT", Button, -1, 1)
+	Button.Highlight:SetTexture(Assets:GetTexture("Blank"))
+	Button.Highlight:SetVertexColor(1, 1, 1, 0.4)
+	Button.Highlight:SetAlpha(0)
 
-        Button.Text = Button:CreateFontString(nil, "OVERLAY")
-        Button.Text:SetSize(MENU_BUTTON_WIDTH - 6, WIDGET_HEIGHT)
-        Button.Text:SetJustifyH("LEFT")
+	Button.Text = Button:CreateFontString(nil, "OVERLAY")
+	Button.Text:SetSize(MENU_BUTTON_WIDTH - 6, WIDGET_HEIGHT)
+	Button.Text:SetJustifyH("LEFT")
 
-        Button.FadeIn = LibMotion:CreateAnimation(Button, "Fade")
-        Button.FadeIn:SetEasing("in")
-        Button.FadeIn:SetDuration(0.15)
-        Button.FadeIn:SetChange(SELECTED_HIGHLIGHT_ALPHA)
+	Button.FadeIn = LibMotion:CreateAnimation(Button, "Fade")
+	Button.FadeIn:SetEasing("in")
+	Button.FadeIn:SetDuration(0.15)
+	Button.FadeIn:SetChange(SELECTED_HIGHLIGHT_ALPHA)
 
-        Button.FadeOut = LibMotion:CreateAnimation(Button, "Fade")
-        Button.FadeOut:SetEasing("out")
-        Button.FadeOut:SetDuration(0.15)
-        Button.FadeOut:SetChange(0)
+	Button.FadeOut = LibMotion:CreateAnimation(Button, "Fade")
+	Button.FadeOut:SetEasing("out")
+	Button.FadeOut:SetDuration(0.15)
+	Button.FadeOut:SetChange(0)
 
-        local categoryButtons = self.Buttons[category]
+	if parent then
+		Button:SetScript("OnMouseUp", WindowSubButtonOnMouseUp)
+		Button:SetScript("OnMouseDown", WindowSubButtonOnMouseDown)
 
-        if (not categoryButtons) then
-                categoryButtons = {}
-                self.Buttons[category] = categoryButtons
-        end
+		Button.Parent = parent
 
-        if parent then
-                Button:SetScript("OnMouseUp", WindowSubButtonOnMouseUp)
-                Button:SetScript("OnMouseDown", WindowSubButtonOnMouseDown)
+		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 
-                Button.Parent = parent
+		Button.Text:SetPoint("LEFT", Button, SPACING * 3, 0)
+		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], 12)
+		Button.Text:SetText("|cFF" .. Settings["ui-widget-font-color"] .. name .. "|r")
 
-                Button.Selected:SetVertexColor(GetColorRGB("ui-widget-color"))
+		for j = 1, #Category.Buttons do
+			if (Category.Buttons[j].Name == parent) then
+				if (not Category.Buttons[j].Children) then
+					Category.Buttons[j].Children = {}
 
-                Button.Text:SetPoint("LEFT", Button, SPACING * 3, 0)
-                HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], 12)
-                Button.Text:SetText("|cFF" .. Settings["ui-widget-font-color"] .. name .. "|r")
+					Category.Buttons[j].Arrow = Category.Buttons[j]:CreateTexture(nil, "OVERLAY")
+					Category.Buttons[j].Arrow:SetPoint("RIGHT", Category.Buttons[j], -3, -1)
+					Category.Buttons[j].Arrow:SetSize(16, 16)
+					Category.Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+					Category.Buttons[j].Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+				end
 
-                local storedEntry = categoryButtons[parent]
-                local parentButton = storedEntry
+				tinsert(Category.Buttons[j].Children, Button)
 
-                if (not parentButton or not parentButton.GetObjectType) then
-                        parentButton = nil
+				break
+			end
+		end
+	else
+		Button:SetScript("OnMouseUp", WindowButtonOnMouseUp)
+		Button:SetScript("OnMouseDown", WindowButtonOnMouseDown)
 
-                        for j = 1, #Category.Buttons do
-                                if (Category.Buttons[j].Name == parent) then
-                                        parentButton = Category.Buttons[j]
+		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
-                                        break
-                                end
-                        end
-                end
+		Button.Text:SetPoint("LEFT", Button, 4, 0)
+		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], Settings["ui-header-font-size"])
+		Button.Text:SetText("|cFF" .. Settings["ui-button-font-color"] .. name .. "|r")
 
-                if parentButton then
-                        if (not parentButton.Children) then
-                                parentButton.Children = {}
+		tinsert(Category.Buttons, Button)
 
-                                parentButton.Arrow = parentButton:CreateTexture(nil, "OVERLAY")
-                                parentButton.Arrow:SetPoint("RIGHT", parentButton, -3, -1)
-                                parentButton.Arrow:SetSize(16, 16)
-                                parentButton.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-                                parentButton.Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
-                        end
+		self.TotalSelections = (self.TotalSelections or 0) + 1
+	end
 
-                        tinsert(parentButton.Children, Button)
-                        parentButton[name] = Button
+	if (not self.Buttons[category]) then
+		self.Buttons[category] = {}
+	end
 
-                        if (storedEntry and storedEntry ~= parentButton and type(storedEntry) == "table") then
-                                for childName, childButton in pairs(storedEntry) do
-                                        if (childButton ~= Button and childButton and childButton.GetObjectType) then
-                                                childButton.ParentButton = parentButton
-                                                parentButton.Children[#parentButton.Children + 1] = childButton
-                                                parentButton[childName] = childButton
-                                        end
-                                end
-                        end
+	if parent then
+		if (not self.Buttons[category][parent]) then
+			self.Buttons[category][parent] = {}
+		end
 
-                        categoryButtons[parent] = parentButton
-                else
-                        local pending = storedEntry
-
-                        if (not pending or pending.GetObjectType) then
-                                pending = {}
-                        end
-
-                        pending[name] = Button
-                        categoryButtons[parent] = pending
-                end
-
-                Button.ParentButton = parentButton
-        else
-                Button:SetScript("OnMouseUp", WindowButtonOnMouseUp)
-                Button:SetScript("OnMouseDown", WindowButtonOnMouseDown)
-
-                Button.Selected:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
-
-                Button.Text:SetPoint("LEFT", Button, 4, 0)
-                HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], Settings["ui-header-font-size"])
-                Button.Text:SetText("|cFF" .. Settings["ui-button-font-color"] .. name .. "|r")
-
-                local storedEntry = categoryButtons[name]
-
-                tinsert(Category.Buttons, Button)
-                categoryButtons[name] = Button
-
-                if (storedEntry and type(storedEntry) == "table" and not storedEntry.GetObjectType) then
-                        for childName, childButton in pairs(storedEntry) do
-                                if (childButton and childButton.GetObjectType) then
-                                        childButton.ParentButton = Button
-
-                                        if (not Button.Children) then
-                                                Button.Children = {}
-
-                                                Button.Arrow = Button:CreateTexture(nil, "OVERLAY")
-                                                Button.Arrow:SetPoint("RIGHT", Button, -3, -1)
-                                                Button.Arrow:SetSize(16, 16)
-                                                Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-                                                Button.Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
-                                        end
-
-                                        Button.Children[#Button.Children + 1] = childButton
-                                        Button[childName] = childButton
-                                end
-                        end
-                end
-        end
-
-        if parent then
-                local parentEntry = categoryButtons[parent]
-
-                if (parentEntry and parentEntry ~= Button and not parentEntry[name]) then
-                        parentEntry[name] = Button
-                end
-        end
-
-        self:MarkMenuDirty()
+		self.Buttons[category][parent][name] = Button
+	elseif (not self.Buttons[category][name]) then
+		self.Buttons[category][name] = Button
+	end
 end
 
 function GUI:AddWidgets(category, name, arg1, arg2)
@@ -1075,416 +725,119 @@ function GUI:AddWidgets(category, name, arg1, arg2)
 end
 
 function GUI:GetWidget(id)
-        if self.WidgetID[id] then
-                return self.WidgetID[id]
-        end
-end
-
-function GUI:SetWidgetValue(id, ...)
-        local widget = self.WidgetID[id]
-
-        if widget and widget.SetValue then
-                widget:SetValue(...)
-
-                return true
-        end
-
-        return false
-end
-
-function GUI:GetWidgetValue(id, ...)
-        local widget = self.WidgetID[id]
-
-        if widget and widget.GetValue then
-                return widget:GetValue(...)
-        end
-end
-
-function GUI:SetWidgetEnabled(id, enabled)
-        local widget = self.WidgetID[id]
-
-        if (not widget) then
-                return false
-        end
-
-        if (enabled == false) then
-                if widget.Disable then
-                        widget:Disable()
-                end
-
-                widget.Disabled = true
-
-                return widget.Disable ~= nil
-        end
-
-        if widget.Enable then
-                widget:Enable()
-                widget.Disabled = false
-
-                return true
-        end
-
-        widget.Disabled = false
-
-        return false
-end
-
-function GUI:IsWidgetEnabled(id)
-        local widget = self.WidgetID[id]
-
-        if (not widget) then
-                return false
-        end
-
-        if (widget.Disabled ~= nil) then
-                return not widget.Disabled
-        end
-
-        return true
-end
-
-function GUI:ToggleWidgetEnabled(id)
-        if self:IsWidgetEnabled(id) then
-                return self:SetWidgetEnabled(id, false)
-        end
-
-        return self:SetWidgetEnabled(id, true)
-end
-
-function GUI:SetCategorySearchKeywords(name, ...)
-        local category = self.Categories[name]
-
-        if (not category) then
-                return false
-        end
-
-        category.SearchKeywords = BuildSearchKeywords(name, ...)
-
-        self:MarkMenuDirty(false)
-
-        return true
-end
-
-function GUI:AddCategorySearchKeywords(name, ...)
-        local category = self.Categories[name]
-
-        if (not category) then
-                return false
-        end
-
-        category.SearchKeywords = AppendSearchKeywords(category.SearchKeywords, ...)
-
-        self:MarkMenuDirty(false)
-
-        return true
-end
-
-function GUI:SetButtonSearchKeywords(category, name, parent, ...)
-        local button = self:GetButton(category, name, parent)
-
-        if (not button) then
-                return false
-        end
-
-        button.SearchKeywords = BuildSearchKeywords(category, parent or "", name, ...)
-
-        self:MarkMenuDirty(false)
-
-        return true
-end
-
-function GUI:AddButtonSearchKeywords(category, name, parent, ...)
-        local button = self:GetButton(category, name, parent)
-
-        if (not button) then
-                return false
-        end
-
-        button.SearchKeywords = AppendSearchKeywords(button.SearchKeywords or "", category, parent or "", name, ...)
-
-        self:MarkMenuDirty(false)
-
-        return true
-end
-
-function GUI:RebuildVisibleMenu()
-        if (not self.MenuDirty) then
-                return
-        end
-
-        self:SortMenuButtons()
-
-        local visible = self.VisibleMenu
-
-        if not visible then
-                visible = {}
-                self.VisibleMenu = visible
-        else
-                ClearTable(visible)
-        end
-
-        local total = 0
-        local categories = self.Categories
-        local tokens = self.SearchTokens
-        local hasSearch = tokens and (#tokens > 0)
-
-        for i = 1, #categories do
-                local category = categories[i]
-                local categoryAdded = false
-
-                category:Hide()
-
-                if not hasSearch then
-                        visible[#visible + 1] = category
-                        total = total + 1
-
-                        local buttons = category.Buttons
-
-                        for j = 1, #buttons do
-                                local button = buttons[j]
-
-                                button:Hide()
-                                visible[#visible + 1] = button
-                                total = total + 1
-
-                                if button.SearchExpanded then
-                                        button.SearchExpanded = nil
-                                end
-
-                                if button.Arrow then
-                                        if button.ChildrenShown then
-                                                button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-                                        else
-                                                button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-                                        end
-                                end
-
-                                local children = button.Children
-
-                                if children then
-                                        if button.ChildrenShown then
-                                                for childIndex = 1, #children do
-                                                        local child = children[childIndex]
-
-                                                        child:Hide()
-                                                        visible[#visible + 1] = child
-                                                        total = total + 1
-                                                end
-                                        else
-                                                for childIndex = 1, #children do
-                                                        children[childIndex]:Hide()
-                                                end
-                                        end
-                                end
-                        end
-                else
-                        local buttons = category.Buttons
-                        local categoryMatches = FrameMatchesSearch(category, tokens)
-
-                        local function AddCategory()
-                                if (not categoryAdded) then
-                                        visible[#visible + 1] = category
-                                        total = total + 1
-                                        categoryAdded = true
-                                end
-                        end
-
-                        for j = 1, #buttons do
-                                local button = buttons[j]
-                                local buttonMatches = FrameMatchesSearch(button, tokens)
-                                local matchedChildren
-
-                                button:Hide()
-
-                                local children = button.Children
-
-                                if children then
-                                        for childIndex = 1, #children do
-                                                local child = children[childIndex]
-                                                local childMatches = FrameMatchesSearch(child, tokens)
-
-                                                child:Hide()
-
-                                                if childMatches then
-                                                        if not matchedChildren then
-                                                                matchedChildren = {}
-                                                        end
-
-                                                        matchedChildren[#matchedChildren + 1] = child
-                                                end
-                                        end
-                                end
-
-                                if button.Arrow then
-                                        if matchedChildren and (#matchedChildren > 0) then
-                                                button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-                                                button.SearchExpanded = true
-                                        else
-                                                button.SearchExpanded = nil
-
-                                                if button.ChildrenShown then
-                                                        button.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-                                                else
-                                                        button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-                                                end
-                                        end
-                                end
-
-                                if buttonMatches or (matchedChildren and (#matchedChildren > 0)) then
-                                        AddCategory()
-
-                                        visible[#visible + 1] = button
-                                        total = total + 1
-
-                                        if matchedChildren then
-                                                for k = 1, #matchedChildren do
-                                                        visible[#visible + 1] = matchedChildren[k]
-                                                        total = total + 1
-                                                end
-                                        end
-                                end
-                        end
-
-                        if categoryMatches and (not categoryAdded) then
-                                AddCategory()
-                        end
-
-                        if (not categoryAdded) then
-                                if buttons then
-                                        for j = 1, #buttons do
-                                                local button = buttons[j]
-
-                                                button:Hide()
-
-                                                if button.Children then
-                                                        for childIndex = 1, #button.Children do
-                                                                button.Children[childIndex]:Hide()
-                                                        end
-                                                end
-                                        end
-                                end
-                        end
-                end
-        end
-
-        self.TotalSelections = total
-        self.MenuDirty = false
+	if self.WidgetID[id] then
+		return self.WidgetID[id]
+	end
 end
 
 function GUI:ScrollSelections()
-        self:RebuildVisibleMenu()
+	local Count = 0
+	local Categories = self.Categories
+	local ScrollButtons = self.ScrollButtons
 
-        local visible = self.VisibleMenu
-        local total = self.TotalSelections or 0
-        local scrollButtons = self.ScrollButtons
+	-- Collect buttons
+	for i = 1, #ScrollButtons do
+		tremove(ScrollButtons, 1)
+	end
 
-        for index = #scrollButtons, 1, -1 do
-                local button = scrollButtons[index]
+	for i = 1, #Categories do
+		Count = Count + 1
 
-                if button then
-                        button:Hide()
-                        scrollButtons[index] = nil
-                end
-        end
+		if (Count >= self.Offset) and (Count <= self.Offset + MAX_WIDGETS_SHOWN - 1) then
+			tinsert(ScrollButtons, Categories[i])
+		end
 
-        if self.EmptyResults then
-                self.EmptyResults:Hide()
-        end
+		Categories[i]:Hide()
 
-        if (total == 0) then
-                if self.EmptyResults then
-                        if (self.SearchQuery and self.SearchQuery ~= "") then
-                                self.EmptyResults:SetText(NO_RESULTS_PROMPT)
-                        else
-                                self.EmptyResults:SetText(NO_OPTIONS_PROMPT)
-                        end
+		for j = 1, #Categories[i].Buttons do
+			Count = Count + 1
 
-                        self.EmptyResults:Show()
-                end
+			if (Count >= self.Offset) and (Count <= self.Offset + MAX_WIDGETS_SHOWN - 1) then
+				tinsert(ScrollButtons, Categories[i].Buttons[j])
+			end
 
-                if self.ScrollBar then
-                        self.ScrollBar:SetMinMaxValues(1, 1)
-                        self.ScrollBar:SetValue(1)
-                end
+			if Categories[i].Buttons[j].ChildrenShown then
+				for o = 1, #Categories[i].Buttons[j].Children do
+					Count = Count + 1
 
-                UpdateArrows(self.ScrollUp, self.ScrollDown, 1, 1)
+					if (Count >= self.Offset) and (Count <= self.Offset + MAX_WIDGETS_SHOWN - 1) then
+						tinsert(ScrollButtons, Categories[i].Buttons[j].Children[o])
+						Categories[i].Buttons[j].Children[o]:Show()
+					else
+						Categories[i].Buttons[j].Children[o]:Hide()
+					end
+				end
+			end
 
-                return
-        end
+			Categories[i].Buttons[j]:Hide()
+		end
+	end
 
-        self.Offset = self:ClampSelectionOffset(self.Offset or 1)
+	self.TotalSelections = Count
 
-        local offset = self.Offset
-        local lastVisible = min(offset + MAX_MENU_BUTTONS_SHOWN - 1, total)
-        local maxOffset = max((total - MAX_MENU_BUTTONS_SHOWN) + 1, 1)
+	self.ScrollBar:SetMinMaxValues(1, (Count - MAX_WIDGETS_SHOWN) + 1)
 
-        if self.ScrollBar then
-                self.ScrollBar:SetMinMaxValues(1, maxOffset)
-        end
+	for i = 1, #ScrollButtons do
+		if ScrollButtons[i] then
+			ScrollButtons[i]:ClearAllPoints()
 
-        local anchor
-        local topOffset = self.MenuListOffset or ((SPACING * 2) + WIDGET_HEIGHT)
+			if (i == 1) then
+				ScrollButtons[i]:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
+			else
+				ScrollButtons[i]:SetPoint("TOP", ScrollButtons[i-1], "BOTTOM", 0, -2)
+			end
 
-        for index = offset, lastVisible do
-                local button = visible[index]
+			ScrollButtons[i]:Show()
+		end
+	end
 
-                if button then
-                        button:ClearAllPoints()
+	if (self.Offset == 1) then
+		self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+	else
+		self.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	end
 
-                        if anchor then
-                                button:SetPoint("TOP", anchor, "BOTTOM", 0, -2)
-                        else
-                                button:SetPoint("TOPLEFT", self.MenuParent, SPACING, -topOffset)
-                        end
+	local Min, Max = self.ScrollBar:GetMinMaxValues()
 
-                        button:Show()
-                        scrollButtons[#scrollButtons + 1] = button
-                        anchor = button
-                end
-        end
-
-        UpdateArrows(self.ScrollUp, self.ScrollDown, self.Offset, maxOffset)
-end
-
-function GUI:ClampSelectionOffset(offset)
-        if (offset <= 1) then
-                return 1
-        end
-
-        local total = self.TotalSelections or 1
-        local maxOffset = max((total - MAX_MENU_BUTTONS_SHOWN) + 1, 1)
-
-        if (offset > maxOffset) then
-                return maxOffset
-        end
-
-        return offset
+	if (self.Offset == Max) then
+		self.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+	else
+		self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	end
 end
 
 function GUI:SetSelectionOffset(offset)
-        self.Offset = offset
+	self.Offset = offset
 
-        self.Offset = self:ClampSelectionOffset(self.Offset)
+	if (self.Offset <= 1) then
+		self.Offset = 1
+	elseif (self.Offset > (self.TotalSelections - MAX_WIDGETS_SHOWN - 1)) then
+		self.Offset = self.Offset - 1
+	end
 
-        self:ScrollSelections()
+	self:ScrollSelections()
 end
 
 function GUI:SetSelectionOffsetByDelta(delta)
-        if (delta > 0) then -- Up
-                self.Offset = self.Offset - 1
-        else -- Down
-                self.Offset = self.Offset + 1
-        end
+	if (delta == 1) then -- Up
+		self.Offset = self.Offset - 1
 
-        self.Offset = self:ClampSelectionOffset(self.Offset)
+		if (self.Offset <= 1) then
+			self.Offset = 1
+		end
+	else -- Down
+		self.Offset = self.Offset + 1
+
+		if (self.Offset > (self.TotalSelections - (MAX_WIDGETS_SHOWN - 1))) then
+			self.Offset = self.Offset - 1
+		end
+	end
 end
 
 local SelectionOnMouseWheel = function(self, delta)
-        self:SetSelectionOffsetByDelta(delta)
-        self:ScrollSelections()
-        if self.ScrollBar then
-                self.ScrollBar:SetValue(self.Offset)
-        end
+	self:SetSelectionOffsetByDelta(delta)
+	self:ScrollSelections()
+	self.ScrollBar:SetValue(self.Offset)
 end
 
 local Round = function(num, dec)
@@ -1494,9 +847,9 @@ local Round = function(num, dec)
 end
 
 local SelectionScrollBarOnValueChanged = function(self)
-        GUI.Offset = GUI:ClampSelectionOffset(Round(self:GetValue()))
+	GUI.Offset = Round(self:GetValue())
 
-        GUI:ScrollSelections()
+	GUI:ScrollSelections()
 end
 
 local MenuParentOnMouseWheel = function(self, delta)
@@ -1504,52 +857,11 @@ local MenuParentOnMouseWheel = function(self, delta)
 end
 
 local SelectionScrollBarOnMouseWheel = function(self, delta)
-        SelectionOnMouseWheel(self:GetParent():GetParent(), delta)
-end
-
-function GUI:SetSearchQuery(text)
-        local query = lower(TrimWhitespace(text or ""))
-
-        if (self.SearchQuery == query) then
-                return
-        end
-
-        self.SearchQuery = query
-
-        local tokens = self.SearchTokens
-
-        if tokens then
-                ClearTable(tokens)
-
-                if (query ~= "") then
-                        for word in gmatch(query, "%S+") do
-                                tokens[#tokens + 1] = word
-                        end
-                end
-        end
-
-        self.Offset = 1
-        self:MarkMenuDirty(false)
-        self:ScrollSelections()
-
-        if self.ScrollBar then
-                self.ScrollBar:SetValue(1)
-        end
-
-        if self.MenuSearch then
-                SearchBoxUpdateState(self.MenuSearch)
-        end
-end
-
-function GUI:ClearSearch()
-        if self.MenuSearch then
-                self.MenuSearch:SetText("")
-                self.MenuSearch:ClearFocus()
-        end
+	SelectionOnMouseWheel(self:GetParent():GetParent(), delta)
 end
 
 local FadeOnFinished = function(self)
-        self.Parent:Hide()
+	self.Parent:Hide()
 end
 
 function GUI:CreateUpdateWindow()
@@ -1563,7 +875,7 @@ function GUI:CreateUpdateWindow()
 	self.UpdateWindow:SetSize(340, 168) -- GUI_WIDTH / 3 -- 220 200
 	self.UpdateWindow:SetPoint("CENTER", HydraUI.UIParent, 0, 0)
 	self.UpdateWindow:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.UpdateWindow:SetBackdropColor(GetColorRGB("ui-window-bg-color"))
+	self.UpdateWindow:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
 	self.UpdateWindow:SetBackdropBorderColor(0, 0, 0)
 	self.UpdateWindow:EnableMouse(true)
 	self.UpdateWindow:SetMovable(true)
@@ -1584,14 +896,14 @@ function GUI:CreateUpdateWindow()
 	self.UpdateWindow.Header.Texture:SetPoint("TOPLEFT", self.UpdateWindow.Header, 1, -1)
 	self.UpdateWindow.Header.Texture:SetPoint("BOTTOMRIGHT", self.UpdateWindow.Header, -1, 1)
 	self.UpdateWindow.Header.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.UpdateWindow.Header.Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
+	self.UpdateWindow.Header.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
 	self.UpdateWindow.Header.Text = self.UpdateWindow.Header:CreateFontString(nil, "OVERLAY")
 	self.UpdateWindow.Header.Text:SetPoint("LEFT", self.UpdateWindow.Header, 5, 0)
 	self.UpdateWindow.Header.Text:SetSize(340 - 6, HEADER_HEIGHT)
 	HydraUI:SetFontInfo(self.UpdateWindow.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	self.UpdateWindow.Header.Text:SetJustifyH("LEFT")
-	self.UpdateWindow.Header.Text:SetTextColor(GetColorRGB("ui-header-font-color"))
+	self.UpdateWindow.Header.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-header-font-color"]))
 	self.UpdateWindow.Header.Text:SetText(Language["Update"])
 
 	self.UpdateWindow.CloseButton = CreateFrame("Frame", nil, self.UpdateWindow.Header)
@@ -1614,12 +926,12 @@ function GUI:CreateUpdateWindow()
 	self.UpdateWindow.WidgetsBG.Backdrop = CreateFrame("Frame", nil, self.UpdateWindow, "BackdropTemplate")
 	self.UpdateWindow.WidgetsBG.Backdrop:SetAllPoints(self.UpdateWindow.WidgetsBG)
 	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdropColor(GetColorRGB("ui-window-main-color"))
+	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
 	self.UpdateWindow.WidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
 	self.UpdateWindow.Text = CreateFrame("EditBox", nil, self.UpdateWindow.WidgetsBG)
 	HydraUI:SetFontInfo(self.UpdateWindow.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
-	self.UpdateWindow.Text:SetTextColor(GetColorRGB("ui-widget-color"))
+	self.UpdateWindow.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 	self.UpdateWindow.Text:SetPoint("TOPLEFT", self.UpdateWindow.WidgetsBG, 6, -6)
 	self.UpdateWindow.Text:SetPoint("TOPRIGHT", self.UpdateWindow.WidgetsBG, -6, 6)
 	self.UpdateWindow.Text:SetHeight(80)
@@ -1635,14 +947,14 @@ function GUI:CreateUpdateWindow()
 		Box:SetPoint("LEFT", self.UpdateWindow.WidgetsBG, 3, 0)
 		Box:SetPoint("RIGHT", self.UpdateWindow.WidgetsBG, -3, 0)
 		Box:SetBackdrop(HydraUI.BackdropAndBorder)
-		Box:SetBackdropColor(GetColorRGB("ui-window-main-color"))
+		Box:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
 		Box:SetBackdropBorderColor(0, 0, 0)
 
 		--[[Box.Texture = Box:CreateTexture(nil, "BACKGROUND")
 		Box.Texture:SetPoint("TOPLEFT", Box, 1, -1)
 		Box.Texture:SetPoint("BOTTOMRIGHT", Box, -1, 1)
 		Box.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-		Box.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))]]
+		Box.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))]]
 
 		Box.Input = CreateFrame("EditBox", nil, Box)
 		HydraUI:SetFontInfo(Box.Input, Settings["ui-widget-font"], Settings["ui-font-size"])
@@ -1733,8 +1045,8 @@ function GUI:CreateUpdateAlert()
 	self.Alert.Text:SetPoint("LEFT", self.Alert, 30, -1)
 	HydraUI:SetFontInfo(self.Alert.Text, Settings["ui-header-font"], Settings["ui-font-size"])
 	self.Alert.Text:SetJustifyH("LEFT")
-	self.Alert.Text:SetTextColor(GetColorRGB("ui-widget-color"))
-        self.Alert.Text:SetText(Language["Update available"])
+	self.Alert.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	self.Alert.Text:SetText("Update available") -- localize
 
 	self.Alert:SetWidth(self.Alert.Text:GetStringWidth() + 32)
 
@@ -1743,7 +1055,7 @@ function GUI:CreateUpdateAlert()
 	end)
 
 	self.Alert:SetScript("OnLeave", function(self)
-		self.Text:SetTextColor(GetColorRGB("ui-widget-color"))
+		self.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 	end)
 
 	self.Alert:SetScript("OnMouseDown", function(self)
@@ -1781,7 +1093,7 @@ function GUI:CreateGUI()
 	self:SetSize(GUI_WIDTH, GUI_HEIGHT)
 	self:SetPoint("CENTER", HydraUI.UIParent, 0, 0)
 	self:SetBackdrop(HydraUI.BackdropAndBorder)
-	self:SetBackdropColor(GetColorRGB("ui-window-bg-color"))
+	self:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
 	self:SetBackdropBorderColor(0, 0, 0)
 	self:EnableMouse(true)
 	self:SetMovable(true)
@@ -1829,147 +1141,41 @@ function GUI:CreateGUI()
 	self.Header.Texture:SetPoint("TOPLEFT", self.Header, 1, -1)
 	self.Header.Texture:SetPoint("BOTTOMRIGHT", self.Header, -1, 1)
 	self.Header.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.Header.Texture:SetVertexColor(GetColorRGB("ui-header-texture-color"))
+	self.Header.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
 	self.Header.Text = self.Header:CreateFontString(nil, "OVERLAY")
 	self.Header.Text:SetPoint("CENTER", self.Header, 0, -1)
 	self.Header.Text:SetSize(HEADER_WIDTH - 6, HEADER_HEIGHT)
 	HydraUI:SetFontInfo(self.Header.Text, Settings["ui-header-font"], Settings["ui-title-font-size"])
 	self.Header.Text:SetJustifyH("CENTER")
-	self.Header.Text:SetTextColor(GetColorRGB("ui-widget-color"))
+	self.Header.Text:SetTextColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 	self.Header.Text:SetText("Hydra|cFFEAEAEAUI|r")
 
 	-- Menu parent
-        self.MenuParent = CreateFrame("Frame", nil, self, "BackdropTemplate")
-        self.MenuParent:SetWidth(BUTTON_LIST_WIDTH)
-        self.MenuParent:SetPoint("BOTTOMLEFT", self, SPACING, SPACING)
-        self.MenuParent:SetPoint("TOPLEFT", self.Header, "BOTTOMLEFT", 0, -2)
-        self.MenuParent:SetBackdrop(HydraUI.BackdropAndBorder)
-        self.MenuParent:SetBackdropColor(GetColorRGB("ui-window-main-color"))
-        self.MenuParent:SetBackdropBorderColor(0, 0, 0)
-        self.MenuParent:SetScript("OnMouseWheel", MenuParentOnMouseWheel)
+	self.MenuParent = CreateFrame("Frame", nil, self, "BackdropTemplate")
+	self.MenuParent:SetWidth(BUTTON_LIST_WIDTH)
+	self.MenuParent:SetPoint("BOTTOMLEFT", self, SPACING, SPACING)
+	self.MenuParent:SetPoint("TOPLEFT", self.Header, "BOTTOMLEFT", 0, -2)
+	self.MenuParent:SetBackdrop(HydraUI.BackdropAndBorder)
+	self.MenuParent:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	self.MenuParent:SetBackdropBorderColor(0, 0, 0)
+	self.MenuParent:SetScript("OnMouseWheel", MenuParentOnMouseWheel)
 
-        self.MenuSearchBG = CreateFrame("Frame", nil, self.MenuParent, "BackdropTemplate")
-        self.MenuSearchBG:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
-        self.MenuSearchBG:SetPoint("TOPRIGHT", self.MenuParent, -SPACING, -SPACING)
-        self.MenuSearchBG:SetHeight(WIDGET_HEIGHT)
-        self.MenuSearchBG:SetBackdrop(HydraUI.BackdropAndBorder)
-        self.MenuSearchBG:SetBackdropColor(GetColorRGB("ui-window-bg-color"))
-        self.MenuSearchBG:SetBackdropBorderColor(0, 0, 0)
-
-        self.MenuSearchBG.Texture = self.MenuSearchBG:CreateTexture(nil, "ARTWORK")
-        self.MenuSearchBG.Texture:SetPoint("TOPLEFT", self.MenuSearchBG, 1, -1)
-        self.MenuSearchBG.Texture:SetPoint("BOTTOMRIGHT", self.MenuSearchBG, -1, 1)
-        self.MenuSearchBG.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-        self.MenuSearchBG.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
-
-        self.MenuSearchBG.Highlight = self.MenuSearchBG:CreateTexture(nil, "OVERLAY")
-        self.MenuSearchBG.Highlight:SetPoint("TOPLEFT", self.MenuSearchBG, 1, -1)
-        self.MenuSearchBG.Highlight:SetPoint("BOTTOMRIGHT", self.MenuSearchBG, -1, 1)
-        self.MenuSearchBG.Highlight:SetTexture(Assets:GetTexture("Blank"))
-        self.MenuSearchBG.Highlight:SetVertexColor(1, 1, 1)
-        self.MenuSearchBG.Highlight:SetAlpha(0)
-
-        self.MenuSearch = CreateFrame("EditBox", nil, self.MenuSearchBG)
-        HydraUI:SetFontInfo(self.MenuSearch, Settings["ui-widget-font"], Settings["ui-font-size"])
-        self.MenuSearch:SetPoint("LEFT", self.MenuSearchBG, 6, 0)
-        self.MenuSearch:SetPoint("RIGHT", self.MenuSearchBG, -24, 0)
-        self.MenuSearch:SetHeight(WIDGET_HEIGHT)
-        self.MenuSearch:SetJustifyH("LEFT")
-        self.MenuSearch:SetAutoFocus(false)
-        self.MenuSearch:EnableKeyboard(true)
-        self.MenuSearch:EnableMouse(true)
-        self.MenuSearch:SetMaxLetters(48)
-        self.MenuSearch:SetTextColor(GetColorRGB("ui-widget-color"))
-        self.MenuSearch:SetScript("OnTextChanged", SearchBoxOnTextChanged)
-        self.MenuSearch:SetScript("OnEditFocusGained", SearchBoxOnEditFocusGained)
-        self.MenuSearch:SetScript("OnEditFocusLost", SearchBoxOnEditFocusLost)
-        self.MenuSearch:SetScript("OnEscapePressed", function(self)
-                self:SetText("")
-                self:ClearFocus()
-        end)
-        self.MenuSearch:SetScript("OnEnterPressed", function(self)
-                self:ClearFocus()
-        end)
-
-        self.MenuSearch.Instructions = self.MenuSearchBG:CreateFontString(nil, "OVERLAY")
-        self.MenuSearch.Instructions:SetPoint("LEFT", self.MenuSearchBG, 8, 0)
-        self.MenuSearch.Instructions:SetJustifyH("LEFT")
-        HydraUI:SetFontInfo(self.MenuSearch.Instructions, Settings["ui-widget-font"], Settings["ui-font-size"])
-        self.MenuSearch.Instructions:SetTextColor(0.7, 0.7, 0.7)
-        self.MenuSearch.Instructions:SetText(SEARCH_PROMPT)
-
-        self.MenuSearch.ClearButton = CreateFrame("Frame", nil, self.MenuSearchBG)
-        self.MenuSearch.ClearButton:SetSize(16, 16)
-        self.MenuSearch.ClearButton:SetPoint("RIGHT", self.MenuSearchBG, -4, 0)
-        self.MenuSearch.ClearButton:EnableMouse(true)
-
-        local clearDefaultR, clearDefaultG, clearDefaultB = HydraUI:HexToRGB("EEEEEE")
-        local clearActiveR, clearActiveG, clearActiveB = HydraUI:HexToRGB("C0392B")
-
-        self.MenuSearch.ClearButton.Icon = self.MenuSearch.ClearButton:CreateTexture(nil, "ARTWORK")
-        self.MenuSearch.ClearButton.Icon:SetPoint("CENTER", self.MenuSearch.ClearButton, 0, 0)
-        self.MenuSearch.ClearButton.Icon:SetSize(12, 12)
-        self.MenuSearch.ClearButton.Icon:SetTexture(Assets:GetTexture("Close"))
-        self.MenuSearch.ClearButton.Icon:SetVertexColor(clearDefaultR, clearDefaultG, clearDefaultB)
-
-        self.MenuSearch.ClearButton.Highlight = self.MenuSearch.ClearButton:CreateTexture(nil, "HIGHLIGHT")
-        self.MenuSearch.ClearButton.Highlight:SetPoint("TOPLEFT", self.MenuSearch.ClearButton, -2, 2)
-        self.MenuSearch.ClearButton.Highlight:SetPoint("BOTTOMRIGHT", self.MenuSearch.ClearButton, 2, -2)
-        self.MenuSearch.ClearButton.Highlight:SetTexture(Assets:GetTexture("Blank"))
-        self.MenuSearch.ClearButton.Highlight:SetVertexColor(1, 1, 1)
-        self.MenuSearch.ClearButton.Highlight:SetAlpha(0)
-
-        self.MenuSearch.ClearButton:SetScript("OnEnter", function(self)
-                self.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
-        end)
-
-        self.MenuSearch.ClearButton:SetScript("OnLeave", function(self)
-                self.Highlight:SetAlpha(0)
-                self.Icon:SetVertexColor(clearDefaultR, clearDefaultG, clearDefaultB)
-        end)
-
-        self.MenuSearch.ClearButton:SetScript("OnMouseDown", function(self)
-                self.Icon:SetVertexColor(clearActiveR, clearActiveG, clearActiveB)
-        end)
-
-        self.MenuSearch.ClearButton:SetScript("OnMouseUp", function(self)
-                self.Icon:SetVertexColor(clearDefaultR, clearDefaultG, clearDefaultB)
-                GUI:ClearSearch()
-        end)
-
-        self.MenuSearch.Background = self.MenuSearchBG
-        self.MenuSearch.ClearButton:Hide()
-
-        self.MenuSearch:SetText("")
-        SearchBoxUpdateState(self.MenuSearch)
-
-        local menuListOffset = WIDGET_HEIGHT + (SPACING * 2)
-        self.MenuListOffset = menuListOffset
-
-        self.EmptyResults = self.MenuParent:CreateFontString(nil, "OVERLAY")
-        self.EmptyResults:SetPoint("TOPLEFT", self.MenuParent, SPACING + 4, -menuListOffset)
-        self.EmptyResults:SetPoint("RIGHT", self.MenuParent, -SPACING - 4, 0)
-        HydraUI:SetFontInfo(self.EmptyResults, Settings["ui-widget-font"], Settings["ui-font-size"])
-        self.EmptyResults:SetJustifyH("LEFT")
-        self.EmptyResults:SetTextColor(GetColorRGB("ui-widget-color"))
-        self.EmptyResults:Hide()
-
-        -- Scroll up
-        self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
-        self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
-        self.ScrollUp:SetPoint("TOPLEFT", self.MenuParent, "TOPRIGHT", 2, -menuListOffset)
-        self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
-        self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
-        self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
-        self.ScrollUp:SetScript("OnMouseUp", function(self)
-                self.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+	-- Scroll up
+	self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
+	self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
+	self.ScrollUp:SetPoint("TOPLEFT", self.MenuParent, "TOPRIGHT", 2, 0)
+	self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
+	self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
+	self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
+	self.ScrollUp:SetScript("OnMouseUp", function(self)
+		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
 		SelectionOnMouseWheel(self:GetParent(), 1)
 	end)
 
 	self.ScrollUp:SetScript("OnMouseDown", function(self)
-		local R, G, B = GetColorRGB("ui-widget-bright-color")
+		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
 
 		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
 	end)
@@ -1978,7 +1184,7 @@ function GUI:CreateGUI()
 	self.ScrollUp.Texture:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
 	self.ScrollUp.Texture:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
 	self.ScrollUp.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollUp.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+	self.ScrollUp.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
 	self.ScrollUp.Highlight = self.ScrollUp:CreateTexture(nil, "HIGHLIGHT")
 	self.ScrollUp.Highlight:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
@@ -2001,13 +1207,13 @@ function GUI:CreateGUI()
 	self.ScrollDown:SetBackdropColor(0, 0, 0, 0)
 	self.ScrollDown:SetBackdropBorderColor(0, 0, 0)
 	self.ScrollDown:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
 		SelectionOnMouseWheel(self:GetParent(), -1)
 	end)
 
 	self.ScrollDown:SetScript("OnMouseDown", function(self)
-		local R, G, B = GetColorRGB("ui-widget-bright-color")
+		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
 
 		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
 	end)
@@ -2016,7 +1222,7 @@ function GUI:CreateGUI()
 	self.ScrollDown.Texture:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
 	self.ScrollDown.Texture:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
 	self.ScrollDown.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollDown.Texture:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+	self.ScrollDown.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
 	self.ScrollDown.Highlight = self.ScrollDown:CreateTexture(nil, "HIGHLIGHT")
 	self.ScrollDown.Highlight:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
@@ -2029,7 +1235,7 @@ function GUI:CreateGUI()
 	self.ScrollDown.Arrow:SetPoint("CENTER", self.ScrollDown, 0, 0)
 	self.ScrollDown.Arrow:SetSize(16, 16)
 	self.ScrollDown.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-	self.ScrollDown.Arrow:SetVertexColor(GetColorRGB("ui-widget-color"))
+	self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 
 	-- Selection scrollbar
 	local ScrollBar = CreateFrame("Slider", nil, self.MenuParent, "BackdropTemplate")
@@ -2039,7 +1245,7 @@ function GUI:CreateGUI()
 	ScrollBar:SetOrientation("VERTICAL")
 	ScrollBar:SetValueStep(1)
 	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-	ScrollBar:SetBackdropColor(GetColorRGB("ui-window-main-color"))
+	ScrollBar:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
 	ScrollBar:SetBackdropBorderColor(0, 0, 0)
 	ScrollBar:EnableMouseWheel(true)
 	ScrollBar:SetScript("OnMouseWheel", SelectionScrollBarOnMouseWheel)
@@ -2062,13 +1268,13 @@ function GUI:CreateGUI()
 	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
 	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
 	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.NewThumb2:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+	ScrollBar.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
 	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
 	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
 	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
 	ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.Progress:SetVertexColor(GetColorRGB("ui-widget-bright-color"))
+	ScrollBar.Progress:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 	ScrollBar.Progress:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
 
 	-- Close button
@@ -2092,23 +1298,16 @@ function GUI:CreateGUI()
 	self.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
 	self.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
 
-        local buttonQueue = self.ButtonQueue
+	for i = 1, #self.ButtonQueue do
+		self:CreateWindow(unpack(tremove(self.ButtonQueue, 1)))
+	end
 
-        for i = 1, #buttonQueue do
-                self:CreateWindow(unpack(buttonQueue[i]))
-        end
+	self:SortMenuButtons()
 
-        ClearTable(buttonQueue)
-
-        self:MarkMenuDirty()
-        self:RebuildVisibleMenu()
-
-        local maxOffset = max(((self.TotalSelections or 0) - MAX_MENU_BUTTONS_SHOWN) + 1, 1)
-
-        self.ScrollBar:SetMinMaxValues(1, maxOffset)
-        self.ScrollBar:SetValue(1)
-        self:SetSelectionOffset(1)
-        self.ScrollBar:Show()
+	self.ScrollBar:SetMinMaxValues(1, ((self.NumShownButtons or 15) - MAX_WIDGETS_SHOWN) + 1)
+	self.ScrollBar:SetValue(1)
+	self:SetSelectionOffset(1)
+	self.ScrollBar:Show()
 
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")

@@ -4,138 +4,73 @@ local tonumber = tonumber
 local IsInGuild = IsInGuild
 local IsInGroup = IsInGroup
 local IsInRaid = IsInRaid
-local IsInInstance = IsInInstance
 local GetNumGroupMembers = GetNumGroupMembers
-local UnitOnTaxi = UnitOnTaxi
-local GetZoneText = GetZoneText
 local LE_PARTY_CATEGORY_HOME = LE_PARTY_CATEGORY_HOME
 local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
-local wipe = wipe
 
 local AddOnVersion = HydraUI.UIVersion
 local AddOnNum = tonumber(HydraUI.UIVersion)
 local User = HydraUI.UserName .. "-" .. HydraUI.UserRealm
+local tinsert = table.insert
+local tremove = table.remove
 local CT = ChatThrottleLib
-local After = C_Timer.After
 
 local Update = HydraUI:NewModule("Update")
 Update.SentHome = false
 Update.SentInst = false
-Update.Delay = 5
-Update.TimerHandle = nil
+Update.Timer = 5
 
 local Tables = {}
 local Queue = {}
-local QueueHead = 1
-local QueueTail = 0
-local QueuedChannels = {}
 
 local Throttle = HydraUI:GetModule("Throttle")
 
-local ProcessQueueTimer = function()
-        Update:ProcessQueue()
-end
-
-local function QueueVersionYell(self)
-        if Throttle:IsThrottled("vrsn") then
-                return false
-        end
-
-        if self:QueueChannel("YELL") then
-                Throttle:Start("vrsn", 10)
-
-                return true
-        end
-
-        return false
-end
-
-local function HandleTaxiZoneChange(self)
-        if UnitOnTaxi("player") then
-                local Zone = GetZoneText()
-
-                if (Zone ~= self.Zone) and QueueVersionYell(self) then
-                        self.Zone = Zone
-                end
-        end
-end
-
 function Update:QueueChannel(channel, target)
-	if (not channel) then
-		return false
-	end
+	local Data
 
-	local key = target and (channel .. target) or channel
-
-	if QueuedChannels[key] then
-		return false
-	end
-
-	local Data = Tables[#Tables]
-
-	if Data then
-		Tables[#Tables] = nil
+	if (#Tables == 0) then
+		Data = {channel, target}
+	else
+		Data = tremove(Tables, 1)
 		Data[1] = channel
 		Data[2] = target
-		Data[3] = key
-	else
-		Data = {channel, target, key}
 	end
 
-	QueueTail = QueueTail + 1
-	Queue[QueueTail] = Data
-	QueuedChannels[key] = true
+	tinsert(Queue, Data)
 
-	if (not self.TimerHandle) then
-		self.TimerHandle = true
-		After(self.Delay, ProcessQueueTimer)
+	if (not self:GetScript("OnUpdate")) then
+		self:SetScript("OnUpdate", self.OnUpdate)
 	end
-
-	return true
 end
 
-function Update:ProcessQueue()
-	self.TimerHandle = nil
+function Update:OnUpdate(elapsed)
+	self.Timer = self.Timer - elapsed
 
-	local Data = Queue[QueueHead]
+	if (self.Timer < 0) then
+		local Data = tremove(Queue, 1)
 
-	if Data then
 		CT:SendAddonMessage("NORMAL", "HydraUI-Version", AddOnVersion, Data[1], Data[2])
 
-		QueuedChannels[Data[3]] = nil
+		tinsert(Tables, Data)
 
-		Queue[QueueHead] = nil
-		QueueHead = QueueHead + 1
+		self.Timer = 5
 
-		Data[1] = nil
-		Data[2] = nil
-		Data[3] = nil
-		Tables[#Tables + 1] = Data
-
-		if (QueueHead <= QueueTail) then
-			self.TimerHandle = true
-			After(self.Delay, ProcessQueueTimer)
-		else
-			QueueHead = 1
-			QueueTail = 0
-			wipe(QueuedChannels)
+		if (#Queue == 0) then
+			self:SetScript("OnUpdate", nil)
 		end
-	else
-		QueueHead = 1
-		QueueTail = 0
-		wipe(QueuedChannels)
 	end
 end
 
-
 function Update:PLAYER_ENTERING_WORLD()
-        if (not HydraUI.IsMainline and not IsInInstance()) then
-                After(5, function()
-                        QueueVersionYell(self)
-                end)
-        end
+	if (not HydraUI.IsMainline and not IsInInstance()) and (not Throttle:IsThrottled("vrsn")) then
+		C_Timer.After(5, function()
+			self:QueueChannel("YELL")
+		end)
 
-        self:GROUP_ROSTER_UPDATE()
+		Throttle:Start("vrsn", 10)
+	end
+
+	self:GROUP_ROSTER_UPDATE()
 end
 
 function Update:GUILD_ROSTER_UPDATE()
@@ -156,17 +91,13 @@ function Update:GROUP_ROSTER_UPDATE()
 		self.SentInst = false
 	end
 
-        if (Instance > 0 and not self.SentInst) then
-                if self:QueueChannel("INSTANCE_CHAT") then
-                        self.SentInst = true
-                end
-        elseif (Home > 0 and not self.SentHome) then
-                local channel = (IsInRaid(LE_PARTY_CATEGORY_HOME) and "RAID") or (IsInGroup(LE_PARTY_CATEGORY_HOME) and "PARTY")
-
-                if self:QueueChannel(channel) then
-                        self.SentHome = true
-                end
-        end
+	if (Instance > 0 and not self.SentInst) then
+		self:QueueChannel("INSTANCE_CHAT")
+		self.SentInst = true
+	elseif (Home > 0 and not self.SentHome) then
+		self:QueueChannel(IsInRaid(LE_PARTY_CATEGORY_HOME) and "RAID" or IsInGroup(LE_PARTY_CATEGORY_HOME) and "PARTY")
+		self.SentHome = true
+	end
 end
 
 function Update:CHAT_MSG_ADDON(prefix, message, channel, sender)
@@ -190,11 +121,27 @@ function Update:CHAT_MSG_ADDON(prefix, message, channel, sender)
 end
 
 function Update:ZONE_CHANGED_NEW_AREA()
-        HandleTaxiZoneChange(self)
+	if UnitOnTaxi("player") then
+		local Zone = GetZoneText()
+
+		if (Zone ~= self.Zone and not Throttle:IsThrottled("vrsn")) then
+			self:QueueChannel("YELL")
+			self.Zone = Zone
+			Throttle:Start("vrsn", 10)
+		end
+	end
 end
 
 function Update:ZONE_CHANGED()
-        HandleTaxiZoneChange(self)
+	if UnitOnTaxi("player") then
+		local Zone = GetZoneText()
+
+		if (Zone ~= self.Zone and not Throttle:IsThrottled("vrsn")) then
+			self:QueueChannel("YELL")
+			self.Zone = Zone
+			Throttle:Start("vrsn", 10)
+		end
+	end
 end
 
 function Update:OnEvent(event, ...)

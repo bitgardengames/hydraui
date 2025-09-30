@@ -90,6 +90,6 @@ GUI:AddWidgets(Language["Info"], Language["Supporters"], function(left, right)
 	right:CreateHeader(Language["Donors"])
 	right:CreateMessage("", Donors)
 
-right:CreateHeader(Language["Thank you so much!"])
-right:CreateMessage("", Language["Thank you to all of these amazing people for their support, through donations and Patreon pledges! This generosity allows me to spend so much of my time developing the interface for everyone."])
+	right:CreateHeader("Thank you so much!")
+	right:CreateMessage("", "Thank you to all of these amazing people for their support, through donations and Patreon pledges! This generosity allows me to spend so much of my time developing the interface for everyone.")
 end)

@@ -1,103 +1,57 @@
 local HydraUI = select(2, ...):get()
 
+local tinsert = table.insert
+local tremove = table.remove
 local GetTime = GetTime
-local max = math.max
-local type = type
 
 local Throttle = HydraUI:NewModule("Throttle")
-local Records = {}
-
-local HandleExpiration
-
-HandleExpiration = function(name, record, canceled)
-        record.Active = false
-
-        if record.OnExpire then
-                local callback = record.OnExpire
-                record.OnExpire = nil
-
-                callback(name, canceled)
-        end
-end
-
-local function IsRecordActive(name, record, now)
-        if (not record or not record.Active) then
-                return false
-        end
-
-        if ((now - record.Started) >= record.Duration) then
-                HandleExpiration(name, record, false)
-
-                return false
-        end
-
-        return true
-end
+local Active = {}
+local Inactive = {}
 
 function Throttle:IsThrottled(name)
-        return IsRecordActive(name, Records[name], GetTime())
+	for i = 1, #Active do
+		if (Active[i][1] == name) then
+			local Item = tremove(Active, i)
+
+			if (GetTime() - Item[2] >= Item[3]) then
+				tinsert(Inactive, Item)
+
+				return false
+			end
+
+			return true
+		end
+	end
 end
 
 function Throttle:Exists(name)
-        return Records[name] ~= nil
+	for i = 1, #Active do
+		if (Active[i][1] == name) then
+			return true
+		end
+	end
+
+	for i = 1, #Inactive do
+		if (Inactive[i][1] == name) then
+			return true
+		end
+	end
 end
 
-function Throttle:Start(name, duration, onExpire)
-        local record = Records[name]
-        local now = GetTime()
+function Throttle:Start(name, duration)
+	if (not self:Exists(name)) then
+		tinsert(Inactive, {name, GetTime(), duration})
+	end
 
-        if IsRecordActive(name, record, now) then
-                return false
-        end
+	if (not self:IsThrottled(name)) then
+		for i = 1, #Inactive do
+			if (Inactive[i][1] == name) then
+				Inactive[i][2] = GetTime()
 
-        duration = duration or 0
+				tinsert(Active, tremove(Inactive, i))
 
-        if not record then
-                record = {}
-                Records[name] = record
-        end
-
-        record.Duration = duration
-        record.Started = now
-        record.Active = true
-        record.OnExpire = onExpire
-
-        return true
-end
-
-function Throttle:Cancel(name)
-        local record = Records[name]
-
-        if (not record or not record.Active) then
-                return false
-        end
-
-        HandleExpiration(name, record, true)
-
-        return true
-end
-
-function Throttle:GetRemaining(name)
-        local record = Records[name]
-        local now = GetTime()
-
-        if (not IsRecordActive(name, record, now)) then
-                return 0
-        end
-
-        return max(0, record.Duration - (now - record.Started))
-end
-
-function Throttle:Run(name, duration, func, ...)
-        if (type(func) ~= "function") then
-                return false
-        end
-
-        if (not self:Start(name, duration)) then
-                return false
-        end
-
-        func(...)
-
-        return true
+				break
+			end
+		end
+	end
 end

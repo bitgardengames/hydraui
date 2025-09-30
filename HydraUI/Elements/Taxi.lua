@@ -1,39 +1,32 @@
 local HydraUI, Language, Assets, Settings = select(2, ...):get()
 
 local Taxi = HydraUI:NewModule("Vehicle")
-local GameTooltip = GameTooltip
-local UnitOnTaxi = UnitOnTaxi
-local TaxiRequestEarlyLanding = TaxiRequestEarlyLanding
 
 function Taxi:OnEnter()
-        local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-font-color"])
+	local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-font-color"])
 
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", 0, -6)
-        GameTooltip:AddLine(TAXI_CANCEL_DESCRIPTION, R, G, B)
-        GameTooltip:Show()
+	GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", 0, -6)
+	GameTooltip:AddLine(TAXI_CANCEL_DESCRIPTION, R, G, B)
+	GameTooltip:Show()
 end
 
 function Taxi:OnLeave()
-        GameTooltip:Hide()
+	GameTooltip:Hide()
 end
 
 function Taxi:OnMouseUp()
-        if UnitOnTaxi("player") then
-                TaxiRequestEarlyLanding()
-                self:Hide()
-        end
-end
-
-function Taxi:UpdateVisibility()
-        if UnitOnTaxi("player") then
-                self:Show()
-        else
-                self:Hide()
-        end
+    if UnitOnTaxi("player") then
+        TaxiRequestEarlyLanding()
+		self:Hide()
+    end
 end
 
 function Taxi:OnEvent()
-        self:UpdateVisibility()
+    if UnitOnTaxi("player") then
+        self:Show()
+    else
+		self:Hide()
+    end
 end
 
 function Taxi:Load()
@@ -42,17 +35,21 @@ function Taxi:Load()
 	self:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
 	self:SetBackdropBorderColor(0, 0, 0)
 	self:SetFrameStrata("HIGH")
-        self:SetFrameLevel(10)
-        self:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-        self:SetScript("OnMouseUp", self.OnMouseUp)
-        self:SetScript("OnEnter", self.OnEnter)
-        self:SetScript("OnLeave", self.OnLeave)
-        self:SetScript("OnEvent", self.OnEvent)
+	self:SetFrameLevel(10)
+	self:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+	self:SetScript("OnMouseUp", self.OnMouseUp)
+	self:SetScript("OnEnter", self.OnEnter)
+	self:SetScript("OnLeave", self.OnLeave)
+	self:SetScript("OnEvent", self.OnEvent)
 
-        self:UpdateVisibility()
+    if UnitOnTaxi("player") then
+        self:Show()
+    else
+		self:Hide()
+    end
 
-        self.Texture = self:CreateTexture(nil, "ARTWORK")
-        self.Texture:SetPoint("TOPLEFT", self, 1, -1)
+	self.Texture = self:CreateTexture(nil, "ARTWORK")
+	self.Texture:SetPoint("TOPLEFT", self, 1, -1)
 	self.Texture:SetPoint("BOTTOMRIGHT", self, -1, 1)
 	self.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
 	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))

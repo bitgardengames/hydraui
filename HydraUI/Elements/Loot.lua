@@ -11,108 +11,88 @@ local GetNumLootItems = GetNumLootItems
 local GetLootThreshold = GetLootThreshold
 local GetLootSlotInfo = GetLootSlotInfo
 local LootSlot = LootSlot
-local CloseLoot = CloseLoot
-local IsInGroup = IsInGroup
 
-local tinsert = table.insert
-local wipe = table.wipe or wipe
-
-local AUTO_LOOT_TOGGLE = "AUTOLOOTTOGGLE"
-local MASTER_LOOT = "master"
+local Icon, Name, Quantity, CurrencyID, Quality, Locked, QuestItem, QuestID, IsActive
+local Quality, Locked, Threshold, _
 
 Loot.LootSlots = {}
+Loot.Grouped = false
 
 if C_PartyInfo and C_PartyInfo.GetLootMethod then
-        GetLootMethod = C_PartyInfo.GetLootMethod
-end
-
-local ShouldAutoLoot = function()
-        local AutoLootDefault = GetCVar("autoLootDefault")
-
-        if (AutoLootDefault == "1") then
-                return not IsModifiedClick(AUTO_LOOT_TOGGLE)
-        end
-
-        return IsModifiedClick(AUTO_LOOT_TOGGLE)
-end
-
-function Loot:ProcessQueue()
-        local Slots = self.LootSlots
-
-        if (#Slots == 0) then
-                self:SetScript("OnUpdate", nil)
-
-                if (GetNumLootItems() == 0) then
-                        CloseLoot()
-                end
-
-                return
-        end
-
-        for index = #Slots, 1, -1 do
-                LootSlot(Slots[index])
-                Slots[index] = nil
-        end
-
-        if (GetNumLootItems() == 0) then
-                self:SetScript("OnUpdate", nil)
-                CloseLoot()
-        end
+	GetLootMethod = C_PartyInfo.GetLootMethod
 end
 
 function Loot:LOOT_READY()
-        if (not ShouldAutoLoot()) then
-                return
-        end
+	if (GetCVar("autoLootDefault") == "1" and not IsModifiedClick("AUTOLOOTTOGGLE")) or (GetCVar("autoLootDefault") ~= "1" and IsModifiedClick("AUTOLOOTTOGGLE")) then
+		if (GetLootMethod() == "master") then
+			return
+		end
 
-        local Slots = self.LootSlots
+		if (IsInGroup() and GetLootMethod() == "master") then
+			self.Grouped = true
+		end
 
-        wipe(Slots)
+		for i = GetNumLootItems(), 1, -1 do
+			_, _, _, _, Quality, Locked = GetLootSlotInfo(i)
+			Threshold = GetLootThreshold()
 
-        local LootMethod = GetLootMethod()
-        local IsMasterLoot = (LootMethod == MASTER_LOOT) and IsInGroup()
-        local Threshold = GetLootThreshold() or 0
+			if (Locked ~= nil and not Locked) then
+				if (self.Grouped and Quality < Threshold) then
+					self.LootSlots[#self.LootSlots + 1] = i
+				end
+			end
+		end
 
-        for slot = GetNumLootItems(), 1, -1 do
-                local _, _, _, _, Quality, Locked = GetLootSlotInfo(slot)
+		self:SetScript("OnUpdate", self.OnUpdate)
+	end
+end
 
-                if (Locked == nil or Locked == false) then
-                        if (not IsMasterLoot) or (Quality and (Quality < Threshold)) then
-                                tinsert(Slots, slot)
-                        end
-                end
-        end
+function Loot:OnUpdate()
+	if (#self.LootSlots == 0) then
+		return
+	end
 
-        if (#Slots > 0) then
-                self:SetScript("OnUpdate", self.ProcessQueue)
-        end
+	for i = 1, #self.LootSlots do
+		LootSlot(self.LootSlots[i])
+	end
+
+	if (GetNumLootItems() == 0) then
+		self:SetScript("OnUpdate", nil)
+
+		for i = #self.LootSlots, 1, -1 do
+			table.remove(self.LootSlots, i)
+		end
+
+		self.Grouped = false
+
+		CloseLoot()
+	end
 end
 
 function Loot:OnEvent(event, ...)
-        if self[event] then
-                self[event](self, ...)
-        end
-end
-
-function Loot:UpdateRegistration(enabled)
-        if enabled then
-                self:RegisterEvent("LOOT_READY")
-                self:SetScript("OnEvent", self.OnEvent)
-        else
-                self:UnregisterEvent("LOOT_READY")
-                self:SetScript("OnEvent", nil)
-        end
+	self[event](self)
 end
 
 function Loot:Load()
-        self:UpdateRegistration(Settings["fast-loot"])
+	if (not Settings["fast-loot"]) then
+		return
+	end
+
+	self:RegisterEvent("LOOT_READY")
+	self:SetScript("OnEvent", self.OnEvent)
 end
 
 local UpdateFastLoot = function(value)
-        Loot:UpdateRegistration(value)
+	if value then
+		Loot:RegisterEvent("LOOT_READY")
+		Loot:SetScript("OnEvent", Loot.OnEvent)
+	else
+		Loot:UnregisterEvent("LOOT_READY")
+		Loot:SetScript("OnEvent", nil)
+	end
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["General"], function(left, right)
-        right:CreateHeader(Language["Loot"])
-        right:CreateSwitch("fast-loot", Settings["fast-loot"], Language["Enable Fast Loot"], Language["Speed up auto looting"], UpdateFastLoot)
+	right:CreateHeader(Language["Loot"])
+	right:CreateSwitch("fast-loot", Settings["fast-loot"], Language["Enable Fast Loot"], Language["Speed up auto looting"], UpdateFastLoot)
 end)

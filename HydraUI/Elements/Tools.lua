@@ -6,79 +6,21 @@ local select = select
 local date = date
 local sub = string.sub
 local format = string.format
-local gsub = string.gsub
 local floor = math.floor
-local ceil = math.ceil
 local match = string.match
 local reverse = string.reverse
-local upper = string.upper
-local min = math.min
-local max = math.max
-
-HydraUI.HexToRGBCache = HydraUI.HexToRGBCache or {}
-
-local HexCache = HydraUI.HexToRGBCache
-
-local GetOrCreateRGB = function(hex)
-        local cached = HexCache[hex]
-
-        if cached then
-                return cached[1], cached[2], cached[3]
-        end
-
-        local r = tonumber(sub(hex, 1, 2), 16) / 255
-        local g = tonumber(sub(hex, 3, 4), 16) / 255
-        local b = tonumber(sub(hex, 5, 6), 16) / 255
-
-        cached = {r, g, b}
-        HexCache[hex] = cached
-
-        return r, g, b
-end
-
-function HydraUI:NormalizeHex(hex)
-        if (not hex) then
-                return
-        end
-
-        if (type(hex) ~= "string") then
-                hex = tostring(hex)
-        end
-
-        if (sub(hex, 1, 1) == "#") then
-                hex = sub(hex, 2)
-        end
-
-        hex = upper(hex)
-
-        if (#hex ~= 6) then
-                return
-        end
-
-        return hex
-end
 
 -- Tools
 function HydraUI:HexToRGB(hex)
-        local normalized = self:NormalizeHex(hex)
+	if (not hex) then
+		return
+	end
 
-        if (not normalized) then
-                return
-        end
-
-        return GetOrCreateRGB(normalized)
+	return tonumber("0x" .. sub(hex, 1, 2)) / 255, tonumber("0x" .. sub(hex, 3, 4)) / 255, tonumber("0x" .. sub(hex, 5, 6)) / 255
 end
 
 function HydraUI:RGBToHex(r, g, b)
-        if (not r or not g or not b) then
-                return
-        end
-
-        r = floor(max(0, min(1, r)) * 255 + 0.5)
-        g = floor(max(0, min(1, g)) * 255 + 0.5)
-        b = floor(max(0, min(1, b)) * 255 + 0.5)
-
-        return format("%02x%02x%02x", r, g, b)
+	return format("%02x%02x%02x", r * 255, g * 255, b * 255)
 end
 
 function HydraUI:FormatTime(seconds)

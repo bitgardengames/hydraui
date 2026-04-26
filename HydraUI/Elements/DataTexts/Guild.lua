@@ -1,0 +1,204 @@
+local HydraUI, Language, Assets, Settings = select(2, ...):get()
+
+local IsInGuild = IsInGuild
+local GuildRoster = C_GuildInfo.GuildRoster
+local GetGuildInfo = GetGuildInfo
+local GetGuildRosterInfo = GetGuildRosterInfo
+local GetNumGuildMembers = GetNumGuildMembers
+local GetQuestDifficultyColor = GetQuestDifficultyColor
+local select = select
+local format = format
+local match = string.match
+local Label = GUILD
+
+local MaxCharacters = 30
+
+local StatusLabels = {
+	[1] = "|cFFFFFF33" .. CHAT_FLAG_AFK .. "|r",
+	[2] = "|cFFFF6666" .. CHAT_FLAG_DND .. "|r",
+}
+
+local OnUpdate = function(self, elapsed)
+	self.Elapsed = self.Elapsed + elapsed
+
+	if (self.Elapsed > 10) then
+		GuildRoster()
+
+		self.Elapsed = 0
+	end
+end
+
+local OnEnter = function(self)
+	if (not IsInGuild()) then
+		return
+	end
+
+	self:RegisterEvent("MODIFIER_STATE_CHANGED")
+
+	self:SetTooltip()
+
+	GuildRoster()
+
+	local GuildName = GetGuildInfo("player")
+	local NumTotal, NumOnline, NumOnlineAndMobile = GetNumGuildMembers()
+	local GuildMessage = GetGuildRosterMOTD()
+	local Name, Rank, RankIndex, Level, ClassName, Zone, Note, OfficerNote, Online, Status, Class
+	local Color, LevelColor
+
+	if (not NumOnlineAndMobile) then
+		NumOnlineAndMobile = NumOnline
+	end
+
+	GameTooltip:AddDoubleLine(GuildName, format("%s/%s", NumOnlineAndMobile, NumTotal), nil, nil, nil, 1, 1, 1)
+	GameTooltip:AddLine(" ")
+
+	if (GuildMessage and GuildMessage ~= "") then
+		GameTooltip:AddLine(GUILD_MOTD_LABEL2)
+		GameTooltip:AddLine(GuildMessage, 1, 1, 1, true)
+		GameTooltip:AddLine(" ")
+	end
+
+	local Limit = NumTotal > MaxCharacters and MaxCharacters or NumTotal
+	local Count = 0
+	local MapID = C_Map.GetBestMapForUnit("player")
+	local CurrentText = GetZoneText()
+	local CurrentZone
+
+	if MapID then
+		CurrentZone = C_Map.GetMapInfo(MapID).name or GetRealZoneText()
+	else
+		CurrentZone = GetRealZoneText()
+	end
+
+	for i = 1, NumTotal do
+		if (Count == Limit) then
+			break
+		end
+
+		Name, Rank, RankIndex, Level, ClassName, Zone, Note, OfficerNote, Online, Status, Class = GetGuildRosterInfo(i)
+
+		if (Name and Online) then
+			Name = match(Name, "(%S+)-%S+")
+			Color = RAID_CLASS_COLORS[Class].colorStr
+			LevelColor = GetQuestDifficultyColor(Level)
+			LevelColor = HydraUI:RGBToHex(LevelColor.r, LevelColor.g, LevelColor.b)
+
+			if StatusLabels[Status] then
+				Name = format("|cFF%s%s |c%s%s|r %s", LevelColor, Level, Color, Name, StatusLabels[Status])
+			else
+				Name = format("|cFF%s%s |c%s%s|r", LevelColor, Level, Color, Name)
+			end
+
+			if IsModifierKeyDown() then
+				GameTooltip:AddDoubleLine(Name, Rank, nil, nil, nil, 1, 1, 1)
+			else
+				if (Zone == CurrentZone or Zone == CurrentText) then
+					Zone = format("|cFF33FF33%s|r", Zone)
+				end
+
+				GameTooltip:AddDoubleLine(Name, Zone or UNKNOWN, nil, nil, nil, 1, 1, 1)
+			end
+
+			Count = Count + 1
+		end
+	end
+
+	if (NumOnlineAndMobile > MaxCharacters) then
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine(NumOnlineAndMobile - MaxCharacters .. Language[" more characters not shown"], 1, 1, 1)
+	end
+
+	self.TooltipShown = true
+
+	if (not self:GetScript("OnUpdate")) then
+		self.Elapsed = 0
+		self:SetScript("OnUpdate", OnUpdate)
+	end
+
+	GameTooltip:Show()
+end
+
+local OnLeave = function(self)
+	GameTooltip:Hide()
+	self:UnregisterEvent("MODIFIER_STATE_CHANGED")
+	self.TooltipShown = false
+
+	if self:GetScript("OnUpdate") then
+		self:SetScript("OnUpdate", nil)
+	end
+end
+
+local Update = function(self, event)
+	if (not IsInGuild()) then
+		self.Text:SetText(Language["No Guild"])
+
+		return
+	end
+
+	if (event == "MODIFIER_STATE_CHANGED") then
+		GameTooltip:ClearLines()
+		OnEnter(self)
+	else
+		if self.TooltipShown then
+			GameTooltip:ClearLines()
+			OnEnter(self)
+		else
+			GuildRoster()
+		end
+
+		local Total, Online, OnlineAndMobile = GetNumGuildMembers()
+
+		if (not OnlineAndMobile) then
+			OnlineAndMobile = Online
+		end
+
+		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor, OnlineAndMobile)
+	end
+end
+
+local OnMouseUp = function()
+	if InCombatLockdown() then
+		return print(ERR_NOT_IN_COMBAT)
+	end
+
+	if HydraUI.IsMainline then
+		ToggleCommunitiesFrame()
+	elseif (HydraUI.IsCata or HydraUI.IsMists) then
+		ToggleGuildFrame()
+	else
+		ToggleFriendsFrame(3)
+	end
+end
+
+local OnEnable = function(self)
+	self:RegisterEvent("GUILD_ROSTER_UPDATE")
+	self:RegisterEvent("GUILD_RANKS_UPDATE")
+	self:RegisterEvent("PLAYER_GUILD_UPDATE")
+	self:RegisterEvent("GUILD_MOTD")
+	self:SetScript("OnEvent", Update)
+	self:SetScript("OnEnter", OnEnter)
+	self:SetScript("OnLeave", OnLeave)
+	self:SetScript("OnMouseUp", OnMouseUp)
+
+	self:Update()
+end
+
+local OnDisable = function(self)
+	self:UnregisterEvent("GUILD_ROSTER_UPDATE")
+	self:UnregisterEvent("GUILD_RANKS_UPDATE")
+	self:UnregisterEvent("PLAYER_GUILD_UPDATE")
+	self:UnregisterEvent("GUILD_MOTD")
+	self:SetScript("OnEvent", nil)
+	self:SetScript("OnEnter", nil)
+	self:SetScript("OnLeave", nil)
+	self:SetScript("OnMouseUp", nil)
+	self:SetScript("OnUpdate", nil)
+
+	if self.Elapsed then
+		self.Elapsed = 0
+	end
+
+	self.Text:SetText("")
+end
+
+HydraUI:AddDataText("Guild", OnEnable, OnDisable, Update)

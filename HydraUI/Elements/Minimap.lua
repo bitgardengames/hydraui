@@ -243,6 +243,8 @@ function Map:Style()
 		if (not Settings["minimap-show-calendar"]) then
 			GameTimeFrame:Hide()
 		end
+	else
+		GameTimeFrame:Hide()
 	end
 
 	if Settings["minimap-show-top"] and not Settings["minimap-show-bottom"] then

@@ -25,6 +25,7 @@ elseif HydraUI.IsTBC then
 		QuestLogMicroButton,
 		SocialsMicroButton,
 		LFGMicroButton,
+		WorldMapMicroButton,
 		MainMenuMicroButton,
 		HelpMicroButton,
 	}

@@ -69,6 +69,35 @@ function BagsFrame:UpdateVisibility()
 	end
 end
 
+function BagsFrame:PositionButtons()
+	if (not self.Panel) then
+		return
+	end
+
+	for i = 1, #self.Objects do
+		local Object = self.Objects[i]
+
+		Object:SetParent(self.Panel)
+		Object:ClearAllPoints()
+
+		if (i == 1) then
+			Object:SetPoint("LEFT", self.Panel, 4, 0)
+		else
+			Object:SetPoint("LEFT", self.Objects[i-1], "RIGHT", 4, 0)
+		end
+
+		if (IsClassic and i == 1) then
+			Object:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
+		else
+			Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
+		end
+	end
+end
+
+local RestoreBagButtonPositions = function()
+	BagsFrame:PositionButtons()
+end
+
 function BagsFrame:Load()
 	if (not Settings["ab-enable"]) then
 		return
@@ -102,8 +131,6 @@ function BagsFrame:Load()
 		Object = self.Objects[i]
 
 		Object:SetParent(self.Panel)
-		Object:ClearAllPoints()
-		Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
 		Object:HookScript("OnEnter", BagsFrameButtonOnEnter)
 		Object:HookScript("OnLeave", BagsFrameButtonOnLeave)
 
@@ -163,15 +190,7 @@ function BagsFrame:Load()
 
 		Object:SetHighlightTexture(Highlight)
 
-		if (i == 1) then
-			Object:SetPoint("LEFT", self.Panel, 4, 0)
-
-			if IsClassic then
-				Object:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
-			end
-		else
-			Object:SetPoint("LEFT", self.Objects[i-1], "RIGHT", 4, 0)
-
+		if (i ~= 1) then
 			local Pushed = Object:CreateTexture(nil, "ARTWORK")
 			Pushed:SetPoint("TOPLEFT", Object, 0, 0)
 			Pushed:SetPoint("BOTTOMRIGHT", Object, 0, 0)
@@ -179,6 +198,23 @@ function BagsFrame:Load()
 			Pushed:SetDrawLayer("ARTWORK", 7)
 
 			Object:SetPushedTexture(Pushed)
+		end
+	end
+
+	self:PositionButtons()
+
+	-- Blizzard rebuilds the managed-frame layout after events such as entering a
+	-- vehicle or changing a status bar. Reassert our anchors after each known
+	-- layout pass so the bag buttons remain attached to the HydraUI panel.
+	local PositionFunctions = {
+		"UIParent_ManageFramePositions",
+		"MainMenuBar_UpdateExperienceBars",
+		"MainMenuBar_UpdatePositionForStatusBars",
+	}
+
+	for i = 1, #PositionFunctions do
+		if _G[PositionFunctions[i]] then
+			hooksecurefunc(PositionFunctions[i], RestoreBagButtonPositions)
 		end
 	end
 
@@ -213,20 +249,7 @@ local UpdateBagFrameSize = function(value)
 		BagsFrame.Panel:SetSize(((value + 4) * #BagsFrame.Objects) + 4, value + 8)
 	end
 
-	for i = 1, #BagsFrame.Objects do
-		BagsFrame.Objects[i]:ClearAllPoints()
-
-		if (i == 1) then
-			if IsClassic then
-				BagsFrame.Objects[i]:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
-			else
-				BagsFrame.Objects[i]:SetPoint("LEFT", BagsFrame.Panel, 4, 0)
-			end
-		else
-			BagsFrame.Objects[i]:SetSize(value, value)
-			BagsFrame.Objects[i]:SetPoint("LEFT", BagsFrame.Objects[i-1], "RIGHT", 4, 0)
-		end
-	end
+	BagsFrame:PositionButtons()
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Action Bars"], function(left, right)

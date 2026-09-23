@@ -203,9 +203,6 @@ function BagsFrame:Load()
 
 	self:PositionButtons()
 
-	-- Blizzard rebuilds the managed-frame layout after events such as entering a
-	-- vehicle or changing a status bar. Reassert our anchors after each known
-	-- layout pass so the bag buttons remain attached to the HydraUI panel.
 	local PositionFunctions = {
 		"UIParent_ManageFramePositions",
 		"MainMenuBar_UpdateExperienceBars",

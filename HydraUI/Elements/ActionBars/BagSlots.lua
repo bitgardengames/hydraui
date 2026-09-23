@@ -106,6 +106,7 @@ function BagsFrame:Load()
 	if (HydraUI.ClientVersion >= 100000) then
 		MainMenuBarBackpackButton:ClearAllPoints()
 		MainMenuBarBackpackButton:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 5)
+		MainMenuBarBackpackButton.SetPoint = function() end
 
 		return
 	end

@@ -1409,6 +1409,28 @@ function AB:UpdateFlyout()
 	end
 end
 
+function AB:ShowEmptyButtons()
+	for i = 1, 8 do
+		local Bar = self["Bar" .. i]
+
+		if Bar then
+			for j = 1, #Bar do
+				local Button = Bar[j]
+
+				-- Changing the CVar does not refresh buttons that have already been
+				-- created, so update each button's grid state explicitly as well.
+				Button:SetAttribute("showgrid", HydraUI.IsMainline and 1 or 2)
+
+				if Button.ShowGrid then
+					Button:ShowGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
+				elseif ActionButton_ShowGrid then
+					ActionButton_ShowGrid(Button)
+				end
+			end
+		end
+	end
+end
+
 local MultiCastSummonSpellButton_Update = function()
 	for i = 1, 12 do
 		local Slot = _G["MultiCastSlotButton"..i]
@@ -1580,6 +1602,7 @@ function AB:Load()
 	C_CVar.SetCVar("alwaysShowActionBars", "1")
 	self:Disable(MainMenuBar)
 	self:CreateBars()
+	self:ShowEmptyButtons()
 	self:CreateMovers()
 
 	if HydraUI.IsMainline then

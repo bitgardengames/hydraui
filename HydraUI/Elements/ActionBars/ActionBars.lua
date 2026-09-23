@@ -1647,6 +1647,8 @@ function AB:Load()
 	self:SetCVars()
 	HideMainMenuBarDecorations()
 	self:Disable(MainMenuBar)
+	if ActionBarUpButton then ActionBarUpButton:Hide() end
+	if ActionBarDownButton then ActionBarDownButton:Hide() end
 	self:CreateBars()
 	self:CreateMovers()
 	self:UpdateEmptyButtons()

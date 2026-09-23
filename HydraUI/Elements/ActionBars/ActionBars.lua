@@ -106,18 +106,6 @@ Defaults["ab-stance-alpha"] = 100
 Defaults["ab-totem-enable"] = true
 Defaults["ab-extra-button-size"] = 60
 
--- Change only the Edit Mode default so a value saved in the active layout is
--- still authoritative after the player changes this option.
-local EditModeActionBarDefaults = EDIT_MODE_CLASSIC_SYSTEM_MAP
-	and Enum.EditModeSystem
-	and Enum.EditModeActionBarSetting
-	and EDIT_MODE_CLASSIC_SYSTEM_MAP[Enum.EditModeSystem.ActionBar]
-
-if EditModeActionBarDefaults and EditModeActionBarDefaults[1] and EditModeActionBarDefaults[1].settings then
-	EditModeActionBarDefaults[1].settings[Enum.EditModeActionBarSetting.HideBarArt] = true
-	EditModeActionBarDefaults[1].settings[Enum.EditModeActionBarSetting.HideBarScrolling] = true
-end
-
 local ActionBars = {
 	"ActionButton",
 	"MultiBarBottomLeftButton",
@@ -1634,6 +1622,18 @@ local GetBarHeight = function()
 	return 0
 end
 
+local HideMainMenuBarDecorations = function()
+	if not MainMenuBar.UpdateSystemSettingValue or not Enum.EditModeActionBarSetting then
+		return
+	end
+
+	-- Updating the Edit Mode defaults does not affect an existing active layout.
+	-- Apply these settings to the bar itself so its artwork and paging controls
+	-- are hidden regardless of the values saved in that layout.
+	MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarArt, true)
+	MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarScrolling, true)
+end
+
 function AB:Load()
 	if (not Settings["ab-enable"]) then
 		return
@@ -1645,6 +1645,7 @@ function AB:Load()
 	SetActionBarToggles(1, 1, 1, 1, 1, 1, 1, 1)
 
 	self:SetCVars()
+	HideMainMenuBarDecorations()
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()

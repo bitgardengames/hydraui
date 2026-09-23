@@ -204,21 +204,39 @@ function HydraUI:print(...)
 	end
 end
 
+local FontObjectCache = {}
+local FontObjectCount = 0
+
+local GetFontObject = function(font, size, flags)
+	local Font, IsPixel = Assets:GetFont(font)
+	local FontFlags = IsPixel and "MONOCHROME, OUTLINE" or (flags or "")
+	local CacheKey = format("%s\031%s\031%s", Font, tostring(size), FontFlags)
+	local FontObject = FontObjectCache[CacheKey]
+
+	if (not FontObject) then
+		FontObjectCount = FontObjectCount + 1
+		FontObject = CreateFont("HydraUIFontObject" .. FontObjectCount)
+		FontObject:SetFont(Font, size, FontFlags)
+
+		if IsPixel then
+			FontObject:SetShadowColor(0, 0, 0, 0)
+		else
+			FontObject:SetShadowColor(0, 0, 0, 1)
+			FontObject:SetShadowOffset(1, -1)
+		end
+
+		FontObjectCache[CacheKey] = FontObject
+	end
+
+	return FontObject
+end
+
 function HydraUI:SetFontInfo(object, font, size, flags)
 	if (not object) then
 		return
 	end
 
-	local Font, IsPixel = Assets:GetFont(font)
-
-	if IsPixel then
-		object:SetFont(Font, size, "MONOCHROME, OUTLINE")
-		object:SetShadowColor(0, 0, 0, 0)
-	else
-		object:SetFont(Font, size, flags or "")
-		object:SetShadowColor(0, 0, 0, 1)
-		object:SetShadowOffset(1, -1)
-	end
+	object:SetFontObject(GetFontObject(font, size, flags))
 end
 
 -- Backdrops

@@ -218,11 +218,18 @@ function AB:StyleActionButton(button)
 		button.Border:SetTexture(nil)
 	end
 
-	if button.icon then
-		button.icon:ClearAllPoints()
-		button.icon:SetPoint("TOPLEFT", button, 1, -1)
-		button.icon:SetPoint("BOTTOMRIGHT", button, -1, 1)
-		button.icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+	-- ActionButtonMixin exposes the icon as Icon on current clients. Keep the
+	-- lowercase lookup for older clients, which used the template global.
+	local Icon = button.Icon or button.icon
+
+	if Icon then
+		button.icon = Icon
+		Icon:ClearAllPoints()
+		Icon:SetPoint("TOPLEFT", button, 1, -1)
+		Icon:SetPoint("BOTTOMRIGHT", button, -1, 1)
+		Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+		Icon:SetAlpha(1)
+		Icon:Show()
 	end
 
 	if _G[button:GetName() .. "FloatingBG"] then
@@ -1410,6 +1417,8 @@ function AB:UpdateFlyout()
 end
 
 function AB:ShowEmptyButtons()
+	local ShowGridReason = ACTION_BUTTON_SHOW_GRID_REASON_EVENT or 1
+
 	for i = 1, 8 do
 		local Bar = self["Bar" .. i]
 
@@ -1422,12 +1431,21 @@ function AB:ShowEmptyButtons()
 				Button:SetAttribute("showgrid", HydraUI.IsMainline and 1 or 2)
 
 				if Button.ShowGrid then
-					Button:ShowGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
+					Button:ShowGrid(ShowGridReason)
 				elseif ActionButton_ShowGrid then
 					ActionButton_ShowGrid(Button)
 				end
 			end
 		end
+	end
+end
+
+function AB:ShowActionBars()
+	-- SetActionBarToggles is a legacy wrapper which only knew about the
+	-- original four multi-bars. Set the current CVars directly so bars added
+	-- through Edit Mode are enabled as well.
+	for i = 1, 7 do
+		C_CVar.SetCVar("showMultiActionBar" .. i, "1")
 	end
 end
 
@@ -1597,8 +1615,7 @@ function AB:Load()
 	self.Hide = CreateFrame("Frame", nil, UIParent, "SecureHandlerStateTemplate")
 	self.Hide:Hide()
 
-	SetActionBarToggles(1, 1, 1, 1, 1, 1, 1, 1)
-
+	self:ShowActionBars()
 	C_CVar.SetCVar("alwaysShowActionBars", "1")
 	self:Disable(MainMenuBar)
 	self:CreateBars()

@@ -123,11 +123,15 @@ function AB:Disable(object)
 end
 
 function AB:EnableBar(bar)
+	if not bar then return end
+
 	RegisterAttributeDriver(bar, "state-visibility", "[nopetbattle] show; hide")
 	bar:Show()
 end
 
 function AB:DisableBar(bar)
+	if not bar then return end
+
 	UnregisterAttributeDriver(bar, "state-visibility")
 	bar:Hide()
 end
@@ -393,6 +397,10 @@ function AB:StylePetActionButton(button)
 	button.icon:SetDrawLayer("BACKGROUND", 7)
 	button.icon:SetPoint("TOPLEFT", button, 1, -1)
 	button.icon:SetPoint("BOTTOMRIGHT", button, -1, 1)
+
+	if button.IconMask then
+		button.IconMask:Hide()
+	end
 
 	if button.SlotArt then
 		button.SlotArt:Hide()
@@ -1404,6 +1412,48 @@ function AB:UpdateFlyout()
 	end
 end
 
+function AB:UpdateEmptyButtons()
+	if Settings["ab-show-empty"] then
+		for i = 1, #ActionBars do
+			for j = 1, 12 do
+				local Button = _G[ActionBars[i] .. j]
+
+				if Button then
+					if Button.ShowGrid then
+						Button:ShowGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
+					end
+
+					if HydraUI.IsMainline then
+						Button:SetAttribute("showgrid", 1)
+					else
+						Button:SetAttribute("showgrid", 2)
+
+						if ActionButton_ShowGrid then
+							ActionButton_ShowGrid(Button)
+						elseif Button.ShowGrid then
+							Button:ShowGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
+						end
+					end
+				end
+			end
+		end
+	else
+		for i = 1, #ActionBars do
+			for j = 1, 12 do
+				local Button = _G[ActionBars[i] .. j]
+
+				if Button then
+					Button:SetAttribute("showgrid", 0)
+
+					if Button.HideGrid then
+						Button:HideGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
+					end
+				end
+			end
+		end
+	end
+end
+
 local MultiCastSummonSpellButton_Update = function()
 	for i = 1, 12 do
 		local Slot = _G["MultiCastSlotButton"..i]
@@ -1576,6 +1626,7 @@ function AB:Load()
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()
+	self:UpdateEmptyButtons()
 
 	if HydraUI.IsMainline then
 		MainMenuBar.GetBottomAnchoredHeight = GetBarHeight
@@ -1595,11 +1646,6 @@ function AB:Load()
 			EditModeManagerFrame.UpdateRightActionBarPositions = function() end
 		end
 	end
-
-	-- Not even sure what this is, it covers the bottom of the screen and consumes clicks
-	--[[if MainActionBar then
-		MainActionBar:Hide()
-	end]]
 
 	hooksecurefunc("ActionButton_UpdateRangeIndicator", AB.UpdateButtonStatus)
 
@@ -1749,6 +1795,8 @@ local UpdateEnableTotemBar = function(value)
 end
 
 local UpdateShowHotKey = function(value)
+	if not AB.Bar1 then return end
+
 	if value then
 		for i = 1, 12 do
 			AB.Bar1[i].HotKey:SetAlpha(1)
@@ -1763,11 +1811,11 @@ local UpdateShowHotKey = function(value)
 				AB.Bar8[i].HotKey:SetAlpha(1)
 			end
 
-			if AB.PetBar[i] then
+			if AB.PetBar and AB.PetBar[i] then
 				AB.PetBar[i].HotKey:SetAlpha(1)
 			end
 
-			if AB.StanceBar[i] then
+			if AB.StanceBar and AB.StanceBar[i] then
 				AB.StanceBar[i].HotKey:SetAlpha(1)
 			end
 		end
@@ -2131,6 +2179,10 @@ local UpdateStanceHover = function(value)
 			AB.StanceBar[i].cooldown:SetDrawBling(true)
 		end
 	end
+end
+
+local UpdateEmptyButtons = function()
+	AB:UpdateEmptyButtons()
 end
 
 local UpdateBar1Alpha = function(value)

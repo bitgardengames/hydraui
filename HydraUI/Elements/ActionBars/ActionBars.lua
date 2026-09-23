@@ -1427,13 +1427,18 @@ function AB:ShowEmptyButtons()
 				local Button = Bar[j]
 
 				-- Changing the CVar does not refresh buttons that have already been
-				-- created, so update each button's grid state explicitly as well.
-				Button:SetAttribute("showgrid", HydraUI.IsMainline and 1 or 2)
+				-- created. Current ActionButtonMixin uses SetShowGrid; setting the
+				-- old secure attribute alone no longer updates its grid state.
+				if Button.SetShowGrid then
+					Button:SetShowGrid(true, ShowGridReason)
+				else
+					Button:SetAttribute("showgrid", HydraUI.IsMainline and 1 or 2)
 
-				if Button.ShowGrid then
-					Button:ShowGrid(ShowGridReason)
-				elseif ActionButton_ShowGrid then
-					ActionButton_ShowGrid(Button)
+					if Button.ShowGrid then
+						Button:ShowGrid(ShowGridReason)
+					elseif ActionButton_ShowGrid then
+						ActionButton_ShowGrid(Button)
+					end
 				end
 			end
 		end

@@ -1622,18 +1622,6 @@ local GetBarHeight = function()
 	return 0
 end
 
-local HideMainMenuBarDecorations = function()
-	if not MainMenuBar.UpdateSystemSettingValue or not Enum.EditModeActionBarSetting then
-		return
-	end
-
-	-- Updating the Edit Mode defaults does not affect an existing active layout.
-	-- Apply these settings to the bar itself so its artwork and paging controls
-	-- are hidden regardless of the values saved in that layout.
-	MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarArt, true)
-	MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarScrolling, true)
-end
-
 function AB:Load()
 	if (not Settings["ab-enable"]) then
 		return
@@ -1645,7 +1633,6 @@ function AB:Load()
 	SetActionBarToggles(1, 1, 1, 1, 1, 1, 1, 1)
 
 	self:SetCVars()
-	HideMainMenuBarDecorations()
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()
@@ -1668,6 +1655,11 @@ function AB:Load()
 			EditModeManagerFrame.UpdateBottomActionBarPositions = function() end
 			EditModeManagerFrame.UpdateRightActionBarPositions = function() end
 		end
+	end
+
+	if MainActionBar then
+		MainActionBar:SetAlpha(0)
+		MainActionBar:EnableMouse(false)
 	end
 
 	hooksecurefunc("ActionButton_UpdateRangeIndicator", AB.UpdateButtonStatus)

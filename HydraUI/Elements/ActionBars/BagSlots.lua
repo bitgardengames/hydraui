@@ -10,8 +10,9 @@ Defaults["bags-frame-max"] = 100
 Defaults["bags-frame-size"] = 32
 
 local IsClassic = HydraUI.IsClassic
+local IsTBC = HydraUI.IsTBC
 
-if IsClassic then
+if IsClassic or IsTBC then
 	BagsFrame.Objects = {
 		KeyRingButton,
 		CharacterBag3Slot,
@@ -86,7 +87,7 @@ function BagsFrame:PositionButtons()
 			Object:SetPoint("LEFT", self.Objects[i-1], "RIGHT", 4, 0)
 		end
 
-		if (IsClassic and i == 1) then
+		if ((IsClassic or IsTBC) and i == 1) then
 			Object:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
 		else
 			Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
@@ -118,7 +119,7 @@ function BagsFrame:Load()
 	self.Panel:SetBackdropBorderColor(0, 0, 0)
 	self.Panel:SetFrameStrata("LOW")
 
-	if IsClassic then
+	if IsClassic or IsTBC then
 		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * (#self.Objects - 1)) + 8 + (Settings["bags-frame-size"] / 2), Settings["bags-frame-size"] + 8)
 	else
 		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * #self.Objects) + 4, Settings["bags-frame-size"] + 8)
@@ -221,13 +222,6 @@ function BagsFrame:Load()
 	else
 		SetInsertItemsLeftToRight(Settings["bags-loot-from-left"])
 	end
-
-	-- Key Ring button disabled: Blizzard's own Classic/Keyring.lua OnShow handler
-	-- throws on this client (1.15.9+), and the error fires through the engine's
-	-- protected-script system, so pcall can't catch it here.
-	-- if IsClassic then
-	-- 	KeyRingButton:Show()
-	-- end
 
 	self:UpdateVisibility()
 end

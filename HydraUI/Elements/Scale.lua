@@ -1,6 +1,14 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
 Defaults["enable-scale"] = true
+Defaults["ui-scale"] = (768 / select(2, GetPhysicalScreenSize()))
+
+local Scale = HydraUI:NewModule("Scale")
+
+function Scale:Load()
+	C_CVar.SetCVar("useUiScale", Settings["enable-scale"] and "1" or "0")
+	C_CVar.SetCVar("uiScale", Settings["ui-scale"])
+end
 
 local ScaleOnAccept = function()
 	local Scale = (768 / select(2, GetPhysicalScreenSize()))

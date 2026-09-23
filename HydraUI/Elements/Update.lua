@@ -4,6 +4,8 @@ local tonumber = tonumber
 local IsInGuild = IsInGuild
 local IsInGroup = IsInGroup
 local IsInRaid = IsInRaid
+local IsInInstance = IsInInstance
+local GetZoneText = GetZoneText
 local GetNumGroupMembers = GetNumGroupMembers
 local LE_PARTY_CATEGORY_HOME = LE_PARTY_CATEGORY_HOME
 local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
@@ -14,6 +16,8 @@ local User = HydraUI.UserName .. "-" .. HydraUI.UserRealm
 local tinsert = table.insert
 local tremove = table.remove
 local CT = ChatThrottleLib
+
+local Prefix = "HydraUI-Version"
 
 local Update = HydraUI:NewModule("Update")
 Update.SentHome = false
@@ -26,6 +30,10 @@ local Queue = {}
 local Throttle = HydraUI:GetModule("Throttle")
 
 function Update:QueueChannel(channel, target)
+	if (not channel) then
+		return
+	end
+
 	local Data
 
 	if (#Tables == 0) then
@@ -46,10 +54,17 @@ end
 function Update:OnUpdate(elapsed)
 	self.Timer = self.Timer - elapsed
 
-	if (self.Timer < 0) then
+	if (self.Timer <= 0) then
 		local Data = tremove(Queue, 1)
 
-		CT:SendAddonMessage("NORMAL", "HydraUI-Version", AddOnVersion, Data[1], Data[2])
+		if (not Data) then
+			self:SetScript("OnUpdate", nil)
+			self.Timer = 5
+
+			return
+		end
+
+		CT:SendAddonMessage("NORMAL", Prefix, AddOnVersion, Data[1], Data[2])
 
 		tinsert(Tables, Data)
 
@@ -62,12 +77,12 @@ function Update:OnUpdate(elapsed)
 end
 
 function Update:PLAYER_ENTERING_WORLD()
-	if (not HydraUI.IsMainline and not IsInInstance()) and (not Throttle:IsThrottled("vrsn")) then
+	if (not HydraUI.IsMainline and not IsInInstance()) and (not Throttle:IsThrottled("version")) then
 		C_Timer.After(5, function()
 			self:QueueChannel("YELL")
 		end)
 
-		Throttle:Start("vrsn", 10)
+		Throttle:Start("version", 10)
 	end
 
 	self:GROUP_ROSTER_UPDATE()
@@ -87,7 +102,9 @@ function Update:GROUP_ROSTER_UPDATE()
 
 	if (Home == 0 and self.SentHome) then
 		self.SentHome = false
-	elseif (Instance == 0 and self.SentInst) then
+	end
+
+	if (Instance == 0 and self.SentInst) then
 		self.SentInst = false
 	end
 
@@ -101,11 +118,15 @@ function Update:GROUP_ROSTER_UPDATE()
 end
 
 function Update:CHAT_MSG_ADDON(prefix, message, channel, sender)
-	if (sender == User or prefix ~= "HydraUI-Version") then
+	if (sender == User or prefix ~= Prefix) then
 		return
 	end
 
 	message = tonumber(message)
+
+	if (not message) then
+		return
+	end
 
 	if (AddOnNum > message) then -- We have a higher version, share it
 		self:QueueChannel(channel)
@@ -119,28 +140,26 @@ function Update:CHAT_MSG_ADDON(prefix, message, channel, sender)
 	end
 end
 
-function Update:ZONE_CHANGED_NEW_AREA()
-	if UnitOnTaxi("player") then
-		local Zone = GetZoneText()
+function Update:ZoneVersionCheck()
+	if IsInInstance() then
+		return
+	end
 
-		if (Zone ~= self.Zone and not Throttle:IsThrottled("vrsn")) then
-			self:QueueChannel("YELL")
-			self.Zone = Zone
-			Throttle:Start("vrsn", 10)
-		end
+	local Zone = GetZoneText()
+
+	if (Zone ~= self.Zone and not Throttle:IsThrottled("version")) then
+		self:QueueChannel("YELL")
+		self.Zone = Zone
+		Throttle:Start("version", 10)
 	end
 end
 
 function Update:ZONE_CHANGED()
-	if UnitOnTaxi("player") then
-		local Zone = GetZoneText()
+	self:ZoneVersionCheck()
+end
 
-		if (Zone ~= self.Zone and not Throttle:IsThrottled("vrsn")) then
-			self:QueueChannel("YELL")
-			self.Zone = Zone
-			Throttle:Start("vrsn", 10)
-		end
-	end
+function Update:ZONE_CHANGED_NEW_AREA()
+	self:ZoneVersionCheck()
 end
 
 function Update:OnEvent(event, ...)
@@ -154,10 +173,10 @@ if (not HydraUI.IsMainline) then
 	Update:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 end
 
+C_ChatInfo.RegisterAddonMessagePrefix(Prefix)
+
 Update:RegisterEvent("GUILD_ROSTER_UPDATE")
 Update:RegisterEvent("PLAYER_ENTERING_WORLD")
 Update:RegisterEvent("GROUP_ROSTER_UPDATE")
 Update:RegisterEvent("CHAT_MSG_ADDON")
 Update:SetScript("OnEvent", Update.OnEvent)
-
-C_ChatInfo.RegisterAddonMessagePrefix("HydraUI-Version")

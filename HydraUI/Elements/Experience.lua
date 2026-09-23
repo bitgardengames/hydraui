@@ -19,6 +19,7 @@ local GetNumQuests
 local LEVEL = LEVEL
 local HasXPBuff
 local XPMod = 1
+local FirstRun = true
 
 if HydraUI.IsMainline then
 	GetNumQuests = C_QuestLog.GetNumQuestLogEntries
@@ -330,7 +331,7 @@ function Experience:Update()
 	end
 
 	if Settings["experience-animate"] then
-		if (not first) then
+		if (not FirstRun) then
 			self.Change:SetChange(XP)
 			self.Change:Play()
 
@@ -339,6 +340,7 @@ function Experience:Update()
 			end
 		else
 			self.Bar:SetValue(XP)
+			FirstRun = false
 		end
 	else
 		self.Bar:SetValue(XP)

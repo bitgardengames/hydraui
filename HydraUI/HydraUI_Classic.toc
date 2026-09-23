@@ -1,8 +1,8 @@
 ## Interface: 11508
 ## Author: Hydra
-## Version: 2.74
+## Version: 2.75
 ## Title: |cFFFFC44DHydra|r|cFFFFFFFFUI|r
-## Notes: Interface replacement for Classic and Season of Mastery
+## Notes: Interface replacement for Classic World of Warcraft
 ## SavedVariables: HydraUIProfileData, HydraUIProfiles, HydraUIData, HydraUIGold
 
 Elements\Initialize.lua

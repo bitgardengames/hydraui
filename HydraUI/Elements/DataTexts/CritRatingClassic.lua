@@ -16,31 +16,6 @@ local GetSpellCrit = function()
 	return Max
 end
 
-local OnEnter = function(self)
-	self:SetTooltip()
-
-	local Crit
-	local Spell = GetSpellCrit()
-	local Melee = GetCritChance()
-
-	if (HydraUI.UserClass == "HUNTER") then
-		GameTooltip:AddLine(format("%s %.2f%%", RANGED_CRIT_CHANCE, GetRangedCritChance()))
-		GameTooltip:AddLine(format(CR_CRIT_TOOLTIP, GetCombatRating(CR_CRIT_RANGED), GetCombatRatingBonus(CR_CRIT_RANGED)), 1, 1, 1)
-	elseif (Spell > Melee) then
-		GameTooltip:AddLine(format("%s %.2f%%", SPELL_CRIT_CHANCE, Spell))
-		GameTooltip:AddLine(format(CR_CRIT_TOOLTIP, GetCombatRating(CR_CRIT_SPELL), GetCombatRatingBonus(CR_CRIT_SPELL)), 1, 1, 1)
-	else
-		GameTooltip:AddLine(format("%s %.2f%%", MELEE_CRIT_CHANCE, Melee))
-		GameTooltip:AddLine(format(CR_CRIT_MELEE_TOOLTIP, GetCombatRating(CR_CRIT_MELEE), GetCombatRatingBonus(CR_CRIT_MELEE)), 1, 1, 1)
-	end
-
-	GameTooltip:Show()
-end
-
-local OnLeave = function()
-	GameTooltip:Hide()
-end
-
 local OnMouseUp = function()
 	if InCombatLockdown() then
 		return print(ERR_NOT_IN_COMBAT)
@@ -75,8 +50,6 @@ local OnEnable = function(self)
 	self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 	self:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 	self:SetScript("OnEvent", Update)
-	self:SetScript("OnEnter", OnEnter)
-	self:SetScript("OnLeave", OnLeave)
 	self:SetScript("OnMouseUp", OnMouseUp)
 
 	self:Update(nil, "player")
@@ -88,8 +61,6 @@ local OnDisable = function(self)
 	self:UnregisterEvent("PLAYER_EQUIPMENT_CHANGED")
 	self:UnregisterEvent("UPDATE_SHAPESHIFT_FORM")
 	self:SetScript("OnEvent", nil)
-	self:SetScript("OnEnter", nil)
-	self:SetScript("OnLeave", nil)
 	self:SetScript("OnMouseUp", nil)
 
 	self.Text:SetText("")

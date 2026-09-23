@@ -102,7 +102,7 @@ else
 		for i = 1, 5 do -- Default UI uses 5 here for some reason? Just going to roll with it right now even though it makes no sense to me
 			Name, Texture, PointsSpent = GetTalentTabInfo(i)
 
-			if Name then
+			if (Name and type(PointsSpent) == "number") then
 				if (PointsSpent > HighestPoints) then
 					MainSpec = Name
 					HighestPoints = PointsSpent

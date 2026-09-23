@@ -106,17 +106,6 @@ Defaults["ab-stance-alpha"] = 100
 Defaults["ab-totem-enable"] = true
 Defaults["ab-extra-button-size"] = 60
 
--- Change only the Edit Mode default so a value saved in the active layout is
--- still authoritative after the player changes this option.
-local EditModeActionBarDefaults = EDIT_MODE_CLASSIC_SYSTEM_MAP
-	and Enum.EditModeSystem
-	and Enum.EditModeActionBarSetting
-	and EDIT_MODE_CLASSIC_SYSTEM_MAP[Enum.EditModeSystem.ActionBar]
-
-if EditModeActionBarDefaults and EditModeActionBarDefaults[1] and EditModeActionBarDefaults[1].settings then
-	EditModeActionBarDefaults[1].settings[Enum.EditModeActionBarSetting.HideBarScrolling] = true
-end
-
 local ActionBars = {
 	"ActionButton",
 	"MultiBarBottomLeftButton",

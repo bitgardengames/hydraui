@@ -18,7 +18,6 @@ Defaults["ab-enable"] = true
 Defaults["ab-show-hotkey"] = true
 Defaults["ab-show-count"] = true
 Defaults["ab-show-macro"] = true
-Defaults["ab-show-empty"] = true
 
 Defaults["ab-font"] = "PT Sans"
 Defaults["ab-font-size"] = 12
@@ -105,14 +104,6 @@ Defaults["ab-stance-alpha"] = 100
 
 Defaults["ab-totem-enable"] = true
 Defaults["ab-extra-button-size"] = 60
-
-local ActionBars = {
-	"ActionButton",
-	"MultiBarBottomLeftButton",
-	"MultiBarBottomRightButton",
-	"MultiBarLeftButton",
-	"MultiBarRightButton",
-}
 
 function AB:Disable(object)
 	if object.UnregisterAllEvents then
@@ -1388,10 +1379,6 @@ function AB:CreateMovers()
 	self.Bar1Mover.PostMove = Bar1PostMove
 end
 
-function AB:SetCVars()
-	C_CVar.SetCVar("showgrid", 1)
-end
-
 function AB:UpdateFlyout()
 	if (not self.FlyoutArrow) then
 		return
@@ -1417,50 +1404,6 @@ function AB:UpdateFlyout()
 			if Button.GlyphIcon then
 				Button.GlyphIcon:ClearAllPoints()
 				Button.GlyphIcon:SetPoint("TOPRIGHT", Button, 2, 2)
-			end
-		end
-	end
-end
-
-function AB:UpdateEmptyButtons()
-	C_CVar.SetCVar("alwaysShowActionBars", Settings["ab-show-empty"] and "1" or "0")
-
-	if Settings["ab-show-empty"] then
-		for i = 1, #ActionBars do
-			for j = 1, 12 do
-				local Button = _G[ActionBars[i] .. j]
-
-				if Button then
-					if Button.ShowGrid then
-						Button:ShowGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
-					end
-
-					if HydraUI.IsMainline then
-						Button:SetAttribute("showgrid", 1)
-					else
-						Button:SetAttribute("showgrid", 2)
-
-						if ActionButton_ShowGrid then
-							ActionButton_ShowGrid(Button)
-						elseif Button.ShowGrid then
-							Button:ShowGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
-						end
-					end
-				end
-			end
-		end
-	else
-		for i = 1, #ActionBars do
-			for j = 1, 12 do
-				local Button = _G[ActionBars[i] .. j]
-
-				if Button then
-					Button:SetAttribute("showgrid", 0)
-
-					if Button.HideGrid then
-						Button:HideGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
-					end
-				end
 			end
 		end
 	end
@@ -1634,11 +1577,10 @@ function AB:Load()
 
 	SetActionBarToggles(1, 1, 1, 1, 1, 1, 1, 1)
 
-	self:SetCVars()
+	C_CVar.SetCVar("alwaysShowActionBars", "1")
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()
-	self:UpdateEmptyButtons()
 
 	if HydraUI.IsMainline then
 		MainMenuBar.GetBottomAnchoredHeight = GetBarHeight
@@ -2196,10 +2138,6 @@ local UpdateStanceHover = function(value)
 			AB.StanceBar[i].cooldown:SetDrawBling(true)
 		end
 	end
-end
-
-local UpdateEmptyButtons = function()
-	AB:UpdateEmptyButtons()
 end
 
 local UpdateBar1Alpha = function(value)

@@ -114,6 +114,7 @@ local EditModeActionBarDefaults = EDIT_MODE_CLASSIC_SYSTEM_MAP
 	and EDIT_MODE_CLASSIC_SYSTEM_MAP[Enum.EditModeSystem.ActionBar]
 
 if EditModeActionBarDefaults and EditModeActionBarDefaults[1] and EditModeActionBarDefaults[1].settings then
+	EditModeActionBarDefaults[1].settings[Enum.EditModeActionBarSetting.HideBarArt] = true
 	EditModeActionBarDefaults[1].settings[Enum.EditModeActionBarSetting.HideBarScrolling] = true
 end
 

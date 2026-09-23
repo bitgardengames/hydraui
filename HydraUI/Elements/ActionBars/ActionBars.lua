@@ -1622,16 +1622,29 @@ local GetBarHeight = function()
 	return 0
 end
 
-local HideMainMenuBarDecorations = function()
-	if not MainMenuBar.UpdateSystemSettingValue or not Enum.EditModeActionBarSetting then
-		return
+local HideMainMenuBarDecorations = function(self)
+	if MainMenuBar.UpdateSystemSettingValue and Enum and Enum.EditModeActionBarSetting then
+		-- Updating the Edit Mode defaults does not affect an existing active layout.
+		MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarArt, true)
+		MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarScrolling, true)
 	end
 
-	-- Updating the Edit Mode defaults does not affect an existing active layout.
-	-- Apply these settings to the bar itself so its artwork and paging controls
-	-- are hidden regardless of the values saved in that layout.
-	MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarArt, true)
-	MainMenuBar:UpdateSystemSettingValue(Enum.EditModeActionBarSetting.HideBarScrolling, true)
+	-- The scrolling controls can be shown independently of MainMenuBar when the
+	-- active Edit Mode layout is refreshed. Move them to our hidden frame too so
+	-- a subsequent Blizzard update cannot make them visible again.
+	local HideControl = function(Control)
+		if Control then
+			self:Disable(Control)
+			Control:Hide()
+		end
+	end
+
+	HideControl(MainMenuBar.ActionBarPageNumber)
+	HideControl(MainMenuBar.ScrollUpButton)
+	HideControl(MainMenuBar.ScrollDownButton)
+	HideControl(ActionBarUpButton)
+	HideControl(ActionBarDownButton)
+	HideControl(MainMenuBarPageNumber)
 end
 
 function AB:Load()
@@ -1645,7 +1658,7 @@ function AB:Load()
 	SetActionBarToggles(1, 1, 1, 1, 1, 1, 1, 1)
 
 	self:SetCVars()
-	HideMainMenuBarDecorations()
+	HideMainMenuBarDecorations(self)
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()

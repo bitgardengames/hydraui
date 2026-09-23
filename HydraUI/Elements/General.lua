@@ -127,9 +127,7 @@ function Durability:Load() -- Maybe a setting to hide the whole frame?
 	HydraUI:CreateMover(self)
 end
 
--- Some Classic clients, including Burning Crusade Anniversary, do not create
--- the Blizzard vehicle seat frame.
-if (not HydraUI.IsClassic and VehicleSeatIndicator) then
+if VehicleSeatIndicator then
 	local SeatIndicator = HydraUI:NewModule("Vehicle Seats")
 
 	local SetSeatIndicatorPosition = function(self, anchor, parent)

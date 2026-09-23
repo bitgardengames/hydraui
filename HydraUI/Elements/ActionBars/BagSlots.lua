@@ -69,13 +69,39 @@ function BagsFrame:UpdateVisibility()
 	end
 end
 
-function BagsFrame:PositionButtons()
+function BagsFrame:Load()
+	if (not Settings["ab-enable"]) then
+		return
+	end
+
+	if (HydraUI.ClientVersion >= 100000) then
+		MainMenuBarBackpackButton:ClearAllPoints()
+		MainMenuBarBackpackButton:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 5)
+
+		return
+	end
+
+	self.Panel = CreateFrame("Frame", "HydraUI Bags Window", HydraUI.UIParent, "BackdropTemplate")
+	self.Panel:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 3)
+	self.Panel:SetBackdrop(HydraUI.BackdropAndBorder)
+	self.Panel:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
+	self.Panel:SetBackdropBorderColor(0, 0, 0)
+	self.Panel:SetFrameStrata("LOW")
+
+	if IsClassic then
+		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * (#self.Objects - 1)) + 8 + (Settings["bags-frame-size"] / 2), Settings["bags-frame-size"] + 8)
+	else
+		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * #self.Objects) + 4, Settings["bags-frame-size"] + 8)
+	end
+
+	HydraUI:CreateMover(self.Panel)
+
 	local Object
 
-	for i = 1, #BagsFrame.Objects do
-		Object = BagsFrame.Objects[i]
+	for i = 1, #self.Objects do
+		Object = self.Objects[i]
 
-		Object:SetParent(BagsFrame.Panel)
+		Object:SetParent(self.Panel)
 		Object:ClearAllPoints()
 		Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
 		Object:HookScript("OnEnter", BagsFrameButtonOnEnter)
@@ -138,13 +164,13 @@ function BagsFrame:PositionButtons()
 		Object:SetHighlightTexture(Highlight)
 
 		if (i == 1) then
-			Object:SetPoint("LEFT", BagsFrame.Panel, 4, 0)
+			Object:SetPoint("LEFT", self.Panel, 4, 0)
 
 			if IsClassic then
 				Object:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
 			end
 		else
-			Object:SetPoint("LEFT", BagsFrame.Objects[i-1], "RIGHT", 4, 0)
+			Object:SetPoint("LEFT", self.Objects[i-1], "RIGHT", 4, 0)
 
 			local Pushed = Object:CreateTexture(nil, "ARTWORK")
 			Pushed:SetPoint("TOPLEFT", Object, 0, 0)
@@ -155,31 +181,6 @@ function BagsFrame:PositionButtons()
 			Object:SetPushedTexture(Pushed)
 		end
 	end
-end
-
-function BagsFrame:Load()
-	if (not Settings["ab-enable"]) then
-		return
-	end
-
-	self.Panel = CreateFrame("Frame", "HydraUI Bags Window", HydraUI.UIParent, "BackdropTemplate")
-	self.Panel:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 3)
-	self.Panel:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.Panel:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
-	self.Panel:SetBackdropBorderColor(0, 0, 0)
-	self.Panel:SetFrameStrata("LOW")
-
-	if IsClassic then
-		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * (#self.Objects - 1)) + 8 + (Settings["bags-frame-size"] / 2), Settings["bags-frame-size"] + 8)
-	else
-		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * #self.Objects) + 4, Settings["bags-frame-size"] + 8)
-	end
-
-	HydraUI:CreateMover(self.Panel)
-
-	self:PositionButtons()
-
-	hooksecurefunc("UIParent_ManageFramePositions", self.PositionButtons)
 
 	if (C_Container and C_Container.SetInsertItemsLeftToRight) then
 		C_Container.SetInsertItemsLeftToRight(Settings["bags-loot-from-left"])
@@ -187,9 +188,12 @@ function BagsFrame:Load()
 		SetInsertItemsLeftToRight(Settings["bags-loot-from-left"])
 	end
 
-	if IsClassic then
-		KeyRingButton:Show()
-	end
+	-- Key Ring button disabled: Blizzard's own Classic/Keyring.lua OnShow handler
+	-- throws on this client (1.15.9+), and the error fires through the engine's
+	-- protected-script system, so pcall can't catch it here.
+	-- if IsClassic then
+	-- 	KeyRingButton:Show()
+	-- end
 
 	self:UpdateVisibility()
 end

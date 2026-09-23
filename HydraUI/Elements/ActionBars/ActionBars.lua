@@ -208,9 +208,6 @@ function AB:StyleActionButton(button)
 		button.SlotArt:Hide()
 	end
 
-	-- The modern action button template uses SlotBackground for the soft
-	-- outline around each slot. Keep it transparent even when Blizzard shows
-	-- the texture again while updating the action bar grid.
 	if button.SlotBackground then
 		button.SlotBackground:SetAlpha(0)
 		button.SlotBackground:Hide()

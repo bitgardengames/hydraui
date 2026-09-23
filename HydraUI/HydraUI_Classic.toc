@@ -1,6 +1,6 @@
-## Interface: 11508
+## Interface: 11509
 ## Author: Hydra
-## Version: 2.75
+## Version: 2.76
 ## Title: |cFFFFC44DHydra|r|cFFFFFFFFUI|r
 ## Notes: Interface replacement for Classic World of Warcraft
 ## SavedVariables: HydraUIProfileData, HydraUIProfiles, HydraUIData, HydraUIGold

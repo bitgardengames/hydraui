@@ -1417,36 +1417,6 @@ function AB:UpdateFlyout()
 	end
 end
 
-function AB:ShowEmptyButtons()
-	local ShowGridReason = ACTION_BUTTON_SHOW_GRID_REASON_EVENT or 1
-
-	for i = 1, 8 do
-		local Bar = self["Bar" .. i]
-
-		if Bar then
-			for j = 1, #Bar do
-				local Button = Bar[j]
-
-				-- Keep the secure state in sync so later action updates do not hide
-				-- empty buttons again after the initial grid refresh.
-				Button:SetAttribute("showgrid", HydraUI.IsMainline and 1 or 2)
-
-				-- Changing the CVar or secure attribute does not refresh buttons that
-				-- have already been created, so update their grid state explicitly.
-				if Button.SetShowGrid then
-					Button:SetShowGrid(true, ShowGridReason)
-				else
-					if Button.ShowGrid then
-						Button:ShowGrid(ShowGridReason)
-					elseif ActionButton_ShowGrid then
-						ActionButton_ShowGrid(Button)
-					end
-				end
-			end
-		end
-	end
-end
-
 function AB:ShowActionBars()
 	-- SetActionBarToggles is a legacy wrapper which only knew about the
 	-- original four multi-bars. Set the current CVars directly so bars added
@@ -1623,10 +1593,8 @@ function AB:Load()
 	self.Hide:Hide()
 
 	self:ShowActionBars()
-	C_CVar.SetCVar("alwaysShowActionBars", "1")
 	self:Disable(MainMenuBar)
 	self:CreateBars()
-	self:ShowEmptyButtons()
 	self:CreateMovers()
 
 	if HydraUI.IsMainline then

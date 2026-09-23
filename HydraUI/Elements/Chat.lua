@@ -842,6 +842,23 @@ local OpenTemporaryWindow = function()
 end
 
 function Chat:MoveChatFrames()
+	-- Override edit mode
+	EDIT_MODE_CLASSIC_SYSTEM_MAP[Enum.EditModeSystem.ChatFrame] = {
+		settings = {
+			[Enum.EditModeChatFrameSetting.WidthHundreds] = 4,
+			[Enum.EditModeChatFrameSetting.WidthTensAndOnes] = 30,
+			[Enum.EditModeChatFrameSetting.HeightHundreds] = 1,
+			[Enum.EditModeChatFrameSetting.HeightTensAndOnes] = 20,
+		},
+		anchorInfo = {
+			point = "CENTER",
+			relativeTo = self.Middle,
+			relativePoint = "CENTER",
+			offsetX = 0,
+			offsetY = 0,
+		},
+	}
+
 	for i = 1, NUM_CHAT_WINDOWS do
 		local Frame = _G["ChatFrame"..i]
 
@@ -876,8 +893,11 @@ function Chat:MoveChatFrames()
 			if (i == 1) then
 				Frame:SetUserPlaced(true)
 				Frame:ClearAllPoints()
-				Frame:SetPoint("TOPLEFT", self.Middle, 4 + Settings["ui-border-thickness"], -(4 + Settings["ui-border-thickness"]))
-				Frame:SetPoint("BOTTOMRIGHT", self.Middle, -(4 + Settings["ui-border-thickness"]), 4 + Settings["ui-border-thickness"])
+				--Frame:SetHeight(92)
+				Frame:SetPoint("TOPLEFT", self.Top, "BOTTOMLEFT", 4, -2)
+				Frame:SetPoint("BOTTOMRIGHT", self.Bottom, "TOPRIGHT", -4, 2)
+				--Frame:SetPoint("TOPLEFT", self.Middle, 4 + Settings["ui-border-thickness"], -(4 + Settings["ui-border-thickness"]))
+				--Frame:SetPoint("BOTTOMRIGHT", self.Middle, -(4 + Settings["ui-border-thickness"]), 4 + Settings["ui-border-thickness"])
 			end
 		end
 
@@ -886,7 +906,7 @@ function Chat:MoveChatFrames()
 		end
 
 		FCF_SetChatWindowFontSize(nil, Frame, Settings["chat-font-size"])
-		FCF_SavePositionAndDimensions(Frame)
+		--FCF_SavePositionAndDimensions(Frame)
 
 		local Font, IsPixel = Assets:GetFont(Settings["chat-font"])
 
@@ -1184,6 +1204,9 @@ function Chat:Load()
 	hooksecurefunc("ChatEdit_UpdateHeader", UpdateHeader)
 	hooksecurefunc("FCF_OpenTemporaryWindow", OpenTemporaryWindow)
 	hooksecurefunc("FCF_RestorePositionAndDimensions", MoveChatFrames)
+	hooksecurefunc("FCF_SavePositionAndDimensions", MoveChatFrames)
+	hooksecurefunc("UIParent_ManageFramePositions", MoveChatFrames)
+	--hooksecurefunc(EditModeManagerFrame, "UpdateActionBarLayout", MoveChatFrames)
 
 	if HydraUI.IsMainline then
 		self:RegisterEvent("PLAYER_ENTERING_WORLD")

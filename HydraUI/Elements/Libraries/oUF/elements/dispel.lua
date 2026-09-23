@@ -8,6 +8,16 @@ local UnitAura = UnitAura
 local DebuffTypeColor = DebuffTypeColor
 local FindAuraByName = AuraUtil.FindAuraByName
 
+if (not DebuffTypeColor) then
+	DebuffTypeColor = {
+		Magic = {r = 0.20, g = 0.60, b = 1.00},
+		Curse = {r = 0.60, g = 0.00, b = 1.00},
+		Disease = {r = 0.60, g = 0.40, b = 0.00},
+		Poison ={r = 0.00, g = 0.60, b = 0.00},
+		none = {r = 0.80, g = 0.00, b = 0.00},
+	}
+end
+
 local Priorities = {
 	Magic = 4,
 	Curse = 3,

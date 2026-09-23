@@ -148,6 +148,12 @@ end
 
 -- Events
 function HydraUI:OnEvent(event)
+	if (HydraUI.ClientVersion >= 20000) then
+		print("HydraUI is not supported for this version of World of Warcraft")
+
+		return
+	end
+
 	-- Import profile data and load a profile
 	self:CreateProfileData()
 	self:UpdateProfileList()

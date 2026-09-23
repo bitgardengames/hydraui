@@ -394,10 +394,6 @@ function AB:StylePetActionButton(button)
 	button.icon:SetPoint("TOPLEFT", button, 1, -1)
 	button.icon:SetPoint("BOTTOMRIGHT", button, -1, 1)
 
-	if button.IconMask then
-		button.IconMask:Hide()
-	end
-
 	if button.SlotArt then
 		button.SlotArt:Hide()
 	end
@@ -1408,43 +1404,6 @@ function AB:UpdateFlyout()
 	end
 end
 
-function AB:UpdateEmptyButtons()
-	if Settings["ab-show-empty"] then
-		for i = 1, #ActionBars do
-			for j = 1, 12 do
-				local Button = _G[ActionBars[i] .. j]
-
-				if Button then
-					if Button.ShowGrid then
-						Button:ShowGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
-					end
-
-					if HydraUI.IsMainline then
-						Button:SetAttribute("showgrid", 1)
-					else
-						Button:SetAttribute("showgrid", 2)
-						ActionButton_ShowGrid(Button)
-					end
-				end
-			end
-		end
-	else
-		for i = 1, #ActionBars do
-			for j = 1, 12 do
-				local Button = _G[ActionBars[i] .. j]
-
-				if Button then
-					Button:SetAttribute("showgrid", 0)
-
-					if Button.HideGrid then
-						Button:HideGrid(ACTION_BUTTON_SHOW_GRID_REASON_EVENT)
-					end
-				end
-			end
-		end
-	end
-end
-
 local MultiCastSummonSpellButton_Update = function()
 	for i = 1, 12 do
 		local Slot = _G["MultiCastSlotButton"..i]
@@ -1617,7 +1576,6 @@ function AB:Load()
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()
-	self:UpdateEmptyButtons()
 
 	if HydraUI.IsMainline then
 		MainMenuBar.GetBottomAnchoredHeight = GetBarHeight
@@ -1637,6 +1595,11 @@ function AB:Load()
 			EditModeManagerFrame.UpdateRightActionBarPositions = function() end
 		end
 	end
+
+	-- Not even sure what this is, it covers the bottom of the screen and consumes clicks
+	--[[if MainActionBar then
+		MainActionBar:Hide()
+	end]]
 
 	hooksecurefunc("ActionButton_UpdateRangeIndicator", AB.UpdateButtonStatus)
 
@@ -2168,10 +2131,6 @@ local UpdateStanceHover = function(value)
 			AB.StanceBar[i].cooldown:SetDrawBling(true)
 		end
 	end
-end
-
-local UpdateEmptyButtons = function()
-	AB:UpdateEmptyButtons()
 end
 
 local UpdateBar1Alpha = function(value)

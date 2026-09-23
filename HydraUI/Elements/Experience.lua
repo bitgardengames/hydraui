@@ -29,7 +29,7 @@ elseif HydraUI.IsMists then
 	XPMod = 1.10
 else
 	GetNumQuests = GetNumQuestLogEntries
-	HasXPBuff = AuraUtil.FindAuraByName(GetSpellInfo(377749), "player", "HELPFUL") -- Joyous Journeys +50%
+	--HasXPBuff = AuraUtil.FindAuraByName("player", GetSpellInfo(377749), "HELPFUL") -- Joyous Journeys +50%
 	XPMod = 1.50
 end
 

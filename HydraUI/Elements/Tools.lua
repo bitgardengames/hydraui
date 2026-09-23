@@ -216,7 +216,7 @@ function HydraUI:SetFontInfo(object, font, size, flags)
 		object:SetShadowColor(0, 0, 0, 0)
 	else
 		object:SetFont(Font, size, flags or "")
-		object:SetShadowColor(0, 0, 0)
+		object:SetShadowColor(0, 0, 0, 1)
 		object:SetShadowOffset(1, -1)
 	end
 end

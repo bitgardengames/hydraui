@@ -23,6 +23,7 @@ Defaults["auto-vendor-report"] = true
 
 AutoVendor.Filter = {
 	[6196] = true,
+	[4813] = true,
 }
 
 -- Temporary during DF prepatch

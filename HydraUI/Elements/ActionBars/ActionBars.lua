@@ -1423,6 +1423,8 @@ function AB:UpdateFlyout()
 end
 
 function AB:UpdateEmptyButtons()
+	C_CVar.SetCVar("alwaysShowActionBars", Settings["ab-show-empty"] and "1" or "0")
+
 	if Settings["ab-show-empty"] then
 		for i = 1, #ActionBars do
 			for j = 1, 12 do

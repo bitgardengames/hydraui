@@ -208,6 +208,14 @@ function AB:StyleActionButton(button)
 		button.SlotArt:Hide()
 	end
 
+	-- The modern action button template uses SlotBackground for the soft
+	-- outline around each slot. Keep it transparent even when Blizzard shows
+	-- the texture again while updating the action bar grid.
+	if button.SlotBackground then
+		button.SlotBackground:SetAlpha(0)
+		button.SlotBackground:Hide()
+	end
+
 	if _G[button:GetName().."NormalTexture"] then
 		_G[button:GetName().."NormalTexture"]:SetTexture(nil)
 	end
@@ -404,6 +412,11 @@ function AB:StylePetActionButton(button)
 
 	if button.SlotArt then
 		button.SlotArt:Hide()
+	end
+
+	if button.SlotBackground then
+		button.SlotBackground:SetAlpha(0)
+		button.SlotBackground:Hide()
 	end
 
 	_G[button:GetName().."NormalTexture"]:SetAlpha(0)

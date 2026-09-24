@@ -5,6 +5,9 @@ if (HydraUI.UserLocale ~= "zhTW") then
 end
 
 -- General
+L["Language"] = "語言"
+L["System Default"] = "系統預設"
+L["Choose the language used by HydraUI"] = "選擇 HydraUI 使用的語言"
 L["General"] = "一般"
 L["Welcome"] = "歡迎"
 L["Display Welcome Message"] = "顯示 歡迎 訊息"

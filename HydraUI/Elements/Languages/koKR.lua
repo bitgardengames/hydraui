@@ -5,6 +5,9 @@ if (HydraUI.UserLocale ~= "koKR") then
 end
 
 -- General
+L["Language"] = "언어"
+L["System Default"] = "시스템 기본값"
+L["Choose the language used by HydraUI"] = "HydraUI에서 사용할 언어를 선택하세요"
 L["General"] = "일반"
 L["Welcome"] = "환영합니다"
 L["Display Welcome Message"] = "표시 환영합니다 메시지"

@@ -43,6 +43,15 @@ if (HydraUI.UserLocale == "enGB") then
 	HydraUI.UserLocale = "enUS"
 end
 
+-- Language
+local Language = {}
+
+local Index = function(self, key)
+	return key
+end
+
+setmetatable(Language, {__index = Index})
+
 HydraUI.Languages = {
 	["enUS"] = "English",
 	["deDE"] = "Deutsch",
@@ -67,7 +76,7 @@ else
 end
 
 function HydraUI:GetLanguageList()
-	local Languages = { ["System Default"] = "AUTO" }
+	local Languages = { [Language["System Default"]] = "AUTO" }
 
 	for Locale, Name in pairs(self.Languages) do
 		Languages[Name] = Locale
@@ -89,15 +98,6 @@ function HydraUI:SetLanguage(locale)
 
 	ReloadUI()
 end
-
--- Language
-local Language = {}
-
-local Index = function(self, key)
-	return key
-end
-
-setmetatable(Language, {__index = Index})
 
 -- Modules and plugins
 function HydraUI:NewModule(name)

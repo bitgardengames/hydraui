@@ -1710,7 +1710,11 @@ local DropdownDisableSaving = function(self)
 	return self
 end
 
+local InitializeDropdown
+
 local DropdownButtonOnMouseUp = function(self)
+	InitializeDropdown(self.Parent)
+
 	self.Parent.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
 	self.Parent.Current:ClearAllPoints()
@@ -2010,6 +2014,10 @@ local AddDropdownScrollBar = function(self)
 end
 
 local DropdownSort = function(self)
+	if not self.Menu.Initialized then
+		return
+	end
+
 	tsort(self.Menu, function(a, b)
 		return TrimHex(a.Key) < TrimHex(b.Key)
 	end)
@@ -2025,7 +2033,7 @@ local DropdownSort = function(self)
 	self.Menu:SetHeight(((WIDGET_HEIGHT - 1) * #self.Menu) + 1)
 end
 
-local DropdownCreateSelection = function(self, key, value)
+local CreateDropdownSelection = function(self, key, value)
 	local MenuItem = CreateFrame("Frame", nil, self.Menu, "BackdropTemplate")
 	MenuItem:SetSize(DROPDOWN_WIDTH - 6, WIDGET_HEIGHT)
 	MenuItem:SetBackdrop(HydraUI.BackdropAndBorder)
@@ -2073,7 +2081,74 @@ local DropdownCreateSelection = function(self, key, value)
 	return MenuItem
 end
 
+local ConfigureDropdownSelection = function(self, MenuItem)
+	if (self.SpecificType == "Texture") then
+		MenuItem.Texture:SetTexture(Assets:GetTexture(MenuItem.Key))
+	elseif (self.SpecificType == "Font") then
+		HydraUI:SetFontInfo(MenuItem.Text, MenuItem.Key, 12)
+	elseif (self.SpecificType == "Language") then
+		SetLanguageFont(MenuItem.Text, MenuItem.Value)
+	end
+
+	local IsSelected
+
+	if (self.SpecificType and self.SpecificType ~= "Language") then
+		IsSelected = MenuItem.Key == self.Value
+	else
+		IsSelected = MenuItem.Value == self.Value
+	end
+
+	MenuItem.Selected:SetShown(IsSelected)
+
+	if IsSelected then
+		self.Current:SetText(MenuItem.Key)
+
+		if (self.SpecificType == "Language") then
+			SetLanguageFont(self.Current, MenuItem.Value)
+		end
+	end
+end
+
+InitializeDropdown = function(self)
+	if self.Menu.Initialized then
+		return
+	end
+
+	for Key, Value in next, self.Values do
+		ConfigureDropdownSelection(self, CreateDropdownSelection(self, Key, Value))
+	end
+
+	self.Menu.Initialized = true
+	self:Sort()
+	self.Menu.Offset = 1
+
+	if (#self.Menu > DROPDOWN_MAX_SHOWN) then
+		AddDropdownScrollBar(self.Menu)
+	else
+		self.Menu:SetHeight(((WIDGET_HEIGHT - 1) * #self.Menu) + 1)
+	end
+end
+
+local DropdownCreateSelection = function(self, key, value)
+	self.Values[key] = value
+
+	if not self.Menu.Initialized then
+		return
+	end
+
+	local MenuItem = CreateDropdownSelection(self, key, value)
+	ConfigureDropdownSelection(self, MenuItem)
+
+	return MenuItem
+end
+
 local DropdownRemoveSelection = function(self, key)
+	self.Values[key] = nil
+
+	if not self.Menu.Initialized then
+		return
+	end
+
 	for i = 1, #self.Menu do
 		if (self.Menu[i].Key == key) then
 			self.Menu[i]:Hide() -- Handle this more thoroughly
@@ -2135,6 +2210,18 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	HydraUI:SetFontInfo(Dropdown.Current, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Dropdown.Current:SetJustifyH("LEFT")
 
+	for Key, Value in next, values do
+		if ((specific and specific ~= "Language") and Key == value) or ((not specific or specific == "Language") and Value == value) then
+			Dropdown.Current:SetText(Key)
+
+			if (specific == "Language") then
+				SetLanguageFont(Dropdown.Current, Value)
+			end
+
+			break
+		end
+	end
+
 	Dropdown.Button = CreateFrame("Frame", nil, Dropdown, "BackdropTemplate")
 	Dropdown.Button:SetSize(DROPDOWN_WIDTH, WIDGET_HEIGHT)
 	Dropdown.Button:SetPoint("LEFT", Dropdown, 0, 0)
@@ -2180,6 +2267,8 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Menu:EnableMouseWheel(true)
 	Dropdown.Menu:Hide()
 	Dropdown.Menu:SetAlpha(0)
+	Dropdown.Menu.Initialized = false
+	Dropdown.Menu.Offset = 1
 
 	Dropdown.Button.Menu = Dropdown.Menu
 	Dropdown.Button.Parent = Dropdown
@@ -2206,41 +2295,6 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Menu.BG:EnableMouse(true)
 	Dropdown.Menu.BG:SetScript("OnMouseWheel", function() end)
 
-	for Key, Value in next, values do
-		local MenuItem = Dropdown:CreateSelection(Key, Value)
-
-		if (specific == "Texture") then
-			MenuItem.Texture:SetTexture(Assets:GetTexture(Key))
-		elseif (specific == "Font") then
-			HydraUI:SetFontInfo(MenuItem.Text, Key, 12)
-		elseif (specific == "Language") then
-			SetLanguageFont(MenuItem.Text, Value)
-		end
-
-		if (specific and specific ~= "Language") then
-			if (MenuItem.Key == MenuItem.GrandParent.Value) then
-				MenuItem.Selected:Show()
-				MenuItem.GrandParent.Current:SetText(Key)
-			else
-				MenuItem.Selected:Hide()
-			end
-		else
-			if (MenuItem.Value == MenuItem.GrandParent.Value) then
-				MenuItem.Selected:Show()
-				MenuItem.GrandParent.Current:SetText(Key)
-
-				if (specific == "Language") then
-					SetLanguageFont(MenuItem.GrandParent.Current, Value)
-				end
-			else
-				MenuItem.Selected:Hide()
-			end
-		end
-
-	end
-
-	Dropdown:Sort()
-
 	if (specific == "Texture") then
 		Dropdown.Texture:SetTexture(Assets:GetTexture(value))
 	elseif (specific == "Font") then
@@ -2248,12 +2302,6 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 		HydraUI:SetFontInfo(Dropdown.Current, Settings[id], Settings["ui-font-size"])
 	else
 		Dropdown.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	end
-
-	if (#Dropdown.Menu > DROPDOWN_MAX_SHOWN) then
-		AddDropdownScrollBar(Dropdown.Menu)
-	else
-		Dropdown.Menu:SetHeight(((WIDGET_HEIGHT - 1) * #Dropdown.Menu) + 1)
 	end
 
 	Anchor.Dropdown = Dropdown

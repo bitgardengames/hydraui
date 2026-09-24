@@ -66,7 +66,7 @@ local Update = function(self, elapsed)
 			local Position = GetPlayerMapPosition(MapID, "player")
 
 			if Position then
-				local X, Y = GetPlayerMapPosition(MapID, "player"):GetXY()
+				local X, Y = Position:GetXY()
 
 				self.Text:SetFormattedText("|cFF%s%.2f|r, |cFF%s%.2f|r", HydraUI.ValueColor, X * 100, HydraUI.ValueColor, Y * 100)
 

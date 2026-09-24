@@ -5,6 +5,9 @@ if (HydraUI.UserLocale ~= "deDE") then
 end
 
 -- General
+L["Language"] = "Sprache"
+L["System Default"] = "Systemstandard"
+L["Choose the language used by HydraUI"] = "Wähle die von HydraUI verwendete Sprache"
 L["General"] = "Allgemein"
 L["Welcome"] = "Willkommen"
 L["Display Welcome Message"] = "Anzeigen Willkommen Nachricht"

@@ -652,16 +652,6 @@ function GUI:CreateWindow(category, name, parent)
 	Button.Text:SetSize(MENU_BUTTON_WIDTH - 6, WIDGET_HEIGHT)
 	Button.Text:SetJustifyH("LEFT")
 
-	Button.FadeIn = LibMotion:CreateAnimation(Button, "Fade")
-	Button.FadeIn:SetEasing("in")
-	Button.FadeIn:SetDuration(0.15)
-	Button.FadeIn:SetChange(SELECTED_HIGHLIGHT_ALPHA)
-
-	Button.FadeOut = LibMotion:CreateAnimation(Button, "Fade")
-	Button.FadeOut:SetEasing("out")
-	Button.FadeOut:SetDuration(0.15)
-	Button.FadeOut:SetChange(0)
-
 	if parent then
 		Button:SetScript("OnMouseUp", WindowSubButtonOnMouseUp)
 		Button:SetScript("OnMouseDown", WindowSubButtonOnMouseDown)

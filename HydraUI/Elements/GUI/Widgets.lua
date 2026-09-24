@@ -1672,6 +1672,27 @@ local DROPDOWN_HEIGHT = 20
 local DROPDOWN_FADE_DELAY = 3 -- To be implemented
 local DROPDOWN_MAX_SHOWN = 8
 
+local LANGUAGE_FONTS = {
+	["koKR"] = "Fonts\\2002.TTF",
+	["ruRU"] = "Fonts\\FRIZQT___CYR.TTF",
+	["zhCN"] = "Fonts\\ARKai_T.ttf",
+	["zhTW"] = "Fonts\\bLEI00D.ttf",
+}
+
+local SetLanguageFont = function(fontString, locale)
+	if (locale == "AUTO") then
+		locale = HydraUI.ClientLocale
+	end
+
+	local Font = LANGUAGE_FONTS[locale]
+
+	if Font then
+		fontString:SetFont(Font, Settings["ui-font-size"])
+	else
+		HydraUI:SetFontInfo(fontString, Settings["ui-widget-font"], Settings["ui-font-size"])
+	end
+end
+
 local CloseLastDropdown = function(compare)
 	if (LAST_ACTIVE_DROPDOWN and LAST_ACTIVE_DROPDOWN.Menu:IsShown() and (LAST_ACTIVE_DROPDOWN ~= compare)) then
 		if (not LAST_ACTIVE_DROPDOWN.Menu.FadeOut:IsPlaying()) then
@@ -1698,7 +1719,7 @@ local DropdownButtonOnMouseUp = function(self)
 		self.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 	else
 		for i = 1, #self.Menu do
-			if self.Parent.SpecificType then
+			if (self.Parent.SpecificType and self.Parent.SpecificType ~= "Language") then
 				if (self.Menu[i].Key == self.Parent.Value) then
 					self.Menu[i].Selected:Show()
 				else
@@ -1738,7 +1759,7 @@ local MenuItemOnMouseUp = function(self)
 	self.Highlight:SetAlpha(0)
 	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
-	if self.GrandParent.SpecificType then
+	if (self.GrandParent.SpecificType and self.GrandParent.SpecificType ~= "Language") then
 		if (not self.GrandParent.IsSavingDisabled) then
 			SetVariable(self.ID, self.Key)
 		end
@@ -1768,6 +1789,8 @@ local MenuItemOnMouseUp = function(self)
 		self.GrandParent.Texture:SetTexture(Assets:GetTexture(self.Key))
 	elseif (self.GrandParent.SpecificType == "Font") then
 		HydraUI:SetFontInfo(self.GrandParent.Current, self.Key, Settings["ui-font-size"])
+	elseif (self.GrandParent.SpecificType == "Language") then
+		SetLanguageFont(self.GrandParent.Current, self.Value)
 	end
 
 	self.GrandParent.Current:SetText(self.Key)
@@ -2151,9 +2174,11 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 			MenuItem.Texture:SetTexture(Assets:GetTexture(Key))
 		elseif (specific == "Font") then
 			HydraUI:SetFontInfo(MenuItem.Text, Key, 12)
+		elseif (specific == "Language") then
+			SetLanguageFont(MenuItem.Text, Value)
 		end
 
-		if specific then
+		if (specific and specific ~= "Language") then
 			if (MenuItem.Key == MenuItem.GrandParent.Value) then
 				MenuItem.Selected:Show()
 				MenuItem.GrandParent.Current:SetText(Key)
@@ -2164,6 +2189,10 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 			if (MenuItem.Value == MenuItem.GrandParent.Value) then
 				MenuItem.Selected:Show()
 				MenuItem.GrandParent.Current:SetText(Key)
+
+				if (specific == "Language") then
+					SetLanguageFont(MenuItem.GrandParent.Current, Value)
+				end
 			else
 				MenuItem.Selected:Hide()
 			end

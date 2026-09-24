@@ -2234,14 +2234,30 @@ end
 local SLIDER_WIDTH = 80
 local EDITBOX_WIDTH = 48
 
-local SliderOnValueChanged = function(self)
-	local Value = self:GetValue()
-
+local NormalizeSliderValue = function(self, value)
 	if (self.EditBox.StepValue >= 1) then
-		Value = floor(Value)
+		value = floor(value)
 	else
-		Value = Round(Value, (self.EditBox.StepValue <= 0.01 and 2 or 1))
+		value = Round(value, (self.EditBox.StepValue <= 0.01 and 2 or 1))
 	end
+
+	if (value < self.EditBox.MinValue) then
+		value = self.EditBox.MinValue
+	elseif (value > self.EditBox.MaxValue) then
+		value = self.EditBox.MaxValue
+	end
+
+	return value
+end
+
+local SliderOnValueChanged = function(self)
+	local Value = NormalizeSliderValue(self, self:GetValue())
+
+	if (Value == self.AppliedValue) then
+		return
+	end
+
+	self.AppliedValue = Value
 
 	self.EditBox.Value = Value
 	self.EditBox:SetText(self.Prefix..Value..self.Postfix)
@@ -2284,7 +2300,6 @@ local SliderOnMouseWheel = function(self, delta)
 	self.EditBox.Value = Value
 
 	self:SetValue(Value)
-	self.EditBox:SetText(self.Prefix..Value..self.Postfix)
 end
 
 local EditBoxOnEnterPressed = function(self)
@@ -2296,7 +2311,6 @@ local EditBoxOnEnterPressed = function(self)
 
 	if (Value ~= self.Value) then
 		self.Slider:SetValue(Value)
-		SliderOnValueChanged(self.Slider)
 	end
 
 	self:SetAutoFocus(false)
@@ -2350,7 +2364,6 @@ local EditBoxOnMouseWheel = function(self, delta)
 		end
 	end
 
-	self:SetText(self.Value)
 	self.Slider:SetValue(self.Value)
 end
 
@@ -2509,6 +2522,7 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	Slider.EditBox = EditBox.Box
 	Slider.Hook = hook
 	Slider.ID = id
+	Slider.AppliedValue = NormalizeSliderValue(Slider, Slider:GetValue())
 	Slider.RequiresReload = SliderRequiresReload
 	Slider.OnMouseWheel = SliderOnMouseWheel
 

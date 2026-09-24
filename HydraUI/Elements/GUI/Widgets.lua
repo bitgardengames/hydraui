@@ -2198,8 +2198,9 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 			end
 		end
 
-		Dropdown:Sort()
 	end
+
+	Dropdown:Sort()
 
 	if (specific == "Texture") then
 		Dropdown.Texture:SetTexture(Assets:GetTexture(value))

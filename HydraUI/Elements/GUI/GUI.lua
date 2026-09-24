@@ -466,108 +466,57 @@ function GUI:CreateWidgetWindow(category, name, parent)
 end
 
 function GUI:ShowWindow(category, name, parent)
-	local Categories = self.Categories
+	local Button = parent and self.Buttons[category][parent][name] or self.Buttons[category][name]
+	local PreviousButton = self.ActivePageButton
 
-	for i = 1, #Categories do
-		for j = 1, #Categories[i].Buttons do
-			if parent then
-				if (Categories[i].Buttons[j].Name == parent and Categories[i].Buttons[j].Children) then
-					for o = 1, #Categories[i].Buttons[j].Children do
-						if (Categories[i].Buttons[j].Children[o].Name == name) then
-							if (not Categories[i].Buttons[j].Children[o].Window) then
-								Categories[i].Buttons[j].Children[o].Window = self:CreateWidgetWindow(category, name, parent)
-							end
+	if PreviousButton then
+		if PreviousButton.Window then
+			PreviousButton.Window:Hide()
+		end
 
-							Categories[i].Buttons[j].Window:Hide()
-
-							Categories[i].Buttons[j].Children[o].Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-							Categories[i].Buttons[j].Children[o].Window:Show()
-						elseif Categories[i].Buttons[j].Children[o].Window then
-							Categories[i].Buttons[j].Children[o].Window:Hide()
-
-							if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
-								Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
-							end
-						end
-					end
-
-					if (Categories[i].Buttons[j].Selected:GetAlpha() > 0) then
-						Categories[i].Buttons[j].Selected:SetAlpha(0)
-					end
-				elseif Categories[i].Buttons[j].Window then
-					Categories[i].Buttons[j].Window:Hide()
-				end
-			elseif (Categories[i].Name == category) and (Categories[i].Buttons[j].Name == name) then
-				if (not Categories[i].Buttons[j].Window) then
-					Categories[i].Buttons[j].Window = self:CreateWidgetWindow(category, name, parent)
-				end
-
-				Categories[i].Buttons[j].Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-				Categories[i].Buttons[j].Window:Show()
-
-				if Categories[i].Buttons[j].Children then
-					if Categories[i].Buttons[j].ChildrenShown then
-						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-
-						for o = 1, #Categories[i].Buttons[j].Children do
-							if Categories[i].Buttons[j].Children[o].Window then
-								Categories[i].Buttons[j].Children[o].Window:Hide()
-
-								if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
-									Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
-								end
-							end
-
-							Categories[i].Buttons[j].Children[o]:Hide()
-						end
-
-						Categories[i].Buttons[j].ChildrenShown = false
-						self.SelectionRowsDirty = true
-					else
-						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-
-						for o = 1, #Categories[i].Buttons[j].Children do
-							if Categories[i].Buttons[j].Children[o].Window then
-								Categories[i].Buttons[j].Children[o].Window:Hide()
-
-								if (Categories[i].Buttons[j].Children[o].Selected:GetAlpha() > 0) then
-									Categories[i].Buttons[j].Children[o].Selected:SetAlpha(0)
-								end
-							end
-
-							Categories[i].Buttons[j].Children[o]:Hide()
-						end
-
-						Categories[i].Buttons[j].ChildrenShown = true
-						self.SelectionRowsDirty = true
-					end
-				end
-			else
-				if Categories[i].Buttons[j].Window then
-					Categories[i].Buttons[j].Window:Hide()
-
-					if (Categories[i].Buttons[j].Selected:GetAlpha() > 0) then
-						Categories[i].Buttons[j].Selected:SetAlpha(0)
-					end
-
-					if Categories[i].Buttons[j].Children then
-						Categories[i].Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-
-						for o = 1, #Categories[i].Buttons[j].Children do
-							if Categories[i].Buttons[j].Children[o].Window then
-								Categories[i].Buttons[j].Children[o].Window:Hide()
-							end
-
-							Categories[i].Buttons[j].Children[o]:Hide()
-						end
-
-						Categories[i].Buttons[j].ChildrenShown = false
-						self.SelectionRowsDirty = true
-					end
-				end
-			end
+		if (PreviousButton.Selected:GetAlpha() > 0) then
+			PreviousButton.Selected:SetAlpha(0)
 		end
 	end
+
+	if (not Button.Window) then
+		Button.Window = self:CreateWidgetWindow(category, name, parent)
+	end
+
+	if parent then
+		local ParentButton = self.Buttons[category][parent]
+
+		if ParentButton.Window then
+			ParentButton.Window:Hide()
+		end
+
+		if (ParentButton.Selected:GetAlpha() > 0) then
+			ParentButton.Selected:SetAlpha(0)
+		end
+	elseif Button.Children then
+		Button.ChildrenShown = not Button.ChildrenShown
+		Button.Arrow:SetTexture(Assets:GetTexture(Button.ChildrenShown and "Arrow Up" or "Arrow Down"))
+
+		for i = 1, #Button.Children do
+			local ChildButton = Button.Children[i]
+
+			if ChildButton.Window then
+				ChildButton.Window:Hide()
+
+				if (ChildButton.Selected:GetAlpha() > 0) then
+					ChildButton.Selected:SetAlpha(0)
+				end
+			end
+
+			ChildButton:Hide()
+		end
+
+		self.SelectionRowsDirty = true
+	end
+
+	Button.Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+	Button.Window:Show()
+	self.ActivePageButton = Button
 
 	self:ScrollSelections()
 

@@ -11,8 +11,9 @@ Defaults["bags-frame-size"] = 32
 
 local IsClassic = HydraUI.IsClassic
 local IsTBC = HydraUI.IsTBC
+local HasKeyRing = IsClassic or IsTBC
 
-if IsClassic or IsTBC then
+if HasKeyRing then
 	BagsFrame.Objects = {
 		KeyRingButton,
 		CharacterBag3Slot,
@@ -33,39 +34,58 @@ end
 
 local BagsFrameButtonOnEnter = function(self)
 	if (Settings["bags-frame-visiblity"] == "MOUSEOVER") then
-		self:GetParent():SetAlpha(Settings["bags-frame-max"] / 100)
+		BagsFrame:SetAlpha(Settings["bags-frame-max"] / 100)
 	end
 end
 
 local BagsFrameOnEnter = function(self)
-	self:SetAlpha(Settings["bags-frame-max"] / 100)
+	BagsFrame:SetAlpha(Settings["bags-frame-max"] / 100)
 end
 
 local BagsFrameButtonOnLeave = function(self)
 	if (Settings["bags-frame-visiblity"] == "MOUSEOVER") then
-		self:GetParent():SetAlpha(Settings["bags-frame-opacity"] / 100)
+		BagsFrame:SetAlpha(Settings["bags-frame-opacity"] / 100)
 	end
 end
 
 local BagsFrameOnLeave = function(self)
-	self:SetAlpha(Settings["bags-frame-opacity"] / 100)
+	BagsFrame:SetAlpha(Settings["bags-frame-opacity"] / 100)
+end
+
+function BagsFrame:SetAlpha(alpha)
+	self.Panel:SetAlpha(alpha)
+
+	-- KeyRingButton's Blizzard scripts call methods on its original parent.
+	-- Keep it there and mirror the custom panel's alpha instead of reparenting it.
+	if HasKeyRing then
+		KeyRingButton:SetAlpha(alpha)
+	end
 end
 
 function BagsFrame:UpdateVisibility()
 	if (Settings["bags-frame-visiblity"] == "HIDE") then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
-		self.Panel:SetAlpha(0)
+		self:SetAlpha(0)
+		if HasKeyRing then
+			KeyRingButton:EnableMouse(false)
+		end
 		self.Panel:Hide()
 	elseif (Settings["bags-frame-visiblity"] == "MOUSEOVER") then
 		self.Panel:SetScript("OnEnter", BagsFrameOnEnter)
 		self.Panel:SetScript("OnLeave", BagsFrameOnLeave)
-		self.Panel:SetAlpha(Settings["bags-frame-opacity"] / 100)
+		self:SetAlpha(Settings["bags-frame-opacity"] / 100)
+		if HasKeyRing then
+			KeyRingButton:EnableMouse(true)
+		end
 		self.Panel:Show()
 	elseif (Settings["bags-frame-visiblity"] == "SHOW") then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
-		self.Panel:SetAlpha(Settings["bags-frame-max"] / 100)
+		self:SetAlpha(Settings["bags-frame-max"] / 100)
+		if HasKeyRing then
+			KeyRingButton:EnableMouse(true)
+		end
 		self.Panel:Show()
 	end
 end
@@ -78,7 +98,9 @@ function BagsFrame:PositionButtons()
 	for i = 1, #self.Objects do
 		local Object = self.Objects[i]
 
-		Object:SetParent(self.Panel)
+		if (Object ~= KeyRingButton) then
+			Object:SetParent(self.Panel)
+		end
 		Object:ClearAllPoints()
 
 		if (i == 1) then
@@ -132,7 +154,9 @@ function BagsFrame:Load()
 	for i = 1, #self.Objects do
 		Object = self.Objects[i]
 
-		Object:SetParent(self.Panel)
+		if (Object ~= KeyRingButton) then
+			Object:SetParent(self.Panel)
+		end
 		Object:HookScript("OnEnter", BagsFrameButtonOnEnter)
 		Object:HookScript("OnLeave", BagsFrameButtonOnLeave)
 

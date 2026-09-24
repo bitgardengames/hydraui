@@ -112,6 +112,20 @@ local Scroll = function(self)
 	self.LastRenderedOffset = Offset
 	self.LastRenderedLeftOffset = LeftOffset
 	self.LastRenderedRightOffset = RightOffset
+
+	if self.ScrollBar then
+		if (Offset == 1) then
+			self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+		else
+			self.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+		end
+
+		if (Offset == self.MaxScroll) then
+			self.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+		else
+			self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+		end
+	end
 end
 
 local NoScroll = function() end
@@ -122,19 +136,11 @@ end
 
 local WindowOnMouseWheel = function(self, delta)
 	SetOffsetByDelta(self, delta)
-	Scroll(self)
-	self.ScrollBar:SetValue(self.Offset)
 
-	if (self.Offset == 1) then
-		self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-	else
-		self.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-	end
-
-	if (self.Offset == self.MaxScroll) then
-		self.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-	else
-		self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	if (self.ScrollBar:GetValue() ~= self.Offset) then
+		self.ScrollBar:SetValue(self.Offset)
+	elseif (self.LastRenderedOffset ~= self.Offset) then
+		Scroll(self)
 	end
 end
 
@@ -810,8 +816,12 @@ end
 
 local SelectionOnMouseWheel = function(self, delta)
 	self:SetSelectionOffsetByDelta(delta)
-	self:ScrollSelections()
-	self.ScrollBar:SetValue(self.Offset)
+
+	if (self.ScrollBar:GetValue() ~= self.Offset) then
+		self.ScrollBar:SetValue(self.Offset)
+	elseif self.SelectionRowsDirty or (self.LastRenderedSelectionOffset ~= self.Offset) then
+		self:ScrollSelections()
+	end
 end
 
 local SelectionScrollBarOnValueChanged = function(self)

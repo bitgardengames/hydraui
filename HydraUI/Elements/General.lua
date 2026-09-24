@@ -44,7 +44,7 @@ end
 GUI:AddWidgets(Language["General"], Language["General"], function(left, right)
 	left:CreateHeader(Language["Welcome"])
 	left:CreateSwitch("ui-display-welcome", Settings["ui-display-welcome"], Language["Display Welcome Message"], Language["Display a welcome message on login with UI information"])
-	left:CreateDropdown("ui-language", HydraUI.SelectedLanguage, HydraUI:GetLanguageList(), Language["Language"], Language["Choose the language used by HydraUI"], UpdateLanguage):DisableSaving():RequiresReload(true)
+	left:CreateDropdown("ui-language", HydraUI.SelectedLanguage, HydraUI:GetLanguageList(), Language["Language"], Language["Choose the language used by HydraUI"], UpdateLanguage, "Language"):DisableSaving():RequiresReload(true)
 	--left:CreateSwitch("ui-display-whats-new", Settings["ui-display-whats-new"], Language[ [[Display "What's New" Pop-ups]] ], "")
 
 	left:CreateHeader(Language["Move UI"])

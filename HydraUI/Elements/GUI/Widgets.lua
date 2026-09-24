@@ -1712,6 +1712,39 @@ end
 
 local InitializeDropdown
 
+local GetDropdownSelectionValue = function(self, MenuItem)
+	if (self.SpecificType and self.SpecificType ~= "Language") then
+		return MenuItem.Key
+	end
+
+	return MenuItem.Value
+end
+
+local SynchronizeDropdownSelection = function(self)
+	local Menu = self.Menu
+
+	if (self.Value == Menu.SynchronizedValue) then
+		return
+	end
+
+	if Menu.SelectedItem then
+		Menu.SelectedItem.Selected:Hide()
+		Menu.SelectedItem = nil
+	end
+
+	for i = 1, #Menu do
+		local MenuItem = Menu[i]
+
+		if (GetDropdownSelectionValue(self, MenuItem) == self.Value) then
+			MenuItem.Selected:Show()
+			Menu.SelectedItem = MenuItem
+			break
+		end
+	end
+
+	Menu.SynchronizedValue = self.Value
+end
+
 local DropdownButtonOnMouseUp = function(self)
 	InitializeDropdown(self.Parent)
 
@@ -1724,21 +1757,7 @@ local DropdownButtonOnMouseUp = function(self)
 		self.Menu.FadeOut:Play()
 		self.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 	else
-		for i = 1, #self.Menu do
-			if (self.Parent.SpecificType and self.Parent.SpecificType ~= "Language") then
-				if (self.Menu[i].Key == self.Parent.Value) then
-					self.Menu[i].Selected:Show()
-				else
-					self.Menu[i].Selected:Hide()
-				end
-			else
-				if (self.Menu[i].Value == self.Parent.Value) then
-					self.Menu[i].Selected:Show()
-				else
-					self.Menu[i].Selected:Hide()
-				end
-			end
-		end
+		SynchronizeDropdownSelection(self.Parent)
 
 		CloseLastDropdown(self)
 		self.Menu:Show()
@@ -1761,6 +1780,14 @@ end
 local MenuItemOnMouseUp = function(self)
 	self.Parent.FadeOut:Play()
 	self.GrandParent.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+
+	if (self.Parent.SelectedItem and self.Parent.SelectedItem ~= self) then
+		self.Parent.SelectedItem.Selected:Hide()
+	end
+
+	self.Selected:Show()
+	self.Parent.SelectedItem = self
+	self.Parent.SynchronizedValue = GetDropdownSelectionValue(self.GrandParent, self)
 
 	self.Highlight:SetAlpha(0)
 	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
@@ -2101,6 +2128,11 @@ local ConfigureDropdownSelection = function(self, MenuItem)
 	MenuItem.Selected:SetShown(IsSelected)
 
 	if IsSelected then
+		if (self.Menu.SelectedItem and self.Menu.SelectedItem ~= MenuItem) then
+			self.Menu.SelectedItem.Selected:Hide()
+		end
+
+		self.Menu.SelectedItem = MenuItem
 		self.Current:SetText(MenuItem.Key)
 
 		if (self.SpecificType == "Language") then
@@ -2119,6 +2151,7 @@ InitializeDropdown = function(self)
 	end
 
 	self.Menu.Initialized = true
+	self.Menu.SynchronizedValue = self.Value
 	self:Sort()
 	self.Menu.Offset = 1
 
@@ -2151,6 +2184,11 @@ local DropdownRemoveSelection = function(self, key)
 
 	for i = 1, #self.Menu do
 		if (self.Menu[i].Key == key) then
+			if (self.Menu.SelectedItem == self.Menu[i]) then
+				self.Menu.SelectedItem = nil
+				self.Menu.SynchronizedValue = nil
+			end
+
 			self.Menu[i]:Hide() -- Handle this more thoroughly
 			self.Menu[i]:EnableMouse(false)
 
@@ -2269,6 +2307,8 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Menu:SetAlpha(0)
 	Dropdown.Menu.Initialized = false
 	Dropdown.Menu.Offset = 1
+	Dropdown.Menu.SelectedItem = nil
+	Dropdown.Menu.SynchronizedValue = nil
 
 	Dropdown.Button.Menu = Dropdown.Menu
 	Dropdown.Button.Parent = Dropdown

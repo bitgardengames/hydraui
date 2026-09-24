@@ -33,7 +33,7 @@ HydraUI.UserLocale = HydraUI.ClientLocale
 HydraUI.UserProfileKey = format("%s:%s", HydraUI.UserName, HydraUI.UserRealm)
 HydraUI.ClientVersion = select(4, GetBuildInfo())
 
-local IsMainlineProject = WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and (WOW_PROJECT_ID == WOW_PROJECT_MAINLINE)
+local IsMainlineProject = (WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE) or false
 
 HydraUI.IsForever = IsMainlineProject and HydraUI.ClientVersion >= 16000 and HydraUI.ClientVersion < 20000
 HydraUI.IsClassic = (not HydraUI.IsForever) and HydraUI.ClientVersion > 10000 and HydraUI.ClientVersion < 20000

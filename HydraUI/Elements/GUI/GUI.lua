@@ -725,7 +725,10 @@ function GUI:ScrollSelections()
 	local ScrollButtons = self.ScrollButtons
 	local Count = #ScrollButtons
 	local Offset = ClampOffset(self.Offset, Count)
+	local First = Offset
 	local Last = min(Offset + MAX_WIDGETS_SHOWN - 1, Count)
+	local OldFirst = OldRows and OldOffset
+	local OldLast = OldRows and OldOffset and min(OldOffset + MAX_WIDGETS_SHOWN - 1, #OldRows)
 
 	self.Offset = Offset
 	self.TotalSelections = Count
@@ -738,42 +741,32 @@ function GUI:ScrollSelections()
 		return
 	end
 
-	local NewVisible = {}
-	local OldVisible = {}
-
-	for i = Offset, Last do
-		NewVisible[ScrollButtons[i]] = true
-	end
-
-	if OldRows and OldOffset then
-		local OldLast = min(OldOffset + MAX_WIDGETS_SHOWN - 1, #OldRows)
-
-		for i = OldOffset, OldLast do
-			local Row = OldRows[i]
-
-			OldVisible[Row] = true
-
-			if not NewVisible[Row] then
-				Row:Hide()
+	if OldFirst then
+		for i = OldFirst, OldLast do
+			if RowsChanged or (i < First) or (i > Last) then
+				OldRows[i]:Hide()
 			end
 		end
 	else
-		for i = 1, Count do
-			if not NewVisible[ScrollButtons[i]] then
-				ScrollButtons[i]:Hide()
-			end
+		-- Selection rows start shown, so the initial layout must hide the non-visible rows once.
+		for i = 1, First - 1 do
+			ScrollButtons[i]:Hide()
+		end
+
+		for i = Last + 1, Count do
+			ScrollButtons[i]:Hide()
 		end
 	end
 
-	for i = Offset, Last do
+	for i = First, Last do
 		local Row = ScrollButtons[i]
 		local Predecessor = ScrollButtons[i - 1]
-		local Anchor = (i == Offset) and self.MenuParent or Predecessor
+		local Anchor = (i == First) and self.MenuParent or Predecessor
 
 		if Row.HydraScrollAnchor ~= Anchor then
 			Row:ClearAllPoints()
 
-			if (i == Offset) then
+			if (i == First) then
 				Row:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
 			else
 				Row:SetPoint("TOP", Predecessor, "BOTTOM", 0, -2)
@@ -782,7 +775,7 @@ function GUI:ScrollSelections()
 			Row.HydraScrollAnchor = Anchor
 		end
 
-		if not OldVisible[Row] then
+		if RowsChanged or (not OldFirst) or (i < OldFirst) or (i > OldLast) then
 			Row:Show()
 		end
 	end

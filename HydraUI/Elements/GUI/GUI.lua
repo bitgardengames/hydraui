@@ -20,7 +20,6 @@ local MAX_WIDGETS_SHOWN = floor(GUI_HEIGHT / (WIDGET_HEIGHT + SPACING))
 -- Locals
 local type = type
 local tinsert = table.insert
-local tremove = table.remove
 local tsort = table.sort
 local floor = math.floor
 local max = math.max
@@ -420,18 +419,20 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG[Name] = Function
 	end
 
+	local Calls
+
 	if (parent and self.LoadCalls[category][parent].Children) then
-		for i = 1, #self.LoadCalls[category][parent].Children[name].Calls do
-			self.LoadCalls[category][parent].Children[name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
-
-			tremove(self.LoadCalls[category][parent].Children[name].Calls, 1)
-		end
+		Calls = self.LoadCalls[category][parent].Children[name].Calls
 	else
-		for i = 1, #self.LoadCalls[category][name].Calls do
-			self.LoadCalls[category][name].Calls[1](Window.LeftWidgetsBG, Window.RightWidgetsBG)
+		Calls = self.LoadCalls[category][name].Calls
+	end
 
-			tremove(self.LoadCalls[category][name].Calls, 1)
-		end
+	-- Read the queue in place instead of repeatedly removing its first item. Aside
+	-- from shifting the whole table for every callback, table.remove also made a
+	-- widget-heavy window unnecessarily expensive to initialize.
+	for i = 1, #Calls do
+		Calls[i](Window.LeftWidgetsBG, Window.RightWidgetsBG)
+		Calls[i] = nil
 	end
 
 	if (#Window.LeftWidgetsBG.Widgets > 0) then
@@ -1333,8 +1334,12 @@ function GUI:CreateGUI()
 	self.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
 	self.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
 
+	-- Consuming this queue from the front shifts every remaining entry on each
+	-- iteration. Iterate it directly so GUI initialization remains linear as
+	-- more configuration pages are registered.
 	for i = 1, #self.ButtonQueue do
-		self:CreateWindow(unpack(tremove(self.ButtonQueue, 1)))
+		self:CreateWindow(unpack(self.ButtonQueue[i]))
+		self.ButtonQueue[i] = nil
 	end
 
 	self:SortMenuButtons()

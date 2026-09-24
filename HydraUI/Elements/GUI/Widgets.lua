@@ -14,6 +14,8 @@ local sub = string.sub
 local gsub = string.gsub
 local find = string.find
 local floor = math.floor
+local max = math.max
+local min = math.min
 local InCombatLockdown = InCombatLockdown
 local IsModifierKeyDown = IsModifierKeyDown
 
@@ -1844,64 +1846,101 @@ local DropdownRequiresReload = function(self, flag)
 	return self
 end
 
-local ScrollMenu = function(self)
-	local First = false
+local NormalizeDropdownOffset = function(self, offset)
+	return min(max(Round(tonumber(offset) or 1), 1), max(#self - DROPDOWN_MAX_SHOWN + 1, 1))
+end
 
-	for i = 1, #self do
-		if (i >= self.Offset) and (i <= self.Offset + DROPDOWN_MAX_SHOWN - 1) then
-			if (not First) then
-				self[i]:SetPoint("TOPLEFT", self, 0, 0)
-				First = true
-			else
-				self[i]:SetPoint("TOPLEFT", self[i-1], "BOTTOMLEFT", 0, 1)
-			end
+local AnchorDropdownRows = function(self, first, last)
+	local Previous
 
-			self[i]:Show()
+	for i = first, last do
+		local Row = self[i]
+
+		Row:ClearAllPoints()
+
+		if Previous then
+			Row:SetPoint("TOPLEFT", Previous, "BOTTOMLEFT", 0, 1)
 		else
-			self[i]:Hide()
+			Row:SetPoint("TOPLEFT", self, 0, 0)
 		end
+
+		Previous = Row
 	end
 end
 
-local SetDropdownOffsetByDelta = function(self, delta)
-	if (delta == 1) then -- up
-		self.Offset = self.Offset - 1
+local SyncDropdownScrollBar = function(self)
+	if self.ScrollBar and (self.ScrollBar:GetValue() ~= self.Offset) then
+		self.UpdatingScrollBar = true
+		self.ScrollBar:SetValue(self.Offset)
+		self.UpdatingScrollBar = false
+	end
+end
 
-		if (self.Offset <= 1) then
-			self.Offset = 1
+local ScrollMenu = function(self)
+	local Offset = NormalizeDropdownOffset(self, self.Offset)
+	local OldOffset = self.LastRenderedOffset
+
+	self.Offset = Offset
+	SyncDropdownScrollBar(self)
+
+	if (OldOffset == Offset) then
+		return
+	end
+
+	local Last = min(Offset + DROPDOWN_MAX_SHOWN - 1, #self)
+
+	if not OldOffset then
+		-- Menu items start shown, so hide the initial overflow once.
+		for i = Last + 1, #self do
+			self[i]:Hide()
 		end
-	else -- down
-		self.Offset = self.Offset + 1
+	elseif (Offset == OldOffset + 1) then
+		self[OldOffset]:Hide()
+		self[Last]:Show()
+	elseif (Offset == OldOffset - 1) then
+		local OldLast = min(OldOffset + DROPDOWN_MAX_SHOWN - 1, #self)
 
-		if (self.Offset > (#self - (DROPDOWN_MAX_SHOWN - 1))) then
-			self.Offset = self.Offset - 1
+		self[OldLast]:Hide()
+		self[Offset]:Show()
+	else
+		local OldLast = min(OldOffset + DROPDOWN_MAX_SHOWN - 1, #self)
+
+		for i = OldOffset, OldLast do
+			if (i < Offset) or (i > Last) then
+				self[i]:Hide()
+			end
+		end
+
+		for i = Offset, Last do
+			self[i]:Show()
 		end
 	end
+
+	AnchorDropdownRows(self, Offset, Last)
+	self.LastRenderedOffset = Offset
+end
+
+local SetDropdownOffsetByDelta = function(self, delta)
+	self.Offset = NormalizeDropdownOffset(self, self.Offset + (delta == 1 and -1 or 1))
 end
 
 local DropdownOnMouseWheel = function(self, delta)
 	self:SetDropdownOffsetByDelta(delta)
-	self:ScrollMenu()
-	self.ScrollBar:SetValue(self.Offset)
+	self:SetDropdownOffset(self.Offset)
 end
 
 local SetDropdownOffset = function(self, offset)
-	self.Offset = offset
-
-	if (self.Offset <= 1) then
-		self.Offset = 1
-	elseif (self.Offset > (#self - DROPDOWN_MAX_SHOWN - 1)) then
-		self.Offset = self.Offset - 1
-	end
+	self.Offset = NormalizeDropdownOffset(self, offset)
 
 	self:ScrollMenu()
 end
 
 local DropdownScrollBarOnValueChanged = function(self)
 	local Parent = self:GetParent()
-	Parent.Offset = Round(self:GetValue())
 
-	Parent:ScrollMenu()
+	if not Parent.UpdatingScrollBar then
+		Parent:SetDropdownOffset(self:GetValue())
+	end
 end
 
 local DropdownScrollBarOnMouseWheel = function(self, delta)

@@ -28,7 +28,8 @@ HydraUI.UserName = UnitName("player")
 HydraUI.UserClass = select(2, UnitClass("player"))
 HydraUI.UserRace = UnitRace("player")
 HydraUI.UserRealm = GetRealmName()
-HydraUI.UserLocale = GetLocale()
+HydraUI.ClientLocale = GetLocale()
+HydraUI.UserLocale = HydraUI.ClientLocale
 HydraUI.UserProfileKey = format("%s:%s", HydraUI.UserName, HydraUI.UserRealm)
 HydraUI.ClientVersion = select(4, GetBuildInfo())
 HydraUI.IsClassic = HydraUI.ClientVersion > 10000 and HydraUI.ClientVersion < 20000
@@ -40,6 +41,53 @@ HydraUI.IsMainline = HydraUI.ClientVersion > 90000
 
 if (HydraUI.UserLocale == "enGB") then
 	HydraUI.UserLocale = "enUS"
+end
+
+HydraUI.Languages = {
+	["enUS"] = "English",
+	["deDE"] = "Deutsch",
+	["esES"] = "Espa\195\177ol (Espa\195\177a)",
+	["esMX"] = "Espa\195\177ol (Latinoam\195\169rica)",
+	["frFR"] = "Fran\195\167ais",
+	["itIT"] = "Italiano",
+	["koKR"] = "\237\149\156\234\181\173\236\150\180",
+	["ptBR"] = "Portugu\195\170s (Brasil)",
+	["ruRU"] = "\208\160\209\131\209\129\209\129\208\186\208\184\208\185",
+	["zhCN"] = "\231\174\128\228\189\147\228\184\173\230\150\135",
+	["zhTW"] = "\231\185\129\233\171\148\228\184\173\230\150\135",
+}
+
+local SavedLocale = (type(HydraUIData) == "table") and HydraUIData.Language
+
+if (SavedLocale and HydraUI.Languages[SavedLocale]) then
+	HydraUI.UserLocale = SavedLocale
+	HydraUI.SelectedLanguage = SavedLocale
+else
+	HydraUI.SelectedLanguage = "AUTO"
+end
+
+function HydraUI:GetLanguageList()
+	local Languages = { ["System Default"] = "AUTO" }
+
+	for Locale, Name in pairs(self.Languages) do
+		Languages[Name] = Locale
+	end
+
+	return Languages
+end
+
+function HydraUI:SetLanguage(locale)
+	if ((locale ~= "AUTO") and (not self.Languages[locale])) then
+		return
+	end
+
+	if (type(HydraUIData) ~= "table") then
+		HydraUIData = {}
+	end
+
+	HydraUIData.Language = (locale ~= "AUTO") and locale or nil
+
+	ReloadUI()
 end
 
 -- Language

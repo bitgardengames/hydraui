@@ -7,7 +7,9 @@ local OnEnter
 
 if HydraUI.IsMainline then
 	OnEnter = function(self)
-		self:SetTooltip()
+		if not self:SetTooltip() then
+			return
+		end
 
 		local Base, EffectiveArmor = UnitArmor("player")
 		local ArmorReduction = PaperDollFrame_GetArmorReduction(EffectiveArmor, UnitEffectiveLevel("player"))
@@ -24,7 +26,9 @@ if HydraUI.IsMainline then
 	end
 else
 	OnEnter = function(self)
-		self:SetTooltip()
+		if not self:SetTooltip() then
+			return
+		end
 
 		local Base, EffectiveArmor = UnitArmor("player")
 		local Level = UnitLevel("player")

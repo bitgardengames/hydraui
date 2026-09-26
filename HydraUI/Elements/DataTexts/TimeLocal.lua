@@ -17,7 +17,9 @@ local OnMouseUp = function(self, button)
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local HomeLatency, WorldLatency = select(3, GetNetStats())
 	local Framerate = floor(GetFramerate())

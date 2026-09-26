@@ -13,7 +13,9 @@ local OnMouseUp = function()
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	GameTooltip:AddLine(Label, 1, 1, 1)
 

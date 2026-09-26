@@ -6,7 +6,9 @@ local GetCritChance = GetCritChance
 local Label = CRIT_ABBR
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local Crit
 	local Spell = GetSpellCritChance()

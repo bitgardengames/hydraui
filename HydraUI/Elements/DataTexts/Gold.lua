@@ -10,7 +10,9 @@ if C_CurrencyInfo then
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local TrashValue = select(2, HydraUI:GetTrashValue())
 	local ServerInfo, ServerTotalGold = Gold:GetServerInfo()

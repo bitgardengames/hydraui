@@ -297,9 +297,11 @@ local GetClientInformation = function(client, name, info)
 end
 
 local OnEnter = function(self)
-	C_FriendList.ShowFriends()
+	if not self:SetTooltip() then
+		return
+	end
 
-	self:SetTooltip()
+	C_FriendList.ShowFriends()
 
 	local NumFriends = GetNumFriends()
 	local NumFriendsOnline = GetNumOnlineFriends()

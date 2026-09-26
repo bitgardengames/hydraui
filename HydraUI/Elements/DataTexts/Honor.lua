@@ -7,7 +7,9 @@ local UnitHonorLevel = UnitHonorLevel
 local Label = HONOR
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local Honor = UnitHonor("player")
 	local MaxHonor = UnitHonorMax("player")

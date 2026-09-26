@@ -3,7 +3,9 @@ local HydraUI, Language, Assets, Settings = select(2, ...):get()
 local Label = MAIL_LABEL
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local Senders = {GetLatestThreeSenders()}
 	local HasSender

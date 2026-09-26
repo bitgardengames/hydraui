@@ -11,7 +11,9 @@ local ThrownSubType = LE_ITEM_WEAPON_THROWN
 local PreviousCount = 0
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	if GetInventoryItemID("player", 0) then
 		GameTooltip:SetInventoryItem("player", 0)

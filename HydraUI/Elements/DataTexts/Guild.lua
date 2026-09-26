@@ -30,13 +30,15 @@ local OnUpdate = function(self, elapsed)
 end
 
 local OnEnter = function(self)
+	if not self:SetTooltip() then
+		return
+	end
+
 	if (not IsInGuild()) then
 		return
 	end
 
 	self:RegisterEvent("MODIFIER_STATE_CHANGED")
-
-	self:SetTooltip()
 
 	GuildRoster()
 

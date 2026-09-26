@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Author: Hydra
-## Version: 2.78
+## Version: 2.79
 ## Title: |cFFFFC44DHydra|r|cFFFFFFFFUI|r
 ## Notes: Interface replacement for World of Warcraft: Forever
 ## SavedVariables: HydraUIProfileData, HydraUIProfiles, HydraUIData, HydraUIGold

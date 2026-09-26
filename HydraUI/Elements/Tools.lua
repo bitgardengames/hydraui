@@ -79,6 +79,20 @@ if HydraUI.IsMainline then
 
 		return num
 	end
+
+	function HydraUI:Comma(number)
+		if (not number) then
+			return
+		end
+
+		if (HydraUI.IsMainline and issecretvalue(number) and not canaccessvalue(number)) then
+			return BreakUpLargeNumbers(number)
+		end
+
+		local Left, Number = match(floor(number + 0.5), "^([^%d]*%d)(%d+)(.-)$")
+
+		return Left and Left .. reverse(gsub(reverse(Number), "(%d%d%d)", "%1,")) or number
+	end
 else
 	function HydraUI:ShortValue(num)
 		if (num > 999999) then
@@ -89,20 +103,16 @@ else
 
 		return num
 	end
-end
 
-function HydraUI:Comma(number)
-	if (not number) then
-		return
+	function HydraUI:Comma(number)
+		if (not number) then
+			return
+		end
+
+		local Left, Number = match(floor(number + 0.5), "^([^%d]*%d)(%d+)(.-)$")
+
+		return Left and Left .. reverse(gsub(reverse(Number), "(%d%d%d)", "%1,")) or number
 	end
-
-	if (HydraUI.IsMainline and issecretvalue(number) and not canaccessvalue(number)) then
-		return BreakUpLargeNumbers(number)
-	end
-
-   	local Left, Number = match(floor(number + 0.5), "^([^%d]*%d)(%d+)(.-)$")
-
-	return Left and Left .. reverse(gsub(reverse(Number), "(%d%d%d)", "%1,")) or number
 end
 
 function HydraUI:CopperToGold(copper)

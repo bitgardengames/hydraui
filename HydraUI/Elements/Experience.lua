@@ -14,7 +14,7 @@ local UnitLevel = UnitLevel
 local GetXPExhaustion = GetXPExhaustion
 local GetQuestInfo = C_QuestLog.GetInfo
 local ReadyForTurnIn = C_QuestLog.ReadyForTurnIn
-local IsPlayerAtEffectiveMaxLevel = IsPlayerAtEffectiveMaxLevel
+local IsPlayerAtEffectiveMaxLevel = C_PlayerInfo and C_PlayerInfo.IsPlayerAtEffectiveMaxLevel or IsPlayerAtEffectiveMaxLevel
 local GetNumQuests
 local LEVEL = LEVEL
 local HasXPBuff

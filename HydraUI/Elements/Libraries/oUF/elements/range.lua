@@ -27,11 +27,22 @@ Offline units are handled as if they are in range.
 
 local _, ns = ...
 local oUF = ns.oUF
+local HydraUI = ns:get()
 
 local _FRAMES = {}
 local OnRangeFrame
 
 local UnitInRange, UnitIsConnected = UnitInRange, UnitIsConnected
+
+local function IsInaccessible()
+	return false
+end
+
+if HydraUI.IsMainline then
+	IsInaccessible = function(value)
+		return issecretvalue(value) and not canaccessvalue(value)
+	end
+end
 
 local function Update(self, event)
 	local element = self.Range
@@ -48,8 +59,19 @@ local function Update(self, event)
 
 	local inRange, checkedRange
 	local connected = UnitIsConnected(unit)
+	if(IsInaccessible(connected)) then
+		connected = nil
+	end
+
 	if(connected) then
 		inRange, checkedRange = UnitInRange(unit)
+		if(IsInaccessible(inRange)) then
+			inRange = nil
+		end
+		if(IsInaccessible(checkedRange)) then
+			checkedRange = nil
+		end
+
 		if(checkedRange and not inRange) then
 			self:SetAlpha(element.outsideAlpha)
 		else

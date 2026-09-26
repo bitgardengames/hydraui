@@ -14,7 +14,6 @@ local UnitLevel = UnitLevel
 local GetXPExhaustion = GetXPExhaustion
 local GetQuestInfo = C_QuestLog.GetInfo
 local ReadyForTurnIn = C_QuestLog.ReadyForTurnIn
-local IsPlayerAtEffectiveMaxLevel = IsPlayerAtEffectiveMaxLevel
 local GetNumQuests
 local LEVEL = LEVEL
 local HasXPBuff
@@ -246,7 +245,7 @@ function Experience:Update()
 	local CurrentZone
 
 	-- Expansion transition script, remove after launch
-	if (not self:IsShown() and not IsPlayerAtEffectiveMaxLevel()) then
+	if (not self:IsShown() and MaxXP > 0) then
 		self:Show()
 	end
 
@@ -366,7 +365,9 @@ function Experience:Update()
 end
 
 function Experience:PLAYER_LEVEL_UP()
-	if IsPlayerAtEffectiveMaxLevel() then
+	MaxXP = UnitXPMax("player")
+
+	if (MaxXP == 0) then
 		self:Hide()
 		--self:UnregisterAllEvents()
 		--self:SetScript("OnEnter", nil)

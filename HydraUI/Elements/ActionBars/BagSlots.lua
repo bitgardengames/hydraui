@@ -97,6 +97,10 @@ function BagsFrame:PositionButtons()
 
 	self.IsPositioning = true
 
+	-- Clear every existing anchor before rebuilding the chain. The default UI
+	-- anchors the bag slots to the backpack, so the backpack must be the root of
+	-- our chain as well; making it depend on CharacterBag0Slot causes a circular
+	-- dependency when Blizzard restores its anchors.
 	for i = 1, #self.Objects do
 		local Object = self.Objects[i]
 
@@ -104,11 +108,15 @@ function BagsFrame:PositionButtons()
 			Object:SetParent(self.Panel)
 		end
 		Object:ClearAllPoints()
+	end
 
-		if (i == 1) then
-			Object:SetPoint("LEFT", self.Panel, 4, 0)
+	for i = #self.Objects, 1, -1 do
+		local Object = self.Objects[i]
+
+		if (i == #self.Objects) then
+			Object:SetPoint("RIGHT", self.Panel, -4, 0)
 		else
-			Object:SetPoint("LEFT", self.Objects[i-1], "RIGHT", 4, 0)
+			Object:SetPoint("RIGHT", self.Objects[i+1], "LEFT", -4, 0)
 		end
 
 		if ((IsClassic or IsTBC) and i == 1) then

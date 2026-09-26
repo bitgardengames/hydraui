@@ -106,6 +106,8 @@ Defaults["ab-totem-enable"] = true
 Defaults["ab-extra-button-size"] = 60
 
 function AB:Disable(object)
+	if not object then return end
+
 	if object.UnregisterAllEvents then
 		object:UnregisterAllEvents()
 	end

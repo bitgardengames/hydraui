@@ -55,6 +55,63 @@ local Update = function(self, event, unit)
 	end
 end
 
+-- The prediction APIs and health APIs can all return secret values on
+-- mainline. Use a dedicated path there and hide predictions that Lua cannot
+-- safely compare or combine; classic keeps the unchecked implementation.
+if (select(4, GetBuildInfo()) > 90000) then
+	Update = function(self, event, unit)
+		if (self.unit ~= unit) then return end
+
+		local IncomingHeals = UnitGetIncomingHeals(unit) or 0
+		local Health = UnitHealth(unit)
+		local MaxHealth = UnitHealthMax(unit)
+
+		if (issecretvalue(IncomingHeals) or issecretvalue(Health) or issecretvalue(MaxHealth)) then
+			if self.HealBar then self.HealBar:SetValue(0) end
+			if self.AbsorbsBar then self.AbsorbsBar:SetValue(0) end
+			return
+		end
+
+		if self.HealBar then
+			if (Health == 0) then
+				self.HealBar:SetValue(0)
+				return
+			end
+
+			self.HealBar:SetMinMaxValues(0, MaxHealth)
+			if (IncomingHeals == 0) then
+				self.HealBar:SetValue(0)
+			elseif (Health + IncomingHeals >= MaxHealth) then
+				self.HealBar:SetValue(MaxHealth - Health)
+			else
+				self.HealBar:SetValue(IncomingHeals)
+			end
+		end
+
+		if self.AbsorbsBar then
+			if (Health == 0) then
+				self.AbsorbsBar:SetValue(0)
+				return
+			end
+
+			local TotalAbsorbs = UnitGetTotalAbsorbs(unit) or 0
+			if (issecretvalue(TotalAbsorbs)) then
+				self.AbsorbsBar:SetValue(0)
+				return
+			end
+
+			self.AbsorbsBar:SetMinMaxValues(0, MaxHealth)
+			if (TotalAbsorbs == 0) then
+				self.AbsorbsBar:SetValue(0)
+			elseif (Health + TotalAbsorbs >= MaxHealth) then
+				self.AbsorbsBar:SetValue(MaxHealth - Health)
+			else
+				self.AbsorbsBar:SetValue(TotalAbsorbs)
+			end
+		end
+	end
+end
+
 local ForceUpdate = function(element)
 	return Update(element.__owner, "ForceUpdate", element.__owner.unit)
 end

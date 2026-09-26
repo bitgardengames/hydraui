@@ -597,8 +597,11 @@ if HydraUI.IsMainline then
 		local Max = UnitHealthMax(Unit)
 
 		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
-			self.HealthValue:SetText(" ")
-			self.HealthPercent:SetText(" ")
+			-- SetFormattedText can pass secret values directly to the UI without
+			-- exposing them to addon Lua. UnitHealthPercent provides the matching
+			-- secret-safe percentage for the modern client.
+			self.HealthValue:SetFormattedText("%s / %s", Current, Max)
+			self.HealthPercent:SetFormattedText("%.1f%%", UnitHealthPercent(Unit, false, CurveConstants.ScaleTo100))
 			return
 		end
 

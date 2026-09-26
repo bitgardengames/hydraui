@@ -68,6 +68,8 @@ function DT:NewAnchor(name, parent)
 	Anchor:SetFrameStrata(parent:GetFrameStrata())
 	Anchor.Name = name
 	Anchor.SetTooltip = SetTooltip
+	Anchor:HookScript("OnMouseDown", self.OnMouseDown)
+	Anchor:HookScript("OnMouseUp", self.OnMouseUp)
 
 	Anchor.Text = Anchor:CreateFontString(nil, "OVERLAY")
 	HydraUI:SetFontInfo(Anchor.Text, Settings["data-text-font"], Settings["data-text-font-size"], Settings["data-text-font-flags"])
@@ -112,9 +114,6 @@ function DT:SetDataText(anchor, name)
 	Anchor.Update = Type.Update
 
 	Anchor:Enable()
-
-	Anchor:HookScript("OnMouseDown", self.OnMouseDown)
-	Anchor:HookScript("OnMouseUp", self.OnMouseUp)
 end
 
 function DT:SetTooltipsEnabled(value)

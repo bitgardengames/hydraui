@@ -98,10 +98,18 @@ local ButtonOnEnter = function(self)
 	end
 end
 
+local PanelOnEnter = function(self)
+	MicroButtons.Panel:SetAlpha(Settings["micro-buttons-max"] / 100)
+end
+
 local ButtonOnLeave = function(self)
 	if (Settings["micro-buttons-visiblity"] == "MOUSEOVER") then
 		self:GetParent():SetAlpha(Settings["micro-buttons-opacity"] / 100)
 	end
+end
+
+local PanelOnLeave = function(self)
+	MicroButtons.Panel:SetAlpha(Settings["micro-buttons-opacity"] / 100)
 end
 
 function MicroButtons:UpdateVisibility()
@@ -111,8 +119,8 @@ function MicroButtons:UpdateVisibility()
 		self.Panel:SetAlpha(0)
 		self.Panel:Hide()
 	elseif (Settings["micro-buttons-visiblity"] == "MOUSEOVER") then
-		self.Panel:SetScript("OnEnter", BagsFrameOnEnter)
-		self.Panel:SetScript("OnLeave", BagsFrameOnLeave)
+		self.Panel:SetScript("OnEnter", PanelOnEnter)
+		self.Panel:SetScript("OnLeave", PanelOnLeave)
 		self.Panel:SetAlpha(Settings["micro-buttons-opacity"] / 100)
 		self.Panel:Show()
 	elseif (Settings["micro-buttons-visiblity"] == "SHOW") then

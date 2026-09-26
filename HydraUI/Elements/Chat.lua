@@ -933,8 +933,6 @@ function Chat:MoveChatFrames()
 
 	GeneralDockManagerOverflowButton:ClearAllPoints()
 	GeneralDockManagerOverflowButton:SetPoint("RIGHT", self.Top, -2, 0)
-
-	FCF_SelectDockFrame(ChatFrame1)
 end
 
 function Chat:StyleChatFrames()

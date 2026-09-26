@@ -100,7 +100,7 @@ HydraUI.StyleFuncs["partypet"] = function(self, unit)
 	-- Attributes
 	Health.frequentUpdates = true
 	Health.colorDisconnected = true
-	Health.Smooth = true
+	Health.Smooth = Settings["party-pets-health-smooth"]
 
 	UF:SetHealthAttributes(Health, Settings["party-pets-health-color"])
 
@@ -165,12 +165,10 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Party Pets"],
 	right:CreateHeader(Language["Party Pets Size"])
 	right:CreateSlider("party-pets-width", Settings["party-pets-width"], 40, 200, 1, Language["Width"], Language["Set the width of party pet unit frames"], ReloadUI, nil):RequiresReload(true)
 
-	--[[Defaults["party-pets-enable"] = true
-	Defaults["party-pets-width"] = 78
-	Defaults["party-pets-health-height"] = 22
-	Defaults["party-pets-health-reverse"] = false
-	Defaults["party-pets-health-color"] = "CLASS"
-	Defaults["party-pets-health-orientation"] = "HORIZONTAL"
-	Defaults["party-pets-health-smooth"] = true
-	Defaults["party-pets-power-height"] = 0 -- NYI]]
+	right:CreateHeader(Language["Health"])
+	right:CreateSlider("party-pets-health-height", Settings["party-pets-health-height"], 12, 60, 1, Language["Health Height"], Language["Set the height of party health bars"], ReloadUI):RequiresReload(true)
+	right:CreateDropdown("party-pets-health-color", Settings["party-pets-health-color"], {[Language["Class"]] = "CLASS", [Language["Reaction"]] = "REACTION", [Language["Custom"]] = "CUSTOM"}, Language["Health Bar Color"], Language["Set the color of the health bar"], ReloadUI):RequiresReload(true)
+	right:CreateDropdown("party-pets-health-orientation", Settings["party-pets-health-orientation"], {[Language["Horizontal"]] = "HORIZONTAL", [Language["Vertical"]] = "VERTICAL"}, Language["Fill Orientation"], Language["Set the fill orientation of the health bar"], ReloadUI):RequiresReload(true)
+	right:CreateSwitch("party-pets-health-reverse", Settings["party-pets-health-reverse"], Language["Reverse Health Fill"], Language["Reverse the fill of the health bar"], ReloadUI):RequiresReload(true)
+	right:CreateSwitch("party-pets-health-smooth", Settings["party-pets-health-smooth"], Language["Enable Smooth Progress"], Language["Set the health bar to animate changes smoothly"], ReloadUI):RequiresReload(true)
 end)

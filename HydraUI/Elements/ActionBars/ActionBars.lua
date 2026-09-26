@@ -1580,10 +1580,6 @@ function AB:StyleTotemBar()
 	end
 end
 
-local GetBarHeight = function()
-	return 0
-end
-
 function AB:Load()
 	if (not Settings["ab-enable"]) then
 		return
@@ -1596,25 +1592,6 @@ function AB:Load()
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()
-
-	if HydraUI.IsMainline then
-		MainMenuBar.GetBottomAnchoredHeight = GetBarHeight
-		OverrideActionBar.GetBottomAnchoredHeight = GetBarHeight
-		MultiBarBottomLeft.GetBottomAnchoredHeight = GetBarHeight
-		MultiBarBottomRight.GetBottomAnchoredHeight = GetBarHeight
-		StanceBar.GetBottomAnchoredHeight = GetBarHeight
-		PetActionBar.GetBottomAnchoredHeight = GetBarHeight
-		PossessActionBar.GetBottomAnchoredHeight = GetBarHeight
-		MainMenuBarVehicleLeaveButton.GetBottomAnchoredHeight = GetBarHeight
-
-		MultiBarLeft.IsInDefaultPosition = function() return false end
-		MultiBarRight.IsInDefaultPosition = function() return false end
-
-		if EditModeManagerFrame then
-			EditModeManagerFrame.UpdateBottomActionBarPositions = function() end
-			EditModeManagerFrame.UpdateRightActionBarPositions = function() end
-		end
-	end
 
 	if MainActionBar then
 		MainActionBar:SetAlpha(0)

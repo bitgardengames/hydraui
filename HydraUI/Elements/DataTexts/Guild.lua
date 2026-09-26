@@ -6,6 +6,7 @@ local GetGuildInfo = GetGuildInfo
 local GetGuildRosterInfo = GetGuildRosterInfo
 local GetNumGuildMembers = GetNumGuildMembers
 local GetQuestDifficultyColor = GetQuestDifficultyColor
+local GetCVar = GetCVar
 local select = select
 local format = format
 local match = string.match
@@ -164,7 +165,11 @@ local OnMouseUp = function()
 	if HydraUI.IsMainline then
 		ToggleCommunitiesFrame()
 	elseif (HydraUI.IsCata or HydraUI.IsMists) then
-		ToggleGuildFrame()
+		if (GetCVar("useClassicGuildUI") == "1") then
+			ToggleGuildFrame()
+		else
+			ToggleCommunitiesFrame()
+		end
 	else
 		ToggleFriendsFrame(3)
 	end

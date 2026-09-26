@@ -67,14 +67,28 @@ function HydraUI:AuraFormatTime(seconds)
 	return format("%.1f", seconds)
 end
 
-function HydraUI:ShortValue(num)
-	if (num > 999999) then
-		return format("%.2fm", num / 1000000)
-	elseif (num > 999) then
-		return format("%.1fk", num / 1000)
-	end
+if HydraUI.IsMainline then
+	function HydraUI:ShortValue(num)
+		if issecretvalue(num) then
+			return ""
+		elseif (num > 999999) then
+			return format("%.2fm", num / 1000000)
+		elseif (num > 999) then
+			return format("%.1fk", num / 1000)
+		end
 
-	return num
+		return num
+	end
+else
+	function HydraUI:ShortValue(num)
+		if (num > 999999) then
+			return format("%.2fm", num / 1000000)
+		elseif (num > 999) then
+			return format("%.1fk", num / 1000)
+		end
+
+		return num
+	end
 end
 
 function HydraUI:Comma(number)

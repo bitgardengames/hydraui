@@ -106,7 +106,9 @@ Defaults["ab-totem-enable"] = true
 Defaults["ab-extra-button-size"] = 60
 
 function AB:Disable(object)
-	if not object then return end
+	if (not object) then
+		return
+	end
 
 	if object.UnregisterAllEvents then
 		object:UnregisterAllEvents()
@@ -116,14 +118,18 @@ function AB:Disable(object)
 end
 
 function AB:EnableBar(bar)
-	if not bar then return end
+	if (not bar) then
+		return
+	end
 
 	RegisterAttributeDriver(bar, "state-visibility", "[nopetbattle] show; hide")
 	bar:Show()
 end
 
 function AB:DisableBar(bar)
-	if not bar then return end
+	if (not bar) then
+		return
+	end
 
 	UnregisterAttributeDriver(bar, "state-visibility")
 	bar:Hide()

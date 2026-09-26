@@ -195,29 +195,14 @@ Methods["Health:Short"] = function(unit)
 end
 
 Events["HealthPercent"] = HealthEvent .. "UNIT_MAXHEALTH"
-if HydraUI.IsMainline then
-	Methods["HealthPercent"] = function(unit)
-		local Current = UnitHealth(unit)
-		local Max = UnitHealthMax(unit)
+Methods["HealthPercent"] = function(unit)
+	local Current = UnitHealth(unit)
+	local Max = UnitHealthMax(unit)
 
-		if (issecretvalue(Current) or issecretvalue(Max)) then
-			return ""
-		elseif (Max == 0) then
-			return 0
-		else
-			return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
-		end
-	end
-else
-	Methods["HealthPercent"] = function(unit)
-		local Current = UnitHealth(unit)
-		local Max = UnitHealthMax(unit)
-
-		if (Max == 0) then
-			return 0
-		else
-			return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
-		end
+	if (Max == 0) then
+		return 0
+	else
+		return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
 	end
 end
 
@@ -311,80 +296,6 @@ Methods["HealthColor"] = function(unit)
 		return "|cFF" .. HydraUI:RGBToHex(GetColor(Current / Max, 0.905, 0.298, 0.235, 0.17, 0.77, 0.4))
 	else
 		return "|cFF" .. HydraUI:RGBToHex(0.18, 0.8, 0.443)
-	end
-end
-
--- Retail health can be secret in combat. These are separate implementations
--- so classic clients retain the direct paths above without per-update checks.
-if HydraUI.IsMainline then
-	Methods["Health"] = function(unit)
-		local Current = UnitHealth(unit)
-		return issecretvalue(Current) and "" or Current
-	end
-
-	Methods["Health:Short"] = function(unit)
-		local Current = UnitHealth(unit)
-		return issecretvalue(Current) and "" or HydraUI:ShortValue(Current)
-	end
-
-	Methods["HealthValues"] = function(unit)
-		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if (issecretvalue(Current) or issecretvalue(Max)) then return "" end
-		return Current .. " / " .. Max
-	end
-
-	Methods["HealthValues:Short"] = function(unit)
-		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if (issecretvalue(Current) or issecretvalue(Max)) then return "" end
-		return HydraUI:ShortValue(Current) .. " / " .. HydraUI:ShortValue(Max)
-	end
-
-	Methods["HealthDeficit"] = function(unit)
-		if UnitIsDead(unit) then return "|cFFEE4D4D" .. DEAD .. "|r" end
-		if UnitIsGhost(unit) then return "|cFFEEEEEE" .. Language["Ghost"] .. "|r" end
-		if not UnitIsConnected(unit) then return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r" end
-		if UnitIsAFK(unit) then return "|cFFEEEEEE" .. AFK .. "|r" end
-
-		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if (issecretvalue(Current) or issecretvalue(Max)) then return "" end
-		local Deficit = Max - Current
-		if ((Deficit ~= 0) or (Current ~= Max)) then return "-" .. Deficit end
-	end
-
-	Methods["HealthDeficit:Short"] = function(unit)
-		if UnitIsDead(unit) then return "|cFFEE4D4D" .. DEAD .. "|r" end
-		if UnitIsGhost(unit) then return "|cFFEEEEEE" .. Language["Ghost"] .. "|r" end
-		if not UnitIsConnected(unit) then return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r" end
-		if UnitIsAFK(unit) then return "|cFFEEEEEE" .. AFK .. "|r" end
-
-		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if (issecretvalue(Current) or issecretvalue(Max)) then return "" end
-		local Deficit = Max - Current
-		if ((Deficit ~= 0) or (Current ~= Max)) then return "-" .. HydraUI:ShortValue(Deficit) end
-	end
-
-	Methods["GroupStatus"] = function(unit)
-		if UnitIsDead(unit) then return "|cFFEE4D4D" .. DEAD .. "|r" end
-		if UnitIsGhost(unit) then return "|cFFEEEEEE" .. Language["Ghost"] .. "|r" end
-		if not UnitIsConnected(unit) then return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r" end
-		if UnitIsAFK(unit) then return "|cFFEEEEEE" .. AFK .. "|r" end
-
-		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if (issecretvalue(Current) or issecretvalue(Max)) then return "" end
-		local Color = Methods["HealthColor"](unit)
-		if (Max == 0) then return Color .. "0|r" end
-		return Color .. floor(Current / Max * 100 + 0.5) .. "|r"
-	end
-
-	Methods["HealthColor"] = function(unit)
-		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if (issecretvalue(Current) or issecretvalue(Max)) then
-			return "|cFF" .. HydraUI:RGBToHex(0.18, 0.8, 0.443)
-		elseif (Current and Max > 0) then
-			return "|cFF" .. HydraUI:RGBToHex(GetColor(Current / Max, 0.905, 0.298, 0.235, 0.17, 0.77, 0.4))
-		else
-			return "|cFF" .. HydraUI:RGBToHex(0.18, 0.8, 0.443)
-		end
 	end
 end
 

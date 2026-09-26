@@ -14,20 +14,12 @@ local UnitLevel = UnitLevel
 local GetXPExhaustion = GetXPExhaustion
 local GetQuestInfo = C_QuestLog.GetInfo
 local ReadyForTurnIn = C_QuestLog.ReadyForTurnIn
-local IsPlayerAtEffectiveMaxLevel = C_PlayerInfo and C_PlayerInfo.IsPlayerAtEffectiveMaxLevel or IsPlayerAtEffectiveMaxLevel
+local IsPlayerAtEffectiveMaxLevel = IsPlayerAtEffectiveMaxLevel
 local GetNumQuests
 local LEVEL = LEVEL
 local HasXPBuff
 local XPMod = 1
 local FirstRun = true
-
--- This helper is not available in every version of the retail client.
--- A player who cannot earn any more experience has a maximum XP value of zero.
-if (not IsPlayerAtEffectiveMaxLevel) then
-	IsPlayerAtEffectiveMaxLevel = function()
-		return UnitXPMax("player") == 0
-	end
-end
 
 if HydraUI.IsMainline then
 	GetNumQuests = C_QuestLog.GetNumQuestLogEntries

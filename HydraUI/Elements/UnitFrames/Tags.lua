@@ -201,7 +201,7 @@ if HydraUI.IsMainline then
 		local Max = UnitHealthMax(unit)
 
 		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
-			return ""
+			return format("%.1f%%", UnitHealthPercent(unit, false, CurveConstants.ScaleTo100))
 		elseif (Max == 0) then
 			return 0
 		else

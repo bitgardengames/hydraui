@@ -574,44 +574,95 @@ function Tooltips:AddHooks()
 	hooksecurefunc(GameTooltip, "SetUnitDebuff", OnTooltipSetAura)
 end
 
-local OnValueChanged = function(self)
-	local Unit = select(2, self:GetParent():GetUnit())
+local OnValueChanged
 
-	if (not Unit) then
-		return
-	end
+if HydraUI.IsMainline then
+	OnValueChanged = function(self)
+		local Unit = select(2, self:GetParent():GetUnit())
 
-	local Color = GetUnitColor(Unit)
+		if (not Unit) then
+			return
+		end
 
-	self:SetStatusBarColor(HydraUI:HexToRGB(Color))
-	self.BG:SetVertexColor(HydraUI:HexToRGB(Color))
+		local Color = GetUnitColor(Unit)
 
-	if (not Settings["tooltips-show-health-text"]) then
-		return
-	end
+		self:SetStatusBarColor(HydraUI:HexToRGB(Color))
+		self.BG:SetVertexColor(HydraUI:HexToRGB(Color))
 
-	local Current = UnitHealth(Unit)
-	local Max = UnitHealthMax(Unit)
+		if (not Settings["tooltips-show-health-text"]) then
+			return
+		end
 
-	if (Max == 0) then
-		if UnitIsDead(Unit) then
-			self.HealthValue:SetText("|cFFD64545" .. Language["Dead"] .. "|r")
-		elseif UnitIsGhost(Unit) then
-			self.HealthValue:SetText("|cFFEEEEEE" .. Language["Ghost"] .. "|r")
-		else
+		local Current = UnitHealth(Unit)
+		local Max = UnitHealthMax(Unit)
+
+		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
 			self.HealthValue:SetText(" ")
 			self.HealthPercent:SetText(" ")
-		end
-	else
-		if UnitIsDead(Unit) then
-			self.HealthValue:SetText("|cFFD64545" .. Language["Dead"] .. "|r")
-		elseif UnitIsGhost(Unit) then
-			self.HealthValue:SetText("|cFFEEEEEE" .. Language["Ghost"] .. "|r")
-		else
-			self.HealthValue:SetText(format("%s / %s", HydraUI:ShortValue(Current), HydraUI:ShortValue(Max)))
+			return
 		end
 
-		self.HealthPercent:SetText(format("%s%%", floor((Current / Max * 100 + 0.05) * 10) / 10))
+		if (Max == 0) then
+			if UnitIsDead(Unit) then
+				self.HealthValue:SetText("|cFFD64545" .. Language["Dead"] .. "|r")
+			elseif UnitIsGhost(Unit) then
+				self.HealthValue:SetText("|cFFEEEEEE" .. Language["Ghost"] .. "|r")
+			else
+				self.HealthValue:SetText(" ")
+				self.HealthPercent:SetText(" ")
+			end
+		else
+			if UnitIsDead(Unit) then
+				self.HealthValue:SetText("|cFFD64545" .. Language["Dead"] .. "|r")
+			elseif UnitIsGhost(Unit) then
+				self.HealthValue:SetText("|cFFEEEEEE" .. Language["Ghost"] .. "|r")
+			else
+				self.HealthValue:SetText(format("%s / %s", HydraUI:ShortValue(Current), HydraUI:ShortValue(Max)))
+			end
+
+			self.HealthPercent:SetText(format("%s%%", floor((Current / Max * 100 + 0.05) * 10) / 10))
+		end
+	end
+else
+	OnValueChanged = function(self)
+		local Unit = select(2, self:GetParent():GetUnit())
+
+		if (not Unit) then
+			return
+		end
+
+		local Color = GetUnitColor(Unit)
+
+		self:SetStatusBarColor(HydraUI:HexToRGB(Color))
+		self.BG:SetVertexColor(HydraUI:HexToRGB(Color))
+
+		if (not Settings["tooltips-show-health-text"]) then
+			return
+		end
+
+		local Current = UnitHealth(Unit)
+		local Max = UnitHealthMax(Unit)
+
+		if (Max == 0) then
+			if UnitIsDead(Unit) then
+				self.HealthValue:SetText("|cFFD64545" .. Language["Dead"] .. "|r")
+			elseif UnitIsGhost(Unit) then
+				self.HealthValue:SetText("|cFFEEEEEE" .. Language["Ghost"] .. "|r")
+			else
+				self.HealthValue:SetText(" ")
+				self.HealthPercent:SetText(" ")
+			end
+		else
+			if UnitIsDead(Unit) then
+				self.HealthValue:SetText("|cFFD64545" .. Language["Dead"] .. "|r")
+			elseif UnitIsGhost(Unit) then
+				self.HealthValue:SetText("|cFFEEEEEE" .. Language["Ghost"] .. "|r")
+			else
+				self.HealthValue:SetText(format("%s / %s", HydraUI:ShortValue(Current), HydraUI:ShortValue(Max)))
+			end
+
+			self.HealthPercent:SetText(format("%s%%", floor((Current / Max * 100 + 0.05) * 10) / 10))
+		end
 	end
 end
 

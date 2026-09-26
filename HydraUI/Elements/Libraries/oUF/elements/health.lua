@@ -79,7 +79,8 @@ The following options are listed by priority. The first check that returns true 
 local _, ns = ...
 local oUF = ns.oUF
 local Private = oUF.Private
-local Mainline = select(4, GetBuildInfo()) > 90000
+local HydraUI = ns:get()
+local Mainline = HydraUI.IsMainline
 
 local unitSelectionType = Private.unitSelectionType
 
@@ -91,6 +92,22 @@ local UnitThreatSituation = UnitThreatSituation
 local UnitReaction = UnitReaction
 local UnitHealth = UnitHealth
 local UnitHealthMax = UnitHealthMax
+
+local function GetSmoothColor(self, element)
+	return self:ColorGradient(element.cur or 1, element.max or 1, unpack(element.smoothGradient or self.colors.smooth))
+end
+
+if Mainline then
+	GetSmoothColor = function(self, element)
+		local cur, max = element.cur, element.max
+
+		if((issecretvalue(cur) and not canaccessvalue(cur)) or (issecretvalue(max) and not canaccessvalue(max))) then
+			return
+		end
+
+		return self:ColorGradient(cur or 1, max or 1, unpack(element.smoothGradient or self.colors.smooth))
+	end
+end
 
 local function UpdateColor(self, event, unit)
 	if(not unit or self.unit ~= unit) then return end
@@ -113,7 +130,7 @@ local function UpdateColor(self, event, unit)
 	elseif(element.colorReaction and UnitReaction(unit, 'player')) then
 		color = self.colors.reaction[UnitReaction(unit, 'player')]
 	elseif(element.colorSmooth) then
-		r, g, b = self:ColorGradient(element.cur or 1, element.max or 1, unpack(element.smoothGradient or self.colors.smooth))
+		r, g, b = GetSmoothColor(self, element)
 	elseif(element.colorHealth) then
 		color = self.colors.health
 	end
@@ -203,6 +220,45 @@ local function Update(self, event, unit)
 	--]]
 	if(element.PostUpdate) then
 		element:PostUpdate(unit, cur, max)
+	end
+end
+
+-- Mainline health values can become secret while in combat. Keep its guarded
+-- update separate so classic clients do not pay for secret checks on every event.
+if Mainline then
+	Update = function(self, event, unit)
+		if(not unit or self.unit ~= unit) then return end
+		local element = self.Health
+
+		if(element.PreUpdate) then
+			element:PreUpdate(unit)
+		end
+
+		local cur, max = UnitHealth(unit), UnitHealthMax(unit)
+		element:SetMinMaxValues(0, max)
+
+		if(UnitIsConnected(unit)) then
+			element:SetValue(cur)
+		else
+			element:SetValue(max)
+		end
+
+		if(not (issecretvalue(cur) and not canaccessvalue(cur)) and cur == 0) then
+			if self.HealBar then
+				self.HealBar:SetValue(0)
+			end
+
+			if self.AbsorbsBar then
+				self.AbsorbsBar:SetValue(0)
+			end
+		end
+
+		element.cur = cur
+		element.max = max
+
+		if(element.PostUpdate) then
+			element:PostUpdate(unit, cur, max)
+		end
 	end
 end
 

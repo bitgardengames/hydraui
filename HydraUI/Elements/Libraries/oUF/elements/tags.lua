@@ -104,6 +104,7 @@ in the `oUF.Tags.SharedEvents` table as follows: `oUF.Tags.SharedEvents.EVENT_NA
 
 local _, ns = ...
 local oUF = ns.oUF
+local HydraUI = ns:get()
 local Private = oUF.Private
 
 local nierror = Private.nierror
@@ -516,6 +517,32 @@ local tags = setmetatable(
 		end,
 	}
 )
+
+-- Returning secret health values from a tag causes the tag compiler to inspect
+-- or concatenate them. Install retail-only implementations while leaving the
+-- classic functions free of a check on every update.
+if HydraUI.IsMainline then
+	tags.curhp = function(unit)
+		local value = UnitHealth(unit)
+		return not (issecretvalue(value) and not canaccessvalue(value)) and value or nil
+	end
+	tags.maxhp = function(unit)
+		local value = UnitHealthMax(unit)
+		return not (issecretvalue(value) and not canaccessvalue(value)) and value or nil
+	end
+	tagStrings['missinghp'] = [[function(u)
+		local max, current = UnitHealthMax(u), UnitHealth(u)
+		if((issecretvalue(max) and not canaccessvalue(max)) or (issecretvalue(current) and not canaccessvalue(current))) then return end
+		local missing = max - current
+		if(missing > 0) then return missing end
+	end]]
+	tagStrings['perhp'] = [[function(u)
+		local max, current = UnitHealthMax(u), UnitHealth(u)
+		if((issecretvalue(max) and not canaccessvalue(max)) or (issecretvalue(current) and not canaccessvalue(current))) then return end
+		if(max == 0) then return 0 end
+		return math.floor(current / max * 100 + .5)
+	end]]
+end
 
 _ENV._TAGS = tags
 

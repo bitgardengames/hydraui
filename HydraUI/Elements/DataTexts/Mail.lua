@@ -5,7 +5,7 @@ local Label = MAIL_LABEL
 local OnEnter = function(self)
 	self:SetTooltip()
 
-	local Senders = { GetLatestThreeSenders() }
+	local Senders = {GetLatestThreeSenders()}
 	local HasSender
 
 	for Index = 1, 3 do

@@ -181,15 +181,10 @@ local SetTooltipStyle = function(self)
 end
 
 local GetUnitColor = function(unit)
-	local Color
+	local Class = select(2, UnitClass(unit))
+	local Color = Class and HydraUI.ClassColors[Class]
 
-	if UnitIsPlayer(unit) then
-		local Class = select(2, UnitClass(unit))
-
-		if Class then
-			Color = HydraUI.ClassColors[Class]
-		end
-	else
+	if (not Color) then
 		local Reaction = UnitReaction(unit, "player")
 
 		if Reaction then

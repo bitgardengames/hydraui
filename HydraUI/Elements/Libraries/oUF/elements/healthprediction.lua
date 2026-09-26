@@ -126,6 +126,8 @@ local Enable = function(self)
 		self.HealBar.__owner = self
 		self.HealBar.ForceUpdate = ForceUpdate
 
+		self.HealBar:SetMinMaxValues(0, 1)
+		self.HealBar:SetValue(0)
 		self.HealBar:Show()
 
 		if self.AbsorbsBar then

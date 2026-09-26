@@ -55,8 +55,6 @@ end
 function BagsFrame:SetAlpha(alpha)
 	self.Panel:SetAlpha(alpha)
 
-	-- KeyRingButton's Blizzard scripts call methods on its original parent.
-	-- Keep it there and mirror the custom panel's alpha instead of reparenting it.
 	if HasKeyRing then
 		KeyRingButton:SetAlpha(alpha)
 	end
@@ -67,25 +65,31 @@ function BagsFrame:UpdateVisibility()
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self:SetAlpha(0)
+
 		if HasKeyRing then
 			KeyRingButton:EnableMouse(false)
 		end
+
 		self.Panel:Hide()
 	elseif (Settings["bags-frame-visiblity"] == "MOUSEOVER") then
 		self.Panel:SetScript("OnEnter", BagsFrameOnEnter)
 		self.Panel:SetScript("OnLeave", BagsFrameOnLeave)
 		self:SetAlpha(Settings["bags-frame-opacity"] / 100)
+
 		if HasKeyRing then
 			KeyRingButton:EnableMouse(true)
 		end
+
 		self.Panel:Show()
 	elseif (Settings["bags-frame-visiblity"] == "SHOW") then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self:SetAlpha(Settings["bags-frame-max"] / 100)
+
 		if HasKeyRing then
 			KeyRingButton:EnableMouse(true)
 		end
+
 		self.Panel:Show()
 	end
 end
@@ -238,9 +242,6 @@ function BagsFrame:Load()
 
 	self:PositionButtons()
 
-	-- Blizzard can reposition these buttons from several layout paths. Hook the
-	-- method all of those paths eventually call so our anchors are restored even
-	-- when the caller changes between clients or patches.
 	for i = 1, #self.Objects do
 		hooksecurefunc(self.Objects[i], "SetPoint", RestoreBagButtonPositions)
 	end

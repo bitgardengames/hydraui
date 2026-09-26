@@ -43,12 +43,12 @@ local OnEnter = function(self)
 			GameTooltip:AddLine(" ")
 			GameTooltip:AddLine(Language["Coordinates"])
 			GameTooltip:AddLine(format("%.2f, %.2f", X * 100, Y * 100), 1, 1, 1)
-
-			self.TooltipShown = true
-
-			GameTooltip:Show()
 		end
 	end
+
+	self.TooltipShown = true
+
+	GameTooltip:Show()
 end
 
 local OnLeave = function(self)
@@ -61,20 +61,19 @@ local Update = function(self, elapsed)
 
 	if (self.Elapsed > 0.5) then
 		local MapID = GetBestMapForUnit("player")
+		local Position = MapID and GetPlayerMapPosition(MapID, "player")
 
-		if MapID then
-			local Position = GetPlayerMapPosition(MapID, "player")
+		if Position then
+			local X, Y = Position:GetXY()
 
-			if Position then
-				local X, Y = Position:GetXY()
+			self.Text:SetFormattedText("|cFF%s%.2f|r, |cFF%s%.2f|r", HydraUI.ValueColor, X * 100, HydraUI.ValueColor, Y * 100)
+		else
+			self.Text:SetText("--, --")
+		end
 
-				self.Text:SetFormattedText("|cFF%s%.2f|r, |cFF%s%.2f|r", HydraUI.ValueColor, X * 100, HydraUI.ValueColor, Y * 100)
-
-				if self.TooltipShown then
-					GameTooltip:ClearLines()
-					OnEnter(self)
-				end
-			end
+		if self.TooltipShown then
+			GameTooltip:ClearLines()
+			OnEnter(self)
 		end
 
 		self.Elapsed = 0

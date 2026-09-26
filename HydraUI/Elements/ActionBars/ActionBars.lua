@@ -106,6 +106,8 @@ Defaults["ab-totem-enable"] = true
 Defaults["ab-extra-button-size"] = 60
 
 function AB:Disable(object)
+	if not object then return end
+
 	if object.UnregisterAllEvents then
 		object:UnregisterAllEvents()
 	end
@@ -1584,6 +1586,12 @@ local GetBarHeight = function()
 	return 0
 end
 
+local SetBarHeightOverride = function(bar)
+	if bar then
+		bar.GetBottomAnchoredHeight = GetBarHeight
+	end
+end
+
 function AB:Load()
 	if (not Settings["ab-enable"]) then
 		return
@@ -1598,14 +1606,14 @@ function AB:Load()
 	self:CreateMovers()
 
 	if HydraUI.IsMainline then
-		MainMenuBar.GetBottomAnchoredHeight = GetBarHeight
-		OverrideActionBar.GetBottomAnchoredHeight = GetBarHeight
-		MultiBarBottomLeft.GetBottomAnchoredHeight = GetBarHeight
-		MultiBarBottomRight.GetBottomAnchoredHeight = GetBarHeight
-		StanceBar.GetBottomAnchoredHeight = GetBarHeight
-		PetActionBar.GetBottomAnchoredHeight = GetBarHeight
-		PossessActionBar.GetBottomAnchoredHeight = GetBarHeight
-		MainMenuBarVehicleLeaveButton.GetBottomAnchoredHeight = GetBarHeight
+		SetBarHeightOverride(MainMenuBar)
+		SetBarHeightOverride(OverrideActionBar)
+		SetBarHeightOverride(MultiBarBottomLeft)
+		SetBarHeightOverride(MultiBarBottomRight)
+		SetBarHeightOverride(StanceBar)
+		SetBarHeightOverride(PetActionBar)
+		SetBarHeightOverride(PossessActionBar)
+		SetBarHeightOverride(MainMenuBarVehicleLeaveButton)
 
 		MultiBarLeft.IsInDefaultPosition = function() return false end
 		MultiBarRight.IsInDefaultPosition = function() return false end

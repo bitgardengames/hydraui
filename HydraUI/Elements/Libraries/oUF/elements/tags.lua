@@ -518,14 +518,17 @@ local tags = setmetatable(
 	}
 )
 
--- Keep retail-only implementations together so classic clients retain their
--- direct paths without secret-value handling on every update.
+-- Returning secret health values from a tag causes the tag compiler to inspect
+-- or concatenate them. Install retail-only implementations while leaving the
+-- classic functions free of a check on every update.
 if HydraUI.IsMainline then
 	tags.curhp = function(unit)
-		return UnitHealth(unit)
+		local value = UnitHealth(unit)
+		return not (issecretvalue(value) and not canaccessvalue(value)) and value or nil
 	end
 	tags.maxhp = function(unit)
-		return UnitHealthMax(unit)
+		local value = UnitHealthMax(unit)
+		return not (issecretvalue(value) and not canaccessvalue(value)) and value or nil
 	end
 	tagStrings['missinghp'] = [[function(u)
 		local max, current = UnitHealthMax(u), UnitHealth(u)
@@ -726,10 +729,6 @@ local function getTagFunc(tagstr)
 								str = tag(unit, realUnit)
 							end
 
-							if HydraUI.IsMainline and issecretvalue(str) and not canaccessvalue(str) then
-								return str
-							end
-
 							if(str and str ~= '') then
 								return prefix .. str .. suffix
 							end
@@ -741,10 +740,6 @@ local function getTagFunc(tagstr)
 								str = tag(unit, realUnit, string.split(',', customArgs))
 							else
 								str = tag(unit, realUnit)
-							end
-
-							if HydraUI.IsMainline and issecretvalue(str) and not canaccessvalue(str) then
-								return str
 							end
 
 							if(str and str ~= '') then
@@ -783,17 +778,7 @@ local function getTagFunc(tagstr)
 			_ENV._COLORS = parent.colors
 			_ENV._FRAME = parent
 			for i, f in next, args do
-				local value = f(unit, realUnit)
-
-				-- SetFormattedText can display secret values, but using `or` to
-				-- supply the usual empty fallback attempts to inspect them first.
-				-- Pass secrets through untouched so literals and neighboring tags
-				-- are formatted exactly like they are on classic clients.
-				if HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value) then
-					tmp[i] = value
-				else
-					tmp[i] = value or ''
-				end
+				tmp[i] = f(unit, realUnit) or ''
 			end
 
 			-- We do 1, numTags because tmp can hold several unneeded variables.

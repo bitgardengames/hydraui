@@ -318,7 +318,8 @@ end
 -- so classic clients retain the direct paths above without per-update checks.
 if HydraUI.IsMainline then
 	Methods["Health"] = function(unit)
-		return UnitHealth(unit)
+		local Current = UnitHealth(unit)
+		return (issecretvalue(Current) and not canaccessvalue(Current)) and "" or Current
 	end
 
 	Methods["Health:Short"] = function(unit)

@@ -5,15 +5,26 @@ local Label = MAIL_LABEL
 local OnEnter = function(self)
 	self:SetTooltip()
 
-	local One, Two, Three = GetLatestThreeSenders()
+	local Senders = { GetLatestThreeSenders() }
+	local HasSender
 
-	if One then
-		GameTooltip:AddLine(HAVE_MAIL_FROM)
+	for Index = 1, 3 do
+		local Sender = Senders[Index]
 
-		GameTooltip:AddLine(One, 1, 1, 1)
-		GameTooltip:AddLine(Two, 1, 1, 1)
-		GameTooltip:AddLine(Three, 1, 1, 1)
+		if (Sender and Sender ~= "") then
+			if (not HasSender) then
+				GameTooltip:AddLine(HAVE_MAIL_FROM)
+			end
 
+			GameTooltip:AddLine(Sender, 1, 1, 1)
+			HasSender = true
+		end
+	end
+
+	if HasSender then
+		GameTooltip:Show()
+	elseif HasNewMail() then
+		GameTooltip:AddLine(HAVE_MAIL)
 		GameTooltip:Show()
 	end
 end

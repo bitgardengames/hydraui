@@ -91,9 +91,11 @@ function BagsFrame:UpdateVisibility()
 end
 
 function BagsFrame:PositionButtons()
-	if (not self.Panel) then
+	if (not self.Panel or self.IsPositioning) then
 		return
 	end
+
+	self.IsPositioning = true
 
 	for i = 1, #self.Objects do
 		local Object = self.Objects[i]
@@ -115,6 +117,8 @@ function BagsFrame:PositionButtons()
 			Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
 		end
 	end
+
+	self.IsPositioning = false
 end
 
 local RestoreBagButtonPositions = function()
@@ -229,16 +233,11 @@ function BagsFrame:Load()
 
 	self:PositionButtons()
 
-	local PositionFunctions = {
-		"UIParent_ManageFramePositions",
-		"MainMenuBar_UpdateExperienceBars",
-		"MainMenuBar_UpdatePositionForStatusBars",
-	}
-
-	for i = 1, #PositionFunctions do
-		if _G[PositionFunctions[i]] then
-			hooksecurefunc(PositionFunctions[i], RestoreBagButtonPositions)
-		end
+	-- Blizzard can reposition these buttons from several layout paths. Hook the
+	-- method all of those paths eventually call so our anchors are restored even
+	-- when the caller changes between clients or patches.
+	for i = 1, #self.Objects do
+		hooksecurefunc(self.Objects[i], "SetPoint", RestoreBagButtonPositions)
 	end
 
 	if (C_Container and C_Container.SetInsertItemsLeftToRight) then

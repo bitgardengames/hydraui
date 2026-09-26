@@ -996,7 +996,10 @@ function Chat:Load()
 	hooksecurefunc("FCF_OpenTemporaryWindow", OpenTemporaryWindow)
 	hooksecurefunc("FCF_RestorePositionAndDimensions", MoveChatFrames)
 	hooksecurefunc("FCF_SavePositionAndDimensions", MoveChatFrames)
-	hooksecurefunc("UIParent_ManageFramePositions", MoveChatFrames)
+
+	if UIParent_ManageFramePositions then
+		hooksecurefunc("UIParent_ManageFramePositions", MoveChatFrames)
+	end
 	--hooksecurefunc(EditModeManagerFrame, "UpdateActionBarLayout", MoveChatFrames)
 
 	if HydraUI.IsMainline then

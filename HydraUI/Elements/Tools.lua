@@ -70,7 +70,7 @@ end
 if HydraUI.IsMainline then
 	function HydraUI:ShortValue(num)
 		if (issecretvalue(num) and not canaccessvalue(num)) then
-			return ""
+			return AbbreviateNumbers(num)
 		elseif (num > 999999) then
 			return format("%.2fm", num / 1000000)
 		elseif (num > 999) then
@@ -94,6 +94,10 @@ end
 function HydraUI:Comma(number)
 	if (not number) then
 		return
+	end
+
+	if (HydraUI.IsMainline and issecretvalue(number) and not canaccessvalue(number)) then
+		return BreakUpLargeNumbers(number)
 	end
 
    	local Left, Number = match(floor(number + 0.5), "^([^%d]*%d)(%d+)(.-)$")

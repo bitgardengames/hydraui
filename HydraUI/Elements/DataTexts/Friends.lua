@@ -63,7 +63,7 @@ ClientInfo["App"] = function(name, info)
 	return ClientToName[info.gameAccountInfo.clientProgram], name
 end
 
-ClientInfo["ANBS"] = function(name, id)
+ClientInfo["ANBS"] = function(name, info)
 	if info.gameAccountInfo.isGameAFK then
 		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
 	elseif info.gameAccountInfo.isGameBusy then
@@ -208,7 +208,7 @@ ClientInfo["OSI"] = function(name, info)
 end
 
 ClientInfo["WoW"] = function(name, info)
-	Class = GetClass(info.gameAccountInfo.className)
+	local Class = GetClass(info.gameAccountInfo.className)
 
 	local ClassColor = HydraUI.ClassColors[Class]
 	local ProjectName = ProjectIDToName[info.gameAccountInfo.wowProjectID] or CINEMATIC_NAME_1
@@ -276,18 +276,16 @@ ClientInfo["GRY"] = function(name, info)
 	return ClientToName[info.gameAccountInfo.clientProgram], info.gameAccountInfo.richPresence
 end
 
-ClientInfo["W3"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
+ClientInfo["W3"] = function(name, info)
+	if info.gameAccountInfo.isGameAFK then
 		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
+	elseif info.gameAccountInfo.isGameBusy then
 		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
 	else
 		name = format("|cFF00FFF6%s|r", name)
 	end
 
-	return ClientToName[Client], name, RichPresence
+	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
 end
 
 local GetClientInformation = function(client, name, info)

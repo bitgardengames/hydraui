@@ -28,7 +28,6 @@ Defaults["tooltips-opacity"] = 100
 local select = select
 local find = string.find
 local match = string.match
-local gsub = string.gsub
 local floor = floor
 local format = format
 local UnitPVPName = UnitPVPName
@@ -182,10 +181,15 @@ local SetTooltipStyle = function(self)
 end
 
 local GetUnitColor = function(unit)
-	local Class = select(2, UnitClass(unit))
-	local Color = Class and HydraUI.ClassColors[Class]
+	local Color
 
-	if (not Color) then
+	if UnitIsPlayer(unit) then
+		local Class = select(2, UnitClass(unit))
+
+		if Class then
+			Color = HydraUI.ClassColors[Class]
+		end
+	else
 		local Reaction = UnitReaction(unit, "player")
 
 		if Reaction then
@@ -198,16 +202,6 @@ local GetUnitColor = function(unit)
 	else
 		return "FFFFFF"
 	end
-end
-
-local StripColorCodes = function(text)
-	if (not text) then
-		return text
-	end
-
-	text = gsub(text, "|[cC]%x%x%x%x%x%x%x%x", "")
-
-	return gsub(text, "|[rR]", "")
 end
 
 local FilterUnit = function(unit)
@@ -272,9 +266,7 @@ local OnTooltipSetUnit = function(self)
 		local Name, Realm = UnitName(UnitID)
 		local Race = UnitRace(UnitID)
 		local Level = UnitLevel(UnitID)
-		-- The TBC client can include its own (usually white) color escape in
-		-- UnitPVPName. Remove it so our class or reaction color wraps the entire name.
-		local Title = StripColorCodes(UnitPVPName(UnitID))
+		local Title = UnitPVPName(UnitID)
 		local Guild, Rank = GetGuildInfo(UnitID)
 		local Color = GetUnitColor(UnitID)
 		local CreatureType = UnitCreatureType(UnitID)

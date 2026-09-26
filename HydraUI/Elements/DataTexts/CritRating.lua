@@ -79,7 +79,7 @@ local OnDisable = function(self)
 	self:SetScript("OnEvent", nil)
 	self:SetScript("OnEnter", nil)
 	self:SetScript("OnLeave", nil)
-	self:SetScript("OnLeave", OnMouseUp)
+	self:SetScript("OnMouseUp", nil)
 
 	self.Text:SetText("")
 end

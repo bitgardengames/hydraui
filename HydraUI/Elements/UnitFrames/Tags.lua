@@ -318,23 +318,20 @@ end
 -- so classic clients retain the direct paths above without per-update checks.
 if HydraUI.IsMainline then
 	Methods["Health"] = function(unit)
-		return UnitHealth(unit)
+		return HydraUI:Comma(UnitHealth(unit))
 	end
 
 	Methods["Health:Short"] = function(unit)
-		local Current = UnitHealth(unit)
-		return (issecretvalue(Current) and not canaccessvalue(Current)) and "" or HydraUI:ShortValue(Current)
+		return HydraUI:ShortValue(UnitHealth(unit))
 	end
 
 	Methods["HealthValues"] = function(unit)
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then return "" end
-		return Current .. " / " .. Max
+		return HydraUI:Comma(Current) .. " / " .. HydraUI:Comma(Max)
 	end
 
 	Methods["HealthValues:Short"] = function(unit)
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then return "" end
 		return HydraUI:ShortValue(Current) .. " / " .. HydraUI:ShortValue(Max)
 	end
 
@@ -347,7 +344,7 @@ if HydraUI.IsMainline then
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
 		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then return "" end
 		local Deficit = Max - Current
-		if ((Deficit ~= 0) or (Current ~= Max)) then return "-" .. Deficit end
+		if ((Deficit ~= 0) or (Current ~= Max)) then return "-" .. HydraUI:Comma(Deficit) end
 	end
 
 	Methods["HealthDeficit:Short"] = function(unit)

@@ -590,6 +590,7 @@ if HydraUI.IsMainline then
 		self.BG:SetVertexColor(HydraUI:HexToRGB(Color))
 
 		if (not Settings["tooltips-show-health-text"]) then
+			self.HealthSeparator:Hide()
 			return
 		end
 
@@ -597,10 +598,16 @@ if HydraUI.IsMainline then
 		local Max = UnitHealthMax(Unit)
 
 		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
-			self.HealthValue:SetText(" ")
-			self.HealthPercent:SetText(" ")
+			-- FontString:SetText can display secret values even though addon Lua is
+			-- not allowed to inspect or format them. Keep the two values separate so
+			-- they can be passed straight through to the restricted-safe widget API.
+			self.HealthValue:SetText(Current)
+			self.HealthPercent:SetText(Max)
+			self.HealthSeparator:Show()
 			return
 		end
+
+		self.HealthSeparator:Hide()
 
 		if (Max == 0) then
 			if UnitIsDead(Unit) then
@@ -679,6 +686,7 @@ end
 function Tooltips:UpdateStatusBarFonts()
 	HydraUI:SetFontInfo(GameTooltipStatusBar.HealthValue, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
 	HydraUI:SetFontInfo(GameTooltipStatusBar.HealthPercent, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
+	HydraUI:SetFontInfo(GameTooltipStatusBar.HealthSeparator, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
 end
 
 function Tooltips:StyleStatusBar()
@@ -718,6 +726,12 @@ function Tooltips:StyleStatusBar()
 	HydraUI:SetFontInfo(GameTooltipStatusBar.HealthPercent, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
 	GameTooltipStatusBar.HealthPercent:SetPoint("RIGHT", GameTooltipStatusBar, -3, 0)
 	GameTooltipStatusBar.HealthPercent:SetJustifyH("RIGHT")
+
+	GameTooltipStatusBar.HealthSeparator = GameTooltipStatusBar:CreateFontString(nil, "OVERLAY")
+	HydraUI:SetFontInfo(GameTooltipStatusBar.HealthSeparator, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
+	GameTooltipStatusBar.HealthSeparator:SetPoint("CENTER", GameTooltipStatusBar, 0, 0)
+	GameTooltipStatusBar.HealthSeparator:SetText("/")
+	GameTooltipStatusBar.HealthSeparator:Hide()
 
 	GameTooltipStatusBar:HookScript("OnValueChanged", OnValueChanged)
 	GameTooltipStatusBar:HookScript("OnShow", OnShow)
@@ -831,6 +845,7 @@ local UpdateShowHealthText = function(value)
 	if (value ~= true) then
 		GameTooltipStatusBar.HealthValue:SetText(" ")
 		GameTooltipStatusBar.HealthPercent:SetText(" ")
+		GameTooltipStatusBar.HealthSeparator:Hide()
 	end
 end
 

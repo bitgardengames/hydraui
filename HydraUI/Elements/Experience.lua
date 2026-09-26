@@ -21,6 +21,14 @@ local HasXPBuff
 local XPMod = 1
 local FirstRun = true
 
+-- This helper is not available in every version of the retail client.
+-- A player who cannot earn any more experience has a maximum XP value of zero.
+if (not IsPlayerAtEffectiveMaxLevel) then
+	IsPlayerAtEffectiveMaxLevel = function()
+		return UnitXPMax("player") == 0
+	end
+end
+
 if HydraUI.IsMainline then
 	GetNumQuests = C_QuestLog.GetNumQuestLogEntries
 elseif HydraUI.IsMists then

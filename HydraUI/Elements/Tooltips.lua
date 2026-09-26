@@ -28,6 +28,7 @@ Defaults["tooltips-opacity"] = 100
 local select = select
 local find = string.find
 local match = string.match
+local gsub = string.gsub
 local floor = floor
 local format = format
 local UnitPVPName = UnitPVPName
@@ -199,6 +200,16 @@ local GetUnitColor = function(unit)
 	end
 end
 
+local StripColorCodes = function(text)
+	if (not text) then
+		return text
+	end
+
+	text = gsub(text, "|[cC]%x%x%x%x%x%x%x%x", "")
+
+	return gsub(text, "|[rR]", "")
+end
+
 local FilterUnit = function(unit)
 	local State
 
@@ -261,7 +272,9 @@ local OnTooltipSetUnit = function(self)
 		local Name, Realm = UnitName(UnitID)
 		local Race = UnitRace(UnitID)
 		local Level = UnitLevel(UnitID)
-		local Title = UnitPVPName(UnitID)
+		-- The TBC client can include its own (usually white) color escape in
+		-- UnitPVPName. Remove it so our class or reaction color wraps the entire name.
+		local Title = StripColorCodes(UnitPVPName(UnitID))
 		local Guild, Rank = GetGuildInfo(UnitID)
 		local Color = GetUnitColor(UnitID)
 		local CreatureType = UnitCreatureType(UnitID)

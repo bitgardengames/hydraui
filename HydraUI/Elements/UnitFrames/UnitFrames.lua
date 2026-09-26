@@ -1024,7 +1024,7 @@ function UF:Load()
 
 		if Settings["raid-pets-enable"] then
 			local RaidPet = oUF:SpawnHeader("HydraUI Raid Pets", "SecureGroupPetHeaderTemplate", "raid,solo",
-			"initial-width", Settings["raid-width"],
+			"initial-width", Settings["raid-pets-width"],
 			"initial-height", (Settings["raid-pets-health-height"] + 2),
 			"isTesting", false,
 			"showSolo", Settings["raid-show-solo"],

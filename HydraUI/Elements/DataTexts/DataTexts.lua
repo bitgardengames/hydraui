@@ -27,6 +27,12 @@ DT.List = {}
 HydraUI.ValueColor = "ffffff"
 
 local SetTooltip = function(anchor)
+	if (not Settings["data-text-enable-tooltips"]) then
+		GameTooltip:Hide()
+
+		return false
+	end
+
 	if Settings["data-text-hover-tooltips"] then
 		local X, Y = anchor:GetCenter()
 		local Position = (Y > HydraUI.UIParent:GetHeight() / 2) and "TOP" or "BOTTOM"
@@ -41,6 +47,16 @@ local SetTooltip = function(anchor)
 		end
 	else
 		GameTooltip_SetDefaultAnchor(GameTooltip, anchor)
+	end
+
+	return true
+end
+
+local SuppressDisabledTooltip = function()
+	-- Data text OnEnter handlers build their tooltip after calling SetTooltip, so
+	-- hide it once the handler finishes when tooltips are disabled.
+	if (not Settings["data-text-enable-tooltips"]) then
+		GameTooltip:Hide()
 	end
 end
 
@@ -70,6 +86,7 @@ function DT:NewAnchor(name, parent)
 	Anchor.SetTooltip = SetTooltip
 	Anchor:HookScript("OnMouseDown", self.OnMouseDown)
 	Anchor:HookScript("OnMouseUp", self.OnMouseUp)
+	Anchor:HookScript("OnEnter", SuppressDisabledTooltip)
 
 	Anchor.Text = Anchor:CreateFontString(nil, "OVERLAY")
 	HydraUI:SetFontInfo(Anchor.Text, Settings["data-text-font"], Settings["data-text-font-size"], Settings["data-text-font-flags"])
@@ -118,8 +135,20 @@ end
 
 function DT:SetTooltipsEnabled(value)
 	for Name, Anchor in next, self.Anchors do
-		if (Anchor:HasScript("OnEnter")) then
-			Anchor:EnableMouse(value)
+		if (Anchor:HasScript("OnEnter") or Anchor:HasScript("OnMouseUp")) then
+			Anchor:EnableMouse(true)
+		end
+	end
+
+	if (not value) then
+		local Owner = GameTooltip:GetOwner()
+
+		for Name, Anchor in next, self.Anchors do
+			if (Owner == Anchor) then
+				GameTooltip:Hide()
+
+				break
+			end
 		end
 	end
 end

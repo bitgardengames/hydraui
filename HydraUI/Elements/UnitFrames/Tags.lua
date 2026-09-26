@@ -195,14 +195,29 @@ Methods["Health:Short"] = function(unit)
 end
 
 Events["HealthPercent"] = HealthEvent .. "UNIT_MAXHEALTH"
-Methods["HealthPercent"] = function(unit)
-	local Current = UnitHealth(unit)
-	local Max = UnitHealthMax(unit)
+if HydraUI.IsMainline then
+	Methods["HealthPercent"] = function(unit)
+		local Current = UnitHealth(unit)
+		local Max = UnitHealthMax(unit)
 
-	if (Max == 0) then
-		return 0
-	else
-		return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
+		if (issecretvalue(Current) or issecretvalue(Max)) then
+			return ""
+		elseif (Max == 0) then
+			return 0
+		else
+			return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
+		end
+	end
+else
+	Methods["HealthPercent"] = function(unit)
+		local Current = UnitHealth(unit)
+		local Max = UnitHealthMax(unit)
+
+		if (Max == 0) then
+			return 0
+		else
+			return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
+		end
 	end
 end
 

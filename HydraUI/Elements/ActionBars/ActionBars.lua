@@ -1378,7 +1378,7 @@ function AB:CreateMovers()
 		HydraUI:CreateMover(self.TotemBar)
 	end
 
-	if HydraUI.IsMainline or HydraUI.IsMists then -- Temporarily disabling the mover on Mists, causing issues
+	if HydraUI.IsMists then -- Temporarily disabling the mover on Mists, causing issues
 	--if ExtraActionButton1 then
 		self.ExtraBarMover = HydraUI:CreateMover(self.ExtraBar)
 	end
@@ -1580,10 +1580,6 @@ function AB:StyleTotemBar()
 	end
 end
 
-local GetBarHeight = function()
-	return 0
-end
-
 function AB:Load()
 	if (not Settings["ab-enable"]) then
 		return
@@ -1596,25 +1592,6 @@ function AB:Load()
 	self:Disable(MainMenuBar)
 	self:CreateBars()
 	self:CreateMovers()
-
-	if HydraUI.IsMainline then
-		MainMenuBar.GetBottomAnchoredHeight = GetBarHeight
-		OverrideActionBar.GetBottomAnchoredHeight = GetBarHeight
-		MultiBarBottomLeft.GetBottomAnchoredHeight = GetBarHeight
-		MultiBarBottomRight.GetBottomAnchoredHeight = GetBarHeight
-		StanceBar.GetBottomAnchoredHeight = GetBarHeight
-		PetActionBar.GetBottomAnchoredHeight = GetBarHeight
-		PossessActionBar.GetBottomAnchoredHeight = GetBarHeight
-		MainMenuBarVehicleLeaveButton.GetBottomAnchoredHeight = GetBarHeight
-
-		MultiBarLeft.IsInDefaultPosition = function() return false end
-		MultiBarRight.IsInDefaultPosition = function() return false end
-
-		if EditModeManagerFrame then
-			EditModeManagerFrame.UpdateBottomActionBarPositions = function() end
-			EditModeManagerFrame.UpdateRightActionBarPositions = function() end
-		end
-	end
 
 	if MainActionBar then
 		MainActionBar:SetAlpha(0)
@@ -2296,52 +2273,51 @@ GUI:AddWidgets(Language["General"], Language["Bar 5"], Language["Action Bars"], 
 	right:CreateSlider("ab-bar5-button-gap", Settings["ab-bar5-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar5)
 end)
 
-if HydraUI.IsMainline then
-	GUI:AddWidgets(Language["General"], Language["Bar 6"], Language["Action Bars"], function(left, right)
-		left:CreateHeader(Language["Enable"])
-		left:CreateSwitch("ab-bar6-enable", Settings["ab-bar6-enable"], Language["Enable Bar"], Language["Enable action bar 6"], UpdateEnableBar6)
 
-		left:CreateHeader(Language["Styling"])
-		left:CreateSwitch("ab-bar6-hover", Settings["ab-bar6-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar6Hover)
-		left:CreateSlider("ab-bar6-alpha", Settings["ab-bar6-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar6Alpha)
+GUI:AddWidgets(Language["General"], Language["Bar 6"], Language["Action Bars"], function(left, right)
+	left:CreateHeader(Language["Enable"])
+	left:CreateSwitch("ab-bar6-enable", Settings["ab-bar6-enable"], Language["Enable Bar"], Language["Enable action bar 6"], UpdateEnableBar6)
 
-		right:CreateHeader(Language["Buttons"])
-		right:CreateSlider("ab-bar6-per-row", Settings["ab-bar6-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar6)
-		right:CreateSlider("ab-bar6-button-max", Settings["ab-bar6-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar6)
-		right:CreateSlider("ab-bar6-button-size", Settings["ab-bar6-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar6)
-		right:CreateSlider("ab-bar6-button-gap", Settings["ab-bar6-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar6)
-	end)
+	left:CreateHeader(Language["Styling"])
+	left:CreateSwitch("ab-bar6-hover", Settings["ab-bar6-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar6Hover)
+	left:CreateSlider("ab-bar6-alpha", Settings["ab-bar6-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar6Alpha)
 
-	GUI:AddWidgets(Language["General"], Language["Bar 7"], Language["Action Bars"], function(left, right)
-		left:CreateHeader(Language["Enable"])
-		left:CreateSwitch("ab-bar7-enable", Settings["ab-bar7-enable"], Language["Enable Bar"], Language["Enable action bar 7"], UpdateEnableBar7)
+	right:CreateHeader(Language["Buttons"])
+	right:CreateSlider("ab-bar6-per-row", Settings["ab-bar6-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar6)
+	right:CreateSlider("ab-bar6-button-max", Settings["ab-bar6-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar6)
+	right:CreateSlider("ab-bar6-button-size", Settings["ab-bar6-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar6)
+	right:CreateSlider("ab-bar6-button-gap", Settings["ab-bar6-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar6)
+end)
 
-		left:CreateHeader(Language["Styling"])
-		left:CreateSwitch("ab-bar7-hover", Settings["ab-bar7-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar7Hover)
-		left:CreateSlider("ab-bar7-alpha", Settings["ab-bar7-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar7Alpha)
+GUI:AddWidgets(Language["General"], Language["Bar 7"], Language["Action Bars"], function(left, right)
+	left:CreateHeader(Language["Enable"])
+	left:CreateSwitch("ab-bar7-enable", Settings["ab-bar7-enable"], Language["Enable Bar"], Language["Enable action bar 7"], UpdateEnableBar7)
 
-		right:CreateHeader(Language["Buttons"])
-		right:CreateSlider("ab-bar7-per-row", Settings["ab-bar7-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar7)
-		right:CreateSlider("ab-bar7-button-max", Settings["ab-bar7-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar7)
-		right:CreateSlider("ab-bar7-button-size", Settings["ab-bar7-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar7)
-		right:CreateSlider("ab-bar7-button-gap", Settings["ab-bar7-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar7)
-	end)
+	left:CreateHeader(Language["Styling"])
+	left:CreateSwitch("ab-bar7-hover", Settings["ab-bar7-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar7Hover)
+	left:CreateSlider("ab-bar7-alpha", Settings["ab-bar7-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar7Alpha)
 
-	GUI:AddWidgets(Language["General"], Language["Bar 8"], Language["Action Bars"], function(left, right)
-		left:CreateHeader(Language["Enable"])
-		left:CreateSwitch("ab-bar8-enable", Settings["ab-bar8-enable"], Language["Enable Bar"], Language["Enable action bar 8"], UpdateEnableBar8)
+	right:CreateHeader(Language["Buttons"])
+	right:CreateSlider("ab-bar7-per-row", Settings["ab-bar7-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar7)
+	right:CreateSlider("ab-bar7-button-max", Settings["ab-bar7-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar7)
+	right:CreateSlider("ab-bar7-button-size", Settings["ab-bar7-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar7)
+	right:CreateSlider("ab-bar7-button-gap", Settings["ab-bar7-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar7)
+end)
 
-		left:CreateHeader(Language["Styling"])
-		left:CreateSwitch("ab-bar8-hover", Settings["ab-bar8-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar8Hover)
-		left:CreateSlider("ab-bar8-alpha", Settings["ab-bar8-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar8Alpha)
+GUI:AddWidgets(Language["General"], Language["Bar 8"], Language["Action Bars"], function(left, right)
+	left:CreateHeader(Language["Enable"])
+	left:CreateSwitch("ab-bar8-enable", Settings["ab-bar8-enable"], Language["Enable Bar"], Language["Enable action bar 8"], UpdateEnableBar8)
 
-		right:CreateHeader(Language["Buttons"])
-		right:CreateSlider("ab-bar8-per-row", Settings["ab-bar8-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar8)
-		right:CreateSlider("ab-bar8-button-max", Settings["ab-bar8-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar8)
-		right:CreateSlider("ab-bar8-button-size", Settings["ab-bar8-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar8)
-		right:CreateSlider("ab-bar8-button-gap", Settings["ab-bar8-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar8)
-	end)
-end
+	left:CreateHeader(Language["Styling"])
+	left:CreateSwitch("ab-bar8-hover", Settings["ab-bar8-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar8Hover)
+	left:CreateSlider("ab-bar8-alpha", Settings["ab-bar8-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar8Alpha)
+
+	right:CreateHeader(Language["Buttons"])
+	right:CreateSlider("ab-bar8-per-row", Settings["ab-bar8-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar8)
+	right:CreateSlider("ab-bar8-button-max", Settings["ab-bar8-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar8)
+	right:CreateSlider("ab-bar8-button-size", Settings["ab-bar8-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar8)
+	right:CreateSlider("ab-bar8-button-gap", Settings["ab-bar8-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar8)
+end)
 
 GUI:AddWidgets(Language["General"], Language["Pet Bar"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])

@@ -68,24 +68,26 @@ if HydraUI.IsMainline then
 		local MaxHealth = UnitHealthMax(unit)
 
 		if ((issecretvalue(IncomingHeals) and not canaccessvalue(IncomingHeals)) or (issecretvalue(Health) and not canaccessvalue(Health)) or (issecretvalue(MaxHealth) and not canaccessvalue(MaxHealth))) then
-			if self.HealBar then self.HealBar:SetValue(0) end
+			if self.HealBar then
+				self.HealBar:SetValue(0)
+				self.HealBar:Hide()
+			end
 			if self.AbsorbsBar then self.AbsorbsBar:SetValue(0) end
 			return
 		end
 
 		if self.HealBar then
-			if (Health == 0) then
+			if (Health == 0 or IncomingHeals == 0 or Health >= MaxHealth) then
 				self.HealBar:SetValue(0)
-				return
-			end
-
-			self.HealBar:SetMinMaxValues(0, MaxHealth)
-			if (IncomingHeals == 0) then
-				self.HealBar:SetValue(0)
+				self.HealBar:Hide()
 			elseif (Health + IncomingHeals >= MaxHealth) then
+				self.HealBar:SetMinMaxValues(0, MaxHealth)
 				self.HealBar:SetValue(MaxHealth - Health)
+				self.HealBar:Show()
 			else
+				self.HealBar:SetMinMaxValues(0, MaxHealth)
 				self.HealBar:SetValue(IncomingHeals)
+				self.HealBar:Show()
 			end
 		end
 
@@ -126,7 +128,11 @@ local Enable = function(self)
 		self.HealBar.__owner = self
 		self.HealBar.ForceUpdate = ForceUpdate
 
-		self.HealBar:Show()
+		if HydraUI.IsMainline then
+			self.HealBar:Hide()
+		else
+			self.HealBar:Show()
+		end
 
 		if self.AbsorbsBar then
 			self.AbsorbsBar.__owner = self

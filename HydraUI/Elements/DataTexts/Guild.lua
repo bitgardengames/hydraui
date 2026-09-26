@@ -165,13 +165,13 @@ local OnMouseUp = function()
 	if HydraUI.IsMainline then
 		ToggleCommunitiesFrame()
 	elseif (HydraUI.IsCata or HydraUI.IsMists) then
+		ToggleGuildFrame()
+	else
 		if (GetCVar("useClassicGuildUI") == "1") then
 			ToggleGuildFrame()
 		else
 			ToggleCommunitiesFrame()
 		end
-	else
-		ToggleFriendsFrame(3)
 	end
 end
 

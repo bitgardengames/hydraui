@@ -8,7 +8,9 @@ if C_PvP then
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local ZoneText = GetRealZoneText()
 	local SubZoneText = GetMinimapZoneText()

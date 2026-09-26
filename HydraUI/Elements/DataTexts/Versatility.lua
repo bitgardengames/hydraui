@@ -13,7 +13,9 @@ local OnMouseUp = function()
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local Versatility = GetCombatRating(CR_VERSATILITY_DAMAGE_DONE)
 	local DamageBonus = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) + GetVersatilityBonus(CR_VERSATILITY_DAMAGE_DONE)

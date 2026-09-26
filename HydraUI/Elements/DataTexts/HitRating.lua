@@ -12,7 +12,9 @@ local OnMouseUp = function()
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	if (HydraUI.UserClass == "HUNTER") then
 		GameTooltip:AddLine(format("%s %s", COMBAT_RATING_NAME6, GetCombatRating(CR_HIT_RANGED)))

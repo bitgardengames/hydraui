@@ -14,7 +14,9 @@ local OnMouseUp = function()
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local Mastery, Bonus = GetMasteryEffect()
 	local MasteryBonus = GetCombatRatingBonus(CR_MASTERY) * Bonus

@@ -12,7 +12,9 @@ local OnMouseUp = function()
 end
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local Average, Equipped = GetAverageItemLevel()
 

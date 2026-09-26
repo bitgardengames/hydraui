@@ -8,7 +8,9 @@ local FPSLabel = Language["FPS"]
 local MSLabel = Language["MS"]
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local HomeLatency, WorldLatency = select(3, GetNetStats())
 

@@ -4,7 +4,9 @@ local GetPVPLifetimeStats = GetPVPLifetimeStats
 local Label = KILLS
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local HK = GetPVPSessionStats()
 	local Rank = UnitPVPRank("player")

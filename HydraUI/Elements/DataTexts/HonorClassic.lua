@@ -4,7 +4,9 @@ local GetCurrencyInfo = C_CurrencyInfo.GetCurrencyInfo
 local Label = HONOR
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local HK = GetPVPSessionStats()
 	local Rank = UnitPVPRank("player")

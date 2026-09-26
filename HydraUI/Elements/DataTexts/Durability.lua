@@ -12,7 +12,9 @@ local Label = Language["Durability"]
 local ScanTooltip = CreateFrame("GameTooltip", nil, UIParent, "GameTooltipTemplate")
 
 local OnEnter = function(self)
-	self:SetTooltip()
+	if not self:SetTooltip() then
+		return
+	end
 
 	local TotalCost = 0
 	local Current, Max, HasItem, HasCooldown, RepairCost

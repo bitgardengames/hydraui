@@ -50,6 +50,55 @@ GUI.Buttons = {}
 GUI.ButtonQueue = {}
 GUI.ScrollButtons = {}
 
+-- Every entry in LoadCalls is a page descriptor. Child pages live in their
+-- parent's Children table, but otherwise have the same shape as parent pages.
+local GetOrCreatePage = function(self, category, name, parent)
+	local Category = self.LoadCalls[category]
+
+	if (not Category) then
+		Category = {}
+		self.LoadCalls[category] = Category
+	end
+
+	if parent then
+		local ParentPage = Category[parent]
+
+		if (not ParentPage) then
+			ParentPage = {Calls = {}, Children = {}}
+			Category[parent] = ParentPage
+		elseif (not ParentPage.Children) then
+			ParentPage.Children = {}
+		end
+
+		local Page = ParentPage.Children[name]
+
+		if (not Page) then
+			Page = {Calls = {}}
+			ParentPage.Children[name] = Page
+		end
+
+		return Page, ParentPage
+	end
+
+	local Page = Category[name]
+
+	if (not Page) then
+		Page = {Calls = {}}
+		Category[name] = Page
+	end
+
+	return Page
+end
+
+local QueuePage = function(self, page, category, name, parent)
+	if page.Queued then
+		return
+	end
+
+	page.Queued = true
+	tinsert(self.ButtonQueue, {category, name, parent})
+end
+
 local ScrollWidgetColumn = function(parent, widgets, oldOffset, offset, point)
 	local count = #widgets
 	local first = offset
@@ -425,13 +474,8 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG[Name] = Function
 	end
 
-	local Calls
-
-	if (parent and self.LoadCalls[category][parent].Children) then
-		Calls = self.LoadCalls[category][parent].Children[name].Calls
-	else
-		Calls = self.LoadCalls[category][name].Calls
-	end
+	local Page = GetOrCreatePage(self, category, name, parent)
+	local Calls = Page.Calls
 
 	-- Read the queue in place instead of repeatedly removing its first item. Aside
 	-- from shifting the whole table for every callback, table.remove also made a
@@ -669,26 +713,19 @@ function GUI:CreateWindow(category, name, parent)
 end
 
 function GUI:AddWidgets(category, name, arg1, arg2)
-	if (not self.LoadCalls[category]) then
-		self.LoadCalls[category] = {}
-	end
-
-	if (not self.LoadCalls[category][name]) then
-		self.LoadCalls[category][name] = {Calls = {}}
-	end
-
 	if (type(arg1) == "function") then
-		tinsert(self.LoadCalls[category][name].Calls, arg1)
-		tinsert(self.ButtonQueue, {category, name})
+		local Page = GetOrCreatePage(self, category, name)
+
+		tinsert(Page.Calls, arg1)
+		QueuePage(self, Page, category, name)
 	else -- string
-		if (not self.LoadCalls[category][arg1].Children) then
-			self.LoadCalls[category][arg1].Children = {}
-		end
+		local Page, ParentPage = GetOrCreatePage(self, category, name, arg1)
 
-		self.LoadCalls[category][arg1].Children[name] = {Calls = {}}
-
-		tinsert(self.LoadCalls[category][arg1].Children[name].Calls, arg2)
-		tinsert(self.ButtonQueue, {category, name, arg1})
+		-- Parent buttons must exist before their children are attached. Queueing
+		-- the descriptor here also makes child-before-parent registration safe.
+		QueuePage(self, ParentPage, category, arg1)
+		tinsert(Page.Calls, arg2)
+		QueuePage(self, Page, category, name, arg1)
 	end
 end
 

@@ -913,6 +913,7 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	Switch.Text = Text
 	Switch.Highlight = Highlight
 	Switch.Move = Move
+	Switch.Flavor = Flavor
 
 	Anchor.Switch = Switch
 

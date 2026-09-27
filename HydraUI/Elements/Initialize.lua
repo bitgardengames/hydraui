@@ -36,12 +36,13 @@ HydraUI.ClientVersion = select(4, GetBuildInfo())
 local IsMainlineProject = (WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE) or false
 
 HydraUI.IsForever = IsMainlineProject and HydraUI.ClientVersion >= 16000 and HydraUI.ClientVersion < 20000
+HydraUI.IsMidnight = IsMainlineProject and HydraUI.ClientVersion >= 120000 and HydraUI.ClientVersion < 130000
 HydraUI.IsClassic = (not HydraUI.IsForever) and HydraUI.ClientVersion > 10000 and HydraUI.ClientVersion < 20000
 HydraUI.IsTBC = HydraUI.ClientVersion > 20000 and HydraUI.ClientVersion < 30000
 HydraUI.IsWrath = HydraUI.ClientVersion > 30000 and HydraUI.ClientVersion < 40000
 HydraUI.IsCata = HydraUI.ClientVersion > 40000 and HydraUI.ClientVersion < 50000
 HydraUI.IsMists = HydraUI.ClientVersion > 50000 and HydraUI.ClientVersion < 60000
-HydraUI.IsMainline = IsMainlineProject or HydraUI.ClientVersion > 90000
+HydraUI.IsMainline = IsMainlineProject
 
 if (HydraUI.UserLocale == "enGB") then
 	HydraUI.UserLocale = "enUS"

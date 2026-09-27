@@ -1877,7 +1877,7 @@ local DropdownRequiresReload = function(self, flag)
 end
 
 local NormalizeDropdownOffset = function(self, offset)
-	return min(max(Round(tonumber(offset) or 1), 1), max(#self - DROPDOWN_MAX_SHOWN + 1, 1))
+	return GUI.NormalizeRowOffset(offset, #self, DROPDOWN_MAX_SHOWN)
 end
 
 local AnchorDropdownRows = function(self, first, last)
@@ -1899,59 +1899,16 @@ local AnchorDropdownRows = function(self, first, last)
 end
 
 local SyncDropdownScrollBar = function(self)
-	if self.ScrollBar and (self.ScrollBar:GetValue() ~= self.Offset) then
-		self.UpdatingScrollBar = true
-		self.ScrollBar:SetValue(self.Offset)
-		self.UpdatingScrollBar = false
-	end
+	if self.RowViewport then self.RowViewport:SyncScrollBar() end
 end
 
 local ScrollMenu = function(self)
-	local Offset = NormalizeDropdownOffset(self, self.Offset)
-	local OldOffset = self.LastRenderedOffset
-
-	self.Offset = Offset
-	SyncDropdownScrollBar(self)
-
-	if (OldOffset == Offset) then
-		return
-	end
-
-	local Last = min(Offset + DROPDOWN_MAX_SHOWN - 1, #self)
-
-	if not OldOffset then
-		-- Menu items start shown, so hide the initial overflow once.
-		for i = Last + 1, #self do
-			self[i]:Hide()
-		end
-	elseif (Offset == OldOffset + 1) then
-		self[OldOffset]:Hide()
-		self[Last]:Show()
-	elseif (Offset == OldOffset - 1) then
-		local OldLast = min(OldOffset + DROPDOWN_MAX_SHOWN - 1, #self)
-
-		self[OldLast]:Hide()
-		self[Offset]:Show()
-	else
-		local OldLast = min(OldOffset + DROPDOWN_MAX_SHOWN - 1, #self)
-
-		for i = OldOffset, OldLast do
-			if (i < Offset) or (i > Last) then
-				self[i]:Hide()
-			end
-		end
-
-		for i = Offset, Last do
-			self[i]:Show()
-		end
-	end
-
-	AnchorDropdownRows(self, Offset, Last)
-	self.LastRenderedOffset = Offset
+	self.RowViewport:SetOffset(self.Offset)
+	self.LastRenderedOffset = self.RowViewport.LastRenderedOffset
 end
 
 local SetDropdownOffsetByDelta = function(self, delta)
-	self.Offset = NormalizeDropdownOffset(self, self.Offset + (delta == 1 and -1 or 1))
+	self.RowViewport:SetOffsetByDelta(delta)
 end
 
 local DropdownOnMouseWheel = function(self, delta)
@@ -1960,15 +1917,14 @@ local DropdownOnMouseWheel = function(self, delta)
 end
 
 local SetDropdownOffset = function(self, offset)
-	self.Offset = NormalizeDropdownOffset(self, offset)
-
-	self:ScrollMenu()
+	self.RowViewport:SetOffset(offset)
+	self.LastRenderedOffset = self.RowViewport.LastRenderedOffset
 end
 
 local DropdownScrollBarOnValueChanged = function(self)
 	local Parent = self:GetParent()
 
-	if not Parent.UpdatingScrollBar then
+	if not Parent.RowViewport.Synchronizing then
 		Parent:SetDropdownOffset(self:GetValue())
 	end
 end
@@ -1984,40 +1940,12 @@ local AddDropdownScrollBar = function(self)
 	ScrollBar:SetPoint("TOPRIGHT", self, 0, 0)
 	ScrollBar:SetPoint("BOTTOMRIGHT", self, 0, 0)
 	ScrollBar:SetWidth(ScrollWidth)
-	ScrollBar:SetThumbTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar:SetOrientation("VERTICAL")
-	ScrollBar:SetValueStep(1)
-	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-	ScrollBar:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
-	ScrollBar:SetBackdropBorderColor(0, 0, 0)
+	GUI:StyleVerticalSlider(ScrollBar, {Width = ScrollWidth, ProgressTexture = Settings["ui-widget-texture"], ProgressColor = "ui-widget-color"})
 	ScrollBar:SetMinMaxValues(1, (#self - (DROPDOWN_MAX_SHOWN - 1)))
 	ScrollBar:SetValue(1)
 	ScrollBar:EnableMouseWheel(true)
 	ScrollBar:SetScript("OnMouseWheel", DropdownScrollBarOnMouseWheel)
 	ScrollBar:SetScript("OnValueChanged", DropdownScrollBarOnValueChanged)
-
-	local Thumb = ScrollBar:GetThumbTexture()
-	Thumb:SetSize(ScrollWidth, WIDGET_HEIGHT)
-	Thumb:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	Thumb:SetVertexColor(0, 0, 0)
-
-	ScrollBar.NewThumb = ScrollBar:CreateTexture(nil, "BORDER")
-	ScrollBar.NewThumb:SetPoint("TOPLEFT", Thumb, 0, 0)
-	ScrollBar.NewThumb:SetPoint("BOTTOMRIGHT", Thumb, 0, 0)
-	ScrollBar.NewThumb:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.NewThumb:SetVertexColor(0, 0, 0)
-
-	ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
-	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
-	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
-	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
-	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
-	ScrollBar.Progress:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.Progress:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 
 	self:EnableMouseWheel(true)
 	self:SetScript("OnMouseWheel", DropdownOnMouseWheel)
@@ -2026,6 +1954,27 @@ local AddDropdownScrollBar = function(self)
 	self.SetDropdownOffset = SetDropdownOffset
 	self.SetDropdownOffsetByDelta = SetDropdownOffsetByDelta
 	self.ScrollBar = ScrollBar
+	local Viewport = GUI:CreateRowViewport(self, {
+		Rows = self,
+		MaxVisibleRows = DROPDOWN_MAX_SHOWN,
+		AnchorRows = function(Owner, Rows, First, Last) AnchorDropdownRows(Owner, First, Last) end,
+		UpdateRows = function(Owner, Rows, OldRows, OldOffset, OldLast, Offset, Last)
+			-- Preserve the cheap single hide/show operation for one-row wheel movement.
+			if not OldOffset then
+				for i = Last + 1, #Rows do Rows[i]:Hide() end
+			elseif Offset == OldOffset + 1 then
+				Rows[OldOffset]:Hide()
+				Rows[Last]:Show()
+			elseif Offset == OldOffset - 1 then
+				Rows[OldLast]:Hide()
+				Rows[Offset]:Show()
+			else
+				for i = OldOffset, OldLast do if (i < Offset) or (i > Last) then Rows[i]:Hide() end end
+				for i = Offset, Last do Rows[i]:Show() end
+			end
+		end,
+	})
+	Viewport:SetScrollBar(ScrollBar)
 
 	self:SetDropdownOffset(1)
 
@@ -2064,7 +2013,7 @@ DropdownUpdateList = function(self)
 		end
 
 		ItemWidth = (DROPDOWN_WIDTH - (WIDGET_HEIGHT / 2)) - (SPACING * 3) + 1
-		Menu.ScrollBar:SetMinMaxValues(1, Count - (DROPDOWN_MAX_SHOWN - 1))
+		Menu.RowViewport:SetScrollRange(Count)
 		Menu.ScrollBar:EnableMouse(true)
 		Menu.ScrollBar:Show()
 		Menu:EnableMouseWheel(true)
@@ -2074,7 +2023,7 @@ DropdownUpdateList = function(self)
 		if Menu.ScrollBar then
 			Menu.ScrollBar:Hide()
 			Menu.ScrollBar:EnableMouse(false)
-			Menu.ScrollBar:SetMinMaxValues(1, 1)
+			Menu.RowViewport:SetScrollRange(Count)
 		end
 
 		Menu:EnableMouseWheel(false)
@@ -2102,16 +2051,16 @@ DropdownUpdateList = function(self)
 	Menu.SelectedItem = SelectedItem
 	Menu.SynchronizedValue = SelectedItem and self.Value or nil
 	Menu.Offset = NormalizeDropdownOffset(Menu, Menu.Offset)
-
-	local Last = min(Menu.Offset + DROPDOWN_MAX_SHOWN - 1, Count)
-
-	for i = Menu.Offset, Last do
-		Menu[i]:Show()
+	if Menu.RowViewport then
+		Menu.RowViewport.LastRenderedRows = nil
+		Menu.RowViewport.LastRenderedOffset = nil
+		Menu.RowViewport:SetOffset(Menu.Offset, true)
+		Menu.LastRenderedOffset = Menu.RowViewport.LastRenderedOffset
+	else
+		local First, Last = GUI.GetVisibleRowRange(Menu.Offset, Count, DROPDOWN_MAX_SHOWN)
+		for i = First, Last do Menu[i]:Show() end
+		AnchorDropdownRows(Menu, First, Last)
 	end
-
-	AnchorDropdownRows(Menu, Menu.Offset, Last)
-	Menu.LastRenderedOffset = Menu.Offset
-	SyncDropdownScrollBar(Menu)
 end
 
 local DropdownSort = DropdownUpdateList

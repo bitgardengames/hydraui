@@ -47,7 +47,7 @@ function HydraUI:GetTrashValue()
 				local TotalPrice = VendorPrice
 				local Count
 
-				if HydraUI.IsClassic then
+				if HydraUI.IsVanilla then
 					Count = select(2, GetContainerItemInfo(Bag, Slot)) or 1
 				else
 					Count = GetContainerItemInfo(Bag, Slot).stackCount or 1
@@ -83,7 +83,7 @@ function AutoVendor:OnEvent()
 				local VendorPrice = select(11, GetItemInfo(Link))
 				local Count
 
-				if HydraUI.IsClassic then
+				if HydraUI.IsVanilla then
 					Count = select(2, GetContainerItemInfo(Bag, Slot)) or 1
 				else
 					Count = GetContainerItemInfo(Bag, Slot).stackCount or 1

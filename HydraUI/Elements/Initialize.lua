@@ -37,7 +37,7 @@ local IsMainlineProject = (WOW_PROJECT_ID and WOW_PROJECT_MAINLINE and WOW_PROJE
 
 HydraUI.IsForever = IsMainlineProject and HydraUI.ClientVersion >= 16000 and HydraUI.ClientVersion < 20000
 HydraUI.IsMidnight = IsMainlineProject and HydraUI.ClientVersion >= 120000 and HydraUI.ClientVersion < 130000
-HydraUI.IsClassic = (not HydraUI.IsForever) and HydraUI.ClientVersion > 10000 and HydraUI.ClientVersion < 20000
+HydraUI.IsVanilla = (not HydraUI.IsForever) and HydraUI.ClientVersion > 10000 and HydraUI.ClientVersion < 20000
 HydraUI.IsTBC = HydraUI.ClientVersion > 20000 and HydraUI.ClientVersion < 30000
 HydraUI.IsWrath = HydraUI.ClientVersion > 30000 and HydraUI.ClientVersion < 40000
 HydraUI.IsCata = HydraUI.ClientVersion > 40000 and HydraUI.ClientVersion < 50000

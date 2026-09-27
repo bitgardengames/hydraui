@@ -9,9 +9,9 @@ Defaults["bags-frame-opacity"] = 40
 Defaults["bags-frame-max"] = 100
 Defaults["bags-frame-size"] = 32
 
-local IsClassic = HydraUI.IsClassic
+local IsVanilla = HydraUI.IsVanilla
 local IsTBC = HydraUI.IsTBC
-local HasKeyRing = IsClassic or IsTBC
+local HasKeyRing = IsVanilla or IsTBC
 
 if HasKeyRing then
 	BagsFrame.Objects = {
@@ -120,7 +120,7 @@ function BagsFrame:PositionButtons()
 			Object:SetPoint("RIGHT", self.Objects[i+1], "LEFT", -4, 0)
 		end
 
-		if ((IsClassic or IsTBC) and i == 1) then
+		if ((IsVanilla or IsTBC) and i == 1) then
 			Object:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
 		else
 			Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
@@ -154,7 +154,7 @@ function BagsFrame:Load()
 	self.Panel:SetBackdropBorderColor(0, 0, 0)
 	self.Panel:SetFrameStrata("LOW")
 
-	if IsClassic or IsTBC then
+	if IsVanilla or IsTBC then
 		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * (#self.Objects - 1)) + 8 + (Settings["bags-frame-size"] / 2), Settings["bags-frame-size"] + 8)
 	else
 		self.Panel:SetSize(((Settings["bags-frame-size"] + 4) * #self.Objects) + 4, Settings["bags-frame-size"] + 8)
@@ -264,7 +264,7 @@ local UpdateBagFrameSize = function(value)
 		return
 	end
 
-	if IsClassic then
+	if IsVanilla then
 		BagsFrame.Panel:SetSize(((value + 4) * (#BagsFrame.Objects - 1)) + 8 + (value / 2), value + 8)
 	else
 		BagsFrame.Panel:SetSize(((value + 4) * #BagsFrame.Objects) + 4, value + 8)

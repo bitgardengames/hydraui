@@ -951,7 +951,7 @@ function Chat:SetChatTypeInfo()
 	ChatTypeInfo["CHANNEL19"].colorNameByClass = true
 	ChatTypeInfo["CHANNEL20"].colorNameByClass = true
 
-	if (not HydraUI.IsClassic) then
+	if (not HydraUI.IsVanilla) then
 		ChatTypeInfo["GUILD_ACHIEVEMENT"].colorNameByClass = true
 	end
 

@@ -50,8 +50,7 @@ GUI.Buttons = {}
 GUI.ButtonQueue = {}
 GUI.ScrollButtons = {}
 
--- Every entry in LoadCalls is a page descriptor. Child pages live in their
--- parent's Children table, but otherwise have the same shape as parent pages.
+-- Every entry in LoadCalls is a page descriptor. Child pages live in their parent's Children table, but otherwise have the same shape as parent pages.
 local GetOrCreatePage = function(self, category, name, parent)
 	local Category = self.LoadCalls[category]
 

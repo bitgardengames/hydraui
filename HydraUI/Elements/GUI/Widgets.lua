@@ -725,9 +725,9 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 	FadeOut:SetChange(0)
 
 	if value then
-		Checkbox.Texture:SetAlpha(1)
+		Texture:SetAlpha(1)
 	else
-		Checkbox.Texture:SetAlpha(0)
+		Texture:SetAlpha(0)
 	end
 
 	Checkbox.Highlight = Highlight

@@ -179,7 +179,7 @@ function HydraUI:RestoreToDefault(name)
 		end
 	end
 
-	self:print(format('Restored profile "%s" to default.', name))
+	self:print(format(Language['Restored profile "%s" to default.'], name))
 end
 
 function HydraUI:GetProfile(name)
@@ -282,9 +282,9 @@ function HydraUI:DeleteProfile(name)
 			end
 		end
 
-		self:print(format('Deleted profile "%s".', name))
+		self:print(format(Language['Deleted profile "%s".'], name))
 	else
-		self:print(format('No profile exists with the name "%s".', name))
+		self:print(format(Language['No profile exists with the name "%s".'], name))
 	end
 
 	if (self:GetProfileCount() == 0) then
@@ -382,7 +382,7 @@ function HydraUI:DeleteUnusedProfiles()
 
 	Counts = nil
 
-	self:print(format("Deleted %s unused profiles.", Deleted))
+	self:print(format(Language["Deleted %s unused profiles."], Deleted))
 end
 
 function HydraUI:CountUnusedProfiles()
@@ -609,19 +609,19 @@ function HydraUI:DecodeProfile(encoded)
 	local Decoded = LibDeflate:DecodeForPrint(encoded)
 
 	if (not Decoded) then
-		return self:print("Failure decoding")
+		return self:print(Language["Failure decoding"])
 	end
 
 	local Decompressed = LibDeflate:DecompressDeflate(Decoded)
 
 	if (not Decompressed) then
-		return self:print("Failure decompressing")
+		return self:print(Language["Failure decompressing"])
 	end
 
 	local Success, Deserialized = AceSerializer:Deserialize(Decompressed)
 
 	if (not Success) then
-		return self:print("Failure deserializing")
+		return self:print(Language["Failure deserializing"])
 	end
 
 	-- Check for migrated values

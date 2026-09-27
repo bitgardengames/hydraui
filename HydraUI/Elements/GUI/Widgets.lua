@@ -1604,7 +1604,7 @@ function GUI:CreateImportWindow()
 	Window.Header.Text:SetPoint("LEFT", Window.Header, HEADER_SPACING, -1)
 	HydraUI:SetFontInfo(Window.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	Window.Header.Text:SetJustifyH("LEFT")
-	Window.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"].."Import string".."|r")
+	Window.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"]..Language["Import string"].."|r")
 
 	-- Close button
 	Window.Header.CloseButton = CreateFrame("Frame", nil, Window.Header)
@@ -2800,7 +2800,7 @@ local SwatchEditBoxOnEditFocusLost = function(self)
 		GUI.ColorPicker.Transition:SetChange(HydraUI:HexToRGB(ClassHex))
 		GUI.ColorPicker.Selected = ClassHex
 	else
-		HydraUI:print(format('Invalid hex code "%s".', Value))
+		HydraUI:print(format(Language['Invalid hex code "%s".'], Value))
 
 		self:SetText("#" .. GUI.ColorPicker.Active.Value)
 
@@ -2898,7 +2898,7 @@ local CreateColorPicker = function()
 	ColorPicker.Header.Text:SetPoint("LEFT", ColorPicker.Header, HEADER_SPACING, -1)
 	HydraUI:SetFontInfo(ColorPicker.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
 	ColorPicker.Header.Text:SetJustifyH("LEFT")
-	ColorPicker.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"].."Select a color".."|r")
+	ColorPicker.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"]..Language["Select a color"].."|r")
 
 	-- Close button
 	ColorPicker.CloseButton = CreateFrame("Frame", nil, ColorPicker, "BackdropTemplate")

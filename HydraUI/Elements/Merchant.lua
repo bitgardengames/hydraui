@@ -104,7 +104,7 @@ function AutoVendor:OnEvent()
 	end
 
 	if (Profit > 0 and Settings["auto-vendor-report"]) then
-		HydraUI:print(format(Language["You sold %d %s for a total of %s"], TotalCount, TotalCount > 0 and "items" or "item", GetCoinTextureString(Profit)))
+		HydraUI:print(format(Language[TotalCount == 1 and "You sold %d item for a total of %s" or "You sold %d items for a total of %s"], TotalCount, GetCoinTextureString(Profit)))
 	end
 end
 

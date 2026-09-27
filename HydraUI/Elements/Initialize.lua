@@ -202,7 +202,7 @@ end
 -- Events
 function HydraUI:OnEvent(event)
 	--[[if (HydraUI.ClientVersion >= 20000) then
-		print("HydraUI is not supported for this version of World of Warcraft")
+		print(Language["HydraUI is not supported for this version of World of Warcraft"])
 
 		return
 	end]]

@@ -86,7 +86,7 @@ local Update = function(self)
 	if (Count > 0) then
 		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s%%|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor, Percent)
 	else
-		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%sN/A|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor)
+		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor, NOT_APPLICABLE)
 	end
 
 	if (25 > Percent and not self.Anim:IsPlaying()) then

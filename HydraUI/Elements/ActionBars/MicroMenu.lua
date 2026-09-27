@@ -12,6 +12,7 @@ if HydraUI.IsMainline then
 		GuildMicroButton,
 		LFDMicroButton,
 		CollectionsMicroButton,
+		HousingMicroButton,
 		EJMicroButton,
 		StoreMicroButton,
 		MainMenuMicroButton,

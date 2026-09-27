@@ -139,6 +139,14 @@ function BagsFrame:Load()
 		return
 	end
 
+	if (HydraUI.ClientVersion >= 100000) then
+		MainMenuBarBackpackButton:ClearAllPoints()
+		MainMenuBarBackpackButton:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 5)
+		MainMenuBarBackpackButton.SetPoint = function() end
+
+		return
+	end
+
 	self.Panel = CreateFrame("Frame", "HydraUI Bags Window", HydraUI.UIParent, "BackdropTemplate")
 	self.Panel:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 3)
 	self.Panel:SetBackdrop(HydraUI.BackdropAndBorder)

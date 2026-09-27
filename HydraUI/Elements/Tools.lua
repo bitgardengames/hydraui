@@ -85,7 +85,7 @@ if HydraUI.IsMainline then
 			return
 		end
 
-		if (HydraUI.IsMainline and issecretvalue(number) and not canaccessvalue(number)) then
+		if (issecretvalue(number) and not canaccessvalue(number)) then
 			return BreakUpLargeNumbers(number)
 		end
 

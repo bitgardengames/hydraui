@@ -386,15 +386,23 @@ end
 
 Events["Power"] = "UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_POWER_UPDATE"
 Methods["Power"] = function(unit)
-	if (UnitPower(unit) ~= 0) then
-		return UnitPower(unit)
+	local Current = UnitPower(unit)
+
+	if (HydraUI.IsMainline and issecretvalue(Current) and not canaccessvalue(Current)) then
+		return Current
+	elseif (Current ~= 0) then
+		return Current
 	end
 end
 
 Events["Power:Short"] = "UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_POWER_UPDATE"
 Methods["Power:Short"] = function(unit)
-	if (UnitPower(unit) ~= 0) then
-		return HydraUI:ShortValue(UnitPower(unit))
+	local Current = UnitPower(unit)
+
+	if (HydraUI.IsMainline and issecretvalue(Current) and not canaccessvalue(Current)) then
+		return HydraUI:ShortValue(Current)
+	elseif (Current ~= 0) then
+		return HydraUI:ShortValue(Current)
 	end
 end
 
@@ -403,7 +411,9 @@ Methods["PowerValues"] = function(unit)
 	local Current = UnitPower(unit)
 	local Max = UnitPowerMax(unit)
 
-	if (Max ~= 0) then
+	if (HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)))) then
+		return HydraUI:Comma(Current) .. " / " .. HydraUI:Comma(Max)
+	elseif (Max ~= 0) then
 		return Current .. " / " .. Max
 	end
 end
@@ -413,15 +423,22 @@ Methods["PowerValues:Short"] = function(unit)
 	local Current = UnitPower(unit)
 	local Max = UnitPowerMax(unit)
 
-	if (Max ~= 0) then
+	if (HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)))) then
+		return HydraUI:ShortValue(Current) .. " / " .. HydraUI:ShortValue(Max)
+	elseif (Max ~= 0) then
 		return HydraUI:ShortValue(Current) .. " / " .. HydraUI:ShortValue(Max)
 	end
 end
 
 Events["PowerPercent"] = "UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_POWER_UPDATE"
 Methods["PowerPercent"] = function(unit)
-	if (UnitPower(unit) ~= 0) then
-		return floor((UnitPower(unit) / UnitPowerMax(unit) * 100 + 0.05) * 10) / 10 .. "%"
+	local Current = UnitPower(unit)
+	local Max = UnitPowerMax(unit)
+
+	if (HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)))) then
+		return ""
+	elseif (Current ~= 0) then
+		return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
 	end
 end
 

@@ -42,60 +42,103 @@ end
 local GUI = HydraUI:NewModule("GUI")
 
 -- Storage
+GUI.CategoryOrder = {}
 GUI.Categories = {}
+GUI.Pages = {}
 GUI.Widgets = {}
 GUI.WidgetID = {}
-GUI.LoadCalls = {}
-GUI.Buttons = {}
 GUI.ButtonQueue = {}
 GUI.ScrollButtons = {}
 
--- Every entry in LoadCalls is a page descriptor. Child pages live in their parent's Children table, but otherwise have the same shape as parent pages.
-local GetOrCreatePage = function(self, category, name, parent)
-	local Category = self.LoadCalls[category]
+local GetCategory = function(self, name)
+	local Category = self.Categories[name]
 
 	if (not Category) then
-		Category = {}
-		self.LoadCalls[category] = Category
+		Category = {Name = name, Pages = {}, PageLookup = {}}
+		self.Categories[name] = Category
+		tinsert(self.CategoryOrder, Category)
+		self.Pages[name] = Category.PageLookup
 	end
 
-	if parent then
-		local ParentPage = Category[parent]
+	return Category
+end
+
+local NewPage = function(category, name)
+	return {
+		Category = category,
+		Name = name,
+		Parent = nil,
+		Children = {},
+		ChildLookup = {},
+		Callbacks = {},
+		Expanded = false,
+		Button = nil,
+		Window = nil,
+	}
+end
+
+local GetOrCreatePage = function(self, categoryName, name, parentName)
+	local Category = GetCategory(self, categoryName)
+	local Page = Category.PageLookup[name]
+	local ParentPage
+
+	if parentName then
+		if (name == parentName) then
+			error(format("GUI page '%s/%s' cannot be its own parent", categoryName, name), 3)
+		end
+
+		ParentPage = Category.PageLookup[parentName]
 
 		if (not ParentPage) then
-			ParentPage = {Calls = {}, Children = {}}
-			Category[parent] = ParentPage
-		elseif (not ParentPage.Children) then
-			ParentPage.Children = {}
+			ParentPage = NewPage(Category, parentName)
+			Category.PageLookup[parentName] = ParentPage
+			tinsert(Category.Pages, ParentPage)
 		end
-
-		local Page = ParentPage.Children[name]
-
-		if (not Page) then
-			Page = {Calls = {}}
-			ParentPage.Children[name] = Page
-		end
-
-		return Page, ParentPage
 	end
 
-	local Page = Category[name]
+	if Page then
+		if (Page.Parent ~= ParentPage) then
+			error(format("Duplicate GUI page identity '%s/%s' registered with different parents", categoryName, name), 3)
+		end
+	else
+		Page = NewPage(Category, name)
+		Page.Parent = ParentPage
+		Category.PageLookup[name] = Page
 
-	if (not Page) then
-		Page = {Calls = {}}
-		Category[name] = Page
+		if ParentPage then
+			ParentPage.ChildLookup[name] = Page
+			tinsert(ParentPage.Children, Page)
+		else
+			tinsert(Category.Pages, Page)
+		end
 	end
+
+	Page.Defined = true
 
 	return Page
 end
 
-local QueuePage = function(self, page, category, name, parent)
+local QueuePage = function(self, page)
 	if page.Queued then
 		return
 	end
 
 	page.Queued = true
-	tinsert(self.ButtonQueue, {category, name, parent})
+	tinsert(self.ButtonQueue, page)
+end
+
+local ValidatePages = function(self)
+	for i = 1, #self.CategoryOrder do
+		local Category = self.CategoryOrder[i]
+
+		for _, Page in next, Category.PageLookup do
+			if (not Page.Defined) then
+				error(format("GUI category '%s' references missing parent page '%s'", Category.Name, Page.Name), 3)
+			elseif Page.Parent and Page.Parent.Parent then
+				error(format("GUI page '%s/%s' has nested parent '%s'; only one child level is supported", Category.Name, Page.Name, Page.Parent.Name), 3)
+			end
+		end
+	end
 end
 
 local ScrollWidgetColumn = function(parent, widgets, oldOffset, offset, point)
@@ -347,35 +390,39 @@ local AddWindowScrollBar = function(self)
 end
 
 function GUI:SortMenuButtons()
-	tsort(self.Categories, function(a, b)
+	tsort(self.CategoryOrder, function(a, b)
 		return a.Name < b.Name
 	end)
 
 	self.NumShownButtons = 0
 
-	local Categories = self.Categories
+	local Categories = self.CategoryOrder
 
 	for i = 1, #Categories do
-		tsort(Categories[i].Buttons, function(a, b)
+		local Category = Categories[i]
+		tsort(Category.Pages, function(a, b)
 			return a.Name < b.Name
 		end)
 
-		for j = 1, #Categories[i].Buttons do
+		for j = 1, #Category.Pages do
+			local Page = Category.Pages[j]
+			tsort(Page.Children, function(a, b) return a.Name < b.Name end)
+
 			if (j == 1) then
-				Categories[i].Buttons[j]:SetPoint("TOPLEFT", Categories[i], "BOTTOMLEFT", 0, -2)
+				Page.Button:SetPoint("TOPLEFT", Category.Frame, "BOTTOMLEFT", 0, -2)
 			else
-				Categories[i].Buttons[j]:SetPoint("TOPLEFT", Categories[i].Buttons[j-1], "BOTTOMLEFT", 0, -2)
+				Page.Button:SetPoint("TOPLEFT", Category.Pages[j-1].Button, "BOTTOMLEFT", 0, -2)
 			end
 
 			self.NumShownButtons = self.NumShownButtons + 1
 		end
 
 		if (i == 1) then
-			Categories[i]:SetPoint("TOPLEFT", self.MenuParent, "TOPLEFT", SPACING, -SPACING)
-		elseif #Categories[i-1].Buttons then
-			Categories[i]:SetPoint("TOPLEFT", Categories[i-1].Buttons[#Categories[i-1].Buttons], "BOTTOMLEFT", 0, -2)
+			Category.Frame:SetPoint("TOPLEFT", self.MenuParent, "TOPLEFT", SPACING, -SPACING)
+		elseif #Categories[i-1].Pages > 0 then
+			Category.Frame:SetPoint("TOPLEFT", Categories[i-1].Pages[#Categories[i-1].Pages].Button, "BOTTOMLEFT", 0, -2)
 		else
-			Categories[i]:SetPoint("TOPLEFT", Categories[i-1], "BOTTOMLEFT", 0, -2)
+			Category.Frame:SetPoint("TOPLEFT", Categories[i-1].Frame, "BOTTOMLEFT", 0, -2)
 		end
 
 		self.NumShownButtons = self.NumShownButtons + 1
@@ -385,12 +432,15 @@ function GUI:SortMenuButtons()
 end
 
 function GUI:CreateCategory(name)
+	local Descriptor = GetCategory(self, name)
+
+	if Descriptor.Frame then
+		return Descriptor
+	end
+
 	local Category = CreateFrame("Frame", nil, self)
 	Category:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
 	Category:SetFrameLevel(self:GetFrameLevel() + 2)
-	Category.SortName = name
-	Category.Name = name
-	Category.Buttons = {}
 
 	local Text = Category:CreateFontString(nil, "OVERLAY")
 	Text:SetPoint("CENTER", Category, 0, 0)
@@ -410,19 +460,20 @@ function GUI:CreateCategory(name)
 
 	Category.Text = Text
 	Category.Texture = Texture
+	Descriptor.Frame = Category
 
 	self.TotalSelections = (self.TotalSelections or 0) + 1
 
-	self.Categories[#self.Categories + 1] = Category
-	self.Categories[name] = Category
 	self.SelectionRowsDirty = true
+
+	return Descriptor
 end
 
 local DisableScrolling = function(self)
 	self.ScrollingDisabled = true
 end
 
-function GUI:CreateWidgetWindow(category, name, parent)
+function GUI:CreateWidgetWindow(page)
 	-- Window
 	local Window = CreateFrame("Frame", nil, self)
 	Window:SetWidth(PARENT_WIDTH)
@@ -457,9 +508,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 	Window.RightWidgetsBG.Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
 	Window.RightWidgetsBG.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
-	Window.Category = category
-	Window.Name = name
-	Window.Parent = parent
+	Window.Page = page
 	Window.LeftWidgets = {}
 	Window.RightWidgets = {}
 
@@ -473,8 +522,7 @@ function GUI:CreateWidgetWindow(category, name, parent)
 		Window.RightWidgetsBG[Name] = Function
 	end
 
-	local Page = GetOrCreatePage(self, category, name, parent)
-	local Calls = Page.Calls
+	local Calls = page.Callbacks
 
 	-- Read the queue in place instead of repeatedly removing its first item. Aside
 	-- from shifting the whole table for every callback, table.remove also made a
@@ -515,42 +563,49 @@ function GUI:CreateWidgetWindow(category, name, parent)
 end
 
 function GUI:ShowWindow(category, name, parent)
-	local Button = parent and self.Buttons[category][parent][name] or self.Buttons[category][name]
-	local PreviousButton = self.ActivePageButton
+	local Page = type(category) == "table" and category or self:HasButton(category, name, parent)
 
-	if PreviousButton then
-		if PreviousButton.Window then
-			PreviousButton.Window:Hide()
+	if (not Page) then
+		error(format("Unknown GUI page '%s/%s'", tostring(category), tostring(name)), 2)
+	end
+
+	local Button = Page.Button
+	local PreviousPage = self.ActivePage
+
+	if PreviousPage then
+		if PreviousPage.Window then
+			PreviousPage.Window:Hide()
 		end
 
-		if (PreviousButton.Selected:GetAlpha() > 0) then
-			PreviousButton.Selected:SetAlpha(0)
+		if (PreviousPage.Button.Selected:GetAlpha() > 0) then
+			PreviousPage.Button.Selected:SetAlpha(0)
 		end
 	end
 
-	if (not Button.Window) then
-		Button.Window = self:CreateWidgetWindow(category, name, parent)
+	if (not Page.Window) then
+		Page.Window = self:CreateWidgetWindow(Page)
 	end
 
-	if parent then
-		local ParentButton = self.Buttons[category][parent]
+	if Page.Parent then
+		local ParentPage = Page.Parent
 
-		if ParentButton.Window then
-			ParentButton.Window:Hide()
+		if ParentPage.Window then
+			ParentPage.Window:Hide()
 		end
 
-		if (ParentButton.Selected:GetAlpha() > 0) then
-			ParentButton.Selected:SetAlpha(0)
+		if (ParentPage.Button.Selected:GetAlpha() > 0) then
+			ParentPage.Button.Selected:SetAlpha(0)
 		end
-	elseif Button.Children then
-		Button.ChildrenShown = not Button.ChildrenShown
-		Button.Arrow:SetTexture(Assets:GetTexture(Button.ChildrenShown and "Arrow Up" or "Arrow Down"))
+	elseif #Page.Children > 0 then
+		Page.Expanded = not Page.Expanded
+		Button.Arrow:SetTexture(Assets:GetTexture(Page.Expanded and "Arrow Up" or "Arrow Down"))
 
-		for i = 1, #Button.Children do
-			local ChildButton = Button.Children[i]
+		for i = 1, #Page.Children do
+			local ChildPage = Page.Children[i]
+			local ChildButton = ChildPage.Button
 
-			if ChildButton.Window then
-				ChildButton.Window:Hide()
+			if ChildPage.Window then
+				ChildPage.Window:Hide()
 
 				if (ChildButton.Selected:GetAlpha() > 0) then
 					ChildButton.Selected:SetAlpha(0)
@@ -564,8 +619,8 @@ function GUI:ShowWindow(category, name, parent)
 	end
 
 	Button.Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-	Button.Window:Show()
-	self.ActivePageButton = Button
+	Page.Window:Show()
+	self.ActivePage = Page
 
 	self:ScrollSelections()
 
@@ -584,7 +639,7 @@ local WindowButtonOnMouseUp = function(self)
 	self.Text:ClearAllPoints()
 	self.Text:SetPoint("LEFT", self, 4, 0)
 
-	GUI:ShowWindow(self.Category, self.Name, self.Parent)
+	GUI:ShowWindow(self.Page)
 end
 
 local WindowButtonOnMouseDown = function(self)
@@ -596,7 +651,7 @@ local WindowSubButtonOnMouseUp = function(self)
 	self.Text:ClearAllPoints()
 	self.Text:SetPoint("LEFT", self, SPACING * 3, 0)
 
-	GUI:ShowWindow(self.Category, self.Name, self.Parent)
+	GUI:ShowWindow(self.Page)
 end
 
 local WindowSubButtonOnMouseDown = function(self)
@@ -605,31 +660,26 @@ local WindowSubButtonOnMouseDown = function(self)
 end
 
 function GUI:HasButton(category, name, parent)
-	if parent then
-		if (self.Buttons[category] and self.Buttons[category][parent]) then
-			return self.Buttons[category][parent][name]
-		end
-	else
-		return (self.Buttons[category] and self.Buttons[category][name])
+	local Category = self.Categories[category]
+	local Page = Category and Category.PageLookup[name]
+
+	if Page and ((not parent and not Page.Parent) or (Page.Parent and Page.Parent.Name == parent)) then
+		return Page
 	end
 end
 
-function GUI:CreateWindow(category, name, parent)
-	if self:HasButton(category, name, parent) then
-		return
+function GUI:CreateWindow(page)
+	if page.Button then return page end
+	if page.Parent and (not page.Parent.Defined) then
+		error(format("GUI page '%s/%s' references missing parent '%s'", page.Category.Name, page.Name, page.Parent.Name), 2)
 	end
 
-	if (not self.Categories[category]) then
-		self:CreateCategory(category)
-	end
-
-	local Category = self.Categories[category]
+	local Category = self:CreateCategory(page.Category.Name)
 
 	local Button = CreateFrame("Frame", nil, self)
 	Button:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
 	Button:SetFrameLevel(self:GetFrameLevel() + 2)
-	Button.Name = name
-	Button.Category = category
+	Button.Page = page
 	Button:SetScript("OnEnter", WindowButtonOnEnter)
 	Button:SetScript("OnLeave", WindowButtonOnLeave)
 
@@ -650,35 +700,15 @@ function GUI:CreateWindow(category, name, parent)
 	Button.Text:SetSize(MENU_BUTTON_WIDTH - 6, WIDGET_HEIGHT)
 	Button.Text:SetJustifyH("LEFT")
 
-	if parent then
+	if page.Parent then
 		Button:SetScript("OnMouseUp", WindowSubButtonOnMouseUp)
 		Button:SetScript("OnMouseDown", WindowSubButtonOnMouseDown)
-
-		Button.Parent = parent
 
 		Button.Selected:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 
 		Button.Text:SetPoint("LEFT", Button, SPACING * 3, 0)
 		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], 12)
-		Button.Text:SetText("|cFF" .. Settings["ui-widget-font-color"] .. name .. "|r")
-
-		for j = 1, #Category.Buttons do
-			if (Category.Buttons[j].Name == parent) then
-				if (not Category.Buttons[j].Children) then
-					Category.Buttons[j].Children = {}
-
-					Category.Buttons[j].Arrow = Category.Buttons[j]:CreateTexture(nil, "OVERLAY")
-					Category.Buttons[j].Arrow:SetPoint("RIGHT", Category.Buttons[j], -3, -1)
-					Category.Buttons[j].Arrow:SetSize(16, 16)
-					Category.Buttons[j].Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-					Category.Buttons[j].Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-				end
-
-				tinsert(Category.Buttons[j].Children, Button)
-
-				break
-			end
-		end
+		Button.Text:SetText("|cFF" .. Settings["ui-widget-font-color"] .. page.Name .. "|r")
 	else
 		Button:SetScript("OnMouseUp", WindowButtonOnMouseUp)
 		Button:SetScript("OnMouseDown", WindowButtonOnMouseDown)
@@ -687,44 +717,36 @@ function GUI:CreateWindow(category, name, parent)
 
 		Button.Text:SetPoint("LEFT", Button, 4, 0)
 		HydraUI:SetFontInfo(Button.Text, Settings["ui-widget-font"], Settings["ui-header-font-size"])
-		Button.Text:SetText("|cFF" .. Settings["ui-button-font-color"] .. name .. "|r")
-
-		tinsert(Category.Buttons, Button)
+		Button.Text:SetText("|cFF" .. Settings["ui-button-font-color"] .. page.Name .. "|r")
 
 		self.TotalSelections = (self.TotalSelections or 0) + 1
 	end
 
-	if (not self.Buttons[category]) then
-		self.Buttons[category] = {}
-	end
+	page.Button = Button
 
-	if parent then
-		if (not self.Buttons[category][parent]) then
-			self.Buttons[category][parent] = {}
-		end
-
-		self.Buttons[category][parent][name] = Button
-	elseif (not self.Buttons[category][name]) then
-		self.Buttons[category][name] = Button
+	if (not page.Parent) and (#page.Children > 0) then
+		Button.Arrow = Button:CreateTexture(nil, "OVERLAY")
+		Button.Arrow:SetPoint("RIGHT", Button, -3, -1)
+		Button.Arrow:SetSize(16, 16)
+		Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+		Button.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 	end
 
 	self.SelectionRowsDirty = true
+	return page
 end
 
 function GUI:AddWidgets(category, name, arg1, arg2)
 	if (type(arg1) == "function") then
 		local Page = GetOrCreatePage(self, category, name)
 
-		tinsert(Page.Calls, arg1)
-		QueuePage(self, Page, category, name)
+		tinsert(Page.Callbacks, arg1)
+		QueuePage(self, Page)
 	else -- string
-		local Page, ParentPage = GetOrCreatePage(self, category, name, arg1)
+		local Page = GetOrCreatePage(self, category, name, arg1)
 
-		-- Parent buttons must exist before their children are attached. Queueing
-		-- the descriptor here also makes child-before-parent registration safe.
-		QueuePage(self, ParentPage, category, arg1)
-		tinsert(Page.Calls, arg2)
-		QueuePage(self, Page, category, name, arg1)
+		tinsert(Page.Callbacks, arg2)
+		QueuePage(self, Page)
 	end
 end
 
@@ -741,19 +763,20 @@ function GUI:ScrollSelections()
 
 	if RowsChanged then
 		local Rows = {}
-		local Categories = self.Categories
+		local Categories = self.CategoryOrder
 
 		for i = 1, #Categories do
-			tinsert(Rows, Categories[i])
+			local Category = Categories[i]
+			tinsert(Rows, Category.Frame)
 
-			for j = 1, #Categories[i].Buttons do
-				local Button = Categories[i].Buttons[j]
+			for j = 1, #Category.Pages do
+				local Page = Category.Pages[j]
 
-				tinsert(Rows, Button)
+				tinsert(Rows, Page.Button)
 
-				if Button.ChildrenShown then
-					for o = 1, #Button.Children do
-						tinsert(Rows, Button.Children[o])
+				if Page.Expanded then
+					for o = 1, #Page.Children do
+						tinsert(Rows, Page.Children[o].Button)
 					end
 				end
 			end
@@ -1315,8 +1338,10 @@ function GUI:CreateGUI()
 	-- Consuming this queue from the front shifts every remaining entry on each
 	-- iteration. Iterate it directly so GUI initialization remains linear as
 	-- more configuration pages are registered.
+	ValidatePages(self)
+
 	for i = 1, #self.ButtonQueue do
-		self:CreateWindow(unpack(self.ButtonQueue[i]))
+		self:CreateWindow(self.ButtonQueue[i])
 		self.ButtonQueue[i] = nil
 	end
 

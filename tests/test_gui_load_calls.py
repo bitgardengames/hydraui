@@ -6,7 +6,7 @@ from pathlib import Path
 GUI_SOURCE = Path(__file__).parents[1] / "HydraUI/Elements/GUI/GUI.lua"
 
 
-class LoadCallRegistryTests(unittest.TestCase):
+class PageModelTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = GUI_SOURCE.read_text(encoding="utf-8")
@@ -28,12 +28,12 @@ class LoadCallRegistryTests(unittest.TestCase):
             "function GUI:AddWidgets", "function GUI:GetWidget"
         )
 
-        self.assertIn("local Page = ParentPage.Children[name]", helper)
-        self.assertIn("if (not Page) then", helper)
-        self.assertIn("tinsert(Page.Calls, arg2)", add_widgets)
-        self.assertNotIn("Children[name] = {Calls = {}}", add_widgets)
+        self.assertIn("local Page = Category.PageLookup[name]", helper)
+        self.assertIn("if Page then", helper)
+        self.assertIn("tinsert(Page.Callbacks, arg2)", add_widgets)
+        self.assertNotIn("NewPage(Category, name)", add_widgets)
 
-    def test_child_registration_queues_its_parent_first_and_only_once(self):
+    def test_page_queue_contains_descriptors_only_once(self):
         queue_page = self.function_body(
             "local QueuePage = function", "local ScrollWidgetColumn = function"
         )
@@ -43,9 +43,44 @@ class LoadCallRegistryTests(unittest.TestCase):
 
         self.assertIn("if page.Queued then", queue_page)
         self.assertIn("page.Queued = true", queue_page)
-        parent_queue = "QueuePage(self, ParentPage, category, arg1)"
-        child_queue = "QueuePage(self, Page, category, name, arg1)"
-        self.assertLess(add_widgets.index(parent_queue), add_widgets.index(child_queue))
+        self.assertIn("tinsert(self.ButtonQueue, page)", queue_page)
+        self.assertIn("QueuePage(self, Page)", add_widgets)
+
+    def test_category_order_and_lookup_are_separate(self):
+        storage = self.function_body("-- Storage", "local NewPage = function")
+
+        self.assertIn("GUI.CategoryOrder = {}", storage)
+        self.assertIn("GUI.Categories = {}", storage)
+        self.assertIn("self.Categories[name] = Category", storage)
+        self.assertIn("tinsert(self.CategoryOrder, Category)", storage)
+
+    def test_page_descriptor_owns_navigation_state(self):
+        descriptor = self.function_body(
+            "local NewPage = function", "local GetOrCreatePage = function"
+        )
+
+        for field in (
+            "Category",
+            "Name",
+            "Parent",
+            "Children",
+            "Callbacks",
+            "Expanded",
+            "Button",
+            "Window",
+        ):
+            self.assertRegex(descriptor, rf"\b{field}\s*=")
+
+    def test_registration_validation_reports_invalid_relationships(self):
+        helper = self.function_body(
+            "local GetOrCreatePage = function", "local QueuePage = function"
+        )
+        validation = self.function_body(
+            "local ValidatePages = function", "local ScrollWidgetColumn = function"
+        )
+
+        self.assertIn("Duplicate GUI page identity", helper)
+        self.assertIn("references missing parent page", validation)
 
 
 if __name__ == "__main__":

@@ -31,15 +31,172 @@ local Round = function(num, dec)
 	return floor(num * Mult + 0.5) / Mult
 end
 
-local GetMaxOffset = function(totalRows)
-	return max(totalRows - MAX_WIDGETS_SHOWN + 1, 1)
-end
-
-local ClampOffset = function(offset, totalRows)
-	return min(max(Round(offset or 1), 1), GetMaxOffset(totalRows))
-end
-
 local GUI = HydraUI:NewModule("GUI")
+
+-- Shared scrolling primitives. Keep these independent of a particular row type so
+-- widget pages, the navigation list, and dropdowns can all use the same rules.
+function GUI.GetMaxRowOffset(totalRows, maxVisibleRows)
+	return max((totalRows or 0) - maxVisibleRows + 1, 1)
+end
+
+function GUI.NormalizeRowOffset(offset, totalRows, maxVisibleRows)
+	return min(max(Round(tonumber(offset) or 1), 1), GUI.GetMaxRowOffset(totalRows, maxVisibleRows))
+end
+
+function GUI.GetVisibleRowRange(offset, totalRows, maxVisibleRows)
+	local First = GUI.NormalizeRowOffset(offset, totalRows, maxVisibleRows)
+
+	return First, min(First + maxVisibleRows - 1, totalRows)
+end
+
+function GUI:StyleVerticalSlider(slider, options)
+	options = options or {}
+
+	slider:SetThumbTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	slider:SetOrientation("VERTICAL")
+	slider:SetValueStep(1)
+	slider:SetBackdrop(HydraUI.BackdropAndBorder)
+	slider:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
+	slider:SetBackdropBorderColor(0, 0, 0)
+
+	local Thumb = slider:GetThumbTexture()
+	Thumb:SetSize(options.Width or slider:GetWidth(), WIDGET_HEIGHT)
+	Thumb:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Thumb:SetVertexColor(0, 0, 0)
+
+	slider.NewThumb = slider:CreateTexture(nil, "BORDER")
+	slider.NewThumb:SetPoint("TOPLEFT", Thumb, 0, 0)
+	slider.NewThumb:SetPoint("BOTTOMRIGHT", Thumb, 0, 0)
+	slider.NewThumb:SetTexture(Assets:GetTexture("Blank"))
+	slider.NewThumb:SetVertexColor(0, 0, 0)
+
+	slider.NewThumb2 = slider:CreateTexture(nil, "OVERLAY")
+	slider.NewThumb2:SetPoint("TOPLEFT", slider.NewThumb, 1, -1)
+	slider.NewThumb2:SetPoint("BOTTOMRIGHT", slider.NewThumb, -1, 1)
+	slider.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	slider.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+
+	if options.Highlight then
+		slider.Highlight = slider:CreateTexture(nil, "HIGHLIGHT")
+		slider.Highlight:SetPoint("TOPLEFT", slider.NewThumb, 1, -1)
+		slider.Highlight:SetPoint("BOTTOMRIGHT", slider.NewThumb, -1, 1)
+		slider.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+		slider.Highlight:SetVertexColor(1, 1, 1)
+		slider.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+	end
+
+	slider.Progress = slider:CreateTexture(nil, "ARTWORK")
+	slider.Progress:SetPoint("TOPLEFT", slider, 1, -1)
+	slider.Progress:SetPoint("BOTTOMRIGHT", slider.NewThumb, "TOPRIGHT", -1, 0)
+	slider.Progress:SetTexture(Assets:GetTexture(options.ProgressTexture or "Blank"))
+	slider.Progress:SetVertexColor(HydraUI:HexToRGB(Settings[options.ProgressColor or "ui-widget-bright-color"]))
+	if options.ProgressAlpha then slider.Progress:SetAlpha(options.ProgressAlpha) end
+end
+
+local RowViewport = {}
+RowViewport.__index = RowViewport
+
+function RowViewport:GetRows()
+	return type(self.Rows) == "function" and self.Rows(self.Owner) or self.Rows
+end
+
+function RowViewport:GetTotalRows()
+	local Rows = self:GetRows()
+	return type(self.TotalRows) == "function" and self.TotalRows(self.Owner, Rows) or (self.TotalRows or #Rows)
+end
+
+function RowViewport:SyncScrollBar()
+	if self.ScrollBar and (self.ScrollBar:GetValue() ~= self.Offset) then
+		self.Synchronizing = true
+		self.Owner.UpdatingScrollBar = true -- compatibility for external handlers
+		self.ScrollBar:SetValue(self.Offset)
+		self.Owner.UpdatingScrollBar = false
+		self.Synchronizing = false
+	end
+end
+
+function RowViewport:SetScrollBar(scrollBar)
+	self.ScrollBar = scrollBar
+	self.Owner.ScrollBar = scrollBar
+	self:SyncScrollBar()
+end
+
+function RowViewport:SetScrollRange(totalRows)
+	if not self.ScrollBar then return end
+	self.Synchronizing = true
+	self.Owner.UpdatingScrollBar = true
+	self.ScrollBar:SetMinMaxValues(1, GUI.GetMaxRowOffset(totalRows, self.MaxVisibleRows))
+	self.Owner.UpdatingScrollBar = false
+	self.Synchronizing = false
+end
+
+function RowViewport:Render(rowsChanged)
+	local Rows = self:GetRows()
+	local Count = self:GetTotalRows()
+	local First, Last = GUI.GetVisibleRowRange(self.Offset, Count, self.MaxVisibleRows)
+	local OldRows, OldFirst = self.LastRenderedRows, self.LastRenderedOffset
+	local OldLast = OldRows and OldFirst and min(OldFirst + self.MaxVisibleRows - 1, #OldRows)
+
+	self.Offset = First
+	self.Owner.Offset = First
+	self:SyncScrollBar()
+
+	if (not rowsChanged) and (OldRows == Rows) and (OldFirst == First) then return end
+
+	if self.UpdateRows then
+		self.UpdateRows(self.Owner, Rows, OldRows, OldFirst, OldLast, First, Last, rowsChanged)
+	else
+		if OldRows and OldFirst then
+			for i = OldFirst, OldLast do
+				if rowsChanged or (i < First) or (i > Last) then OldRows[i]:Hide() end
+			end
+		else
+			for i = 1, First - 1 do Rows[i]:Hide() end
+			for i = Last + 1, Count do Rows[i]:Hide() end
+		end
+
+		for i = First, Last do
+			if rowsChanged or (not OldFirst) or (i < OldFirst) or (i > OldLast) then Rows[i]:Show() end
+		end
+	end
+
+	if self.AnchorRows then self.AnchorRows(self.Owner, Rows, First, Last) end
+	self.LastRenderedRows = Rows
+	self.LastRenderedOffset = First
+	self.Owner.LastRenderedOffset = First
+	if self.AfterRender then self.AfterRender(self.Owner, First, Last) end
+end
+
+function RowViewport:SetOffset(offset, rowsChanged)
+	self.Offset = GUI.NormalizeRowOffset(offset, self:GetTotalRows(), self.MaxVisibleRows)
+	self.Owner.Offset = self.Offset
+	self:Render(rowsChanged)
+end
+
+function RowViewport:SetOffsetByDelta(delta)
+	self.Offset = GUI.NormalizeRowOffset(self.Offset + (delta == 1 and -1 or 1), self:GetTotalRows(), self.MaxVisibleRows)
+	self.Owner.Offset = self.Offset
+end
+
+function GUI:CreateRowViewport(owner, options)
+	local Viewport = setmetatable({
+		Owner = owner,
+		Rows = options.Rows,
+		TotalRows = options.TotalRows,
+		MaxVisibleRows = options.MaxVisibleRows,
+		AnchorRows = options.AnchorRows,
+		UpdateRows = options.UpdateRows,
+		AfterRender = options.AfterRender,
+		Offset = GUI.NormalizeRowOffset(options.Offset or owner.Offset, 0, options.MaxVisibleRows),
+	}, RowViewport)
+
+	owner.RowViewport = Viewport
+	return Viewport
+end
+
+local GetMaxOffset = function(totalRows)
+	return GUI.GetMaxRowOffset(totalRows, MAX_WIDGETS_SHOWN)
+end
 
 -- Storage
 GUI.CategoryOrder = {}
@@ -186,43 +343,13 @@ local ScrollWidgetColumn = function(parent, widgets, oldOffset, offset, point)
 end
 
 local Scroll = function(self)
-	local Offset = ClampOffset(self.Offset, self.WidgetCount)
-
-	self.Offset = Offset
-
-	if (self.LastRenderedOffset == Offset) then
-		return
-	end
-
-	local LeftOffset = self.LeftWidgetsBG.ScrollingDisabled and 1 or Offset
-	local RightOffset = self.RightWidgetsBG.ScrollingDisabled and 1 or Offset
-
-	ScrollWidgetColumn(self.LeftWidgetsBG, self.LeftWidgets, self.LastRenderedLeftOffset, LeftOffset, "TOPLEFT")
-	ScrollWidgetColumn(self.RightWidgetsBG, self.RightWidgets, self.LastRenderedRightOffset, RightOffset, "TOPRIGHT")
-
-	self.LastRenderedOffset = Offset
-	self.LastRenderedLeftOffset = LeftOffset
-	self.LastRenderedRightOffset = RightOffset
-
-	if self.ScrollBar then
-		if (Offset == 1) then
-			self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-		else
-			self.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-		end
-
-		if (Offset == self.MaxScroll) then
-			self.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-		else
-			self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-		end
-	end
+	self.RowViewport:SetOffset(self.Offset)
 end
 
 local NoScroll = function() end
 
 local SetOffsetByDelta = function(self, delta)
-	self.Offset = ClampOffset(self.Offset + (delta == 1 and -1 or 1), self.WidgetCount)
+	self.RowViewport:SetOffsetByDelta(delta)
 end
 
 local WindowOnMouseWheel = function(self, delta)
@@ -236,17 +363,13 @@ local WindowOnMouseWheel = function(self, delta)
 end
 
 local SetWindowOffset = function(self, offset)
-	self.Offset = ClampOffset(offset, self.WidgetCount)
-
-	Scroll(self)
+	self.RowViewport:SetOffset(offset)
 end
 
 local WindowScrollBarOnValueChanged = function(self)
 	local Parent = self:GetParent()
 
-	Parent.Offset = ClampOffset(self:GetValue(), Parent.WidgetCount)
-
-	Scroll(Parent)
+	if not Parent.RowViewport.Synchronizing then Parent.RowViewport:SetOffset(self:GetValue()) end
 end
 
 local WindowScrollBarOnMouseWheel = function(self, delta)
@@ -336,13 +459,9 @@ local AddWindowScrollBar = function(self)
 	local ScrollBar = CreateFrame("Slider", nil, self, "BackdropTemplate")
 	ScrollBar:SetPoint("TOPLEFT", self.ScrollUp, "BOTTOMLEFT", 0, -2)
 	ScrollBar:SetPoint("BOTTOMRIGHT", self.ScrollDown, "TOPRIGHT", 0, 2)
-	ScrollBar:SetThumbTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar:SetOrientation("VERTICAL")
-	ScrollBar:SetValueStep(1)
-	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-	ScrollBar:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
-	ScrollBar:SetBackdropBorderColor(0, 0, 0)
-	ScrollBar:SetMinMaxValues(1, self.MaxScroll)
+	GUI:StyleVerticalSlider(ScrollBar, {Highlight = true, ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA})
+	self.RowViewport.ScrollBar = ScrollBar
+	self.RowViewport:SetScrollRange(self.WidgetCount)
 	ScrollBar:SetValue(1)
 	ScrollBar:EnableMouseWheel(true)
 	ScrollBar:SetScript("OnMouseWheel", WindowScrollBarOnMouseWheel)
@@ -350,41 +469,11 @@ local AddWindowScrollBar = function(self)
 
 	ScrollBar.Window = self
 
-	local Thumb = ScrollBar:GetThumbTexture()
-	Thumb:SetSize(ScrollBar:GetWidth(), WIDGET_HEIGHT)
-	Thumb:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	Thumb:SetVertexColor(0, 0, 0)
-
-	ScrollBar.NewThumb = ScrollBar:CreateTexture(nil, "BORDER")
-	ScrollBar.NewThumb:SetPoint("TOPLEFT", Thumb, 0, 0)
-	ScrollBar.NewThumb:SetPoint("BOTTOMRIGHT", Thumb, 0, 0)
-	ScrollBar.NewThumb:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.NewThumb:SetVertexColor(0, 0, 0)
-
-	ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
-	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
-	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	ScrollBar.Highlight = ScrollBar:CreateTexture(nil, "HIGHLIGHT")
-	ScrollBar.Highlight:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
-	ScrollBar.Highlight:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-	ScrollBar.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.Highlight:SetVertexColor(1, 1, 1)
-	ScrollBar.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-
-	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
-	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
-	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
-	ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.Progress:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-	ScrollBar.Progress:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-
 	self:EnableMouseWheel(true)
 	self:SetScript("OnMouseWheel", WindowOnMouseWheel)
 
 	self.ScrollBar = ScrollBar
+	self.RowViewport:SetScrollBar(ScrollBar)
 
 	ScrollBar:Show()
 end
@@ -542,6 +631,33 @@ function GUI:CreateWidgetWindow(page)
 
 	Window.WidgetCount = max(#Window.LeftWidgets, #Window.RightWidgets)
 	Window.MaxScroll = GetMaxOffset(Window.WidgetCount)
+	GUI:CreateRowViewport(Window, {
+		Rows = Window.LeftWidgets,
+		TotalRows = Window.WidgetCount,
+		MaxVisibleRows = MAX_WIDGETS_SHOWN,
+		UpdateRows = function(Owner, Rows, OldRows, OldFirst, OldLast, First)
+			local LeftOffset = Owner.LeftWidgetsBG.ScrollingDisabled and 1 or First
+			local RightOffset = Owner.RightWidgetsBG.ScrollingDisabled and 1 or First
+
+			ScrollWidgetColumn(Owner.LeftWidgetsBG, Owner.LeftWidgets, Owner.LastRenderedLeftOffset, LeftOffset, "TOPLEFT")
+			ScrollWidgetColumn(Owner.RightWidgetsBG, Owner.RightWidgets, Owner.LastRenderedRightOffset, RightOffset, "TOPRIGHT")
+			Owner.LastRenderedLeftOffset = LeftOffset
+			Owner.LastRenderedRightOffset = RightOffset
+		end,
+		AfterRender = function(Owner, Offset)
+			if not Owner.ScrollBar then return end
+			if Offset == 1 then
+				Owner.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+			else
+				Owner.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+			end
+			if Offset == Owner.MaxScroll then
+				Owner.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+			else
+				Owner.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+			end
+		end,
+	})
 
 	if (Window.MaxScroll > 1) then
 		AddWindowScrollBar(Window)
@@ -757,8 +873,6 @@ function GUI:GetWidget(id)
 end
 
 function GUI:ScrollSelections()
-	local OldRows = self.RenderedSelectionRows
-	local OldOffset = self.LastRenderedSelectionOffset
 	local RowsChanged = self.SelectionRowsDirty
 
 	if RowsChanged then
@@ -787,90 +901,23 @@ function GUI:ScrollSelections()
 		self.SelectionRowsDirty = false
 	end
 
-	local ScrollButtons = self.ScrollButtons
-	local Count = #ScrollButtons
-	local Offset = ClampOffset(self.Offset, Count)
-	local First = Offset
-	local Last = min(Offset + MAX_WIDGETS_SHOWN - 1, Count)
-	local OldFirst = OldRows and OldOffset
-	local OldLast = OldRows and OldOffset and min(OldOffset + MAX_WIDGETS_SHOWN - 1, #OldRows)
-
-	self.Offset = Offset
-	self.TotalSelections = Count
-
 	if RowsChanged then
-		self.ScrollBar:SetMinMaxValues(1, GetMaxOffset(Count))
+		self.SelectionViewport:SetScrollRange(#self.ScrollButtons)
 	end
 
-	if (OldRows == ScrollButtons) and (OldOffset == Offset) then
-		return
-	end
-
-	if OldFirst then
-		for i = OldFirst, OldLast do
-			if RowsChanged or (i < First) or (i > Last) then
-				OldRows[i]:Hide()
-			end
-		end
-	else
-		-- Selection rows start shown, so the initial layout must hide the non-visible rows once.
-		for i = 1, First - 1 do
-			ScrollButtons[i]:Hide()
-		end
-
-		for i = Last + 1, Count do
-			ScrollButtons[i]:Hide()
-		end
-	end
-
-	for i = First, Last do
-		local Row = ScrollButtons[i]
-		local Predecessor = ScrollButtons[i - 1]
-		local Anchor = (i == First) and self.MenuParent or Predecessor
-
-		if Row.HydraScrollAnchor ~= Anchor then
-			Row:ClearAllPoints()
-
-			if (i == First) then
-				Row:SetPoint("TOPLEFT", self.MenuParent, SPACING, -SPACING)
-			else
-				Row:SetPoint("TOP", Predecessor, "BOTTOM", 0, -2)
-			end
-
-			Row.HydraScrollAnchor = Anchor
-		end
-
-		if RowsChanged or (not OldFirst) or (i < OldFirst) or (i > OldLast) then
-			Row:Show()
-		end
-	end
-
-	self.RenderedSelectionRows = ScrollButtons
-	self.LastRenderedSelectionOffset = Offset
-
-	if (self.Offset == 1) then
-		self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-	else
-		self.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-	end
-
-	local Min, Max = self.ScrollBar:GetMinMaxValues()
-
-	if (self.Offset == Max) then
-		self.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-	else
-		self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-	end
+	self.SelectionViewport.Rows = self.ScrollButtons
+	self.SelectionViewport.TotalRows = #self.ScrollButtons
+	self.SelectionViewport:SetOffset(self.Offset, RowsChanged)
+	self.LastRenderedSelectionOffset = self.SelectionViewport.LastRenderedOffset
 end
 
 function GUI:SetSelectionOffset(offset)
-	self.Offset = ClampOffset(offset, self.TotalSelections or #self.ScrollButtons)
-
+	self.Offset = GUI.NormalizeRowOffset(offset, self.TotalSelections or #self.ScrollButtons, MAX_WIDGETS_SHOWN)
 	self:ScrollSelections()
 end
 
 function GUI:SetSelectionOffsetByDelta(delta)
-	self.Offset = ClampOffset(self.Offset + (delta == 1 and -1 or 1), self.TotalSelections or #self.ScrollButtons)
+	self.SelectionViewport:SetOffsetByDelta(delta)
 end
 
 local SelectionOnMouseWheel = function(self, delta)
@@ -884,9 +931,7 @@ local SelectionOnMouseWheel = function(self, delta)
 end
 
 local SelectionScrollBarOnValueChanged = function(self)
-	GUI.Offset = ClampOffset(self:GetValue(), GUI.TotalSelections or #GUI.ScrollButtons)
-
-	GUI:ScrollSelections()
+	if not GUI.SelectionViewport.Synchronizing then GUI:SetSelectionOffset(self:GetValue()) end
 end
 
 local MenuParentOnMouseWheel = function(self, delta)
@@ -1278,41 +1323,36 @@ function GUI:CreateGUI()
 	local ScrollBar = CreateFrame("Slider", nil, self.MenuParent, "BackdropTemplate")
 	ScrollBar:SetPoint("TOPLEFT", self.ScrollUp, "BOTTOMLEFT", 0, -2)
 	ScrollBar:SetPoint("BOTTOMRIGHT", self.ScrollDown, "TOPRIGHT", 0, 2)
-	ScrollBar:SetThumbTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar:SetOrientation("VERTICAL")
-	ScrollBar:SetValueStep(1)
-	ScrollBar:SetBackdrop(HydraUI.BackdropAndBorder)
-	ScrollBar:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
-	ScrollBar:SetBackdropBorderColor(0, 0, 0)
+	GUI:StyleVerticalSlider(ScrollBar, {ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA})
 	ScrollBar:EnableMouseWheel(true)
 	ScrollBar:SetScript("OnMouseWheel", SelectionScrollBarOnMouseWheel)
 	ScrollBar:SetScript("OnValueChanged", SelectionScrollBarOnValueChanged)
 
 	self.ScrollBar = ScrollBar
-
-	local Thumb = ScrollBar:GetThumbTexture()
-	Thumb:SetSize(ScrollBar:GetWidth(), WIDGET_HEIGHT)
-	Thumb:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	Thumb:SetVertexColor(0, 0, 0)
-
-	ScrollBar.NewThumb = ScrollBar:CreateTexture(nil, "BORDER")
-	ScrollBar.NewThumb:SetPoint("TOPLEFT", Thumb, 0, 0)
-	ScrollBar.NewThumb:SetPoint("BOTTOMRIGHT", Thumb, 0, 0)
-	ScrollBar.NewThumb:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.NewThumb:SetVertexColor(0, 0, 0)
-
-	ScrollBar.NewThumb2 = ScrollBar:CreateTexture(nil, "OVERLAY")
-	ScrollBar.NewThumb2:SetPoint("TOPLEFT", ScrollBar.NewThumb, 1, -1)
-	ScrollBar.NewThumb2:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, -1, 1)
-	ScrollBar.NewThumb2:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	ScrollBar.NewThumb2:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	ScrollBar.Progress = ScrollBar:CreateTexture(nil, "ARTWORK")
-	ScrollBar.Progress:SetPoint("TOPLEFT", ScrollBar, 1, -1)
-	ScrollBar.Progress:SetPoint("BOTTOMRIGHT", ScrollBar.NewThumb, "TOPRIGHT", -1, 0)
-	ScrollBar.Progress:SetTexture(Assets:GetTexture("Blank"))
-	ScrollBar.Progress:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-	ScrollBar.Progress:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
+	self.SelectionViewport = GUI:CreateRowViewport(self, {
+		Rows = self.ScrollButtons,
+		MaxVisibleRows = MAX_WIDGETS_SHOWN,
+		AnchorRows = function(Owner, Rows, First, Last)
+			for i = First, Last do
+				local Row, Predecessor = Rows[i], Rows[i - 1]
+				local Anchor = (i == First) and Owner.MenuParent or Predecessor
+				if Row.HydraScrollAnchor ~= Anchor then
+					Row:ClearAllPoints()
+					if i == First then Row:SetPoint("TOPLEFT", Owner.MenuParent, SPACING, -SPACING)
+					else Row:SetPoint("TOP", Predecessor, "BOTTOM", 0, -2) end
+					Row.HydraScrollAnchor = Anchor
+				end
+			end
+		end,
+		AfterRender = function(Owner, Offset)
+			if Offset == 1 then Owner.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+			else Owner.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"])) end
+			local _, Max = Owner.ScrollBar:GetMinMaxValues()
+			if Offset == Max then Owner.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+			else Owner.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"])) end
+		end,
+	})
+	self.SelectionViewport:SetScrollBar(ScrollBar)
 
 	-- Close button
 	self.CloseButton = CreateFrame("Frame", nil, self)
@@ -1347,7 +1387,7 @@ function GUI:CreateGUI()
 
 	self:SortMenuButtons()
 
-	self.ScrollBar:SetMinMaxValues(1, GetMaxOffset(self.NumShownButtons or 0))
+	self.SelectionViewport:SetScrollRange(self.NumShownButtons or 0)
 	self.ScrollBar:SetValue(1)
 	self:SetSelectionOffset(1)
 	self.ScrollBar:Show()

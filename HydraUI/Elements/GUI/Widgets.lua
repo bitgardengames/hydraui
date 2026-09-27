@@ -1835,9 +1835,7 @@ local MenuItemOnMouseDown = function(self)
 	self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
 end
 
-local DropdownUpdateList = function(self)
-
-end
+local DropdownUpdateList
 
 local DropdownOnEnter = function(self)
 	self.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
@@ -2040,25 +2038,82 @@ local AddDropdownScrollBar = function(self)
 	self:SetHeight(((WIDGET_HEIGHT - 1) * DROPDOWN_MAX_SHOWN) + 1)
 end
 
-local DropdownSort = function(self)
+DropdownUpdateList = function(self)
 	if not self.Menu.Initialized then
 		return
 	end
 
-	tsort(self.Menu, function(a, b)
+	local Menu = self.Menu
+	local Count = #Menu
+	local IsScrolling = Count > DROPDOWN_MAX_SHOWN
+	local ItemWidth = DROPDOWN_WIDTH - (SPACING * 2)
+
+	tsort(Menu, function(a, b)
 		return TrimHex(a.Key) < TrimHex(b.Key)
 	end)
 
-	for i = 1, #self.Menu do
-		if (i == 1) then
-			self.Menu[i]:SetPoint("TOP", self.Menu, 0, 0)
-		else
-			self.Menu[i]:SetPoint("TOP", self.Menu[i-1], "BOTTOM", 0, 1)
-		end
+	-- Rows may have anchors to their former neighbours after a dynamic update.
+	for i = 1, Count do
+		Menu[i]:ClearAllPoints()
 	end
 
-	self.Menu:SetHeight(((WIDGET_HEIGHT - 1) * #self.Menu) + 1)
+	if IsScrolling then
+		if not Menu.ScrollBar then
+			AddDropdownScrollBar(Menu)
+		end
+
+		ItemWidth = (DROPDOWN_WIDTH - (WIDGET_HEIGHT / 2)) - (SPACING * 3) + 1
+		Menu.ScrollBar:SetMinMaxValues(1, Count - (DROPDOWN_MAX_SHOWN - 1))
+		Menu.ScrollBar:EnableMouse(true)
+		Menu.ScrollBar:Show()
+		Menu:EnableMouseWheel(true)
+		Menu:SetScript("OnMouseWheel", DropdownOnMouseWheel)
+		Menu:SetHeight(((WIDGET_HEIGHT - 1) * DROPDOWN_MAX_SHOWN) + 1)
+	else
+		if Menu.ScrollBar then
+			Menu.ScrollBar:Hide()
+			Menu.ScrollBar:EnableMouse(false)
+			Menu.ScrollBar:SetMinMaxValues(1, 1)
+		end
+
+		Menu:EnableMouseWheel(false)
+		Menu:SetScript("OnMouseWheel", nil)
+		Menu:SetHeight(((WIDGET_HEIGHT - 1) * Count) + 1)
+	end
+
+	Menu:SetWidth(ItemWidth)
+
+	local SelectedItem
+
+	for i = 1, Count do
+		local MenuItem = Menu[i]
+
+		MenuItem:SetWidth(ItemWidth)
+		MenuItem:SetShown(false)
+
+		if (not SelectedItem and GetDropdownSelectionValue(self, MenuItem) == self.Value) then
+			SelectedItem = MenuItem
+		end
+
+		MenuItem.Selected:SetShown(MenuItem == SelectedItem)
+	end
+
+	Menu.SelectedItem = SelectedItem
+	Menu.SynchronizedValue = SelectedItem and self.Value or nil
+	Menu.Offset = NormalizeDropdownOffset(Menu, Menu.Offset)
+
+	local Last = min(Menu.Offset + DROPDOWN_MAX_SHOWN - 1, Count)
+
+	for i = Menu.Offset, Last do
+		Menu[i]:Show()
+	end
+
+	AnchorDropdownRows(Menu, Menu.Offset, Last)
+	Menu.LastRenderedOffset = Menu.Offset
+	SyncDropdownScrollBar(Menu)
 end
+
+local DropdownSort = DropdownUpdateList
 
 local CreateDropdownSelection = function(self, key, value)
 	local MenuItem = CreateFrame("Frame", nil, self.Menu, "BackdropTemplate")
@@ -2151,15 +2206,8 @@ InitializeDropdown = function(self)
 	end
 
 	self.Menu.Initialized = true
-	self.Menu.SynchronizedValue = self.Value
-	self:Sort()
 	self.Menu.Offset = 1
-
-	if (#self.Menu > DROPDOWN_MAX_SHOWN) then
-		AddDropdownScrollBar(self.Menu)
-	else
-		self.Menu:SetHeight(((WIDGET_HEIGHT - 1) * #self.Menu) + 1)
-	end
+	DropdownUpdateList(self)
 end
 
 local DropdownCreateSelection = function(self, key, value)
@@ -2171,6 +2219,7 @@ local DropdownCreateSelection = function(self, key, value)
 
 	local MenuItem = CreateDropdownSelection(self, key, value)
 	ConfigureDropdownSelection(self, MenuItem)
+	DropdownUpdateList(self)
 
 	return MenuItem
 end
@@ -2189,12 +2238,11 @@ local DropdownRemoveSelection = function(self, key)
 				self.Menu.SynchronizedValue = nil
 			end
 
-			self.Menu[i]:Hide() -- Handle this more thoroughly
+			self.Menu[i]:Hide()
 			self.Menu[i]:EnableMouse(false)
 
 			tremove(self.Menu, i)
-
-			self:Sort()
+			DropdownUpdateList(self)
 
 			return
 		end

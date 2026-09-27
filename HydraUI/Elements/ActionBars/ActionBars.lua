@@ -662,7 +662,7 @@ function AB:CreateBar1()
 		end
 	]])
 
-	if HydraUI.IsClassic then
+	if HydraUI.IsVanilla then
 		self.Bar1:SetAttribute("_onstate-page", [[
 			if GetOverrideBarIndex and HasOverrideActionBar() then
 				newstate = GetOverrideBarIndex() or newstate

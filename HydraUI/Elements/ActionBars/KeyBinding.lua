@@ -229,7 +229,7 @@ local PopupOnCancel = function()
 end
 
 local OnAccept = function()
-	if HydraUI.IsClassic then
+	if HydraUI.IsVanilla then
 		AttemptToSaveBindings(GetCurrentBindingSet())
 	else
 		SaveBindings(GetCurrentBindingSet())

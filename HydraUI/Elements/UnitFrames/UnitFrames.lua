@@ -119,7 +119,7 @@ UF.NPThreatPostUpdate = function(self, unit, status, r, g, b)
 	end
 end
 
-if HydraUI.IsClassic then
+if HydraUI.IsVanilla then
 	local LCD = LibStub("LibClassicDurations")
 	local UnitAura = UnitAura
 

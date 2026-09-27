@@ -1961,6 +1961,7 @@ local AddDropdownScrollBar = function(self)
 		UpdateRows = function(Owner, Rows, OldRows, OldOffset, OldLast, Offset, Last)
 			-- Preserve the cheap single hide/show operation for one-row wheel movement.
 			if not OldOffset then
+				for i = Offset, Last do Rows[i]:Show() end
 				for i = Last + 1, #Rows do Rows[i]:Hide() end
 			elseif Offset == OldOffset + 1 then
 				Rows[OldOffset]:Hide()

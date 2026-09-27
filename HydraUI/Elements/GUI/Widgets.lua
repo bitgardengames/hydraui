@@ -2066,11 +2066,8 @@ end
 local DropdownSort = DropdownUpdateList
 
 local CreateDropdownSelection = function(self, key, value)
-	local MenuItem = CreateFrame("Frame", nil, self.Menu, "BackdropTemplate")
+	local MenuItem = CreateFrame("Frame", nil, self.Menu)
 	MenuItem:SetSize(DROPDOWN_WIDTH - 6, WIDGET_HEIGHT)
-	MenuItem:SetBackdrop(HydraUI.BackdropAndBorder)
-	MenuItem:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-widget-bg-color"]))
-	MenuItem:SetBackdropBorderColor(0, 0, 0)
 	MenuItem:SetScript("OnMouseDown", MenuItemOnMouseDown)
 	MenuItem:SetScript("OnMouseUp", MenuItemOnMouseUp)
 	MenuItem:SetScript("OnEnter", MenuItemOnEnter)
@@ -2080,6 +2077,16 @@ local CreateDropdownSelection = function(self, key, value)
 	MenuItem.Key = key
 	MenuItem.Value = value
 	MenuItem.ID = self.ID
+
+	-- A dropdown may contain hundreds of shared-media entries. Applying a
+	-- BackdropTemplate to every row runs NineSlice layout for each entry and can
+	-- exceed the script time limit when the menu is first opened. The inset row
+	-- texture covers the background, so a single black texture provides the same
+	-- one-pixel border without invoking NineSlice.
+	MenuItem.Background = MenuItem:CreateTexture(nil, "BACKGROUND")
+	MenuItem.Background:SetAllPoints()
+	MenuItem.Background:SetTexture(Assets:GetTexture("Blank"))
+	MenuItem.Background:SetVertexColor(0, 0, 0)
 
 	MenuItem.Highlight = MenuItem:CreateTexture(nil, "OVERLAY")
 	MenuItem.Highlight:SetPoint("TOPLEFT", MenuItem, 1, -1)

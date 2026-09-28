@@ -7,7 +7,9 @@ Defaults["party-pets-health-reverse"] = false
 Defaults["party-pets-health-color"] = "CLASS"
 Defaults["party-pets-health-orientation"] = "HORIZONTAL"
 Defaults["party-pets-health-smooth"] = true
-Defaults["party-pets-power-height"] = 0 -- NYI
+Defaults["party-pets-power-enable"] = true
+Defaults["party-pets-power-height"] = 6
+Defaults["party-pets-power-color"] = "POWER"
 
 local UF = HydraUI:GetModule("Unit Frames")
 
@@ -104,6 +106,23 @@ HydraUI.StyleFuncs["partypet"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["party-pets-health-color"])
 
+	-- Power Bar
+	local Power = CreateFrame("StatusBar", nil, self)
+	Power:SetPoint("BOTTOMLEFT", self, 1, 1)
+	Power:SetPoint("BOTTOMRIGHT", self, -1, 1)
+	Power:SetHeight(Settings["party-pets-power-height"])
+	Power:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Power:SetAlpha(Settings["party-pets-power-enable"] and 1 or 0)
+	Health:SetPoint("BOTTOMRIGHT", Power, "TOPRIGHT", 0, 1)
+
+	local PowerBG = Power:CreateTexture(nil, "BORDER")
+	PowerBG:SetAllPoints(Power)
+	PowerBG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	PowerBG:SetAlpha(0.2)
+
+	Power.frequentUpdates = true
+	UF:SetPowerAttributes(Power, Settings["party-pets-power-color"])
+
 	-- Target Icon
 	local RaidTarget = Health:CreateTexture(nil, 'OVERLAY')
 	RaidTarget:SetSize(16, 16)
@@ -119,6 +138,8 @@ HydraUI.StyleFuncs["partypet"] = function(self, unit)
 
 	self.Health = Health
 	self.Health.bg = HealthBG
+	self.Power = Power
+	self.Power.bg = PowerBG
 	self.HealthMiddle = HealthMiddle
 	self.RaidTargetIndicator = RaidTarget
 end
@@ -131,28 +152,13 @@ local UpdateHealthTexture = function(value)
 			Unit = select(i, HydraUI.UnitFrames["partypet"]:GetChildren())
 
 			if Unit then
-				Unit.Health:SetStatusBarTexture(Assets:GetTetxure(value))
-				Unit.Health.bg:SetStatusBarTexture(Assets:GetTetxure(value))
-				Unit.Health.HealBar:SetStatusBarTexture(Assets:GetTetxure(value))
+				Unit.Health:SetStatusBarTexture(Assets:GetTexture(value))
+				Unit.Health.bg:SetTexture(Assets:GetTexture(value))
+				Unit.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
 
 				if Unit.AbsorbsBar then
 					Unit.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
 				end
-			end
-		end
-	end
-end
-
-local UpdatePowerTexture = function(value)
-	if HydraUI.UnitFrames["partypet"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["partypet"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["partypet"]:GetChildren())
-
-			if Unit then
-				Unit.Power:SetStatusBarTexture(Assets:GetTexture(value))
-				Unit.Power.bg:SetTexture(Assets:GetTexture(value))
 			end
 		end
 	end
@@ -171,4 +177,9 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Party Pets"],
 	right:CreateDropdown("party-pets-health-orientation", Settings["party-pets-health-orientation"], {[Language["Horizontal"]] = "HORIZONTAL", [Language["Vertical"]] = "VERTICAL"}, Language["Fill Orientation"], Language["Set the fill orientation of the health bar"], ReloadUI):RequiresReload(true)
 	right:CreateSwitch("party-pets-health-reverse", Settings["party-pets-health-reverse"], Language["Reverse Health Fill"], Language["Reverse the fill of the health bar"], ReloadUI):RequiresReload(true)
 	right:CreateSwitch("party-pets-health-smooth", Settings["party-pets-health-smooth"], Language["Enable Smooth Progress"], Language["Set the health bar to animate changes smoothly"], ReloadUI):RequiresReload(true)
+
+	right:CreateHeader(Language["Power"])
+	right:CreateSwitch("party-pets-power-enable", Settings["party-pets-power-enable"], Language["Enable Power Bar"], Language["Enable the power bar"], ReloadUI):RequiresReload(true)
+	right:CreateSlider("party-pets-power-height", Settings["party-pets-power-height"], 2, 30, 1, Language["Power Height"], Language["Set the height of party pet power bars"], ReloadUI):RequiresReload(true)
+	right:CreateDropdown("party-pets-power-color", Settings["party-pets-power-color"], {[Language["Class"]] = "CLASS", [Language["Reaction"]] = "REACTION", [Language["Power Type"]] = "POWER"}, Language["Power Bar Color"], Language["Set the color of the power bar"], ReloadUI):RequiresReload(true)
 end)

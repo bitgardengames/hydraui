@@ -24,8 +24,33 @@ Defaults["nameplates-enable-castbar"] = true
 Defaults["nameplates-cast-classcolor"] = true
 Defaults["nameplates-castbar-height"] = 12
 Defaults["nameplates-castbar-enable-icon"] = true
+Defaults["nameplates-castbar-show-name"] = true
+Defaults["nameplates-castbar-show-time"] = true
+Defaults["nameplates-castbar-interruptible-color"] = "f0b849"
+Defaults["nameplates-castbar-uninterruptible-color"] = "d94c4c"
+Defaults["nameplates-castbar-emphasize-target"] = true
 Defaults["nameplates-selected-alpha"] = 100
 Defaults["nameplates-unselected-alpha"] = 40
+Defaults["nameplates-show-friendly"] = false
+Defaults["nameplates-show-enemy"] = true
+Defaults["nameplates-show-neutral"] = true
+Defaults["nameplates-show-pets"] = true
+Defaults["nameplates-show-guardians"] = true
+Defaults["nameplates-show-minor"] = true
+Defaults["nameplates-show-personal"] = false
+Defaults["nameplates-stacking"] = true
+Defaults["nameplates-overlap-horizontal"] = 0.8
+Defaults["nameplates-overlap-vertical"] = 1.1
+Defaults["nameplates-max-distance"] = 60
+Defaults["nameplates-friendly-name-only"] = false
+Defaults["nameplates-target-scale"] = 110
+Defaults["nameplates-execute-coloring"] = false
+Defaults["nameplates-execute-threshold"] = 20
+Defaults["nameplates-execute-color"] = "d62f2f"
+Defaults["nameplates-threat-tank-safe"] = "33cc66"
+Defaults["nameplates-threat-tank-danger"] = "e64545"
+Defaults["nameplates-threat-dps-safe"] = "33cc66"
+Defaults["nameplates-threat-dps-danger"] = "e64545"
 Defaults["nameplates-enable-auras"] = true
 Defaults["nameplates-buffs-direction"] = "LTR"
 Defaults["nameplates-debuffs-direction"] = "RTL"
@@ -36,6 +61,70 @@ local oUF = ns.oUF or oUF
 local UF = HydraUI:GetModule("Unit Frames")
 
 local GetNamePlates = C_NamePlate.GetNamePlates
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
+
+-- Only CVars deliberately supported by this module belong here.  Keep this
+-- separate from HydraUI:SetCVars(), which is an unfinished, global concept.
+local NamePlateCVarSettings = {
+	nameplateShowFriends = "nameplates-show-friendly",
+	nameplateShowEnemies = "nameplates-show-enemy",
+	nameplateShowEnemyMinus = "nameplates-show-minor",
+	nameplateShowEnemyPets = "nameplates-show-pets",
+	nameplateShowFriendlyPets = "nameplates-show-pets",
+	nameplateShowEnemyGuardians = "nameplates-show-guardians",
+	nameplateShowFriendlyGuardians = "nameplates-show-guardians",
+	nameplateShowSelf = "nameplates-show-personal",
+	nameplateShowOnlyNames = "nameplates-friendly-name-only",
+	nameplateMotion = "nameplates-stacking",
+	nameplateOverlapH = "nameplates-overlap-horizontal",
+	nameplateOverlapV = "nameplates-overlap-vertical",
+	nameplateMaxDistance = "nameplates-max-distance",
+	nameplateSelectedScale = "nameplates-target-scale",
+}
+
+local function GetNamePlateCVarValue(cvar, setting)
+	local value = Settings[setting]
+	if (cvar == "nameplateSelectedScale") then return value / 100 end
+	if (cvar == "nameplateMotion") then return value and 1 or 0 end
+	if (type(value) == "boolean") then return value and 1 or 0 end
+	return value
+end
+
+function UF:ApplyNamePlateCVars()
+	for cvar, setting in pairs(NamePlateCVarSettings) do
+		local value = GetNamePlateCVarValue(cvar, setting)
+		C_CVar.SetCVar(cvar, value)
+		if self.NamePlateCVars then self.NamePlateCVars[cvar] = value end
+	end
+	-- Neutral units are governed by the enemy master CVar, so preserve enemy
+	-- plates when either hostile or neutral visibility is requested.
+	C_CVar.SetCVar("nameplateShowEnemies", (Settings["nameplates-show-enemy"] or Settings["nameplates-show-neutral"]) and 1 or 0)
+end
+
+local function NamePlateThreatPostUpdate(self, unit, status)
+	if (not status or status == 0) then return end
+	local tank = UnitGroupRolesAssigned("player") == "TANK"
+	local safe = tank and status >= 2 or (not tank and status < 2)
+	local key = tank and (safe and "nameplates-threat-tank-safe" or "nameplates-threat-tank-danger")
+		or (safe and "nameplates-threat-dps-safe" or "nameplates-threat-dps-danger")
+	local r, g, b = HydraUI:HexToRGB(Settings[key])
+	self.Top:SetVertexColor(r, g, b)
+	self.Bottom:SetVertexColor(r, g, b)
+end
+
+local function NamePlateHealthPostUpdate(self, unit, current, maximum)
+	if Settings["nameplates-execute-coloring"] and maximum and maximum > 0
+	and ((current / maximum) * 100 <= Settings["nameplates-execute-threshold"]) then
+		self:SetStatusBarColor(HydraUI:HexToRGB(Settings["nameplates-execute-color"]))
+	end
+end
+
+local function NamePlateCastColor(self)
+	local key = self.notInterruptible and "nameplates-castbar-uninterruptible-color" or "nameplates-castbar-interruptible-color"
+	local r, g, b = HydraUI:HexToRGB(Settings[key])
+	self:SetStatusBarColor(r, g, b)
+	self.bg:SetVertexColor(r, g, b)
+end
 
 HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	self:SetScale(UIParent:GetScale())
@@ -126,12 +215,13 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	Health.colorDisconnected = true
 
 	UF:SetHealthAttributes(Health, Settings["nameplates-health-color"])
+	Health.PostUpdate = NamePlateHealthPostUpdate
 
 	local Threat = CreateFrame("Frame", nil, Health)
 	Threat:SetAllPoints(Health)
 	Threat:SetFrameLevel(Health:GetFrameLevel() - 1)
 	Threat.feedbackUnit = "player"
-	Threat.PostUpdate = UF.NPThreatPostUpdate
+	Threat.PostUpdate = NamePlateThreatPostUpdate
 
 	Threat.Top = Threat:CreateTexture(nil, "BORDER")
 	Threat.Top:SetHeight(6)
@@ -244,13 +334,17 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
     Castbar.Time = Time
     Castbar.Text = Text
     Castbar.Icon = Icon
+	Castbar.IconBG = IconBG
     Castbar.showTradeSkills = true
     Castbar.timeToHold = 0.7
 	Castbar.ClassColor = Settings["nameplates-cast-classcolor"]
-	Castbar.PostCastStart = UF.PostCastStart
+	Castbar.PostCastStart = NamePlateCastColor
 	Castbar.PostCastStop = UF.PostCastStop
 	Castbar.PostCastFail = UF.PostCastFail
-	Castbar.PostCastInterruptible = UF.PostCastInterruptible
+	Castbar.PostCastInterruptible = NamePlateCastColor
+	if (not Settings["nameplates-castbar-show-name"]) then Text:Hide() end
+	if (not Settings["nameplates-castbar-show-time"]) then Time:Hide() end
+	if (not Settings["nameplates-castbar-enable-icon"]) then Icon:Hide(); IconBG:Hide() end
 
 	--[[ Elite icon
 	local EliteIndicator = Health:CreateTexture(nil, "OVERLAY")
@@ -353,6 +447,13 @@ UF.NamePlateCallback = function(plate)
 	else
 		plate:DisableElement("Castbar")
 	end
+
+	plate.Castbar.Text:SetShown(Settings["nameplates-castbar-show-name"])
+	plate.Castbar.Time:SetShown(Settings["nameplates-castbar-show-time"])
+	plate.Castbar.Icon:SetShown(Settings["nameplates-castbar-enable-icon"])
+	plate.Castbar.IconBG:SetShown(Settings["nameplates-castbar-enable-icon"])
+	local emphasize = Settings["nameplates-castbar-emphasize-target"] and UnitIsUnit(plate.unit, "target")
+	plate.Castbar:SetScale(emphasize and 1.15 or 1)
 
 	if plate.Buffs then
 		if (Settings["nameplates-buffs-direction"] == "LTR") then
@@ -500,7 +601,7 @@ local NamePlateEnableCastBars = function(self, value)
 end
 
 local UpdateNamePlatesEnableCastBars = function(value)
-	RunForAllNamePlates(NamePlateSetTargetHightlight, value)
+	RunForAllNamePlates(NamePlateEnableCastBars, value)
 end
 
 local NamePlateSetCastBarsHeight = function(self, value)
@@ -535,6 +636,22 @@ end
 local UpdateNamePlateUnselectedAlpha = function(value)
 	C_CVar.SetCVar("nameplateMinAlpha", value / 100)
 	C_CVar.SetCVar("nameplateMaxAlpha", value / 100)
+end
+
+local UpdateNamePlateCVars = function()
+	UF:ApplyNamePlateCVars()
+end
+
+local UpdateNamePlateAppearance = function()
+	RunForAllNamePlates(function(plate)
+		plate.Castbar.Text:SetShown(Settings["nameplates-castbar-show-name"])
+		plate.Castbar.Time:SetShown(Settings["nameplates-castbar-show-time"])
+		plate.Castbar.Icon:SetShown(Settings["nameplates-castbar-enable-icon"])
+		plate.Castbar.IconBG:SetShown(Settings["nameplates-castbar-enable-icon"])
+		local emphasize = Settings["nameplates-castbar-emphasize-target"] and UnitIsUnit(plate.unit, "target")
+		plate.Castbar:SetScale(emphasize and 1.15 or 1)
+		plate:UpdateAllElements("ForceUpdate")
+	end)
 end
 
 local NamePlateSetBuffDirection = function(self, value)
@@ -595,6 +712,21 @@ end
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Name Plates"], function(left, right)
 	left:CreateHeader(Language["Enable"])
 	left:CreateSwitch("nameplates-enable", Settings["nameplates-enable"], Language["Enable Name Plates"], Language["Enable the HydraUI name plates module"], ReloadUI):RequiresReload(true)
+	left:CreateSwitch("nameplates-show-friendly", Settings["nameplates-show-friendly"], "Friendly Units", "Show friendly nameplates", UpdateNamePlateCVars)
+	left:CreateSwitch("nameplates-show-enemy", Settings["nameplates-show-enemy"], "Enemy Units", "Show enemy nameplates", UpdateNamePlateCVars)
+	left:CreateSwitch("nameplates-show-neutral", Settings["nameplates-show-neutral"], "Neutral Units", "Show neutral nameplates", UpdateNamePlateCVars)
+	left:CreateSwitch("nameplates-show-pets", Settings["nameplates-show-pets"], "Pets", "Show enemy pet nameplates", UpdateNamePlateCVars)
+	left:CreateSwitch("nameplates-show-guardians", Settings["nameplates-show-guardians"], "Guardians", "Show enemy guardian nameplates", UpdateNamePlateCVars)
+	left:CreateSwitch("nameplates-show-minor", Settings["nameplates-show-minor"], "Minor Units", "Show minor-unit nameplates", UpdateNamePlateCVars)
+	left:CreateSwitch("nameplates-show-personal", Settings["nameplates-show-personal"], "Personal Resource", "Show the personal resource nameplate", UpdateNamePlateCVars)
+
+	left:CreateHeader("Blizzard Behavior")
+	left:CreateSwitch("nameplates-stacking", Settings["nameplates-stacking"], "Stack Nameplates", "Stack nameplates instead of allowing overlap", UpdateNamePlateCVars)
+	left:CreateSlider("nameplates-overlap-horizontal", Settings["nameplates-overlap-horizontal"], 0.1, 2, 0.1, "Horizontal Spacing", "Set horizontal nameplate spacing", UpdateNamePlateCVars)
+	left:CreateSlider("nameplates-overlap-vertical", Settings["nameplates-overlap-vertical"], 0.1, 2, 0.1, "Vertical Spacing", "Set vertical nameplate spacing", UpdateNamePlateCVars)
+	left:CreateSlider("nameplates-max-distance", Settings["nameplates-max-distance"], 20, 60, 1, "Maximum Distance", "Set nameplate distance up to the client limit", UpdateNamePlateCVars)
+	left:CreateSwitch("nameplates-friendly-name-only", Settings["nameplates-friendly-name-only"], "Friendly Names Only", "Only show names on friendly nameplates", UpdateNamePlateCVars)
+	left:CreateSlider("nameplates-target-scale", Settings["nameplates-target-scale"], 100, 150, 1, "Target Scale", "Set the selected nameplate scale", UpdateNamePlateCVars)
 
 	left:CreateHeader(Language["Font"])
 	left:CreateDropdown("nameplates-font", Settings["nameplates-font"], Assets:GetFontList(), Language["Font"], Language["Set the font of the name plates"], UpdateNamePlatesFont, "Font")
@@ -607,6 +739,13 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Name Plates"]
 	left:CreateDropdown("nameplates-health-color", Settings["nameplates-health-color"], {[Language["Class"]] = "CLASS", [Language["Reaction"]] = "REACTION", [Language["Custom"]] = "CUSTOM", [Language["Blizzard"]] = "BLIZZARD", [Language["Threat"]] = "THREAT"}, Language["Health Bar Color"], Language["Set the color of the health bar"], UpdateNamePlatesHealthColor)
 	left:CreateSwitch("nameplates-health-smooth", Settings["nameplates-health-smooth"], Language["Enable Smooth Progress"], Language["Set the health bar to animate changes smoothly"], ReloadUI):RequiresReload(true)
 	left:CreateDropdown("NPHealthTexture", Settings.NPHealthTexture, Assets:GetTextureList(), Language["Health Texture"], "", UpdateHealthTexture, "Texture")
+	left:CreateSwitch("nameplates-execute-coloring", Settings["nameplates-execute-coloring"], "Execute-range Coloring", "Color low-health nameplates", UpdateNamePlateAppearance)
+	left:CreateSlider("nameplates-execute-threshold", Settings["nameplates-execute-threshold"], 1, 50, 1, "Execute Threshold", "Health percentage considered execute range", UpdateNamePlateAppearance)
+	left:CreateColorSelection("nameplates-execute-color", Settings["nameplates-execute-color"], "Execute Color", "Color used in execute range", UpdateNamePlateAppearance)
+	left:CreateColorSelection("nameplates-threat-tank-safe", Settings["nameplates-threat-tank-safe"], "Tank: Secure", "Threat color when a tank securely holds threat", UpdateNamePlateAppearance)
+	left:CreateColorSelection("nameplates-threat-tank-danger", Settings["nameplates-threat-tank-danger"], "Tank: Losing", "Threat color when a tank does not hold threat", UpdateNamePlateAppearance)
+	left:CreateColorSelection("nameplates-threat-dps-safe", Settings["nameplates-threat-dps-safe"], "Damage/Healer: Safe", "Threat color without aggro", UpdateNamePlateAppearance)
+	left:CreateColorSelection("nameplates-threat-dps-danger", Settings["nameplates-threat-dps-danger"], "Damage/Healer: Aggro", "Threat color when holding aggro", UpdateNamePlateAppearance)
 
 	left:CreateHeader(Language["Buffs"])
 	left:CreateSwitch("nameplates-enable-auras", Settings["nameplates-enable-auras"], Language["Enable Buffs"], Language["Display buffs above nameplates"], UpdateNamePlatesEnableAuras)
@@ -628,6 +767,12 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Name Plates"]
 	right:CreateSwitch("nameplates-enable-castbar", Settings["nameplates-enable-castbar"], Language["Enable Casting Bar"], Language["Enable the casting bar the name plates"], UpdateNamePlatesEnableCastBars)
 	right:CreateSwitch("nameplates-cast-classcolor", Settings["nameplates-cast-classcolor"], Language["Enable Class Color"], Language["Use class colors"], ReloadUI):RequiresReload(true)
 	right:CreateSlider("nameplates-castbar-height", Settings["nameplates-castbar-height"], 3, 28, 1, Language["Set Height"], Language["Set the height of name plate casting bars"], UpdateNamePlatesCastBarsHeight)
+	right:CreateColorSelection("nameplates-castbar-interruptible-color", Settings["nameplates-castbar-interruptible-color"], "Interruptible Color", "Color for interruptible casts", UpdateNamePlateAppearance)
+	right:CreateColorSelection("nameplates-castbar-uninterruptible-color", Settings["nameplates-castbar-uninterruptible-color"], "Non-interruptible Color", "Color for protected casts", UpdateNamePlateAppearance)
+	right:CreateSwitch("nameplates-castbar-show-name", Settings["nameplates-castbar-show-name"], "Show Cast Name", "Display cast-name text", UpdateNamePlateAppearance)
+	right:CreateSwitch("nameplates-castbar-show-time", Settings["nameplates-castbar-show-time"], "Show Cast Time", "Display remaining cast time", UpdateNamePlateAppearance)
+	right:CreateSwitch("nameplates-castbar-enable-icon", Settings["nameplates-castbar-enable-icon"], "Show Cast Icon", "Display the spell icon", UpdateNamePlateAppearance)
+	right:CreateSwitch("nameplates-castbar-emphasize-target", Settings["nameplates-castbar-emphasize-target"], "Emphasize Target Cast", "Enlarge the target's cast bar", UpdateNamePlateAppearance)
 	right:CreateDropdown("NPCastTexture", Settings.NPCastTexture, Assets:GetTextureList(), Language["Castbar Texture"], "", UpdateCastTexture, "Texture")
 
 	right:CreateHeader(Language["Target Indicator"])

@@ -17,7 +17,6 @@ Defaults["nameplates-bottomright-text"] = "[HealthPercent]"
 Defaults["nameplates-only-player-debuffs"] = true
 Defaults["nameplates-health-color"] = "CLASS"
 Defaults["nameplates-health-smooth"] = true
-Defaults["nameplates-friendly-name-only"] = false
 Defaults["nameplates-enable-elite-indicator"] = true
 Defaults["nameplates-enable-target-indicator"] = true
 Defaults["nameplates-target-indicator-size"] = "SMALL"
@@ -47,7 +46,6 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	Backdrop:SetAllPoints()
 	Backdrop:SetTexture(Assets:GetTexture("Blank"))
 	Backdrop:SetVertexColor(0, 0, 0)
-	self.Backdrop = Backdrop
 
 	self.colors.debuff = HydraUI.DebuffColors
 
@@ -117,12 +115,6 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	HydraUI:SetFontInfo(BottomLeft, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	BottomLeft:SetPoint("LEFT", Health, "BOTTOMLEFT", 4, -3)
 	BottomLeft:SetJustifyH("LEFT")
-
-	local NameOnly = self:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(NameOnly, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	NameOnly:SetPoint("CENTER", self, "CENTER", 0, 0)
-	NameOnly:SetJustifyH("CENTER")
-	NameOnly:Hide()
 
 	--[[local InsideCenter = Health:CreateFontString(nil, "OVERLAY")
 	HydraUI:SetFontInfo(InsideCenter, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
@@ -300,7 +292,6 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	self:Tag(Bottom, Settings["nameplates-bottom-text"])
 	self:Tag(BottomRight, Settings["nameplates-bottomright-text"])
 	self:Tag(BottomLeft, Settings["nameplates-bottomleft-text"])
-	self:Tag(NameOnly, "[NameColor][Name(20)][ColorStop]")
 
 	self.Health = Health
 	self.Top = Top
@@ -309,7 +300,6 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	self.Bottom = Bottom
 	self.BottomRight = BottomRight
 	self.BottomLeft = BottomLeft
-	self.NameOnly = NameOnly
 	self.Health.bg = HealthBG
 	self.Debuffs = Debuffs
 	self.Castbar = Castbar
@@ -317,20 +307,6 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	self.TargetIndicator = TargetIndicator
 	self.ThreatIndicator = Threat
 	self.RaidTargetIndicator = RaidTargetIndicator
-end
-
-local SetFriendlyNameOnly = function(plate)
-	local NameOnly = Settings["nameplates-friendly-name-only"] and plate.unit and UnitIsFriend("player", plate.unit)
-
-	plate.Backdrop:SetShown(not NameOnly)
-	plate.Health:SetShown(not NameOnly)
-	plate.NameOnly:SetShown(NameOnly)
-
-	if NameOnly then
-		plate:DisableElement("Auras")
-		plate:DisableElement("Castbar")
-		plate:DisableElement("TargetIndicator")
-	end
 end
 
 UF.NamePlateCVars = {
@@ -426,11 +402,8 @@ UF.NamePlateCallback = function(plate)
 	HydraUI:SetFontInfo(plate.Bottom, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(plate.BottomRight, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(plate.BottomLeft, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(plate.NameOnly, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(plate.Castbar.Time, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(plate.Castbar.Text, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-
-	SetFriendlyNameOnly(plate)
 end
 
 local RunForAllNamePlates = function(func, value)
@@ -491,10 +464,6 @@ local UpdateNamePlatesHealthColor = function()
 	RunForAllNamePlates(NamePlateSetHealthColor)
 end
 
-local UpdateFriendlyNameOnly = function()
-	RunForAllNamePlates(UF.NamePlateCallback)
-end
-
 local NamePlateSetTargetHightlight = function(self, value)
 	if value then
 		self:EnableElement("TargetIndicator")
@@ -514,7 +483,6 @@ local NamePlateSetFont = function(self)
 	HydraUI:SetFontInfo(self.Bottom, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(self.BottomRight, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(self.BottomLeft, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.NameOnly, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(self.Castbar.Time, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	HydraUI:SetFontInfo(self.Castbar.Text, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 end
@@ -634,7 +602,6 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Name Plates"]
 	left:CreateDropdown("nameplates-font-flags", Settings["nameplates-font-flags"], Assets:GetFlagsList(), Language["Font Flags"], Language["Set the font flags of the name plates"], UpdateNamePlatesFont)
 
 	left:CreateHeader(Language["Health"])
-	left:CreateSwitch("nameplates-friendly-name-only", Settings["nameplates-friendly-name-only"], "Name Only", "Show only the unit name on friendly name plates", UpdateFriendlyNameOnly)
 	left:CreateSlider("nameplates-width", Settings["nameplates-width"], 60, 220, 1, "Set Width", "Set the width of name plates", UpdateNamePlatesWidth)
 	left:CreateSlider("nameplates-height", Settings["nameplates-height"], 4, 50, 1, "Set Height", "Set the height of name plates", UpdateNamePlatesHeight)
 	left:CreateDropdown("nameplates-health-color", Settings["nameplates-health-color"], {[Language["Class"]] = "CLASS", [Language["Reaction"]] = "REACTION", [Language["Custom"]] = "CUSTOM", [Language["Blizzard"]] = "BLIZZARD", [Language["Threat"]] = "THREAT"}, Language["Health Bar Color"], Language["Set the color of the health bar"], UpdateNamePlatesHealthColor)

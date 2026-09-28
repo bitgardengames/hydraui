@@ -1131,35 +1131,14 @@ local InputDisableSaving = function(self)
 	return self
 end
 
-GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
-	if (Settings[id] ~= nil) then
-		value = Settings[id]
-	end
-
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.ID = id
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
-
-	Anchor:SetScript("OnEnter", AnchorOnEnter)
-	Anchor:SetScript("OnLeave", AnchorOnLeave)
-
-	local Input = CreateFrame("Frame", nil, Anchor, "BackdropTemplate")
-	Input:SetSize(INPUT_WIDTH, WIDGET_HEIGHT)
-	Input:SetPoint("RIGHT", Anchor, 0, 0)
+local CreateInputControl = function(parent, width, id, value, tooltip, hook, isCombined)
+	local Input = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	Input:SetSize(width, WIDGET_HEIGHT)
+	Input:SetPoint(isCombined and "LEFT" or "RIGHT", parent, 0, 0)
 	Input:SetBackdrop(HydraUI.BackdropAndBorder)
 	Input:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-widget-bg-color"]))
 	Input:SetBackdropBorderColor(0, 0, 0)
-	Input.ID = id
-	Input.Hook = hook
-	Input.Parent = Input
-	Input.RequiresReload = InputRequiresReload
-	Input.DisableSaving = InputDisableSaving
-
-	Input:SetScript("OnEnter", InputOnEnter)
-	Input:SetScript("OnLeave", InputOnLeave)
-	Input:SetScript("OnMouseUp", InputOnMouseDown)
+	Input.Tooltip = tooltip
 
 	Input.Texture = Input:CreateTexture(nil, "ARTWORK")
 	Input.Texture:SetPoint("TOPLEFT", Input, 1, -1)
@@ -1181,20 +1160,54 @@ GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 	Input.Highlight:SetVertexColor(1, 1, 1, 0.4)
 	Input.Highlight:SetAlpha(0)
 
-	Input.ButtonText = Input:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(Input.ButtonText, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Input.ButtonText:SetSize(INPUT_WIDTH, WIDGET_HEIGHT)
-	Input.ButtonText:SetPoint("TOPLEFT", Input, SPACING, -SPACING)
-	Input.ButtonText:SetPoint("BOTTOMRIGHT", Input, -SPACING, SPACING)
-	Input.ButtonText:SetJustifyH("LEFT")
-	Input.ButtonText:SetText(value)
+	local Control
 
-	Input.Text = Input:CreateFontString(nil, "OVERLAY")
-	Input.Text:SetPoint("LEFT", Anchor, LABEL_SPACING, 0)
-	Input.Text:SetSize(GROUP_WIDTH - INPUT_WIDTH - 6, WIDGET_HEIGHT)
-	HydraUI:SetFontInfo(Input.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Input.Text:SetJustifyH("LEFT")
-	Input.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
+	if isCombined then
+		Control = CreateFrame("EditBox", nil, Input)
+		Control:SetPoint("TOPLEFT", Input, SPACING, -2)
+		Control:SetPoint("BOTTOMRIGHT", Input, -SPACING, 2)
+		Control:SetAutoFocus(false)
+		Control:EnableKeyboard(true)
+		Control:EnableMouse(true)
+		Control:SetMultiLine(true)
+		Control:SetMaxLetters(9999)
+		Control:SetText(value)
+
+		Control:SetScript("OnMouseDown", InputOnMouseDown)
+		Control:SetScript("OnEscapePressed", InputOnEscapePressed)
+		Control:SetScript("OnEnterPressed", InputOnEnterPressed)
+		Control:SetScript("OnEditFocusLost", InputOnEditFocusLost)
+		Control:SetScript("OnChar", InputOnChar)
+		Control:SetScript("OnEnter", InputOnEnter)
+		Control:SetScript("OnLeave", InputOnLeave)
+
+		Input.Box = Control
+	else
+		Control = Input
+		Control:SetScript("OnEnter", InputOnEnter)
+		Control:SetScript("OnLeave", InputOnLeave)
+		Control:SetScript("OnMouseUp", InputOnMouseDown)
+
+		Input.ButtonText = Input:CreateFontString(nil, "OVERLAY")
+		Input.ButtonText:SetSize(width, WIDGET_HEIGHT)
+		Input.ButtonText:SetPoint("TOPLEFT", Input, SPACING, -SPACING)
+		Input.ButtonText:SetPoint("BOTTOMRIGHT", Input, -SPACING, SPACING)
+		Input.ButtonText:SetJustifyH("LEFT")
+		Input.ButtonText:SetText(value)
+	end
+
+	HydraUI:SetFontInfo(isCombined and Control or Input.ButtonText, Settings["ui-widget-font"], Settings["ui-font-size"])
+
+	if isCombined then
+		Control:SetJustifyH("LEFT")
+	end
+
+	Control.ID = id
+	Control.Hook = hook
+	Control.Parent = Input
+	Control.Tooltip = tooltip
+	Control.RequiresReload = InputRequiresReload
+	Control.DisableSaving = InputDisableSaving
 
 	Input.FadeIn = LibMotion:CreateAnimation(Input.Flash, "Fade")
 	Input.FadeIn:SetEasing("in")
@@ -1206,6 +1219,32 @@ GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 	Input.FadeOut:SetEasing("out")
 	Input.FadeOut:SetDuration(0.3)
 	Input.FadeOut:SetChange(0)
+
+	return Input
+end
+
+GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
+	if (Settings[id] ~= nil) then
+		value = Settings[id]
+	end
+
+	local Anchor = CreateFrame("Frame", nil, self)
+	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
+	Anchor.ID = id
+	Anchor.Text = label
+	Anchor.Tooltip = tooltip
+
+	Anchor:SetScript("OnEnter", AnchorOnEnter)
+	Anchor:SetScript("OnLeave", AnchorOnLeave)
+
+	local Input = CreateInputControl(Anchor, INPUT_WIDTH, id, value, tooltip, hook, false)
+
+	Input.Text = Input:CreateFontString(nil, "OVERLAY")
+	Input.Text:SetPoint("LEFT", Anchor, LABEL_SPACING, 0)
+	Input.Text:SetSize(GROUP_WIDTH - INPUT_WIDTH - 6, WIDGET_HEIGHT)
+	HydraUI:SetFontInfo(Input.Text, Settings["ui-widget-font"], Settings["ui-font-size"])
+	Input.Text:SetJustifyH("LEFT")
+	Input.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
 
 	tinsert(self.Widgets, Anchor)
 
@@ -1284,70 +1323,10 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 	Button.MiddleText:SetJustifyH("CENTER")
 	Button.MiddleText:SetText(button)
 
-	local Input = CreateFrame("Frame", nil, Anchor2, "BackdropTemplate")
-	Input:SetSize(INPUT_BUTTON_WIDTH, WIDGET_HEIGHT)
-	Input:SetPoint("LEFT", Anchor2, 0, 0)
-	Input:SetBackdrop(HydraUI.BackdropAndBorder)
-	Input:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-widget-bg-color"]))
-	Input:SetBackdropBorderColor(0, 0, 0)
-
-	Input.Texture = Input:CreateTexture(nil, "ARTWORK")
-	Input.Texture:SetPoint("TOPLEFT", Input, 1, -1)
-	Input.Texture:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	Input.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	Input.Flash = Input:CreateTexture(nil, "OVERLAY")
-	Input.Flash:SetPoint("TOPLEFT", Input, 1, -1)
-	Input.Flash:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Flash:SetTexture(Assets:GetTexture("RenHorizonUp"))
-	Input.Flash:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-	Input.Flash:SetAlpha(0)
-
-	Input.Highlight = Input:CreateTexture(nil, "OVERLAY")
-	Input.Highlight:SetPoint("TOPLEFT", Input, 1, -1)
-	Input.Highlight:SetPoint("BOTTOMRIGHT", Input, -1, 1)
-	Input.Highlight:SetTexture(Assets:GetTexture("Blank"))
-	Input.Highlight:SetVertexColor(1, 1, 1, 0.4)
-	Input.Highlight:SetAlpha(0)
-
-	Input.Box = CreateFrame("EditBox", nil, Input)
-	HydraUI:SetFontInfo(Input.Box, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Input.Box:SetPoint("TOPLEFT", Input, SPACING, -2)
-	Input.Box:SetPoint("BOTTOMRIGHT", Input, -SPACING, 2)
-	Input.Box:SetJustifyH("LEFT")
-	Input.Box:SetAutoFocus(false)
-	Input.Box:EnableKeyboard(true)
-	Input.Box:EnableMouse(true)
-	Input.Box:SetMultiLine(true)
-	Input.Box:SetMaxLetters(9999)
-	Input.Box:SetText(value)
-	Input.Box.ID = id
-	Input.Box.Hook = hook
-	Input.Box.Parent = Input
-	Input.Box.RequiresReload = InputRequiresReload
+	local Input = CreateInputControl(Anchor2, INPUT_BUTTON_WIDTH, id, value, tooltip, hook, true)
 
 	Input.Button = Button
 	Button.Input = Input.Box
-
-	Input.Box:SetScript("OnMouseDown", InputOnMouseDown)
-	Input.Box:SetScript("OnEscapePressed", InputOnEscapePressed)
-	Input.Box:SetScript("OnEnterPressed", InputOnEnterPressed)
-	Input.Box:SetScript("OnEditFocusLost", InputOnEditFocusLost)
-	Input.Box:SetScript("OnChar", InputOnChar)
-	Input.Box:SetScript("OnEnter", InputOnEnter)
-	Input.Box:SetScript("OnLeave", InputOnLeave)
-
-	Input.FadeIn = LibMotion:CreateAnimation(Input.Flash, "Fade")
-	Input.FadeIn:SetEasing("in")
-	Input.FadeIn:SetDuration(0.3)
-	Input.FadeIn:SetChange(SELECTED_HIGHLIGHT_ALPHA)
-
-	Input.FadeOut = LibMotion:CreateAnimation(Input.Flash, "Fade")
-	Input.FadeOut:SetOrder(2)
-	Input.FadeOut:SetEasing("out")
-	Input.FadeOut:SetDuration(0.3)
-	Input.FadeOut:SetChange(0)
 
 	tinsert(self.Widgets, Anchor)
 	tinsert(self.Widgets, Anchor2)

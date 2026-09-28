@@ -33,6 +33,16 @@ local LAST_ACTIVE_DROPDOWN
 
 local GUI = HydraUI:GetModule("GUI")
 
+local RegisterWidget = function(owner, anchor, id)
+	tinsert(owner.Widgets, anchor)
+
+	if (id ~= "") then
+		GUI.WidgetID[id] = anchor
+	end
+
+	return anchor
+end
+
 local Ignore = {
 	["ui-profile"] = true,
 	["profile-copy"] = true,
@@ -98,11 +108,7 @@ GUI.Widgets.CreateLine = function(self, id, text)
 
 	Anchor.Text = Text
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Text
 end
@@ -129,11 +135,7 @@ GUI.Widgets.CreateDoubleLine = function(self, id, left, right)
 	Anchor.Left = Left
 	Anchor.Right = Right
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Left
 end
@@ -251,11 +253,7 @@ GUI.Widgets.CreateAnimatedLine = function(self, id, left, right, r, g, b)
 	ScaleOut:SetOrder(2)
 	ScaleOut:SetGroup(Group)
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 end
 
 GUI.Widgets.CreateAnimatedDoubleLine = function(self, id, left, right, r, g, b)
@@ -368,11 +366,7 @@ GUI.Widgets.CreateAnimatedDoubleLine = function(self, id, left, right, r, g, b)
 		Anchor.RightParent.SOut:SetOrder(2)
 	end
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Anchor.Left, Anchor.Right
 end
@@ -399,7 +393,7 @@ GUI.Widgets.CreateHeader = function(self, text)
 	Texture:SetTexture(Assets:GetTexture("Blank"))
 	Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
-	tinsert(self.Widgets, Anchor)
+	RegisterWidget(self, Anchor, "")
 
 	return Text
 end
@@ -420,7 +414,7 @@ GUI.Widgets.CreateFooter = function(self)
 	Texture:SetTexture(Assets:GetTexture("Blank"))
 	Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
-	tinsert(self.Widgets, Anchor)
+	RegisterWidget(self, Anchor, "")
 end
 
 -- Button
@@ -530,11 +524,7 @@ GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
 
 	Anchor.Button = Button
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Anchor
 end
@@ -608,11 +598,7 @@ GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, labe
 	Bar.MiddleText = MiddleText
 	Bar.Text = Text
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Bar
 end
@@ -737,11 +723,7 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 	Checkbox.FadeIn = FadeIn
 	Checkbox.FadeOut = FadeOut
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Checkbox
 end
@@ -917,11 +899,7 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 
 	Anchor.Switch = Switch
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Switch
 end
@@ -1380,11 +1358,7 @@ GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 	Input.Text:SetJustifyH("LEFT")
 	Input.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	Anchor.Input = Input
 
@@ -1462,8 +1436,8 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 	Input.Button = Button
 	Button.Input = Input.Box
 
-	tinsert(self.Widgets, Anchor)
-	tinsert(self.Widgets, Anchor2)
+	RegisterWidget(self, Anchor, "")
+	RegisterWidget(self, Anchor2, "")
 
 	Anchor.Input = Input
 
@@ -2377,10 +2351,8 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Anchor.Dropdown = Dropdown
 
 	if self.Widgets then
-		tinsert(self.Widgets, Anchor)
-	end
-
-	if (id ~= "") then
+		RegisterWidget(self, Anchor, id)
+	elseif (id ~= "") then
 		GUI.WidgetID[id] = Anchor
 	end
 
@@ -2733,11 +2705,7 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 
 	Slider:Show()
 
-	tinsert(self.Widgets, Anchor)
-
-	if (id ~= "") then
-		GUI.WidgetID[id] = Anchor
-	end
+	RegisterWidget(self, Anchor, id)
 
 	return Slider
 end
@@ -3394,7 +3362,7 @@ GUI.Widgets.CreateColorSelection = function(self, id, value, label, tooltip, hoo
 	Button.Text:SetJustifyH("LEFT")
 	Button.Text:SetText("|cFF"..Settings["ui-widget-font-color"]..label.."|r")
 
-	tinsert(self.Widgets, Anchor)
+	RegisterWidget(self, Anchor, "")
 
 	return Button
 end

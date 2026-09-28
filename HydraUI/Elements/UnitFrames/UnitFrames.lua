@@ -944,7 +944,7 @@ function UF:Load()
 
 			local PartyPet = oUF:SpawnHeader("HydraUI Party Pets", "SecureGroupPetHeaderTemplate", "party,solo",
 				"initial-width", Settings["party-pets-width"],
-				"initial-height", (Settings["party-pets-health-height"] + 2),
+				"initial-height", (Settings["party-pets-health-height"] + Settings["party-pets-power-height"] + 3),
 				"showSolo", Settings["party-show-solo"],
 				"showPlayer", false,
 				"showParty", true,
@@ -961,7 +961,7 @@ function UF:Load()
 			)
 
 			self.PartyPetAnchor = CreateFrame("Frame", "HydraUI Party Pet Anchor", HydraUI.UIParent)
-			self.PartyPetAnchor:SetSize((5 * Settings["party-width"] + (4 * Settings["party-spacing"])), Settings["party-pets-health-height"] + 2)
+			self.PartyPetAnchor:SetSize((5 * Settings["party-width"] + (4 * Settings["party-spacing"])), Settings["party-pets-health-height"] + Settings["party-pets-power-height"] + 3)
 			self.PartyPetAnchor:SetPoint("TOPLEFT", self.PartyAnchor, "BOTTOMLEFT", 0, -2)
 
 			PartyPet:SetPoint("TOPLEFT", self.PartyPetAnchor, 0, 0)
@@ -1025,7 +1025,7 @@ function UF:Load()
 		if Settings["raid-pets-enable"] then
 			local RaidPet = oUF:SpawnHeader("HydraUI Raid Pets", "SecureGroupPetHeaderTemplate", "raid,solo",
 			"initial-width", Settings["raid-pets-width"],
-			"initial-height", (Settings["raid-pets-health-height"] + 2),
+			"initial-height", (Settings["raid-pets-health-height"] + Settings["raid-pets-power-height"] + 3),
 			"isTesting", false,
 			"showSolo", Settings["raid-show-solo"],
 			"showPlayer", true,
@@ -1048,7 +1048,7 @@ function UF:Load()
 
 			self.RaidPetAnchor = CreateFrame("Frame", "HydraUI Raid Pet Anchor", HydraUI.UIParent)
 			self.RaidPetAnchor:SetWidth((floor(40 / Settings["raid-max-columns"]) * Settings["raid-width"] + (floor(40 / Settings["raid-max-columns"]) * Settings["raid-x-offset"] - 2)))
-			self.RaidPetAnchor:SetHeight(Settings["raid-pets-health-height"] * (Settings["raid-max-columns"] + (Settings["raid-y-offset"])) - 1)
+			self.RaidPetAnchor:SetHeight((Settings["raid-pets-health-height"] + Settings["raid-pets-power-height"]) * (Settings["raid-max-columns"] + (Settings["raid-y-offset"])) - 1)
 			self.RaidPetAnchor:SetPoint("BOTTOMLEFT", self.RaidAnchor, "TOPLEFT", 0, 0)
 
 			HydraUI:CreateMover(self.RaidPetAnchor)

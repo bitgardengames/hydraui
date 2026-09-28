@@ -7,7 +7,9 @@ Defaults["raid-pets-health-reverse"] = false
 Defaults["raid-pets-health-color"] = "CLASS"
 Defaults["raid-pets-health-orientation"] = "HORIZONTAL"
 Defaults["raid-pets-health-smooth"] = true
-Defaults["raid-pets-power-height"] = 0 -- NYI
+Defaults["raid-pets-power-enable"] = false
+Defaults["raid-pets-power-height"] = 2
+Defaults["raid-pets-power-color"] = "POWER"
 
 local UF = HydraUI:GetModule("Unit Frames")
 
@@ -103,6 +105,23 @@ HydraUI.StyleFuncs["raidpet"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["raid-pets-health-color"])
 
+	-- Power Bar
+	local Power = CreateFrame("StatusBar", nil, self)
+	Power:SetPoint("BOTTOMLEFT", self, 1, 1)
+	Power:SetPoint("BOTTOMRIGHT", self, -1, 1)
+	Power:SetHeight(Settings["raid-pets-power-height"])
+	Power:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	Power:SetAlpha(Settings["raid-pets-power-enable"] and 1 or 0)
+	Health:SetPoint("BOTTOMRIGHT", Power, "TOPRIGHT", 0, 1)
+
+	local PowerBG = Power:CreateTexture(nil, "BORDER")
+	PowerBG:SetAllPoints(Power)
+	PowerBG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+	PowerBG:SetAlpha(0.2)
+
+	Power.frequentUpdates = true
+	UF:SetPowerAttributes(Power, Settings["raid-pets-power-color"])
+
 	-- Target Icon
 	local RaidTarget = Health:CreateTexture(nil, 'OVERLAY')
 	RaidTarget:SetSize(16, 16)
@@ -118,6 +137,8 @@ HydraUI.StyleFuncs["raidpet"] = function(self, unit)
 
 	self.Health = Health
 	self.Health.bg = HealthBG
+	self.Power = Power
+	self.Power.bg = PowerBG
 	self.HealthMiddle = HealthMiddle
 	self.RaidTargetIndicator = RaidTarget
 end
@@ -135,4 +156,9 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Raid Pets"], 
 	right:CreateDropdown("raid-pets-health-orientation", Settings["raid-pets-health-orientation"], {[Language["Horizontal"]] = "HORIZONTAL", [Language["Vertical"]] = "VERTICAL"}, Language["Fill Orientation"], Language["Set the fill orientation of the health bar"], ReloadUI):RequiresReload(true)
 	right:CreateSwitch("raid-pets-health-reverse", Settings["raid-pets-health-reverse"], Language["Reverse Health Fill"], Language["Reverse the fill of the health bar"], ReloadUI):RequiresReload(true)
 	right:CreateSwitch("raid-pets-health-smooth", Settings["raid-pets-health-smooth"], Language["Enable Smooth Progress"], Language["Set the health bar to animate changes smoothly"], ReloadUI):RequiresReload(true)
+
+	right:CreateHeader(Language["Power"])
+	right:CreateSwitch("raid-pets-power-enable", Settings["raid-pets-power-enable"], Language["Enable Power Bar"], Language["Enable the power bar"], ReloadUI):RequiresReload(true)
+	right:CreateSlider("raid-pets-power-height", Settings["raid-pets-power-height"], 2, 30, 1, Language["Power Height"], Language["Set the height of raid pet power bars"], ReloadUI):RequiresReload(true)
+	right:CreateDropdown("raid-pets-power-color", Settings["raid-pets-power-color"], {[Language["Class"]] = "CLASS", [Language["Reaction"]] = "REACTION", [Language["Power Type"]] = "POWER"}, Language["Power Bar Color"], Language["Set the color of the power bar"], ReloadUI):RequiresReload(true)
 end)

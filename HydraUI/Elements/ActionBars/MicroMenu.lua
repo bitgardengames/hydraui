@@ -139,9 +139,27 @@ function MicroButtons:UpdateMicroButtonsParent()
 end
 
 function MicroButtons:PositionButtons()
-	local NumButtons = #MicroButtons.Buttons
+	local VisibleButtons = {}
+
+	for i = 1, #MicroButtons.Buttons do
+		local Button = MicroButtons.Buttons[i]
+
+		Button:ClearAllPoints()
+
+		if Button:IsShown() then
+			VisibleButtons[#VisibleButtons + 1] = Button
+		end
+	end
+
+	local NumButtons = #VisibleButtons
 	local PerRow = Settings["micro-buttons-per-row"]
 	local Spacing = Settings["micro-buttons-gap"]
+	local Width, Height = MicroButtons.Buttons[1]:GetSize()
+
+	if (NumButtons == 0) then
+		MicroButtons.Panel:SetSize(1, 1)
+		return
+	end
 
 	if (NumButtons < PerRow) then
 		PerRow = NumButtons
@@ -149,28 +167,20 @@ function MicroButtons:PositionButtons()
 
 	local Columns = ceil(NumButtons / PerRow)
 
-	if (Columns < 1) then
-		Columns = 1
-	end
-
-	local Width, Height = MicroButtons.Buttons[1]:GetSize()
-
 	-- Bar sizing
 	MicroButtons.Panel:SetWidth((((Width - 1.8) + Spacing) * PerRow) + Spacing)
 	MicroButtons.Panel:SetHeight((Height * Columns) + (Spacing * (Columns + 1)))
 
 	-- Actual moving
-	for i = 1, #MicroButtons.Buttons do
-		local Button = MicroButtons.Buttons[i]
-
-		Button:ClearAllPoints()
+	for i = 1, NumButtons do
+		local Button = VisibleButtons[i]
 
 		if (i == 1) then
 			Button:SetPoint("TOPLEFT", MicroButtons.Panel, Spacing, -Spacing)
 		elseif ((i - 1) % PerRow == 0) then
-			Button:SetPoint("TOP", MicroButtons.Buttons[i - PerRow], "BOTTOM", 0, -Spacing)
+			Button:SetPoint("TOP", VisibleButtons[i - PerRow], "BOTTOM", 0, -Spacing)
 		else
-			Button:SetPoint("LEFT", MicroButtons.Buttons[i - 1], "RIGHT", Spacing - 2, 0)
+			Button:SetPoint("LEFT", VisibleButtons[i - 1], "RIGHT", Spacing - 2, 0)
 		end
 	end
 end
@@ -215,6 +225,8 @@ function MicroButtons:Load()
 
 		self.Buttons[i]:HookScript("OnEnter", ButtonOnEnter)
 		self.Buttons[i]:HookScript("OnLeave", ButtonOnLeave)
+		self.Buttons[i]:HookScript("OnShow", self.PositionButtons)
+		self.Buttons[i]:HookScript("OnHide", self.PositionButtons)
 
 		self.Buttons[i].BG = self.Buttons[i]:CreateTexture(nil, "BACKGROUND")
 		self.Buttons[i].BG:SetPoint("TOPLEFT", self.Buttons[i], 1, -1)

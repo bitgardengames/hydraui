@@ -342,6 +342,30 @@ local ScrollWidgetColumn = function(parent, widgets, oldOffset, offset, point)
 	end
 end
 
+local UpdateWidgetRows = function(Owner, Rows, OldRows, OldFirst, OldLast, First)
+	local LeftOffset = Owner.LeftWidgetsBG.ScrollingDisabled and 1 or First
+	local RightOffset = Owner.RightWidgetsBG.ScrollingDisabled and 1 or First
+
+	ScrollWidgetColumn(Owner.LeftWidgetsBG, Owner.LeftWidgets, Owner.LastRenderedLeftOffset, LeftOffset, "TOPLEFT")
+	ScrollWidgetColumn(Owner.RightWidgetsBG, Owner.RightWidgets, Owner.LastRenderedRightOffset, RightOffset, "TOPRIGHT")
+	Owner.LastRenderedLeftOffset = LeftOffset
+	Owner.LastRenderedRightOffset = RightOffset
+end
+
+local AfterRenderWidgetRows = function(Owner, Offset)
+	if not Owner.ScrollBar then return end
+	if Offset == 1 then
+		Owner.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+	else
+		Owner.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	end
+	if Offset == Owner.MaxScroll then
+		Owner.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+	else
+		Owner.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+	end
+end
+
 local Scroll = function(self)
 	self.RowViewport:SetOffset(self.Offset)
 end
@@ -635,28 +659,8 @@ function GUI:CreateWidgetWindow(page)
 		Rows = Window.LeftWidgets,
 		TotalRows = Window.WidgetCount,
 		MaxVisibleRows = MAX_WIDGETS_SHOWN,
-		UpdateRows = function(Owner, Rows, OldRows, OldFirst, OldLast, First)
-			local LeftOffset = Owner.LeftWidgetsBG.ScrollingDisabled and 1 or First
-			local RightOffset = Owner.RightWidgetsBG.ScrollingDisabled and 1 or First
-
-			ScrollWidgetColumn(Owner.LeftWidgetsBG, Owner.LeftWidgets, Owner.LastRenderedLeftOffset, LeftOffset, "TOPLEFT")
-			ScrollWidgetColumn(Owner.RightWidgetsBG, Owner.RightWidgets, Owner.LastRenderedRightOffset, RightOffset, "TOPRIGHT")
-			Owner.LastRenderedLeftOffset = LeftOffset
-			Owner.LastRenderedRightOffset = RightOffset
-		end,
-		AfterRender = function(Owner, Offset)
-			if not Owner.ScrollBar then return end
-			if Offset == 1 then
-				Owner.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-			else
-				Owner.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-			end
-			if Offset == Owner.MaxScroll then
-				Owner.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-			else
-				Owner.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-			end
-		end,
+		UpdateRows = UpdateWidgetRows,
+		AfterRender = AfterRenderWidgetRows,
 	})
 
 	if (Window.MaxScroll > 1) then

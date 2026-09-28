@@ -26,7 +26,6 @@ local ActiveItems = {}
 local ItemTables = {}
 local Spells = {}
 local Remaining
-local SpellName
 local Now
 local ContainerItemID
 
@@ -69,6 +68,35 @@ function Cooldowns:GetTexture(cd, id)
 	end
 end
 
+function Cooldowns:ShowReady(kind, id)
+	local Texture = self:GetTexture(kind, id)
+
+	if Texture then
+		if self.AnimIn:IsPlaying() then
+			self.AnimIn:Stop()
+		end
+
+		self.Icon:SetTexture(Texture)
+		self.AnimIn:Play()
+
+		if Settings["cooldowns-text"] then
+			local Name
+
+			if (kind == "item") then
+				Name = GetItemInfo(id)
+			else
+				Name = GetSpellInfo(id)
+			end
+
+			if Name then
+				self.Text:SetText(format(Language["|cff%s%s|r is ready!"], Settings["ui-widget-color"], Name))
+			end
+		else
+			self.Text:SetText("")
+		end
+	end
+end
+
 function Cooldowns:OnUpdate(ela)
 	Elapsed = Elapsed + ela
 
@@ -89,28 +117,7 @@ function Cooldowns:OnUpdate(ela)
 				Remaining = Start + Duration - Now
 
 				if (Remaining <= 0) then
-					local Texture = self:GetTexture("spell", ID)
-
-					if Texture then
-						if self.AnimIn:IsPlaying() then
-							self.AnimIn:Stop()
-						end
-
-						self.Icon:SetTexture(Texture)
-						self.AnimIn:Play()
-
-						if Settings["cooldowns-text"] then
-							SpellName = GetSpellInfo(ID)
-
-							if SpellName then
-								self.Text:SetText(format(Language["|cff%s%s|r is ready!"], Settings["ui-widget-color"], SpellName))
-
-								SpellName = nil
-							end
-						else
-							self.Text:SetText("")
-						end
-					end
+					self:ShowReady("spell", ID)
 
 					tremove(ActiveSpells, i)
 					ActiveCount = ActiveCount - 1
@@ -128,28 +135,7 @@ function Cooldowns:OnUpdate(ela)
 				if (Info.Dur == 0 and Duration > MinTreshold) then
 					Info.Dur = Duration
 				elseif (Info.Dur > 0 and Duration == 0) then
-					local Texture = self:GetTexture("item", Info.ID)
-
-					if Texture then
-						if self.AnimIn:IsPlaying() then
-							self.AnimIn:Stop()
-						end
-
-						self.Icon:SetTexture(Texture)
-						self.AnimIn:Play()
-
-						if Settings["cooldowns-text"] then
-							SpellName = GetItemInfo(Info.ID)
-
-							if SpellName then
-								self.Text:SetText(format(Language["|cff%s%s|r is ready!"], Settings["ui-widget-color"], SpellName))
-
-								SpellName = nil
-							end
-						else
-							self.Text:SetText("")
-						end
-					end
+					self:ShowReady("item", Info.ID)
 
 					tinsert(ItemTables, tremove(ActiveItems, i))
 					ActiveCount = ActiveCount - 1

@@ -97,11 +97,6 @@ local AuraOnUpdate = function(self, ela)
 			self.Time:Hide()
 		end
 
-		if (Now <= 0) then
-			self:SetScript("OnUpdate", nil)
-			self.Time:Hide()
-		end
-
 		self.ela = 0
 	end
 end

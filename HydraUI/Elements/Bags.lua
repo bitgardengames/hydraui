@@ -304,8 +304,8 @@ function Bags:CreateFrame()
 	self.SortButton:SetScript("OnClick", function() if SortBags then SortBags() end end)
 	self.SortButton.Text = self.SortButton:CreateFontString(nil, "OVERLAY")
 	self.SortButton.Text:SetPoint("CENTER")
-	self.SortButton.Text:SetText(Language["Sort"])
 	HydraUI:SetFontInfo(self.SortButton.Text, Settings["ui-button-font"], Settings["ui-font-size"])
+	self.SortButton.Text:SetText(Language["Sort"])
 end
 
 function Bags:Load()

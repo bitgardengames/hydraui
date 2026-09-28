@@ -100,9 +100,7 @@ function Chat:RestoreHistory()
 
 	local CurrentMessages = {}
 
-	-- Chat is initialized after Blizzard has already printed login messages (such as
-	-- the guild MOTD). Save and remove those messages so restored history can be
-	-- inserted before them, then put the login messages back in their original order.
+	-- Chat is initialized after Blizzard has already printed login messages (such as the guild MOTD). Save and remove those messages so restored history can be inserted before them, then put the login messages back in their original order.
 	for _, Entry in ipairs(self:GetHistory()) do
 		local Frame = Entry.Frame and _G[Entry.Frame]
 
@@ -138,8 +136,6 @@ function Chat:RestoreHistory()
 
 	self.RestoringHistory = nil
 end
-
--- When hovering over a chat frame, fade in the scroll controls
 
 local FormatDiscordHyperlink = function(id)
 	return format("|cFF7289DA|Hdiscord:%s|h[%s: %s]|h|r", format("https://discord.gg/%s", id), Language["Discord"], id)

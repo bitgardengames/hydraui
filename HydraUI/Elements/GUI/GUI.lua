@@ -31,6 +31,10 @@ local Round = function(num, dec)
 	return floor(num * Mult + 0.5) / Mult
 end
 
+local SortByName = function(a, b)
+	return a.Name < b.Name
+end
+
 local GUI = HydraUI:NewModule("GUI")
 
 -- Shared scrolling primitives. Keep these independent of a particular row type so
@@ -503,9 +507,7 @@ local AddWindowScrollBar = function(self)
 end
 
 function GUI:SortMenuButtons()
-	tsort(self.CategoryOrder, function(a, b)
-		return a.Name < b.Name
-	end)
+	tsort(self.CategoryOrder, SortByName)
 
 	self.NumShownButtons = 0
 
@@ -513,13 +515,11 @@ function GUI:SortMenuButtons()
 
 	for i = 1, #Categories do
 		local Category = Categories[i]
-		tsort(Category.Pages, function(a, b)
-			return a.Name < b.Name
-		end)
+		tsort(Category.Pages, SortByName)
 
 		for j = 1, #Category.Pages do
 			local Page = Category.Pages[j]
-			tsort(Page.Children, function(a, b) return a.Name < b.Name end)
+			tsort(Page.Children, SortByName)
 
 			if (j == 1) then
 				Page.Button:SetPoint("TOPLEFT", Category.Frame, "BOTTOMLEFT", 0, -2)

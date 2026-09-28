@@ -1283,7 +1283,6 @@ local CreateInputControl = function(parent, width, id, value, tooltip, hook, isC
 		Control:EnableMouse(true)
 		Control:SetMultiLine(true)
 		Control:SetMaxLetters(9999)
-		Control:SetText(value)
 
 		Control:SetScript("OnMouseDown", InputOnMouseDown)
 		Control:SetScript("OnEscapePressed", InputOnEscapePressed)
@@ -1305,10 +1304,11 @@ local CreateInputControl = function(parent, width, id, value, tooltip, hook, isC
 		Input.ButtonText:SetPoint("TOPLEFT", Input, SPACING, -SPACING)
 		Input.ButtonText:SetPoint("BOTTOMRIGHT", Input, -SPACING, SPACING)
 		Input.ButtonText:SetJustifyH("LEFT")
-		Input.ButtonText:SetText(value)
 	end
 
-	HydraUI:SetFontInfo(isCombined and Control or Input.ButtonText, Settings["ui-widget-font"], Settings["ui-font-size"])
+	local TextControl = isCombined and Control or Input.ButtonText
+	HydraUI:SetFontInfo(TextControl, Settings["ui-widget-font"], Settings["ui-font-size"])
+	TextControl:SetText(value)
 
 	if isCombined then
 		Control:SetJustifyH("LEFT")

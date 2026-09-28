@@ -983,111 +983,245 @@ local InputWindowOnMouseDown = function(self)
 	self:SetAutoFocus(true)
 end
 
-function GUI:CreateInputWindow()
-	if self.InputWindow then
-		return self.InputWindow
+local DialogCloseOnEnter = function(self)
+	self.Cross:SetVertexColor(self.HoverR, self.HoverG, self.HoverB)
+end
+
+local DialogCloseOnLeave = function(self)
+	self.Cross:SetVertexColor(self.NormalR, self.NormalG, self.NormalB)
+end
+
+local DialogCloseOnMouseDown = function(self)
+	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
+
+	self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
+end
+
+local DialogCloseOnMouseUp = function(self)
+	if self.Texture then
+		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 	end
 
-	local Window = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	Window:SetSize(300, 200)
-	Window:SetPoint("CENTER", HydraUI.UIParent, 0, 0)
+	if self.CloseBehavior then
+		self.CloseBehavior(self.Window)
+	elseif self.Animated then
+		self.Window.FadeOut:Play()
+	else
+		self.Window:Hide()
+	end
+end
+
+local CreateDialogShell = function(parent, options)
+	local Window = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	Window:SetSize(options.Width, options.Height)
+	Window:SetPoint(options.Point, options.RelativeTo, options.RelativePoint or options.Point, options.X, options.Y)
 	Window:SetBackdrop(HydraUI.BackdropAndBorder)
 	Window:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
 	Window:SetBackdropBorderColor(0, 0, 0)
-	Window:SetFrameStrata("DIALOG")
+	Window:SetFrameStrata(options.Strata)
 	Window:SetMovable(true)
 	Window:EnableMouse(true)
 	Window:RegisterForDrag("LeftButton")
 	Window:SetScript("OnDragStart", Window.StartMoving)
 	Window:SetScript("OnDragStop", Window.StopMovingOrSizing)
-	Window:SetClampedToScreen(true)
-	Window:SetAlpha(0)
+
+	if options.ClampedToScreen then
+		Window:SetClampedToScreen(true)
+	end
+
+	if options.Alpha then
+		Window:SetAlpha(options.Alpha)
+	end
+
 	Window:Hide()
 
-	-- Header
-	Window.Header = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.Header:SetHeight(HEADER_HEIGHT)
-	Window.Header:SetPoint("TOPLEFT", Window, SPACING, -SPACING)
-	Window.Header:SetPoint("TOPRIGHT", Window, -((SPACING + 2) + HEADER_HEIGHT), -SPACING)
-	Window.Header:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.Header:SetBackdropColor(0, 0, 0)
-	Window.Header:SetBackdropBorderColor(0, 0, 0)
+	return Window
+end
 
-	Window.HeaderTexture = Window.Header:CreateTexture(nil, "OVERLAY")
-	Window.HeaderTexture:SetPoint("TOPLEFT", Window.Header, 1, -1)
-	Window.HeaderTexture:SetPoint("BOTTOMRIGHT", Window.Header, -1, 1)
+local CreateDialogHeader = function(Window, options)
+	local Header = CreateFrame("Frame", nil, Window, "BackdropTemplate")
+	Header:SetHeight(HEADER_HEIGHT)
+	Header:SetPoint("TOPLEFT", Window, SPACING, -SPACING)
+	Header:SetPoint("TOPRIGHT", Window, -options.RightInset, -SPACING)
+	Header:SetBackdrop(HydraUI.BackdropAndBorder)
+	Header:SetBackdropColor(0, 0, 0)
+	Header:SetBackdropBorderColor(0, 0, 0)
+
+	Window.Header = Header
+	Window.HeaderTexture = Header:CreateTexture(nil, "OVERLAY")
+	Window.HeaderTexture:SetPoint("TOPLEFT", Header, 1, -1)
+	Window.HeaderTexture:SetPoint("BOTTOMRIGHT", Header, -1, 1)
 	Window.HeaderTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
 	Window.HeaderTexture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
-	Window.Header.Text = Window.Header:CreateFontString(nil, "OVERLAY")
-	Window.Header.Text:SetPoint("LEFT", Window.Header, HEADER_SPACING, -1)
-	HydraUI:SetFontInfo(Window.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
-	Window.Header.Text:SetJustifyH("LEFT")
-	Window.Header.Text:SetText("|cFF" .. Settings["ui-header-font-color"] .. Language["Input"] .. "|r")
+	Header.Text = Header:CreateFontString(nil, "OVERLAY")
+	Header.Text:SetPoint("LEFT", Header, HEADER_SPACING, -1)
+	HydraUI:SetFontInfo(Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
+	Header.Text:SetJustifyH("LEFT")
+	Header.Text:SetText("|cFF" .. Settings["ui-header-font-color"] .. options.Text .. "|r")
 
-	-- Close button
-	Window.CloseButton = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.CloseButton:SetSize(HEADER_HEIGHT, HEADER_HEIGHT)
-	Window.CloseButton:SetPoint("TOPRIGHT", Window, -SPACING, -SPACING)
-	Window.CloseButton:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.CloseButton:SetBackdropColor(0, 0, 0, 0)
-	Window.CloseButton:SetBackdropBorderColor(0, 0, 0)
-	Window.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(HydraUI:HexToRGB("C0392B")) end)
-	Window.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE")) end)
-	Window.CloseButton:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+	return Header
+end
 
-		self:GetParent().FadeOut:Play()
-	end)
+local CreateDialogCloseControl = function(Window, options)
+	local Parent = options.Parent or Window.Header
+	local CloseButton
 
-	Window.CloseButton:SetScript("OnMouseDown", function(self)
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
+	if options.Template then
+		CloseButton = CreateFrame("Frame", nil, Parent, options.Template)
+	else
+		CloseButton = CreateFrame("Frame", nil, Parent)
+	end
+	CloseButton:SetSize(HEADER_HEIGHT, HEADER_HEIGHT)
+	CloseButton:SetPoint(options.Point, options.RelativeTo or Parent, options.RelativePoint or options.Point, options.X or 0, options.Y or 0)
+	CloseButton:SetScript("OnEnter", DialogCloseOnEnter)
+	CloseButton:SetScript("OnLeave", DialogCloseOnLeave)
+	CloseButton:SetScript("OnMouseUp", DialogCloseOnMouseUp)
+	CloseButton.Window = Window
+	CloseButton.Animated = options.Animated
+	CloseButton.CloseBehavior = options.CloseBehavior
+	CloseButton.HoverR, CloseButton.HoverG, CloseButton.HoverB = options.HoverR, options.HoverG, options.HoverB
+	CloseButton.NormalR, CloseButton.NormalG, CloseButton.NormalB = options.NormalR, options.NormalG, options.NormalB
 
-		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
-	end)
+	if options.Template then
+		CloseButton:SetBackdrop(HydraUI.BackdropAndBorder)
+		CloseButton:SetBackdropColor(0, 0, 0, 0)
+		CloseButton:SetBackdropBorderColor(0, 0, 0)
+		CloseButton:SetScript("OnMouseDown", DialogCloseOnMouseDown)
 
-	Window.CloseButton.Texture = Window.CloseButton:CreateTexture(nil, "ARTWORK")
-	Window.CloseButton.Texture:SetPoint("TOPLEFT", Window.CloseButton, 1, -1)
-	Window.CloseButton.Texture:SetPoint("BOTTOMRIGHT", Window.CloseButton, -1, 1)
-	Window.CloseButton.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	Window.CloseButton.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+		CloseButton.Texture = CloseButton:CreateTexture(nil, "ARTWORK")
+		CloseButton.Texture:SetPoint("TOPLEFT", CloseButton, 1, -1)
+		CloseButton.Texture:SetPoint("BOTTOMRIGHT", CloseButton, -1, 1)
+		CloseButton.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+		CloseButton.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+	end
 
-	Window.CloseButton.Cross = Window.CloseButton:CreateTexture(nil, "OVERLAY")
-	Window.CloseButton.Cross:SetPoint("CENTER", Window.CloseButton, 0, 0)
-	Window.CloseButton.Cross:SetSize(16, 16)
-	Window.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
-	Window.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
+	CloseButton.Cross = CloseButton:CreateTexture(nil, "OVERLAY")
+	CloseButton.Cross:SetPoint("CENTER", CloseButton, 0, 0)
+	CloseButton.Cross:SetSize(16, 16)
+	CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
+	CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
 
-	Window.Inner = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.Inner:SetPoint("TOPLEFT", Window.Header, "BOTTOMLEFT", 0, -2)
-	Window.Inner:SetPoint("BOTTOMRIGHT", Window, -3, 3)
-	Window.Inner:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.Inner:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
-	Window.Inner:SetBackdropBorderColor(0, 0, 0)
+	if options.Field then
+		Window[options.Field] = CloseButton
+	else
+		Window.Header.CloseButton = CloseButton
+	end
 
-	Window.Input = CreateFrame("EditBox", nil, Window.Inner)
-	HydraUI:SetFontInfo(Window.Input, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Window.Input:SetPoint("TOPLEFT", Window.Inner, 3, -3)
-	Window.Input:SetPoint("BOTTOMRIGHT", Window.Inner, -3, 3)
-	Window.Input:SetFrameStrata("DIALOG")
-	Window.Input:SetJustifyH("LEFT")
-	Window.Input:SetAutoFocus(false)
-	Window.Input:EnableKeyboard(true)
-	Window.Input:EnableMouse(true)
-	Window.Input:SetMultiLine(true)
-	Window.Input:SetMaxLetters(9999)
-	Window.Input:SetCursorPosition(0)
+	return CloseButton
+end
 
-	Window.Input:SetScript("OnEnterPressed", InputWindowOnEnterPressed)
-	Window.Input:SetScript("OnEscapePressed", InputWindowOnEnterPressed)
-	Window.Input:SetScript("OnMouseDown", InputWindowOnMouseDown)
+local CreateDialogInnerBackdrop = function(Window, options)
+	local Parent = options.Parent or Window
+	local Backdrop = CreateFrame("Frame", nil, Parent, "BackdropTemplate")
+	Backdrop:SetPoint(options.TopPoint, options.TopRelativeTo, options.TopRelativePoint, options.TopX, options.TopY)
+	Backdrop:SetPoint(options.BottomPoint, options.BottomRelativeTo, options.BottomRelativePoint, options.BottomX, options.BottomY)
 
-	--[[ This just makes the animation look better. That's all. ಠ_ಠ
-	Window.BlackTexture = Window:CreateTexture(nil, "BACKGROUND", -7)
-	Window.BlackTexture:SetPoint("TOPLEFT", Window, 0, 0)
-	Window.BlackTexture:SetPoint("BOTTOMRIGHT", Window, 0, 0)
-	Window.BlackTexture:SetTexture(Assets:GetTexture("Blank"))
-	Window.BlackTexture:SetVertexColor(0, 0, 0, 0)]]
+	if options.Height then
+		Backdrop:SetHeight(options.Height)
+	end
+
+	Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
+	if options.Color then
+		Backdrop:SetBackdropColor(HydraUI:HexToRGB(Settings[options.Color]))
+	else
+		Backdrop:SetBackdropColor(options.R, options.G, options.B, options.A)
+	end
+	Backdrop:SetBackdropBorderColor(0, 0, 0)
+	Window[options.Field] = Backdrop
+
+	if options.TextureLayer then
+		Window.InputTexture = Backdrop:CreateTexture(nil, options.TextureLayer)
+		Window.InputTexture:SetPoint("TOPLEFT", Backdrop, 1, -1)
+		Window.InputTexture:SetPoint("BOTTOMRIGHT", Backdrop, -1, 1)
+		Window.InputTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+		Window.InputTexture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+	end
+
+	return Backdrop
+end
+
+local CreateDialogEditBox = function(Window, options)
+	local Input = CreateFrame("EditBox", nil, options.Parent)
+	HydraUI:SetFontInfo(Input, Settings["ui-widget-font"], Settings["ui-font-size"])
+	Input:SetPoint("TOPLEFT", options.Parent, 3, -3)
+	Input:SetPoint("BOTTOMRIGHT", options.Parent, -3, 3)
+
+	if options.Strata then
+		Input:SetFrameStrata(options.Strata)
+	end
+
+	if options.Level then
+		Input:SetFrameLevel(options.Level)
+	end
+
+	Input:SetJustifyH("LEFT")
+	Input:SetAutoFocus(false)
+	Input:EnableKeyboard(true)
+	Input:EnableMouse(true)
+
+	if options.MultiLine ~= nil then
+		Input:SetMultiLine(options.MultiLine)
+	end
+
+	if options.MaxLetters then
+		Input:SetMaxLetters(options.MaxLetters)
+	end
+
+	if options.CursorPosition then
+		Input:SetCursorPosition(options.CursorPosition)
+	end
+
+	for Script, Handler in next, options.Scripts do
+		Input:SetScript(Script, Handler)
+	end
+
+	Window.Input = Input
+
+	return Input
+end
+
+function GUI:CreateInputWindow()
+	if self.InputWindow then
+		return self.InputWindow
+	end
+
+	local Window = CreateDialogShell(self, {
+		Width = 300, Height = 200,
+		Point = "CENTER", RelativeTo = HydraUI.UIParent, X = 0, Y = 0,
+		Strata = "DIALOG", ClampedToScreen = true, Alpha = 0,
+	})
+
+	CreateDialogHeader(Window, {
+		RightInset = (SPACING + 2) + HEADER_HEIGHT,
+		Text = Language["Input"],
+	})
+
+	local HoverR, HoverG, HoverB = HydraUI:HexToRGB("C0392B")
+	local NormalR, NormalG, NormalB = HydraUI:HexToRGB("EEEEEE")
+	CreateDialogCloseControl(Window, {
+		Parent = Window, Field = "CloseButton", Template = "BackdropTemplate",
+		Point = "TOPRIGHT", RelativeTo = Window, X = -SPACING, Y = -SPACING,
+		HoverR = HoverR, HoverG = HoverG, HoverB = HoverB,
+		NormalR = NormalR, NormalG = NormalG, NormalB = NormalB,
+		Animated = true,
+	})
+
+	CreateDialogInnerBackdrop(Window, {
+		Field = "Inner",
+		TopPoint = "TOPLEFT", TopRelativeTo = Window.Header, TopRelativePoint = "BOTTOMLEFT", TopX = 0, TopY = -2,
+		BottomPoint = "BOTTOMRIGHT", BottomRelativeTo = Window, BottomRelativePoint = "BOTTOMRIGHT", BottomX = -3, BottomY = 3,
+		Color = "ui-window-main-color",
+	})
+
+	CreateDialogEditBox(Window, {
+		Parent = Window.Inner, Strata = "DIALOG", MultiLine = true, MaxLetters = 9999, CursorPosition = 0,
+		Scripts = {
+			OnEnterPressed = InputWindowOnEnterPressed,
+			OnEscapePressed = InputWindowOnEnterPressed,
+			OnMouseDown = InputWindowOnMouseDown,
+		},
+	})
 
 	Window.FadeIn = LibMotion:CreateAnimation(Window, "Fade")
 	Window.FadeIn:SetEasing("in")
@@ -1379,90 +1513,46 @@ function GUI:CreateExportWindow()
 		return self.ExportWindow
 	end
 
-	local Window = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	Window:SetSize(300, 74)
-	Window:SetPoint("CENTER", HydraUI.UIParent, 0, 230)
-	Window:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
-	Window:SetBackdropBorderColor(0, 0, 0)
-	Window:SetFrameStrata("DIALOG")
-	Window:SetMovable(true)
-	Window:EnableMouse(true)
-	Window:RegisterForDrag("LeftButton")
-	Window:SetScript("OnDragStart", Window.StartMoving)
-	Window:SetScript("OnDragStop", Window.StopMovingOrSizing)
-	Window:Hide()
+	local Window = CreateDialogShell(self, {
+		Width = 300, Height = 74,
+		Point = "CENTER", RelativeTo = HydraUI.UIParent, X = 0, Y = 230,
+		Strata = "DIALOG",
+	})
 
-	-- Header
-	Window.Header = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.Header:SetHeight(HEADER_HEIGHT)
-	Window.Header:SetPoint("TOPLEFT", Window, SPACING, -SPACING)
-	Window.Header:SetPoint("TOPRIGHT", Window, -SPACING, -SPACING)
-	Window.Header:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.Header:SetBackdropColor(0, 0, 0)
-	Window.Header:SetBackdropBorderColor(0, 0, 0)
+	CreateDialogHeader(Window, {
+		RightInset = SPACING,
+		Text = Language["Export string"],
+	})
 
-	Window.HeaderTexture = Window.Header:CreateTexture(nil, "OVERLAY")
-	Window.HeaderTexture:SetPoint("TOPLEFT", Window.Header, 1, -1)
-	Window.HeaderTexture:SetPoint("BOTTOMRIGHT", Window.Header, -1, 1)
-	Window.HeaderTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	Window.HeaderTexture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+	CreateDialogCloseControl(Window, {
+		Point = "RIGHT", RelativeTo = Window.Header,
+		HoverR = 1, HoverG = 0, HoverB = 0,
+		NormalR = 1, NormalG = 1, NormalB = 1,
+		Animated = false,
+	})
 
-	Window.Header.Text = Window.Header:CreateFontString(nil, "OVERLAY")
-	Window.Header.Text:SetPoint("LEFT", Window.Header, HEADER_SPACING, -1)
-	HydraUI:SetFontInfo(Window.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
-	Window.Header.Text:SetJustifyH("LEFT")
-	Window.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"]..Language["Export string"].."|r")
+	CreateDialogInnerBackdrop(Window, {
+		Field = "BG",
+		TopPoint = "TOPLEFT", TopRelativeTo = Window.Header, TopRelativePoint = "BOTTOMLEFT", TopX = 0, TopY = -2,
+		BottomPoint = "BOTTOMRIGHT", BottomRelativeTo = Window, BottomRelativePoint = "BOTTOMRIGHT", BottomX = -3, BottomY = 3,
+		Color = "ui-window-main-color",
+	})
 
-	-- Close button
-	Window.Header.CloseButton = CreateFrame("Frame", nil, Window.Header)
-	Window.Header.CloseButton:SetSize(HEADER_HEIGHT, HEADER_HEIGHT)
-	Window.Header.CloseButton:SetPoint("RIGHT", Window.Header, 0, 0)
-	Window.Header.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(1, 0, 0) end)
-	Window.Header.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(1, 1, 1) end)
-	Window.Header.CloseButton:SetScript("OnMouseUp", function() GUI.ExportWindow:Hide() end)
+	CreateDialogInnerBackdrop(Window, {
+		Parent = Window.BG, Field = "InputBG", Height = 20, TextureLayer = "BACKGROUND",
+		TopPoint = "BOTTOMLEFT", TopRelativeTo = Window.BG, TopRelativePoint = "BOTTOMLEFT", TopX = 3, TopY = 3,
+		BottomPoint = "BOTTOMRIGHT", BottomRelativeTo = Window.BG, BottomRelativePoint = "BOTTOMRIGHT", BottomX = -3, BottomY = 3,
+		R = 0, G = 0, B = 0, A = 0,
+	})
 
-	Window.Header.CloseButton.Cross = Window.Header.CloseButton:CreateTexture(nil, "OVERLAY")
-	Window.Header.CloseButton.Cross:SetPoint("CENTER", Window.Header.CloseButton, 0, 0)
-	Window.Header.CloseButton.Cross:SetSize(16, 16)
-	Window.Header.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
-	Window.Header.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
-
-	Window.BG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.BG:SetPoint("TOPLEFT", Window.Header, "BOTTOMLEFT", 0, -2)
-	Window.BG:SetPoint("BOTTOMRIGHT", Window, -3, 3)
-	Window.BG:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.BG:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
-	Window.BG:SetBackdropBorderColor(0, 0, 0)
-
-	Window.InputBG = CreateFrame("Frame", nil, Window.BG, "BackdropTemplate")
-	Window.InputBG:SetPoint("BOTTOMLEFT", Window.BG, 3, 3)
-	Window.InputBG:SetPoint("BOTTOMRIGHT", Window.BG, -3, 3)
-	Window.InputBG:SetHeight(20)
-	Window.InputBG:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.InputBG:SetBackdropColor(0, 0, 0, 0)
-	Window.InputBG:SetBackdropBorderColor(0, 0, 0)
-
-	Window.InputTexture = Window.InputBG:CreateTexture(nil, "BACKGROUND")
-	Window.InputTexture:SetPoint("TOPLEFT", Window.InputBG, 1, -1)
-	Window.InputTexture:SetPoint("BOTTOMRIGHT", Window.InputBG, -1, 1)
-	Window.InputTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	Window.InputTexture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	Window.Input = CreateFrame("EditBox", nil, Window.InputBG)
-	HydraUI:SetFontInfo(Window.Input, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Window.Input:SetPoint("TOPLEFT", Window.InputBG, 3, -3)
-	Window.Input:SetPoint("BOTTOMRIGHT", Window.InputBG, -3, 3)
-	Window.Input:SetFrameLevel(10)
-	Window.Input:SetJustifyH("LEFT")
-	Window.Input:SetAutoFocus(false)
-	Window.Input:EnableKeyboard(true)
-	Window.Input:EnableMouse(true)
-	Window.Input:SetMaxLetters(9999)
-	Window.Input:SetCursorPosition(0)
-	Window.Input:SetScript("OnEnterPressed", ExportWindowOnEnterPressed)
-	Window.Input:SetScript("OnEscapePressed", ExportWindowOnEnterPressed)
-	Window.Input:SetScript("OnMouseDown", ExportWindowOnMouseDown)
+	CreateDialogEditBox(Window, {
+		Parent = Window.InputBG, Level = 10, MaxLetters = 9999, CursorPosition = 0,
+		Scripts = {
+			OnEnterPressed = ExportWindowOnEnterPressed,
+			OnEscapePressed = ExportWindowOnEnterPressed,
+			OnMouseDown = ExportWindowOnMouseDown,
+		},
+	})
 
 	Window.Label = Window.BG:CreateFontString(nil, "OVERLAY")
 	Window.Label:SetPoint("BOTTOMLEFT", Window.InputBG, "TOPLEFT", 3, 4)
@@ -1551,76 +1641,37 @@ function GUI:CreateImportWindow()
 		return self.ImportWindow
 	end
 
-	local Window = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	Window:SetSize(300, 74)
-	Window:SetPoint("CENTER", HydraUI.UIParent, 0, 230)
-	Window:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
-	Window:SetBackdropBorderColor(0, 0, 0)
-	Window:SetFrameStrata("DIALOG")
-	Window:SetMovable(true)
-	Window:EnableMouse(true)
-	Window:RegisterForDrag("LeftButton")
-	Window:SetScript("OnDragStart", Window.StartMoving)
-	Window:SetScript("OnDragStop", Window.StopMovingOrSizing)
-	Window:Hide()
+	local Window = CreateDialogShell(self, {
+		Width = 300, Height = 74,
+		Point = "CENTER", RelativeTo = HydraUI.UIParent, X = 0, Y = 230,
+		Strata = "DIALOG",
+	})
 
-	-- Header
-	Window.Header = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.Header:SetHeight(HEADER_HEIGHT)
-	Window.Header:SetPoint("TOPLEFT", Window, SPACING, -SPACING)
-	Window.Header:SetPoint("TOPRIGHT", Window, -SPACING, -SPACING)
-	Window.Header:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.Header:SetBackdropColor(0, 0, 0)
-	Window.Header:SetBackdropBorderColor(0, 0, 0)
+	CreateDialogHeader(Window, {
+		RightInset = SPACING,
+		Text = Language["Import string"],
+	})
 
-	Window.HeaderTexture = Window.Header:CreateTexture(nil, "OVERLAY")
-	Window.HeaderTexture:SetPoint("TOPLEFT", Window.Header, 1, -1)
-	Window.HeaderTexture:SetPoint("BOTTOMRIGHT", Window.Header, -1, 1)
-	Window.HeaderTexture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	Window.HeaderTexture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
+	CreateDialogCloseControl(Window, {
+		Point = "RIGHT", RelativeTo = Window.Header,
+		HoverR = 1, HoverG = 0, HoverB = 0,
+		NormalR = 1, NormalG = 1, NormalB = 1,
+		Animated = false,
+	})
 
-	Window.Header.Text = Window.Header:CreateFontString(nil, "OVERLAY")
-	Window.Header.Text:SetPoint("LEFT", Window.Header, HEADER_SPACING, -1)
-	HydraUI:SetFontInfo(Window.Header.Text, Settings["ui-header-font"], Settings["ui-header-font-size"])
-	Window.Header.Text:SetJustifyH("LEFT")
-	Window.Header.Text:SetText("|cFF"..Settings["ui-header-font-color"]..Language["Import string"].."|r")
+	CreateDialogInnerBackdrop(Window, {
+		Field = "BG",
+		TopPoint = "TOPLEFT", TopRelativeTo = Window.Header, TopRelativePoint = "BOTTOMLEFT", TopX = 0, TopY = -2,
+		BottomPoint = "BOTTOMRIGHT", BottomRelativeTo = Window, BottomRelativePoint = "BOTTOMRIGHT", BottomX = -3, BottomY = 3,
+		Color = "ui-window-main-color",
+	})
 
-	-- Close button
-	Window.Header.CloseButton = CreateFrame("Frame", nil, Window.Header)
-	Window.Header.CloseButton:SetSize(HEADER_HEIGHT, HEADER_HEIGHT)
-	Window.Header.CloseButton:SetPoint("RIGHT", Window.Header, 0, 0)
-	Window.Header.CloseButton:SetScript("OnEnter", function(self) self.Cross:SetVertexColor(1, 0, 0) end)
-	Window.Header.CloseButton:SetScript("OnLeave", function(self) self.Cross:SetVertexColor(1, 1, 1) end)
-	Window.Header.CloseButton:SetScript("OnMouseUp", function() GUI.ImportWindow:Hide() end)
-
-	Window.Header.CloseButton.Cross = Window.Header.CloseButton:CreateTexture(nil, "OVERLAY")
-	Window.Header.CloseButton.Cross:SetPoint("CENTER", Window.Header.CloseButton, 0, 0)
-	Window.Header.CloseButton.Cross:SetSize(16, 16)
-	Window.Header.CloseButton.Cross:SetTexture(Assets:GetTexture("Close"))
-	Window.Header.CloseButton.Cross:SetVertexColor(HydraUI:HexToRGB("EEEEEE"))
-
-	-- Background
-	Window.BG = CreateFrame("Frame", nil, Window, "BackdropTemplate")
-	Window.BG:SetPoint("TOPLEFT", Window.Header, "BOTTOMLEFT", 0, -2)
-	Window.BG:SetPoint("BOTTOMRIGHT", Window, -3, 3)
-	Window.BG:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.BG:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
-	Window.BG:SetBackdropBorderColor(0, 0, 0)
-
-	Window.InputBG = CreateFrame("Frame", nil, Window.BG, "BackdropTemplate")
-	Window.InputBG:SetPoint("BOTTOMLEFT", Window.BG, 3, 3)
-	Window.InputBG:SetPoint("BOTTOMRIGHT", Window.BG, -3, 3)
-	Window.InputBG:SetHeight(20)
-	Window.InputBG:SetBackdrop(HydraUI.BackdropAndBorder)
-	Window.InputBG:SetBackdropColor(0, 0, 0, 0)
-	Window.InputBG:SetBackdropBorderColor(0, 0, 0)
-
-	Window.InputTexture = Window.InputBG:CreateTexture(nil, "BORDER")
-	Window.InputTexture:SetPoint("TOPLEFT", Window.InputBG, 1, -1)
-	Window.InputTexture:SetPoint("BOTTOMRIGHT", Window.InputBG, -1, 1)
-	Window.InputTexture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	Window.InputTexture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+	CreateDialogInnerBackdrop(Window, {
+		Parent = Window.BG, Field = "InputBG", Height = 20, TextureLayer = "BORDER",
+		TopPoint = "BOTTOMLEFT", TopRelativeTo = Window.BG, TopRelativePoint = "BOTTOMLEFT", TopX = 3, TopY = 3,
+		BottomPoint = "BOTTOMRIGHT", BottomRelativeTo = Window.BG, BottomRelativePoint = "BOTTOMRIGHT", BottomX = -3, BottomY = 3,
+		R = 0, G = 0, B = 0, A = 0,
+	})
 
 	Window.Label = Window.BG:CreateFontString(nil, "OVERLAY")
 	Window.Label:SetPoint("BOTTOMLEFT", Window.InputBG, "TOPLEFT", 3, 4)
@@ -1628,20 +1679,14 @@ function GUI:CreateImportWindow()
 	Window.Label:SetJustifyH("LEFT")
 	Window.Label:SetText(Language["Paste your profile string below"])
 
-	Window.Input = CreateFrame("EditBox", nil, Window.InputBG)
-	HydraUI:SetFontInfo(Window.Input, Settings["ui-widget-font"], Settings["ui-font-size"])
-	Window.Input:SetPoint("TOPLEFT", Window.InputBG, 3, -3)
-	Window.Input:SetPoint("BOTTOMRIGHT", Window.InputBG, -3, 3)
-	Window.Input:SetFrameLevel(10)
-	Window.Input:SetJustifyH("LEFT")
-	Window.Input:SetAutoFocus(false)
-	Window.Input:EnableKeyboard(true)
-	Window.Input:EnableMouse(true)
-	Window.Input:SetMaxLetters(9999)
-	Window.Input:SetScript("OnEnterPressed", ImportWindowOnEnterPressed)
-	Window.Input:SetScript("OnEscapePressed", ImportWindowOnEscapePressed)
-	--Window.Input:SetScript("OnTextChanged", ImportWindowOnTextChanged)
-	Window.Input:SetScript("OnMouseDown", ImportWindowOnMouseDown)
+	CreateDialogEditBox(Window, {
+		Parent = Window.InputBG, Level = 10, MaxLetters = 9999,
+		Scripts = {
+			OnEnterPressed = ImportWindowOnEnterPressed,
+			OnEscapePressed = ImportWindowOnEscapePressed,
+			OnMouseDown = ImportWindowOnMouseDown,
+		},
+	})
 
 	self.ImportWindow = Window
 

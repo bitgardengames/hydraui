@@ -1,6 +1,6 @@
 ## Interface: 120100
 ## Author: Hydra
-## Version: 2.79
+## Version: 2.80
 ## Title: |cFFFFC44DHydra|r|cFFFFFFFFUI|r
 ## Notes: Interface replacement for World of Warcraft: Midnight
 ## SavedVariables: HydraUIProfileData, HydraUIProfiles, HydraUIData, HydraUIGold

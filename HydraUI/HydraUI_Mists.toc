@@ -1,6 +1,6 @@
 ## Interface: 50504
 ## Author: Hydra
-## Version: 2.79
+## Version: 2.80
 ## Title: |cFFFFC44DHydra|r|cFFFFFFFFUI|r
 ## Notes: Interface replacement for Mists of Pandaria Classic
 ## SavedVariables: HydraUIProfileData, HydraUIProfiles, HydraUIData, HydraUIGold

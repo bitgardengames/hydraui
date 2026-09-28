@@ -3,7 +3,6 @@ local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 local Bubbles = HydraUI:NewModule("Chat Bubbles")
 
 local next = next
-local select = select
 local GetAllChatBubbles = C_ChatBubbles.GetAllChatBubbles
 
 Defaults["chat-bubbles-enable"] = true
@@ -68,17 +67,7 @@ function Bubbles:OnUpdate(elapsed)
 	end
 end
 
-Bubbles.Players = {}
-
-function Bubbles:ScanPlayers()
-	if UnitExists("raid1") then
-
-	elseif UnitExists("party1") then
-
-	end
-end
-
-function Bubbles:OnEvent(event)
+function Bubbles:OnEvent()
 	local Name, Type = GetInstanceInfo()
 
 	if (Type == "none") then
@@ -95,7 +84,6 @@ function Bubbles:Load()
 
 	self.Elapsed = 0
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
-	self:RegisterEvent("GROUP_ROSTER_UPDATE")
 	self:SetScript("OnEvent", self.OnEvent)
 	self:OnEvent()
 end

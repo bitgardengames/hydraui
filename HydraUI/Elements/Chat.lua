@@ -111,12 +111,6 @@ function Chat:RestoreHistory()
 	self.RestoringHistory = nil
 end
 
-function Chat:ClearHistory()
-	if (HydraUIData and HydraUIData.ChatHistory) then
-		HydraUIData.ChatHistory[HydraUI.UserProfileKey] = nil
-	end
-end
-
 -- When hovering over a chat frame, fade in the scroll controls
 
 local FormatDiscordHyperlink = function(id)
@@ -1193,12 +1187,6 @@ local UpdateEnableLinks = function(value)
 	end
 end
 
-local UpdateChatHistory = function(value)
-	if (not value) then
-		Chat:ClearHistory()
-	end
-end
-
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Chat"], function(left, right)
 	left:CreateHeader(Language["Enable"])
 	left:CreateSwitch("chat-enable", Settings["chat-enable"], Language["Enable Chat Module"], Language["Enable the HydraUI chat module"], ReloadUI):RequiresReload(true)
@@ -1208,7 +1196,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Chat"], funct
 	left:CreateSwitch("chat-enable-fading", Settings["chat-enable-fading"], Language["Enable Text Fading"], Language["Set the text to fade after the set amount of time"], UpdateEnableFading)
 	left:CreateSwitch("chat-link-tooltip", Settings["chat-link-tooltip"], Language["Show Link Tooltips"], Language["Display a tooltip when hovering over links in chat"], UpdateEnableLinks)
 	left:CreateSwitch("chat-shorten-channels", Settings["chat-shorten-channels"], Language["Shorten Channel Names"], Language["Shorten chat channel names to their channel number"])
-	left:CreateSwitch("chat-enable-history", Settings["chat-enable-history"], Language["Enable Chat History"], Language["Restore the last 50 chat messages when logging in"], UpdateChatHistory)
+	left:CreateSwitch("chat-enable-history", Settings["chat-enable-history"], Language["Enable Chat History"], Language["Restore the last 50 chat messages when logging in"])
 
 	right:CreateHeader(Language["Install"])
 	right:CreateButton("", Language["Install"], Language["Install Chat Defaults"], Language["Set default channels and settings related to chat"], RunChatInstall):RequiresReload(true)

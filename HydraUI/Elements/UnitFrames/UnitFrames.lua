@@ -1061,7 +1061,6 @@ function UF:Load()
 	end
 
 	if Settings["nameplates-enable"] then
-		UF:ApplyNamePlateCVars()
 		UF.NamePlateCVars.nameplateSelectedAlpha = (Settings["nameplates-selected-alpha"] / 100)
 		UF.NamePlateCVars.nameplateMinAlpha = (Settings["nameplates-unselected-alpha"] / 100)
 		UF.NamePlateCVars.nameplateMaxAlpha = (Settings["nameplates-unselected-alpha"] / 100)

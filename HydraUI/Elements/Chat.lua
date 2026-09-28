@@ -98,6 +98,28 @@ function Chat:RestoreHistory()
 		return
 	end
 
+	local CurrentMessages = {}
+
+	-- Chat is initialized after Blizzard has already printed login messages (such as
+	-- the guild MOTD). Save and remove those messages so restored history can be
+	-- inserted before them, then put the login messages back in their original order.
+	for _, Entry in ipairs(self:GetHistory()) do
+		local Frame = Entry.Frame and _G[Entry.Frame]
+
+		if (Frame and not CurrentMessages[Frame] and Frame.GetNumMessages and Frame.GetMessageInfo and Frame.Clear) then
+			local Messages = {}
+
+			for i = 1, Frame:GetNumMessages() do
+				local Message, R, G, B, InfoID, AccessID, TypeID = Frame:GetMessageInfo(i)
+
+				Messages[#Messages + 1] = {Message, R, G, B, InfoID, AccessID, TypeID}
+			end
+
+			CurrentMessages[Frame] = Messages
+			Frame:Clear()
+		end
+	end
+
 	self.RestoringHistory = true
 
 	for _, Entry in ipairs(self:GetHistory()) do
@@ -105,6 +127,12 @@ function Chat:RestoreHistory()
 
 		if (Frame and Frame.AddMessage) then
 			Frame:AddMessage(Entry.Message, Entry.R, Entry.G, Entry.B)
+		end
+	end
+
+	for Frame, Messages in pairs(CurrentMessages) do
+		for _, Message in ipairs(Messages) do
+			Frame:AddMessage(unpack(Message))
 		end
 	end
 

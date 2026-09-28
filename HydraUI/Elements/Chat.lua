@@ -25,6 +25,7 @@ Defaults["chat-enable-fading"] = false
 Defaults["chat-fade-time"] = 15
 Defaults["chat-link-tooltip"] = true
 Defaults["chat-shorten-channels"] = true
+Defaults["chat-enable-history"] = true
 
 Defaults["right-window-enable"] = true
 Defaults["right-window-size"] = "SINGLE"
@@ -59,6 +60,62 @@ local CHAT_LABEL = CHAT_LABEL
 
 local Window = HydraUI:NewModule("Right Window")
 local Chat = HydraUI:NewModule("Chat")
+local MaxHistoryMessages = 50
+
+function Chat:GetHistory()
+	if (not HydraUIData) then
+		HydraUIData = {}
+	end
+
+	HydraUIData.ChatHistory = HydraUIData.ChatHistory or {}
+	HydraUIData.ChatHistory[HydraUI.UserProfileKey] = HydraUIData.ChatHistory[HydraUI.UserProfileKey] or {}
+
+	return HydraUIData.ChatHistory[HydraUI.UserProfileKey]
+end
+
+function Chat:SaveMessage(frame, message, r, g, b)
+	if ((not Settings["chat-enable-history"]) or self.RestoringHistory or (type(message) ~= "string")) then
+		return
+	end
+
+	local History = self:GetHistory()
+
+	History[#History + 1] = {
+		Frame = frame:GetName(),
+		Message = message,
+		R = r,
+		G = g,
+		B = b,
+	}
+
+	if (#History > MaxHistoryMessages) then
+		table.remove(History, 1)
+	end
+end
+
+function Chat:RestoreHistory()
+	if (not Settings["chat-enable-history"]) then
+		return
+	end
+
+	self.RestoringHistory = true
+
+	for _, Entry in ipairs(self:GetHistory()) do
+		local Frame = Entry.Frame and _G[Entry.Frame]
+
+		if (Frame and Frame.AddMessage) then
+			Frame:AddMessage(Entry.Message, Entry.R, Entry.G, Entry.B)
+		end
+	end
+
+	self.RestoringHistory = nil
+end
+
+function Chat:ClearHistory()
+	if (HydraUIData and HydraUIData.ChatHistory) then
+		HydraUIData.ChatHistory[HydraUI.UserProfileKey] = nil
+	end
+end
 
 -- When hovering over a chat frame, fade in the scroll controls
 
@@ -452,8 +509,11 @@ local OnHyperlinkLeave = function(self)
 end
 
 function Chat:OverrideAddMessage(msg, ...)
-	msg = gsub(msg, "|h%[(%d+)%.%s.-%]|h", "|h[%1]|h")
+	if Settings["chat-shorten-channels"] and (type(msg) == "string") then
+		msg = gsub(msg, "|h%[(%d+)%.%s.-%]|h", "|h[%1]|h")
+	end
 
+	Chat:SaveMessage(self, msg, ...)
 	self.OldAddMessage(self, msg, ...)
 end
 
@@ -462,10 +522,8 @@ function Chat:StyleChatFrame(frame)
 		return
 	end
 
-	if Settings["chat-shorten-channels"] then
-		frame.OldAddMessage = frame.AddMessage
-		frame.AddMessage = Chat.OverrideAddMessage
-	end
+	frame.OldAddMessage = frame.AddMessage
+	frame.AddMessage = Chat.OverrideAddMessage
 
 	local FrameName = frame:GetName()
 	local Tab = _G[FrameName.."Tab"]
@@ -989,6 +1047,7 @@ function Chat:Load()
 
 	self:MoveChatFrames()
 	self:SetChatTypeInfo()
+	self:RestoreHistory()
 
 	DEFAULT_CHAT_FRAME:SetUserPlaced(true)
 
@@ -1134,22 +1193,9 @@ local UpdateEnableLinks = function(value)
 	end
 end
 
-local UpdateShortenChannels = function(value)
-	local Frame
-
-	if value then
-		for i = 1, NUM_CHAT_WINDOWS do
-			Frame = _G["ChatFrame"..i]
-
-			Frame.OldAddMessage = Frame.AddMessage
-			Frame.AddMessage = Chat.OverrideAddMessage
-		end
-	else
-		for i = 1, NUM_CHAT_WINDOWS do
-			Frame = _G["ChatFrame"..i]
-
-			Frame.AddMessage = Frame.OldAddMessage
-		end
+local UpdateChatHistory = function(value)
+	if (not value) then
+		Chat:ClearHistory()
 	end
 end
 
@@ -1161,7 +1207,8 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Chat"], funct
 	left:CreateSlider("chat-fade-time", Settings["chat-enable-fading"], 0, 60, 5, Language["Set Fade Time"], Language["Set the duration to display text before fading out"], UpdateFadeTime, nil, "s")
 	left:CreateSwitch("chat-enable-fading", Settings["chat-enable-fading"], Language["Enable Text Fading"], Language["Set the text to fade after the set amount of time"], UpdateEnableFading)
 	left:CreateSwitch("chat-link-tooltip", Settings["chat-link-tooltip"], Language["Show Link Tooltips"], Language["Display a tooltip when hovering over links in chat"], UpdateEnableLinks)
-	left:CreateSwitch("chat-shorten-channels", Settings["chat-shorten-channels"], Language["Shorten Channel Names"], Language["Shorten chat channel names to their channel number"], UpdateShortenChannels)
+	left:CreateSwitch("chat-shorten-channels", Settings["chat-shorten-channels"], Language["Shorten Channel Names"], Language["Shorten chat channel names to their channel number"])
+	left:CreateSwitch("chat-enable-history", Settings["chat-enable-history"], Language["Enable Chat History"], Language["Restore the last 50 chat messages when logging in"], UpdateChatHistory)
 
 	right:CreateHeader(Language["Install"])
 	right:CreateButton("", Language["Install"], Language["Install Chat Defaults"], Language["Set default channels and settings related to chat"], RunChatInstall):RequiresReload(true)

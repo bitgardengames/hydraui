@@ -97,6 +97,7 @@ Elements\DataTexts\Mail.lua
 Elements\Tooltips.lua
 Elements\ActionBars\MicroMenu.lua
 Elements\ActionBars\BagSlots.lua
+Elements\Bags.lua
 Elements\Scale.lua
 Elements\ObjectiveTracker.lua
 Elements\Loot.lua

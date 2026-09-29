@@ -27,36 +27,54 @@ HydraUI.StyleFuncs["targettarget"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
-	UF:CreateThreatIndicator(self, { backdrop = HydraUI.Outline, postUpdate = UF.ThreatPostUpdate })
+	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
+	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
 
 	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(self, {
-		height = Settings["unitframes-targettarget-health-height"],
-		texture = Settings.ToTHealthTexture,
-		reverseFill = Settings["unitframes-targettarget-health-reverse"],
-		backgroundLayer = "BORDER",
-	})
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
-		width = Settings["unitframes-targettarget-width"],
-		height = Settings["unitframes-targettarget-health-height"],
-		texture = Settings.ToTHealthTexture,
-		reverseFill = Settings["unitframes-targettarget-health-reverse"],
-		createAbsorb = HydraUI.IsMainline,
-	})
+	local Health, HealthBG = UF:CreateHealthBar(
+		self,
+		Settings["unitframes-targettarget-health-height"],
+		Settings.ToTHealthTexture,
+		Settings["unitframes-targettarget-health-reverse"],
+		nil,
+		"BORDER"
+	)
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
+		self,
+		Health,
+		Settings["unitframes-targettarget-width"],
+		Settings["unitframes-targettarget-health-height"],
+		Settings.ToTHealthTexture,
+		Settings["unitframes-targettarget-health-reverse"],
+		HydraUI.IsMainline
+	)
 
-	local HealthLeft = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
-	})
+	local HealthLeft = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"LEFT",
+		"LEFT",
+		3,
+		0,
+		"LEFT"
+	)
 
-	local HealthRight = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
-	})
+	local HealthRight = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"RIGHT",
+		"RIGHT",
+		-3,
+		0,
+		"RIGHT"
+	)
 
 	-- Target Icon
-	local RaidTargetIndicator = UF:CreateRaidTargetIndicator(Health, { size = 16 })
+	local RaidTargetIndicator = UF:CreateRaidTargetIndicator(Health, 16)
 
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 
@@ -69,11 +87,7 @@ HydraUI.StyleFuncs["targettarget"] = function(self, unit)
 	UF:SetHealthAttributes(Health, Settings["unitframes-targettarget-health-color"])
 
 	-- Power Bar
-	local Power, PowerBG = UF:CreatePowerBar(self, {
-		height = Settings["unitframes-targettarget-power-height"],
-		texture = Settings.ToTPowerTexture,
-		reverseFill = Settings["unitframes-targettarget-power-reverse"],
-	})
+	local Power, PowerBG = UF:CreatePowerBar(self, Settings["unitframes-targettarget-power-height"], Settings.ToTPowerTexture, Settings["unitframes-targettarget-power-reverse"])
 
 	-- Attributes
 	Power.frequentUpdates = true

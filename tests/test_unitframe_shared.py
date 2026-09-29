@@ -24,10 +24,31 @@ STYLES = {
 
 
 def constructor_block(source: str, constructor: str) -> str:
-    match = re.search(rf"UF:{constructor}\([^\n]*, \{{(.*?)\n\t\}}\)", source, re.S)
-    if not match:
+    marker = f"UF:{constructor}("
+    start = source.find(marker)
+    if start < 0:
         raise AssertionError(f"missing {constructor}")
-    return match.group(1)
+    depth = 0
+    quote = None
+    escaped = False
+    for index in range(start + len(marker) - 1, len(source)):
+        char = source[index]
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif char in "'\"":
+            quote = char
+        elif char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return source[start:index + 1]
+    raise AssertionError(f"unterminated {constructor}")
 
 
 class SharedUnitFrameCoverage(unittest.TestCase):

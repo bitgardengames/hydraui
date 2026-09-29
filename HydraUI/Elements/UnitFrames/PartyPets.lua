@@ -17,33 +17,41 @@ HydraUI.StyleFuncs["partypet"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	UF:CreateBackdrop(self, { texture = "Blank", layer = "BORDER" })
-	UF:CreateThreatIndicator(self, { backdrop = HydraUI.Outline, postUpdate = UF.ThreatPostUpdate })
+	UF:CreateBackdrop(self, "Blank", "BORDER")
+	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
 
 	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(self, {
-		height = Settings["party-pets-health-height"],
-		texture = Settings["ui-widget-texture"],
-		reverseFill = Settings["party-pets-health-reverse"],
-		orientation = Settings["party-pets-health-orientation"],
-		backgroundLayer = "BACKGROUND",
-	})
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
-		width = Settings["party-pets-width"],
-		height = Settings["party-pets-health-height"],
-		texture = Settings["ui-widget-texture"],
-		reverseFill = Settings["party-pets-health-reverse"],
-		createAbsorb = HydraUI.IsMainline,
-	})
+	local Health, HealthBG = UF:CreateHealthBar(
+		self,
+		Settings["party-pets-health-height"],
+		Settings["ui-widget-texture"],
+		Settings["party-pets-health-reverse"],
+		Settings["party-pets-health-orientation"],
+		"BACKGROUND"
+	)
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
+		self,
+		Health,
+		Settings["party-pets-width"],
+		Settings["party-pets-health-height"],
+		Settings["ui-widget-texture"],
+		Settings["party-pets-health-reverse"],
+		HydraUI.IsMainline
+	)
 
-	local Highlight = UF:CreateMouseoverHighlight(self, Health, {
-		texture = "Blank", enabled = Settings.PartyEnableMouseover,
-	})
+	local Highlight = UF:CreateMouseoverHighlight(self, Health, "Blank", Settings.PartyEnableMouseover)
 
-	local HealthMiddle = UF:CreateFontString(Health, {
-		font = Settings["party-font"], size = Settings["party-font-size"], flags = Settings["party-font-flags"],
-		point = "CENTER", relativePoint = "CENTER", x = 0, y = 0, justify = "CENTER",
-	})
+	local HealthMiddle = UF:CreateFontString(
+		Health,
+		Settings["party-font"],
+		Settings["party-font-size"],
+		Settings["party-font-flags"],
+		"CENTER",
+		"CENTER",
+		0,
+		0,
+		"CENTER"
+	)
 
 	-- Attributes
 	Health.frequentUpdates = true
@@ -53,7 +61,7 @@ HydraUI.StyleFuncs["partypet"] = function(self, unit)
 	UF:SetHealthAttributes(Health, Settings["party-pets-health-color"])
 
 	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
 
 	-- Tags
 	self:Tag(HealthMiddle, "[Name10]")

@@ -25,33 +25,51 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
-	UF:CreateThreatIndicator(self, { backdrop = HydraUI.Outline, postUpdate = UF.ThreatPostUpdate })
+	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
+	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
 
 	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(self, {
-		height = Settings["unitframes-focus-health-height"],
-		texture = Settings.FocusHealthTexture,
-		reverseFill = Settings["unitframes-focus-health-reverse"],
-		backgroundLayer = "BORDER",
-	})
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
-		width = Settings["unitframes-focus-width"],
-		height = Settings["unitframes-focus-health-height"],
-		texture = Settings.FocusHealthTexture,
-		reverseFill = Settings["unitframes-focus-health-reverse"],
-		createAbsorb = HydraUI.IsMainline,
-	})
+	local Health, HealthBG = UF:CreateHealthBar(
+		self,
+		Settings["unitframes-focus-health-height"],
+		Settings.FocusHealthTexture,
+		Settings["unitframes-focus-health-reverse"],
+		nil,
+		"BORDER"
+	)
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
+		self,
+		Health,
+		Settings["unitframes-focus-width"],
+		Settings["unitframes-focus-health-height"],
+		Settings.FocusHealthTexture,
+		Settings["unitframes-focus-health-reverse"],
+		HydraUI.IsMainline
+	)
 
-	local HealthLeft = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
-	})
+	local HealthLeft = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"LEFT",
+		"LEFT",
+		3,
+		0,
+		"LEFT"
+	)
 
-	local HealthRight = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
-	})
+	local HealthRight = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"RIGHT",
+		"RIGHT",
+		-3,
+		0,
+		"RIGHT"
+	)
 
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 
@@ -61,11 +79,7 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["unitframes-focus-health-color"])
 
-	local Power, PowerBG = UF:CreatePowerBar(self, {
-		height = Settings["unitframes-focus-power-height"],
-		texture = Settings.FocusPowerTexture,
-		reverseFill = Settings["unitframes-focus-power-reverse"],
-	})
+	local Power, PowerBG = UF:CreatePowerBar(self, Settings["unitframes-focus-power-height"], Settings.FocusPowerTexture, Settings["unitframes-focus-power-reverse"])
 
 	-- Attributes
 	Power.frequentUpdates = true
@@ -74,32 +88,92 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["unitframes-focus-power-color"])
 
 	if Settings["focus-enable-castbar"] then
-		UF:CreateCastbar(self, {
-			width = Settings["unitframes-focus-width"] - 30, height = 24,
-			point = "TOPRIGHT", relativeTo = self, relativePoint = "BOTTOMRIGHT", x = -1, y = -3,
-			texture = Settings["ui-widget-texture"], backgroundTexture = "Blank",
-			font = Settings["unitframes-font"], fontSize = Settings["unitframes-font-size"], fontFlags = Settings["unitframes-font-flags"],
-			textWidth = 250 * 0.7, iconSize = 24, iconX = -4, iconBackground = true,
-			showTradeSkills = true, timeToHold = 0.7, postCastStart = UF.PostCastStart,
-			postCastStop = UF.PostCastStop, postCastFail = UF.PostCastFail, postCastInterruptible = UF.PostCastInterruptible,
-		})
+		UF:CreateCastbar(
+			self,
+			nil,
+			Settings["unitframes-focus-width"] - 30,
+			24,
+			"TOPRIGHT",
+			self,
+			"BOTTOMRIGHT",
+			-1,
+			-3,
+			Settings["ui-widget-texture"],
+			nil,
+			"Blank",
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			Settings["unitframes-font"],
+			Settings["unitframes-font-size"],
+			Settings["unitframes-font-flags"],
+			nil,
+			nil,
+			250 * 0.7,
+			24,
+			-4,
+			true,
+			nil,
+			true,
+			0.7,
+			nil,
+			UF.PostCastStart,
+			UF.PostCastStop,
+			UF.PostCastFail,
+			UF.PostCastInterruptible
+		)
 	end
 
 	-- Auras
 	local AuraSize = Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3
-	local Buffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Buffs", width = (AuraSize * 3) + 4, height = AuraSize,
-		point = "LEFT", relativeTo = self, relativePoint = "RIGHT", x = 2,
-		size = AuraSize, spacing = 2, num = 3, initialAnchor = "LEFT", tooltipAnchor = "ANCHOR_TOP", growthX = "RIGHT",
-		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
-	})
-	local Debuffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Debuffs", width = (AuraSize * 3) + 4, height = AuraSize,
-		point = "LEFT", relativeTo = Buffs, relativePoint = "RIGHT", x = 2,
-		size = AuraSize, spacing = 2, num = 3, initialAnchor = "LEFT", tooltipAnchor = "ANCHOR_TOP", growthX = "RIGHT",
-		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
-		onlyShowPlayer = Settings["unitframes-only-focus-debuffs"],
-	})
+	local Buffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Buffs",
+		nil,
+		(AuraSize * 3) + 4,
+		AuraSize,
+		"LEFT",
+		self,
+		"RIGHT",
+		2,
+		nil,
+		AuraSize,
+		2,
+		3,
+		"LEFT",
+		"ANCHOR_TOP",
+		"RIGHT",
+		nil,
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon
+	)
+	local Debuffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Debuffs",
+		nil,
+		(AuraSize * 3) + 4,
+		AuraSize,
+		"LEFT",
+		Buffs,
+		"RIGHT",
+		2,
+		nil,
+		AuraSize,
+		2,
+		3,
+		"LEFT",
+		"ANCHOR_TOP",
+		"RIGHT",
+		nil,
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon,
+		nil,
+		Settings["unitframes-only-focus-debuffs"]
+	)
 
 	-- Tags
 	self:Tag(HealthLeft, Settings["unitframes-focus-health-left"])

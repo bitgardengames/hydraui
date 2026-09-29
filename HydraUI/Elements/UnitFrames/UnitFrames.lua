@@ -107,37 +107,41 @@ end
 
 -- Constructors for the common visual pieces accept resolved, explicit values.
 -- Style modules remain responsible for choosing settings and frame-specific behavior.
-function UF:CreateBackdrop(frame, config)
-	local backdrop = frame:CreateTexture(nil, config.layer or "BACKGROUND")
-	if config.relativeTo then backdrop:SetAllPoints(config.relativeTo) else backdrop:SetAllPoints() end
-	backdrop:SetTexture(Assets:GetTexture(config.texture))
-	backdrop:SetVertexColor(unpack(config.color or {0, 0, 0}))
+function UF:CreateBackdrop(frame, texture, layer, relativeTo, colorR, colorG, colorB)
+	local backdrop = frame:CreateTexture(nil, layer or "BACKGROUND")
+	if relativeTo then backdrop:SetAllPoints(relativeTo) else backdrop:SetAllPoints() end
+	backdrop:SetTexture(Assets:GetTexture(texture))
+	backdrop:SetVertexColor(colorR or 0, colorG or 0, colorB or 0)
 	return backdrop
 end
 
-function UF:CreateThreatIndicator(frame, config)
+function UF:CreateThreatIndicator(frame, backdrop, postUpdate, inset)
+	inset = inset or -1
 	local threat = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-	threat:SetPoint("TOPLEFT", config.inset or -1, -(config.inset or -1))
-	threat:SetPoint("BOTTOMRIGHT", -(config.inset or -1), config.inset or -1)
-	threat:SetBackdrop(config.backdrop)
-	threat.PostUpdate = config.postUpdate
+	threat:SetPoint("TOPLEFT", inset, -inset)
+	threat:SetPoint("BOTTOMRIGHT", -inset, inset)
+	threat:SetBackdrop(backdrop)
+	threat.PostUpdate = postUpdate
 	frame.ThreatIndicator = threat
 	return threat
 end
 
-function UF:CreateHealthBar(frame, config)
+function UF:CreateHealthBar(frame, height, texture, reverseFill, orientation, backgroundLayer, backgroundMultiplier, leftInset, rightInset, topInset)
+	leftInset = leftInset or 1
+	rightInset = rightInset or 1
+	topInset = topInset or 1
 	local health = CreateFrame("StatusBar", nil, frame)
-	health:SetPoint("TOPLEFT", frame, config.leftInset or 1, -(config.topInset or 1))
-	health:SetPoint("TOPRIGHT", frame, -(config.rightInset or 1), -(config.topInset or 1))
-	health:SetHeight(config.height)
-	health:SetStatusBarTexture(Assets:GetTexture(config.texture))
-	health:SetReverseFill(config.reverseFill)
-	if config.orientation then health:SetOrientation(config.orientation) end
+	health:SetPoint("TOPLEFT", frame, leftInset, -topInset)
+	health:SetPoint("TOPRIGHT", frame, -rightInset, -topInset)
+	health:SetHeight(height)
+	health:SetStatusBarTexture(Assets:GetTexture(texture))
+	health:SetReverseFill(reverseFill)
+	if orientation then health:SetOrientation(orientation) end
 
-	local background = frame:CreateTexture(nil, config.backgroundLayer or "BORDER")
+	local background = frame:CreateTexture(nil, backgroundLayer or "BORDER")
 	background:SetAllPoints(health)
-	background:SetTexture(Assets:GetTexture(config.texture))
-	background.multiplier = config.backgroundMultiplier or 0.2
+	background:SetTexture(Assets:GetTexture(texture))
+	background.multiplier = backgroundMultiplier or 0.2
 	health.bg = background
 	frame.Health = health
 	return health, background
@@ -149,88 +153,91 @@ local function AnchorPredictionBar(bar, health, reverseFill)
 	bar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
 end
 
-function UF:CreateHealAndAbsorbBars(frame, health, config)
+function UF:CreateHealAndAbsorbBars(frame, health, width, height, texture, reverseFill, createAbsorb)
 	local heal = CreateFrame("StatusBar", nil, health)
-	heal:SetSize(config.width, config.height)
-	heal:SetStatusBarTexture(Assets:GetTexture(config.texture))
+	heal:SetSize(width, height)
+	heal:SetStatusBarTexture(Assets:GetTexture(texture))
 	heal:SetStatusBarColor(0, 0.48, 0)
-	heal:SetReverseFill(config.reverseFill)
+	heal:SetReverseFill(reverseFill)
 	heal:SetFrameLevel(health:GetFrameLevel() - 1)
-	AnchorPredictionBar(heal, health, config.reverseFill)
+	AnchorPredictionBar(heal, health, reverseFill)
 	frame.HealBar = heal
 
 	local absorb
-	if config.createAbsorb then
+	if createAbsorb then
 		absorb = CreateFrame("StatusBar", nil, health)
-		absorb:SetSize(config.width, config.height)
-		absorb:SetStatusBarTexture(Assets:GetTexture(config.texture))
+		absorb:SetSize(width, height)
+		absorb:SetStatusBarTexture(Assets:GetTexture(texture))
 		absorb:SetStatusBarColor(0, 0.66, 1)
-		absorb:SetReverseFill(config.reverseFill)
+		absorb:SetReverseFill(reverseFill)
 		absorb:SetFrameLevel(health:GetFrameLevel() - 2)
-		AnchorPredictionBar(absorb, health, config.reverseFill)
+		AnchorPredictionBar(absorb, health, reverseFill)
 		frame.AbsorbsBar = absorb
 	end
 	return heal, absorb
 end
 
-function UF:CreatePowerBar(frame, config)
+function UF:CreatePowerBar(frame, height, texture, reverseFill, backgroundLayer, backgroundAlpha, leftInset, rightInset, bottomInset)
+	leftInset = leftInset or 1
+	rightInset = rightInset or 1
+	bottomInset = bottomInset or 1
 	local power = CreateFrame("StatusBar", nil, frame)
-	power:SetPoint("BOTTOMLEFT", frame, config.leftInset or 1, config.bottomInset or 1)
-	power:SetPoint("BOTTOMRIGHT", frame, -(config.rightInset or 1), config.bottomInset or 1)
-	power:SetHeight(config.height)
-	power:SetStatusBarTexture(Assets:GetTexture(config.texture))
-	power:SetReverseFill(config.reverseFill)
-	local background = power:CreateTexture(nil, config.backgroundLayer or "BORDER")
+	power:SetPoint("BOTTOMLEFT", frame, leftInset, bottomInset)
+	power:SetPoint("BOTTOMRIGHT", frame, -rightInset, bottomInset)
+	power:SetHeight(height)
+	power:SetStatusBarTexture(Assets:GetTexture(texture))
+	power:SetReverseFill(reverseFill)
+	local background = power:CreateTexture(nil, backgroundLayer or "BORDER")
 	background:SetAllPoints(power)
-	background:SetTexture(Assets:GetTexture(config.texture))
-	background:SetAlpha(config.backgroundAlpha or 0.2)
+	background:SetTexture(Assets:GetTexture(texture))
+	background:SetAlpha(backgroundAlpha or 0.2)
 	power.bg = background
 	frame.Power = power
 	return power, background
 end
 
-function UF:CreateMouseoverHighlight(frame, health, config)
+function UF:CreateMouseoverHighlight(frame, health, texture, enabled, colorR, colorG, colorB, sublevel, alpha)
 	local highlight = health:CreateTexture(nil, "OVERLAY")
 	highlight:SetAllPoints(health)
-	highlight:SetTexture(Assets:GetTexture(config.texture))
-	highlight:SetVertexColor(unpack(config.color or {0.8, 0.8, 0.8}))
+	highlight:SetTexture(Assets:GetTexture(texture))
+	highlight:SetVertexColor(colorR or 0.8, colorG or 0.8, colorB or 0.8)
 	highlight:SetAlpha(0)
-	highlight:SetDrawLayer("OVERLAY", config.sublevel or 7)
+	highlight:SetDrawLayer("OVERLAY", sublevel or 7)
 	frame.Highlight = highlight
-	frame:HookScript("OnEnter", function(owner) owner.Highlight:SetAlpha(config.alpha or 0.15) end)
+	frame:HookScript("OnEnter", function(owner) owner.Highlight:SetAlpha(alpha or 0.15) end)
 	frame:HookScript("OnLeave", function(owner) owner.Highlight:SetAlpha(0) end)
-	if not config.enabled then highlight:Hide() end
+	if not enabled then highlight:Hide() end
 	return highlight
 end
 
-function UF:CreateFontString(parent, config)
-	local text = parent:CreateFontString(nil, config.layer or "OVERLAY")
-	HydraUI:SetFontInfo(text, config.font, config.size, config.flags)
-	text:SetPoint(config.point, parent, config.relativePoint or config.point, config.x or 0, config.y or 0)
-	text:SetJustifyH(config.justify or config.point)
+function UF:CreateFontString(parent, font, size, flags, point, relativePoint, x, y, justify, layer)
+	local text = parent:CreateFontString(nil, layer or "OVERLAY")
+	HydraUI:SetFontInfo(text, font, size, flags)
+	text:SetPoint(point, parent, relativePoint or point, x or 0, y or 0)
+	text:SetJustifyH(justify or point)
 	return text
 end
 
-function UF:CreatePortrait(frame, config)
+function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relativePoint, x, y, alpha, backgroundTexture, backgroundVisible, backgroundR, backgroundG, backgroundB)
 	local portrait
-	if config.style == "2D" then
+	if style == "2D" then
 		portrait = frame:CreateTexture(nil, "OVERLAY")
 		portrait:SetTexCoord(0.12, 0.88, 0.12, 0.88)
 	else
 		portrait = CreateFrame("PlayerModel", nil, frame)
 	end
 
-	portrait:SetSize(config.width, config.height)
-	portrait:SetPoint(config.point, config.relativeTo or frame, config.relativePoint, config.x or 0, config.y or 0)
-	if config.alpha then portrait:SetAlpha(config.alpha) end
+	portrait:SetSize(width, height)
+	portrait:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
+	if alpha then portrait:SetAlpha(alpha) end
 
-	if config.style ~= "OVERLAY" then
+	if style ~= "OVERLAY" then
 		local background = frame:CreateTexture(nil, "BACKGROUND")
 		background:SetPoint("TOPLEFT", portrait, -1, 1)
 		background:SetPoint("BOTTOMRIGHT", portrait, 1, -1)
-		background:SetTexture(Assets:GetTexture(config.backgroundTexture))
-		background:SetVertexColor(unpack(config.backgroundColor or {0, 0, 0}))
-		if config.backgroundVisible == false then background:Hide() end
+		background:SetTexture(Assets:GetTexture(backgroundTexture))
+		background:SetVertexColor(backgroundR or 0, backgroundG or 0, backgroundB or 0)
+		if backgroundVisible == false then background:Hide() end
 		portrait.BG = background
 	end
 
@@ -238,49 +245,43 @@ function UF:CreatePortrait(frame, config)
 	return portrait
 end
 
-function UF:CreateCastbar(frame, config)
-	local castbar = CreateFrame("StatusBar", config.name, frame)
-	castbar:SetSize(config.width, config.height)
-	castbar:SetPoint(config.point, config.relativeTo or frame, config.relativePoint, config.x or 0, config.y or 0)
-	castbar:SetStatusBarTexture(Assets:GetTexture(config.texture))
+function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativePoint, x, y, texture, barBackgroundAlpha, backgroundTexture, backgroundTopLeftX, backgroundTopLeftY, backgroundBottomRightX, backgroundBottomRightY, backgroundR, backgroundG, backgroundB, font, fontSize, fontFlags, timeX, textX, textWidth, iconSize, iconX, iconBackground, createSafeZone, showTradeSkills, timeToHold, classColor, postCastStart, postCastStop, postCastFail, postCastInterruptible)
+	local castbar = CreateFrame("StatusBar", name, frame)
+	castbar:SetSize(width, height)
+	castbar:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
+	castbar:SetStatusBarTexture(Assets:GetTexture(texture))
 
 	local barBackground = castbar:CreateTexture(nil, "ARTWORK")
 	barBackground:SetAllPoints(castbar)
-	barBackground:SetTexture(Assets:GetTexture(config.texture))
-	barBackground:SetAlpha(config.barBackgroundAlpha or 0.2)
+	barBackground:SetTexture(Assets:GetTexture(texture))
+	barBackground:SetAlpha(barBackgroundAlpha or 0.2)
 
 	local background = castbar:CreateTexture(nil, "BACKGROUND")
-	background:SetPoint("TOPLEFT", castbar, unpack(config.backgroundTopLeft or {-1, 1}))
-	background:SetPoint("BOTTOMRIGHT", castbar, unpack(config.backgroundBottomRight or {1, -1}))
-	background:SetTexture(Assets:GetTexture(config.backgroundTexture))
-	background:SetVertexColor(unpack(config.backgroundColor or {0, 0, 0}))
+	background:SetPoint("TOPLEFT", castbar, backgroundTopLeftX or -1, backgroundTopLeftY or 1)
+	background:SetPoint("BOTTOMRIGHT", castbar, backgroundBottomRightX or 1, backgroundBottomRightY or -1)
+	background:SetTexture(Assets:GetTexture(backgroundTexture))
+	background:SetVertexColor(backgroundR or 0, backgroundG or 0, backgroundB or 0)
 
-	local time = UF:CreateFontString(castbar, {
-		font = config.font, size = config.fontSize, flags = config.fontFlags,
-		point = "RIGHT", relativePoint = "RIGHT", x = config.timeX or -3, y = 0, justify = "RIGHT",
-	})
-	local text = UF:CreateFontString(castbar, {
-		font = config.font, size = config.fontSize, flags = config.fontFlags,
-		point = "LEFT", relativePoint = "LEFT", x = config.textX or 3, y = 0, justify = "LEFT",
-	})
-	text:SetSize(config.textWidth, config.fontSize)
+	local time = UF:CreateFontString(castbar, font, fontSize, fontFlags, "RIGHT", "RIGHT", timeX or -3, 0, "RIGHT")
+	local text = UF:CreateFontString(castbar, font, fontSize, fontFlags, "LEFT", "LEFT", textX or 3, 0, "LEFT")
+	text:SetSize(textWidth, fontSize)
 
 	local icon = castbar:CreateTexture(nil, "OVERLAY")
-	icon:SetSize(config.iconSize, config.iconSize)
-	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", config.iconX or -1, 0)
+	icon:SetSize(iconSize, iconSize)
+	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", iconX or -1, 0)
 	icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-	if config.iconBackground then
-		local iconBackground = castbar:CreateTexture(nil, "BACKGROUND")
-		iconBackground:SetPoint("TOPLEFT", icon, -1, 1)
-		iconBackground:SetPoint("BOTTOMRIGHT", icon, 1, -1)
-		iconBackground:SetTexture(Assets:GetTexture(config.backgroundTexture))
-		iconBackground:SetVertexColor(unpack(config.backgroundColor or {0, 0, 0}))
-		icon.BG = iconBackground
+	if iconBackground then
+		local iconBG = castbar:CreateTexture(nil, "BACKGROUND")
+		iconBG:SetPoint("TOPLEFT", icon, -1, 1)
+		iconBG:SetPoint("BOTTOMRIGHT", icon, 1, -1)
+		iconBG:SetTexture(Assets:GetTexture(backgroundTexture))
+		iconBG:SetVertexColor(backgroundR or 0, backgroundG or 0, backgroundB or 0)
+		icon.BG = iconBG
 	end
 
-	if config.createSafeZone then
+	if createSafeZone then
 		local safeZone = castbar:CreateTexture(nil, "ARTWORK")
-		safeZone:SetTexture(Assets:GetTexture(config.texture))
+		safeZone:SetTexture(Assets:GetTexture(texture))
 		safeZone:SetVertexColor(0.9, 0.15, 0.15, 0.75)
 		castbar.SafeZone = safeZone
 	end
@@ -289,42 +290,43 @@ function UF:CreateCastbar(frame, config)
 	castbar.Time = time
 	castbar.Text = text
 	castbar.Icon = icon
-	castbar.showTradeSkills = config.showTradeSkills
-	castbar.timeToHold = config.timeToHold
-	castbar.ClassColor = config.classColor
-	castbar.PostCastStart = config.postCastStart
-	castbar.PostCastStop = config.postCastStop
-	castbar.PostCastFail = config.postCastFail
-	castbar.PostCastInterruptible = config.postCastInterruptible
+	castbar.showTradeSkills = showTradeSkills
+	castbar.timeToHold = timeToHold
+	castbar.ClassColor = classColor
+	castbar.PostCastStart = postCastStart
+	castbar.PostCastStop = postCastStop
+	castbar.PostCastFail = postCastFail
+	castbar.PostCastInterruptible = postCastInterruptible
 	frame.Castbar = castbar
 	return castbar
 end
 
-function UF:CreateAuraContainer(frame, config)
-	local auras = CreateFrame("Frame", config.name, config.parent or frame)
-	auras:SetSize(config.width, config.height)
-	if config.point then
-		auras:SetPoint(config.point, config.relativeTo or frame, config.relativePoint, config.x or 0, config.y or 0)
+function UF:CreateAuraContainer(frame, name, parent, width, height, point, relativeTo, relativePoint, x, y, size, spacing, num, initialAnchor, tooltipAnchor, growthX, growthY, postCreateIcon, postUpdateIcon, customFilter, onlyShowPlayer, showStealableBuffs)
+	local auras = CreateFrame("Frame", name, parent or frame)
+	auras:SetSize(width, height)
+	if point then
+		auras:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
 	end
-	auras.size = config.size
-	auras.spacing = config.spacing
-	auras.num = config.num
-	auras.initialAnchor = config.initialAnchor
-	auras.tooltipAnchor = config.tooltipAnchor
-	auras["growth-x"] = config.growthX
-	auras["growth-y"] = config.growthY
-	auras.PostCreateIcon = config.postCreateIcon
-	auras.PostUpdateIcon = config.postUpdateIcon
-	auras.CustomFilter = config.customFilter
-	auras.onlyShowPlayer = config.onlyShowPlayer
-	auras.showStealableBuffs = config.showStealableBuffs
+	auras.size = size
+	auras.spacing = spacing
+	auras.num = num
+	auras.initialAnchor = initialAnchor
+	auras.tooltipAnchor = tooltipAnchor
+	auras["growth-x"] = growthX
+	auras["growth-y"] = growthY
+	auras.PostCreateIcon = postCreateIcon
+	auras.PostUpdateIcon = postUpdateIcon
+	auras.CustomFilter = customFilter
+	auras.onlyShowPlayer = onlyShowPlayer
+	auras.showStealableBuffs = showStealableBuffs
 	return auras
 end
 
-function UF:CreateRaidTargetIndicator(health, config)
-	local indicator = health:CreateTexture(nil, config.layer or "OVERLAY")
-	indicator:SetSize(config.size or 16, config.size or 16)
-	indicator:SetPoint(config.point or "CENTER", health, config.relativePoint or "TOP", config.x or 0, config.y or 0)
+function UF:CreateRaidTargetIndicator(health, size, layer, point, relativePoint, x, y)
+	size = size or 16
+	local indicator = health:CreateTexture(nil, layer or "OVERLAY")
+	indicator:SetSize(size, size)
+	indicator:SetPoint(point or "CENTER", health, relativePoint or "TOP", x or 0, y or 0)
 	return indicator
 end
 

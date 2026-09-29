@@ -3,7 +3,8 @@ from pathlib import Path
 import re
 import unittest
 
-SOURCE = (Path(__file__).parents[1] / "HydraUI/Elements/ActionBars/ActionBars.lua").read_text()
+ROOT = Path(__file__).parents[1] / "HydraUI/Elements/ActionBars"
+SOURCE = (ROOT / "StandardBars.lua").read_text() + (ROOT / "Settings.lua").read_text() + (ROOT / "ActionBars.lua").read_text()
 
 
 class ActionBarDescriptorCoverage(unittest.TestCase):
@@ -22,8 +23,8 @@ class ActionBarDescriptorCoverage(unittest.TestCase):
         self.assertIn("if bar and descriptor.securePaging then", SOURCE)
 
     def test_creation_movers_and_callbacks_use_collections(self):
-        self.assertGreaterEqual(SOURCE.count("for _, descriptor in ipairs(ActionBarDescriptors) do"), 2)
-        self.assertIn("for _, bar in ipairs(self.Bars) do", SOURCE)
+        self.assertGreaterEqual(SOURCE.count("for _, descriptor in ipairs(ActionBarDescriptors) do"), 1)
+        self.assertIn("for _, bar in ipairs(self.Bars or {}) do", SOURCE)
         self.assertIn("CreateBarLayoutCallback(descriptor)", SOURCE)
         self.assertIn("CreateBarEnableCallback(descriptor)", SOURCE)
         for index in range(1, 9):

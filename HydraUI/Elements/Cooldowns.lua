@@ -13,21 +13,15 @@ local GetSpellCooldown = GetSpellCooldown
 local GetSpellTexture = GetSpellTexture
 local GetItemInfo = GetItemInfo
 local GetTime = GetTime
-local tinsert = table.insert
-local tremove = table.remove
 
 local ActiveCount = 0
 local MinTreshold = 14
-local Running = false
-local Elapsed = 0
-local Delay = 0.33
 local ActiveSpells = {}
 local ActiveItems = {}
 local ItemTables = {}
 local Spells = {}
-local Remaining
-local Now
 local ContainerItemID
+local CooldownTimer
 
 if C_Container then
 	ContainerItemID = C_Container.GetContainerItemID
@@ -37,6 +31,16 @@ else
 end
 
 local GetSpellCooldown = C_Spell and C_Spell.GetSpellCooldown or GetSpellCooldown
+
+local function GetSpellCooldownValues(id)
+	local Start, Duration = GetSpellCooldown(id)
+
+	if (type(Start) == "table") then
+		return Start.startTime, Start.duration
+	end
+
+	return Start, Duration
+end
 
 Cooldowns.Blacklist = {
 	item = {
@@ -97,78 +101,127 @@ function Cooldowns:ShowReady(kind, id)
 	end
 end
 
-function Cooldowns:OnUpdate(ela)
-	Elapsed = Elapsed + ela
+local function ReleaseRecord(records, id)
+	local Record = records[id]
 
-	if (Elapsed < Delay) then
-		return
+	if Record then
+		records[id] = nil
+		ActiveCount = ActiveCount - 1
+
+		if (Record.Kind == "item") then
+			Record.ID = nil
+			Record.Deadline = nil
+			ItemTables[#ItemTables + 1] = Record
+		end
+	end
+end
+
+local function GetCooldown(kind, id)
+	if (kind == "item") then
+		return GetItemCooldown(id)
 	end
 
-	Now = GetTime()
-	local ID
+	return GetSpellCooldownValues(id)
+end
 
-	if (#ActiveSpells > 0) then
-		for i = #ActiveSpells, 1, -1 do
-			ID = ActiveSpells[i]
+local function IsTrackedCooldown(kind, duration)
+	return duration and (duration > MinTreshold or (kind == "spell" and duration == MinTreshold))
+end
 
-			local Start, Duration = GetSpellCooldown(ID)
+function Cooldowns:ScheduleNext()
+	if CooldownTimer then
+		CooldownTimer:Cancel()
+		CooldownTimer = nil
+	end
 
-			if (Start ~= nil) then
-				Remaining = Start + Duration - Now
+	local Deadline
 
-				if (Remaining <= 0) then
-					self:ShowReady("spell", ID)
+	for _, Records in pairs({ActiveSpells, ActiveItems}) do
+		for _, Record in pairs(Records) do
+			if (Record.Deadline and (not Deadline or Record.Deadline < Deadline)) then
+				Deadline = Record.Deadline
+			end
+		end
+	end
 
-					tremove(ActiveSpells, i)
-					ActiveCount = ActiveCount - 1
+	if Deadline then
+		CooldownTimer = C_Timer.NewTimer(math.max(0, Deadline - GetTime()), function()
+			CooldownTimer = nil
+			Cooldowns:OnUpdate()
+		end)
+	end
+end
+
+local function UpdateRecord(records, kind, id, start, duration)
+	local Record = records[id]
+
+	if (start and IsTrackedCooldown(kind, duration)) then
+		if not Record then
+			Record = (kind == "item" and table.remove(ItemTables, #ItemTables)) or {}
+			Record.ID = id
+			Record.Kind = kind
+			records[id] = Record
+			ActiveCount = ActiveCount + 1
+		end
+
+		Record.Deadline = start + duration
+	elseif Record then
+		-- An update before the known deadline is a cancellation, not completion.
+		if (Record.Deadline <= GetTime()) then
+			Cooldowns:ShowReady(kind, id)
+		end
+
+		ReleaseRecord(records, id)
+	end
+end
+
+-- Called by the one-shot deadline timer, rather than once per frame.
+function Cooldowns:OnUpdate()
+	local Now = GetTime()
+
+	for _, Entry in pairs({{ActiveSpells, "spell"}, {ActiveItems, "item"}}) do
+		local Records, Kind = Entry[1], Entry[2]
+
+		for ID, Record in pairs(Records) do
+			if (Record.Deadline <= Now) then
+				local Start, Duration = GetCooldown(Kind, ID)
+
+				if (Start and IsTrackedCooldown(Kind, Duration) and Start + Duration > Now) then
+					Record.Deadline = Start + Duration
+				else
+					self:ShowReady(Kind, ID)
+					ReleaseRecord(Records, ID)
 				end
 			end
 		end
 	end
 
-	if (#ActiveItems > 0) then
-		for i = #ActiveItems, 1, -1 do
-			local Info = ActiveItems[i]
-			local Start, Duration = GetItemCooldown(Info.ID)
-
-			if (Start ~= nil) then
-				if (Info.Dur == 0 and Duration > MinTreshold) then
-					Info.Dur = Duration
-				elseif (Info.Dur > 0 and Duration == 0) then
-					self:ShowReady("item", Info.ID)
-
-					tinsert(ItemTables, tremove(ActiveItems, i))
-					ActiveCount = ActiveCount - 1
-				end
-			end
-		end
-	end
-
-	if (ActiveCount <= 0) then
-		self:SetScript("OnUpdate", nil)
-		Running = false
-	end
-
-	Elapsed = 0
+	self:ScheduleNext()
 end
 
 -- UNIT_SPELLCAST_SUCCEEDED fetches casts, and then SPELL_UPDATE_COOLDOWN checks them after the GCD is done (Otherwise GetSpellCooldown detects GCD)
 function Cooldowns:SPELL_UPDATE_COOLDOWN()
-	for i = #Spells, 1, -1 do
-		local Start, Duration = GetSpellCooldown(Spells[i])
-
-		if (Duration and Duration >= MinTreshold) then
-			tinsert(ActiveSpells, Spells[i])
-			ActiveCount = ActiveCount + 1
-
-			if (ActiveCount > 0 and not Running) then
-				self:SetScript("OnUpdate", self.OnUpdate)
-				Running = true
-			end
-		end
-
-		tremove(Spells, i)
+	for ID in pairs(ActiveSpells) do
+		local Start, Duration = GetSpellCooldownValues(ID)
+		UpdateRecord(ActiveSpells, "spell", ID, Start, Duration)
 	end
+
+	for ID in pairs(Spells) do
+		local Start, Duration = GetSpellCooldownValues(ID)
+		UpdateRecord(ActiveSpells, "spell", ID, Start, Duration)
+		Spells[ID] = nil
+	end
+
+	self:ScheduleNext()
+end
+
+function Cooldowns:BAG_UPDATE_COOLDOWN()
+	for ID in pairs(ActiveItems) do
+		local Start, Duration = GetItemCooldown(ID)
+		UpdateRecord(ActiveItems, "item", ID, Start, Duration)
+	end
+
+	self:ScheduleNext()
 end
 
 function Cooldowns:UNIT_SPELLCAST_SUCCEEDED(unit, guid, id)
@@ -177,7 +230,7 @@ function Cooldowns:UNIT_SPELLCAST_SUCCEEDED(unit, guid, id)
 			return
 		end
 
-		tinsert(Spells, id)
+		Spells[id] = true
 	end
 end
 
@@ -186,18 +239,9 @@ local StartItem = function(id)
 		return
 	end
 
-	local Info = ItemTables[1] and tremove(ItemTables, 1) or {}
-
-	Info.ID = id
-	Info.Dur = 0
-
-	tinsert(ActiveItems, Info)
-	ActiveCount = ActiveCount + 1
-
-	if (ActiveCount > 0 and not Running) then
-		Cooldowns:SetScript("OnUpdate", Cooldowns.OnUpdate)
-		Running = true
-	end
+	local Start, Duration = GetItemCooldown(id)
+	UpdateRecord(ActiveItems, "item", id, Start, Duration)
+	Cooldowns:ScheduleNext()
 end
 
 local UseAction = function(slot)
@@ -274,6 +318,7 @@ function Cooldowns:Load()
 	HydraUI:CreateMover(self.Anchor)
 
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+	self:RegisterEvent("BAG_UPDATE_COOLDOWN")
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:SetScript("OnEvent", self.OnEvent)
 
@@ -290,9 +335,11 @@ end
 local UpdateEnableCooldownFlash = function(value)
 	if value then
 		Cooldowns:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+		Cooldowns:RegisterEvent("BAG_UPDATE_COOLDOWN")
 		Cooldowns:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	else
 		Cooldowns:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
+		Cooldowns:UnregisterEvent("BAG_UPDATE_COOLDOWN")
 		Cooldowns:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	end
 end

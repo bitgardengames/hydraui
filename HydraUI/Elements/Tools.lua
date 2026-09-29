@@ -67,6 +67,135 @@ function HydraUI:AuraFormatTime(seconds)
 	return format("%.1f", seconds)
 end
 
+-- Duration text does not need a per-frame updater.  Keep one deadline timer for
+-- every duration label and only revisit labels whose displayed value can have
+-- changed.  The small offset puts floor/rounding boundaries just behind us;
+-- at the boundary itself (for example, exactly 10 seconds) the old label is
+-- still correct.
+local DurationText = {
+	Buttons = setmetatable({}, {__mode = "k"}),
+}
+local DurationTextTimer
+local DurationTextDeadline
+local DurationBoundaryOffset = 0.001
+
+local function GetNextDurationChange(remaining)
+	local Boundary
+
+	if (remaining > 86399) then
+		Boundary = math.max(86399, (ceil(remaining / 86400) - 1) * 86400)
+	elseif (remaining > 3599) then
+		Boundary = math.max(3599, (ceil(remaining / 3600) - 1) * 3600)
+	elseif (remaining > 59) then
+		Boundary = math.max(59, (ceil(remaining / 60) - 1) * 60)
+	elseif (remaining > 5) then
+		Boundary = floor(remaining)
+	else
+		-- This mirrors the rounding used by both %.1f duration formatters.
+		Boundary = tonumber(format("%.1f", remaining)) - 0.05
+	end
+
+	return math.min(remaining, math.max(0, remaining - Boundary)) + DurationBoundaryOffset
+end
+
+function DurationText:ScheduleNext()
+	local Deadline
+
+	for _, Record in pairs(self.Buttons) do
+		if (Record.Deadline and (not Deadline or Record.Deadline < Deadline)) then
+			Deadline = Record.Deadline
+		end
+	end
+
+	if (Deadline == DurationTextDeadline) then
+		return
+	end
+
+	if DurationTextTimer then
+		DurationTextTimer:Cancel()
+		DurationTextTimer = nil
+	end
+
+	DurationTextDeadline = Deadline
+
+	if Deadline then
+		DurationTextTimer = C_Timer.NewTimer(math.max(0, Deadline - GetTime()), function()
+			DurationTextTimer = nil
+			DurationTextDeadline = nil
+			DurationText:UpdateDue()
+		end)
+	end
+end
+
+function DurationText:Unregister(button)
+	local Record = self.Buttons[button]
+
+	if not Record then
+		return
+	end
+
+	self.Buttons[button] = nil
+
+	if Record.OnUnregister then
+		Record.OnUnregister(button)
+	end
+
+	self:ScheduleNext()
+end
+
+function DurationText:UpdateButton(button, record, now)
+	local Remaining = record.GetRemaining(button, now)
+
+	if (not Remaining or Remaining <= 0) then
+		self:Unregister(button)
+		return
+	end
+
+	local Text = record.Format(Remaining)
+
+	if (Text ~= record.LastText) then
+		record.LastText = Text
+		record.Text:SetText(Text)
+	end
+
+	record.Deadline = now + GetNextDurationChange(Remaining)
+end
+
+function DurationText:Register(button, text, formatter, getRemaining, onUnregister)
+	local Record = self.Buttons[button]
+
+	if not Record then
+		Record = {}
+		self.Buttons[button] = Record
+	end
+
+	Record.Text = text
+	Record.Format = formatter
+	Record.GetRemaining = getRemaining
+	Record.OnUnregister = onUnregister
+
+	self:UpdateButton(button, Record, GetTime())
+	self:ScheduleNext()
+end
+
+function DurationText:UpdateDue()
+	local Now = GetTime()
+
+	for Button, Record in pairs(self.Buttons) do
+		if (Record.Deadline <= Now) then
+			if Button:IsShown() then
+				self:UpdateButton(Button, Record, Now)
+			else
+				self:Unregister(Button)
+			end
+		end
+	end
+
+	self:ScheduleNext()
+end
+
+HydraUI.DurationText = DurationText
+
 if HydraUI.IsMainline then
 	function HydraUI:ShortValue(num)
 		if (issecretvalue(num) and not canaccessvalue(num)) then

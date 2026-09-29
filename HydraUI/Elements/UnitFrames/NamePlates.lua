@@ -412,8 +412,6 @@ local RunForAllNamePlates = function(func, value)
 	if NamePlates then
 		for i = 1, #NamePlates do
 			func(NamePlates[i].unitFrame, value)
-
-			NamePlates[i].unitFrame:UpdateAllElements("ForceUpdate")
 		end
 	end
 end
@@ -433,6 +431,7 @@ end
 local NamePlatesUpdateShowPlayerDebuffs = function(self)
 	if self.Debuffs then
 		self.Debuffs.onlyShowPlayer = Settings["nameplates-only-player-debuffs"]
+		self.Debuffs:ForceUpdate()
 	end
 end
 
@@ -457,7 +456,10 @@ local UpdateNamePlatesHeight = function()
 end
 
 local NamePlateSetHealthColor = function(self)
-	UF:SetHealthAttributes(self.Health, Settings["nameplates-health-color"])
+	if self.Health then
+		UF:SetHealthAttributes(self.Health, Settings["nameplates-health-color"])
+		self.Health:ForceUpdate()
+	end
 end
 
 local UpdateNamePlatesHealthColor = function()
@@ -465,6 +467,10 @@ local UpdateNamePlatesHealthColor = function()
 end
 
 local NamePlateSetTargetHightlight = function(self, value)
+	if not self.TargetIndicator then
+		return
+	end
+
 	if value then
 		self:EnableElement("TargetIndicator")
 	else
@@ -477,14 +483,23 @@ local UpdateNamePlatesTargetHighlight = function(value)
 end
 
 local NamePlateSetFont = function(self)
-	HydraUI:SetFontInfo(self.Top, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.TopLeft, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.TopRight, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.Bottom, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.BottomRight, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.BottomLeft, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.Castbar.Time, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
-	HydraUI:SetFontInfo(self.Castbar.Text, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
+	local FontObjects = {self.Top, self.TopLeft, self.TopRight, self.Bottom, self.BottomRight, self.BottomLeft}
+
+	for _, FontObject in next, FontObjects do
+		if FontObject then
+			HydraUI:SetFontInfo(FontObject, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
+		end
+	end
+
+	if self.Castbar then
+		if self.Castbar.Time then
+			HydraUI:SetFontInfo(self.Castbar.Time, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
+		end
+
+		if self.Castbar.Text then
+			HydraUI:SetFontInfo(self.Castbar.Text, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
+		end
+	end
 end
 
 local UpdateNamePlatesFont = function()
@@ -492,6 +507,10 @@ local UpdateNamePlatesFont = function()
 end
 
 local NamePlateEnableCastBars = function(self, value)
+	if not self.Castbar then
+		return
+	end
+
 	if value then
 		self:EnableElement("Castbar")
 	else
@@ -500,11 +519,13 @@ local NamePlateEnableCastBars = function(self, value)
 end
 
 local UpdateNamePlatesEnableCastBars = function(value)
-	RunForAllNamePlates(NamePlateSetTargetHightlight, value)
+	RunForAllNamePlates(NamePlateEnableCastBars, value)
 end
 
 local NamePlateSetCastBarsHeight = function(self, value)
-	self.Castbar:SetHeight(value)
+	if self.Castbar then
+		self.Castbar:SetHeight(value)
+	end
 end
 
 local UpdateNamePlatesCastBarsHeight = function(value)
@@ -512,6 +533,10 @@ local UpdateNamePlatesCastBarsHeight = function(value)
 end
 
 local NamePlateSetTargetIndicatorSize = function(self, value)
+	if not self.TargetIndicator or not self.TargetIndicator.Left or not self.TargetIndicator.Right then
+		return
+	end
+
 	if (value == "SMALL") then
 		self.TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left"))
 		self.TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right"))
@@ -538,6 +563,10 @@ local UpdateNamePlateUnselectedAlpha = function(value)
 end
 
 local NamePlateSetBuffDirection = function(self, value)
+	if not self.Buffs then
+		return
+	end
+
 	if (Settings["nameplates-buffs-direction"] == "LTR") then
 		self.Buffs.initialAnchor = "TOPLEFT"
 		self.Buffs["growth-x"] = "RIGHT"
@@ -547,6 +576,8 @@ local NamePlateSetBuffDirection = function(self, value)
 		self.Buffs["growth-x"] = "LEFT"
 		self.Buffs["growth-y"] = "UP"
 	end
+
+	self.Buffs:ForceUpdate()
 end
 
 local UpdateNamePlatesBuffDirection = function(value)
@@ -554,6 +585,10 @@ local UpdateNamePlatesBuffDirection = function(value)
 end
 
 local NamePlateSetDebuffDirection = function(self, value)
+	if not self.Debuffs then
+		return
+	end
+
 	if (Settings["nameplates-debuffs-direction"] == "LTR") then
 		self.Debuffs.initialAnchor = "TOPLEFT"
 		self.Debuffs["growth-x"] = "RIGHT"
@@ -563,6 +598,8 @@ local NamePlateSetDebuffDirection = function(self, value)
 		self.Debuffs["growth-x"] = "LEFT"
 		self.Debuffs["growth-y"] = "UP"
 	end
+
+	self.Debuffs:ForceUpdate()
 end
 
 local UpdateNamePlatesDebuffDirection = function(value)
@@ -570,12 +607,22 @@ local UpdateNamePlatesDebuffDirection = function(value)
 end
 
 local SetHealthTexture = function(self, value)
-	self.Health:SetStatusBarTexture(Assets:GetTexture(value))
-	self.Health.bg:SetTexture(Assets:GetTexture(value))
-	self.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
+	local Texture = Assets:GetTexture(value)
+
+	if self.Health then
+		self.Health:SetStatusBarTexture(Texture)
+
+		if self.Health.bg then
+			self.Health.bg:SetTexture(Texture)
+		end
+	end
+
+	if self.HealBar then
+		self.HealBar:SetStatusBarTexture(Texture)
+	end
 
 	if self.AbsorbsBar then
-		self.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
+		self.AbsorbsBar:SetStatusBarTexture(Texture)
 	end
 end
 
@@ -584,8 +631,15 @@ local UpdateHealthTexture = function(value)
 end
 
 local SetCastTexture = function(self, value)
-	self.Castbar:SetStatusBarTexture(Assets:GetTexture(value))
-	self.Castbar.bg:SetTexture(Assets:GetTexture(value))
+	if self.Castbar then
+		local Texture = Assets:GetTexture(value)
+
+		self.Castbar:SetStatusBarTexture(Texture)
+
+		if self.Castbar.bg then
+			self.Castbar.bg:SetTexture(Texture)
+		end
+	end
 end
 
 local UpdateCastTexture = function(value)

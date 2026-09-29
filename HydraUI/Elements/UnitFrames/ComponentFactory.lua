@@ -64,22 +64,21 @@ function UF:CreateThreatIndicator(frame, backdrop, postUpdate, inset)
 	return threat
 end
 
-function UF:CreateHealthBar(frame, height, texture, reverseFill, orientation, backgroundLayer, backgroundMultiplier, leftInset, rightInset, topInset)
-	leftInset = leftInset or 1
-	rightInset = rightInset or 1
-	topInset = topInset or 1
+function UF:CreateHealthBar(frame, options)
+	local spec = self:NormalizeComponentOptions("HealthBar", options)
+	local size, anchor, bar, backgroundSpec = spec.size, spec.anchor, spec.bar, spec.background
 	local health = CreateFrame("StatusBar", nil, frame)
-	health:SetPoint("TOPLEFT", frame, leftInset, -topInset)
-	health:SetPoint("TOPRIGHT", frame, -rightInset, -topInset)
-	health:SetHeight(height)
-	health:SetStatusBarTexture(Assets:GetTexture(texture))
-	health:SetReverseFill(reverseFill)
-	if orientation then health:SetOrientation(orientation) end
+	health:SetPoint("TOPLEFT", frame, anchor.left, -anchor.top)
+	health:SetPoint("TOPRIGHT", frame, -anchor.right, -anchor.top)
+	health:SetHeight(size.height)
+	health:SetStatusBarTexture(Assets:GetTexture(bar.texture))
+	health:SetReverseFill(bar.reverseFill)
+	if bar.orientation then health:SetOrientation(bar.orientation) end
 
-	local background = frame:CreateTexture(nil, backgroundLayer or "BORDER")
+	local background = frame:CreateTexture(nil, backgroundSpec.layer)
 	background:SetAllPoints(health)
-	background:SetTexture(Assets:GetTexture(texture))
-	background.multiplier = backgroundMultiplier or 0.2
+	background:SetTexture(Assets:GetTexture(backgroundSpec.texture or bar.texture))
+	background.multiplier = backgroundSpec.multiplier
 	health.bg = background
 	frame.Health = health
 	return health, background
@@ -91,44 +90,45 @@ local function AnchorPredictionBar(bar, health, reverseFill)
 	bar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
 end
 
-function UF:CreateHealAndAbsorbBars(frame, health, width, height, texture, reverseFill, createAbsorb)
+function UF:CreateHealAndAbsorbBars(frame, options)
+	local spec = self:NormalizeComponentOptions("PredictionBars", options)
+	local health, size, bar = spec.health, spec.size, spec.bar
 	local heal = CreateFrame("StatusBar", nil, health)
-	heal:SetSize(width, height)
-	heal:SetStatusBarTexture(Assets:GetTexture(texture))
+	heal:SetSize(size.width, size.height)
+	heal:SetStatusBarTexture(Assets:GetTexture(bar.texture))
 	heal:SetStatusBarColor(0, 0.48, 0)
-	heal:SetReverseFill(reverseFill)
+	heal:SetReverseFill(bar.reverseFill)
 	heal:SetFrameLevel(health:GetFrameLevel() - 1)
-	AnchorPredictionBar(heal, health, reverseFill)
+	AnchorPredictionBar(heal, health, bar.reverseFill)
 	frame.HealBar = heal
 
 	local absorb
-	if createAbsorb then
+	if spec.createAbsorb then
 		absorb = CreateFrame("StatusBar", nil, health)
-		absorb:SetSize(width, height)
-		absorb:SetStatusBarTexture(Assets:GetTexture(texture))
+		absorb:SetSize(size.width, size.height)
+		absorb:SetStatusBarTexture(Assets:GetTexture(bar.texture))
 		absorb:SetStatusBarColor(0, 0.66, 1)
-		absorb:SetReverseFill(reverseFill)
+		absorb:SetReverseFill(bar.reverseFill)
 		absorb:SetFrameLevel(health:GetFrameLevel() - 2)
-		AnchorPredictionBar(absorb, health, reverseFill)
+		AnchorPredictionBar(absorb, health, bar.reverseFill)
 		frame.AbsorbsBar = absorb
 	end
 	return heal, absorb
 end
 
-function UF:CreatePowerBar(frame, height, texture, reverseFill, backgroundLayer, backgroundAlpha, leftInset, rightInset, bottomInset)
-	leftInset = leftInset or 1
-	rightInset = rightInset or 1
-	bottomInset = bottomInset or 1
+function UF:CreatePowerBar(frame, options)
+	local spec = self:NormalizeComponentOptions("PowerBar", options)
+	local size, anchor, bar, backgroundSpec = spec.size, spec.anchor, spec.bar, spec.background
 	local power = CreateFrame("StatusBar", nil, frame)
-	power:SetPoint("BOTTOMLEFT", frame, leftInset, bottomInset)
-	power:SetPoint("BOTTOMRIGHT", frame, -rightInset, bottomInset)
-	power:SetHeight(height)
-	power:SetStatusBarTexture(Assets:GetTexture(texture))
-	power:SetReverseFill(reverseFill)
-	local background = power:CreateTexture(nil, backgroundLayer or "BORDER")
+	power:SetPoint("BOTTOMLEFT", frame, anchor.left, anchor.bottom)
+	power:SetPoint("BOTTOMRIGHT", frame, -anchor.right, anchor.bottom)
+	power:SetHeight(size.height)
+	power:SetStatusBarTexture(Assets:GetTexture(bar.texture))
+	power:SetReverseFill(bar.reverseFill)
+	local background = power:CreateTexture(nil, backgroundSpec.layer)
 	background:SetAllPoints(power)
-	background:SetTexture(Assets:GetTexture(texture))
-	background:SetAlpha(backgroundAlpha or 0.2)
+	background:SetTexture(Assets:GetTexture(backgroundSpec.texture or bar.texture))
+	background:SetAlpha(backgroundSpec.alpha)
 	power.bg = background
 	frame.Power = power
 	return power, background
@@ -157,6 +157,9 @@ function UF:CreateFontString(parent, font, size, flags, point, relativePoint, x,
 end
 
 local ComponentDefaults = {
+	HealthBar = {anchor = {left = 1, right = 1, top = 1}, bar = {}, background = {layer = "BORDER", multiplier = 0.2}},
+	PredictionBars = {bar = {}, createAbsorb = false},
+	PowerBar = {anchor = {left = 1, right = 1, bottom = 1}, bar = {}, background = {layer = "BORDER", alpha = 0.2}},
 	Portrait = {anchor = {x = 0, y = 0}, background = {visible = true, r = 0, g = 0, b = 0}},
 	Castbar = {anchor = {x = 0, y = 0}, bar = {backgroundAlpha = 0.2}, background = {topLeftX = -1, topLeftY = 1, bottomRightX = 1, bottomRightY = -1, r = 0, g = 0, b = 0}, text = {timeX = -3, textX = 3}, icon = {x = -1}},
 	AuraContainer = {anchor = {x = 0, y = 0}, callbacks = {}},
@@ -198,8 +201,11 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 	local healthReverse = FamilySetting(config, "-health-reverse")
 	local width = FamilySetting(config, "-width")
 	local healthTexture = Setting(config.healthTextureKey)
-	local health = self:CreateHealthBar(frame, healthHeight, healthTexture, healthReverse, config.healthOrientation and FamilySetting(config, "-health-orientation"), config.healthBackgroundLayer or "BORDER")
-	self:CreateHealAndAbsorbBars(frame, health, width, healthHeight, healthTexture, healthReverse, HydraUI.IsMainline)
+	local health = self:CreateHealthBar(frame, {
+		size = {height = healthHeight}, bar = {texture = healthTexture, reverseFill = healthReverse, orientation = config.healthOrientation and FamilySetting(config, "-health-orientation")},
+		background = {layer = config.healthBackgroundLayer or "BORDER"},
+	})
+	self:CreateHealAndAbsorbBars(frame, {health = health, size = {width = width, height = healthHeight}, bar = {texture = healthTexture, reverseFill = healthReverse}, createAbsorb = HydraUI.IsMainline})
 
 	local font, fontSize, fontFlags = Setting(config.fontKey or "unitframes-font"), Setting(config.fontSizeKey or "unitframes-font-size"), Setting(config.fontFlagsKey or "unitframes-font-flags")
 	local leftSpec, rightSpec = SingleUnitText.left, SingleUnitText.right
@@ -222,7 +228,7 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 	if config.power ~= false and (not config.powerEnabledKey or Setting(config.powerEnabledKey)) then
 		local powerReverse = config.powerReverse
 		if powerReverse == nil then powerReverse = FamilySetting(config, "-power-reverse") end
-		power = self:CreatePowerBar(frame, FamilySetting(config, "-power-height"), Setting(config.powerTextureKey), powerReverse)
+		power = self:CreatePowerBar(frame, {size = {height = FamilySetting(config, "-power-height")}, bar = {texture = Setting(config.powerTextureKey), reverseFill = powerReverse}})
 		power.frequentUpdates = true
 		power.colorReaction = config.powerReaction
 		power.Smooth = true
@@ -273,9 +279,16 @@ function UF:NormalizeComponentOptions(kind, options)
 			for nestedKey, nestedValue in pairs(value) do normalized[key][nestedKey] = nestedValue end
 		else normalized[key] = value end
 	end
-	assert(type(normalized.size) == "table" and normalized.size.width and normalized.size.height, kind .. " requires size.width and size.height")
-	assert(type(normalized.anchor) == "table", kind .. " requires an anchor table")
-	if kind ~= "AuraContainer" then assert(normalized.anchor.point, kind .. " requires anchor.point") end
+	assert(type(normalized.size) == "table" and normalized.size.height, kind .. " requires size.height")
+	if kind ~= "HealthBar" and kind ~= "PowerBar" then
+		assert(normalized.size.width and normalized.size.height, kind .. " requires size.width and size.height")
+	end
+	if kind ~= "PredictionBars" then assert(type(normalized.anchor) == "table", kind .. " requires an anchor table") end
+	if kind == "HealthBar" or kind == "PowerBar" or kind == "PredictionBars" then
+		assert(normalized.bar and normalized.bar.texture, kind .. " requires bar.texture")
+	end
+	if kind == "PredictionBars" then assert(normalized.health, "PredictionBars requires health") end
+	if kind == "Portrait" or kind == "Castbar" then assert(normalized.anchor.point, kind .. " requires anchor.point") end
 	if kind == "Portrait" then assert(normalized.style, "Portrait requires style") end
 	if kind == "Castbar" then
 		assert(normalized.bar and normalized.bar.texture, "Castbar requires bar.texture")

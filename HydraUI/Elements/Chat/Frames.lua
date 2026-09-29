@@ -3,7 +3,7 @@ local Chat = HydraUI:GetModule("Chat")
 local select, match, gsub = select, string.match, string.gsub
 local NoCall = function() end
 local CHAT_LABEL = CHAT_LABEL
-local DT = HydraUI:GetModule("DataText")
+local DT
 
 Chat.StyledFrames = Chat.StyledFrames or {}
 Chat.TemporaryWindowHooks = Chat.TemporaryWindowHooks or {}
@@ -96,6 +96,12 @@ local UpdateHeader = function(editbox)
 end
 
 local OnEditFocusLost = function(self)
+	DT = DT or HydraUI:GetModule("DataText")
+
+	if not DT then
+		return
+	end
+
 	local Left = DT:GetAnchor("Chat-Left")
 	local Middle = DT:GetAnchor("Chat-Middle")
 	local Right = DT:GetAnchor("Chat-Right")
@@ -115,6 +121,12 @@ local OnEditFocusLost = function(self)
 end
 
 local OnEditFocusGained = function(self)
+	DT = DT or HydraUI:GetModule("DataText")
+
+	if not DT then
+		return
+	end
+
 	local Left = DT:GetAnchor("Chat-Left")
 	local Middle = DT:GetAnchor("Chat-Middle")
 	local Right = DT:GetAnchor("Chat-Right")

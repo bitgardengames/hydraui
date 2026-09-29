@@ -38,3 +38,16 @@ def test_temporary_hooks_are_registered_explicitly():
     frames = source("Frames.lua")
     assert "Chat.TemporaryWindowHooks" in frames
     assert "hooks.FCF_OpenTemporaryWindow" in frames
+
+
+def test_edit_box_resolves_data_text_module_after_addon_files_load():
+    frames = source("Frames.lua")
+    declarations = frames[:frames.index("local OnEditFocusLost")]
+    focus_lost = frames[frames.index("local OnEditFocusLost"):frames.index("local OnEditFocusGained")]
+    focus_gained = frames[frames.index("local OnEditFocusGained"):frames.index("local CheckForBottom")]
+
+    assert 'local DT = HydraUI:GetModule("DataText")' not in declarations
+    assert 'DT = DT or HydraUI:GetModule("DataText")' in focus_lost
+    assert 'DT = DT or HydraUI:GetModule("DataText")' in focus_gained
+    assert "if not DT then" in focus_lost
+    assert "if not DT then" in focus_gained

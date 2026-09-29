@@ -25,94 +25,20 @@ local UF = HydraUI:GetModule("Unit Frames")
 
 local function BuildBossComponents(factory, frame, unit)
 	-- Auras
-	local Buffs = factory:CreateAuraContainer(frame, {
-		name = frame:GetName() .. "Buffs",
-		iconSize = Settings["unitframes-boss-buff-size"],
-		spacing = 2,
-		num = 3,
-		initialAnchor = "TOPRIGHT",
-		tooltipAnchor = "ANCHOR_TOP",
-		growthX = "LEFT",
-		growthY = "UP",
-		size = {
-			width = Settings["unitframes-boss-width"],
-			height = Settings["unitframes-boss-buff-size"],
-		},
-		anchor = {
-			point = "RIGHT",
-			relativeTo = frame,
-			relativePoint = "LEFT",
-			x = -2,
-		},
-		callbacks = {
-			postCreateIcon = factory.PostCreateIcon,
-			postUpdateIcon = factory.PostUpdateIcon,
-		},
-	})
-	local Debuffs = factory:CreateAuraContainer(frame, {
-		name = frame:GetName() .. "Debuffs",
-		iconSize = Settings["unitframes-boss-debuff-size"],
-		spacing = 2,
-		num = 4,
-		initialAnchor = "TOPLEFT",
-		tooltipAnchor = "ANCHOR_TOP",
-		growthX = "RIGHT",
-		growthY = "UP",
-		onlyShowPlayer = Settings["unitframes-only-player-debuffs"],
-		size = {
-			width = Settings["unitframes-boss-width"],
-			height = Settings["unitframes-boss-debuff-size"],
-		},
-		anchor = {
-			point = "LEFT",
-			relativeTo = frame,
-			relativePoint = "RIGHT",
-			x = 2,
-		},
-		callbacks = {
-			postCreateIcon = factory.PostCreateIcon,
-			postUpdateIcon = factory.PostUpdateIcon,
-		},
-	})
-	local Castbar = factory:CreateCastbar(frame, {
-		name = frame:GetName() .. " Casting Bar",
-		showTradeSkills = true,
-		timeToHold = 0.3,
-		size = {
-			width = Settings["unitframes-boss-width"] - 28,
-			height = 22,
-		},
-		anchor = {
-			point = "TOPRIGHT",
-			relativeTo = frame,
-			relativePoint = "BOTTOMRIGHT",
-			x = -1,
-			y = -3,
-		},
-		bar = {
-			texture = Settings["ui-widget-texture"],
-		},
-		background = {
-			texture = "Blank",
-		},
-		text = {
-			font = Settings["unitframes-font"],
-			fontSize = Settings["unitframes-font-size"],
-			fontFlags = Settings["unitframes-font-flags"],
-			width = 250 * 0.7,
-		},
-		icon = {
-			size = 22,
-			x = -4,
-			background = true,
-		},
-		callbacks = {
-			postCastStart = factory.PostCastStart,
-			postCastStop = factory.PostCastStop,
-			postCastFail = factory.PostCastFail,
-			postCastInterruptible = factory.PostCastInterruptible,
-		},
-	})
+	local Buffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Buffs", nil, Settings["unitframes-boss-width"], Settings["unitframes-boss-buff-size"],
+		"RIGHT", frame, "LEFT", -2, 0, Settings["unitframes-boss-buff-size"], 2, 3,
+		"TOPRIGHT", "ANCHOR_TOP", "LEFT", "UP", factory.PostCreateIcon, factory.PostUpdateIcon, nil, nil, nil)
+	local Debuffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Debuffs", nil, Settings["unitframes-boss-width"], Settings["unitframes-boss-debuff-size"],
+		"LEFT", frame, "RIGHT", 2, 0, Settings["unitframes-boss-debuff-size"], 2, 4,
+		"TOPLEFT", "ANCHOR_TOP", "RIGHT", "UP", factory.PostCreateIcon, factory.PostUpdateIcon, nil, Settings["unitframes-only-player-debuffs"], nil)
+	local Castbar = factory:CreateCastbar(frame, frame:GetName() .. " Casting Bar",
+		Settings["unitframes-boss-width"] - 28, 22,
+		"TOPRIGHT", frame, "BOTTOMRIGHT", -1, -3, Settings["ui-widget-texture"], "Blank",
+		-22 - 2, 1, 1, -1,
+		Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"],
+		-5, 5, 250 * 0.7,
+		22, -4, true, nil, true, 0.3, nil,
+		factory.PostCastStart, factory.PostCastStop, factory.PostCastFail, factory.PostCastInterruptible)
 
 	frame.Buffs = Buffs
 	frame.Debuffs = Debuffs

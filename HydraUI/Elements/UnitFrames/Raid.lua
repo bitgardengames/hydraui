@@ -41,31 +41,9 @@ local RaidDebuffFilter = function(self, unit, icon, name, texture, count, dtype,
 	return boss or (count and count > 0) or (duration > 0 and timeLeft and not player and not canapply)
 end
 local function CreateRaidDebuffs(frame, health, filter)
-	return UF:CreateAuraContainer(frame, {
-		name = frame:GetName().."Debuffs",
-		parent = health,
-		iconSize = 24,
-		spacing = 0,
-		num = 1,
-		initialAnchor = "TOPLEFT",
-		tooltipAnchor = "ANCHOR_TOP",
-		growthX = "RIGHT",
-		growthY = "DOWN",
-		size = {
-			width = 24,
-			height = 24,
-		},
-		anchor = {
-			point = "CENTER",
-			relativeTo = health,
-			relativePoint = "CENTER",
-		},
-		callbacks = {
-			postCreateIcon = UF.PostCreateIcon,
-			postUpdateIcon = UF.PostUpdateIcon,
-			customFilter = filter,
-		},
-	})
+	return UF:CreateAuraContainer(frame, frame:GetName() .. "Debuffs", health, 24, 24,
+		"CENTER", health, "CENTER", 0, 0, 24, 0, 1,
+		"TOPLEFT", "ANCHOR_TOP", "RIGHT", "DOWN", UF.PostCreateIcon, UF.PostUpdateIcon, filter, nil, nil)
 end
 local function UpdateRaidAnchorSize()
 	if not UF.RaidAnchor then return end

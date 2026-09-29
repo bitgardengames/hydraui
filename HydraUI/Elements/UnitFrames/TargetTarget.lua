@@ -24,14 +24,9 @@ local UF = HydraUI:GetModule("Unit Frames")
 local function BuildTargetTargetComponents(factory, frame, unit)
 	if Settings["unitframes-targettarget-debuffs"] then
 		local position = Settings["unitframes-targettarget-debuff-pos"]
-		frame.Debuffs = factory:CreateAuraContainer(frame, {
-			name = frame:GetName() .. "Debuffs",
-			size = {width = Settings["unitframes-targettarget-width"], height = Settings["unitframes-targettarget-debuff-size"]},
-			anchor = {point = position == "TOP" and "BOTTOM" or "TOP", relativePoint = position == "TOP" and "TOP" or "BOTTOM", y = position == "TOP" and 2 or -2},
-			iconSize = Settings["unitframes-targettarget-debuff-size"], spacing = 2, num = 5, tooltipAnchor = "ANCHOR_TOP",
-			initialAnchor = "TOPRIGHT", growthX = "LEFT", growthY = position == "TOP" and "UP" or "DOWN",
-			callbacks = {postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon},
-		})
+		frame.Debuffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Debuffs", nil, Settings["unitframes-targettarget-width"], Settings["unitframes-targettarget-debuff-size"],
+		position == "TOP" and "BOTTOM" or "TOP", frame, position == "TOP" and "TOP" or "BOTTOM", 0, position == "TOP" and 2 or -2, Settings["unitframes-targettarget-debuff-size"], 2, 5,
+		"TOPRIGHT", "ANCHOR_TOP", "LEFT", position == "TOP" and "UP" or "DOWN", UF.PostCreateIcon, UF.PostUpdateIcon, nil, nil, nil)
 	end
 end
 

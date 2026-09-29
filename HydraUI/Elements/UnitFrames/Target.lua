@@ -32,71 +32,25 @@ local UF = HydraUI:GetModule("Unit Frames")
 
 local function BuildTargetComponents(factory, frame, unit)
 -- Portrait
-	factory:CreatePortrait(frame, {
-		style = Settings["target-portrait-style"],
-		alpha = Settings["target-portrait-style"] == "OVERLAY" and Settings["target-overlay-alpha"] / 100 or nil,
-		size = {
-			width = Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-width"] or 55,
-			height = Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-health-height"] or Settings["unitframes-target-health-height"] + Settings["unitframes-target-power-height"] + 1,
-		},
-		anchor = {
-			point = Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "LEFT",
-			relativeTo = Settings["target-portrait-style"] == "OVERLAY" and frame.Health or frame,
-			relativePoint = Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "RIGHT",
-			x = Settings["target-portrait-style"] == "OVERLAY" and 0 or 3,
-		},
-		background = {
-			texture = Settings["Blank"],
-			visible = Settings["target-enable-portrait"],
-		},
-	})
+	factory:CreatePortrait(frame,
+		Settings["target-portrait-style"],
+		Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-width"] or 55,
+		Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-health-height"] or Settings["unitframes-target-health-height"] + Settings["unitframes-target-power-height"] + 1,
+		Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "LEFT",
+		Settings["target-portrait-style"] == "OVERLAY" and frame.Health or frame,
+		Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "RIGHT",
+		Settings["target-portrait-style"] == "OVERLAY" and 0 or 3, 0,
+		Settings["target-portrait-style"] == "OVERLAY" and Settings["target-overlay-alpha"] / 100 or nil,
+		Settings["Blank"], Settings["target-enable-portrait"])
 
 
 	-- Auras
-	local Buffs = factory:CreateAuraContainer(frame, {
-		name = frame:GetName() .. "Buffs",
-		iconSize = Settings.TargetBuffSize,
-		spacing = Settings.TargetBuffSpacing,
-		num = 16,
-		initialAnchor = "TOPLEFT",
-		tooltipAnchor = "ANCHOR_TOP",
-		growthX = "RIGHT",
-		growthY = "UP",
-		size = {
-			width = Settings["unitframes-target-width"],
-			height = 28,
-		},
-		anchor = {
-			point = "BOTTOMLEFT",
-			relativeTo = frame,
-			relativePoint = "TOPLEFT",
-			y = 2,
-		},
-		callbacks = {
-			postCreateIcon = factory.PostCreateIcon,
-			postUpdateIcon = factory.PostUpdateIcon,
-		},
-	})
-	local Debuffs = factory:CreateAuraContainer(frame, {
-		name = frame:GetName() .. "Debuffs",
-		iconSize = Settings.TargetDebuffSize,
-		spacing = Settings.TargetDebuffSpacing,
-		num = 16,
-		initialAnchor = "TOPRIGHT",
-		tooltipAnchor = "ANCHOR_TOP",
-		growthX = "LEFT",
-		growthY = "UP",
-		onlyShowPlayer = Settings["unitframes-only-player-debuffs"],
-		showStealableBuffs = true,
-		size = {
-			width = Settings["unitframes-target-width"],
-			height = 28,
-		},
-		callbacks = {
-			postCreateIcon = factory.PostCreateIcon,
-			postUpdateIcon = factory.PostUpdateIcon,
-		},
-	})
+	local Buffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Buffs", nil, Settings["unitframes-target-width"], 28,
+		"BOTTOMLEFT", frame, "TOPLEFT", 0, 2, Settings.TargetBuffSize, Settings.TargetBuffSpacing, 16,
+		"TOPLEFT", "ANCHOR_TOP", "RIGHT", "UP", factory.PostCreateIcon, factory.PostUpdateIcon, nil, nil, nil)
+	local Debuffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Debuffs", nil, Settings["unitframes-target-width"], 28,
+		nil, nil, nil, 0, 0, Settings.TargetDebuffSize, Settings.TargetDebuffSpacing, 16,
+		"TOPRIGHT", "ANCHOR_TOP", "LEFT", "UP", factory.PostCreateIcon, factory.PostUpdateIcon, nil, Settings["unitframes-only-player-debuffs"], true)
 	if Settings["unitframes-show-player-buffs"] then
 		Debuffs:SetPoint("BOTTOM", Buffs, "TOP", 0, 2)
 	else
@@ -107,47 +61,14 @@ local function BuildTargetComponents(factory, frame, unit)
 	if Settings["unitframes-target-enable-castbar"] then
 		local Anchor = CreateFrame("Frame", "HydraUI Target Casting Bar", frame)
 		Anchor:SetSize(Settings["unitframes-target-cast-width"], Settings["unitframes-target-cast-height"])
-		factory:CreateCastbar(frame, {
-		showTradeSkills = true,
-		timeToHold = 0.3,
-		classColor = Settings["unitframes-target-cast-classcolor"],
-		size = {
-			width = Settings["unitframes-target-cast-width"] - Settings["unitframes-target-cast-height"] - 1,
-			height = Settings["unitframes-target-cast-height"],
-		},
-		anchor = {
-			point = "RIGHT",
-			relativeTo = Anchor,
-			relativePoint = "RIGHT",
-		},
-		bar = {
-			texture = Settings["ui-widget-texture"],
-		},
-		background = {
-			texture = "Blank",
-			topLeftX = -(Settings["unitframes-target-cast-height"] + 2),
-			topLeftY = 1,
-			bottomRightX = 1,
-			bottomRightY = -1,
-		},
-		text = {
-			font = Settings["unitframes-font"],
-			fontSize = Settings["unitframes-font-size"],
-			fontFlags = Settings["unitframes-font-flags"],
-			timeX = -5,
-			textX = 5,
-			width = Settings["unitframes-target-cast-width"] * 0.7,
-		},
-		icon = {
-			size = Settings["unitframes-target-cast-height"],
-		},
-		callbacks = {
-			postCastStart = factory.PostCastStart,
-			postCastStop = factory.PostCastStop,
-			postCastFail = factory.PostCastFail,
-			postCastInterruptible = factory.PostCastInterruptible,
-		},
-	})
+		factory:CreateCastbar(frame, nil,
+		Settings["unitframes-target-cast-width"] - Settings["unitframes-target-cast-height"] - 1, Settings["unitframes-target-cast-height"],
+		"RIGHT", Anchor, "RIGHT", 0, 0, Settings["ui-widget-texture"], "Blank",
+		-Settings["unitframes-target-cast-height"] - 2, 1, 1, -1,
+		Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"],
+		-5, 5, Settings["unitframes-target-cast-width"] * 0.7,
+		Settings["unitframes-target-cast-height"], nil, nil, nil, true, 0.3, Settings["unitframes-target-cast-classcolor"],
+		factory.PostCastStart, factory.PostCastStop, factory.PostCastFail, factory.PostCastInterruptible)
 		frame.CastAnchor = Anchor
 	end
 

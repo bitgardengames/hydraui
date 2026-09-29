@@ -21,95 +21,24 @@ local UF = HydraUI:GetModule("Unit Frames")
 
 local function BuildFocusComponents(factory, frame, unit)
 	if Settings["focus-enable-castbar"] then
-		factory:CreateCastbar(frame, {
-		showTradeSkills = true,
-		timeToHold = 0.7,
-		size = {
-			width = Settings["unitframes-focus-width"] - 30,
-			height = 24,
-		},
-		anchor = {
-			point = "TOPRIGHT",
-			relativeTo = frame,
-			relativePoint = "BOTTOMRIGHT",
-			x = -1,
-			y = -3,
-		},
-		bar = {
-			texture = Settings["ui-widget-texture"],
-		},
-		background = {
-			texture = "Blank",
-		},
-		text = {
-			font = Settings["unitframes-font"],
-			fontSize = Settings["unitframes-font-size"],
-			fontFlags = Settings["unitframes-font-flags"],
-			width = 250 * 0.7,
-		},
-		icon = {
-			size = 24,
-			x = -4,
-			background = true,
-		},
-		callbacks = {
-			postCastStart = factory.PostCastStart,
-			postCastStop = factory.PostCastStop,
-			postCastFail = factory.PostCastFail,
-			postCastInterruptible = factory.PostCastInterruptible,
-		},
-	})
+		factory:CreateCastbar(frame, nil,
+		Settings["unitframes-focus-width"] - 30, 24,
+		"TOPRIGHT", frame, "BOTTOMRIGHT", -1, -3, Settings["ui-widget-texture"], "Blank",
+		-24 - 2, 1, 1, -1,
+		Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"],
+		-5, 5, 250 * 0.7,
+		24, -4, true, nil, true, 0.7, nil,
+		factory.PostCastStart, factory.PostCastStop, factory.PostCastFail, factory.PostCastInterruptible)
 	end
 
 	-- Auras
 	local AuraSize = Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3
-	local Buffs = factory:CreateAuraContainer(frame, {
-		name = frame:GetName() .. "Buffs",
-		iconSize = AuraSize,
-		spacing = 2,
-		num = 3,
-		initialAnchor = "LEFT",
-		tooltipAnchor = "ANCHOR_TOP",
-		growthX = "RIGHT",
-		size = {
-			width = (AuraSize * 3) + 4,
-			height = AuraSize,
-		},
-		anchor = {
-			point = "LEFT",
-			relativeTo = frame,
-			relativePoint = "RIGHT",
-			x = 2,
-		},
-		callbacks = {
-			postCreateIcon = factory.PostCreateIcon,
-			postUpdateIcon = factory.PostUpdateIcon,
-		},
-	})
-	local Debuffs = factory:CreateAuraContainer(frame, {
-		name = frame:GetName() .. "Debuffs",
-		iconSize = AuraSize,
-		spacing = 2,
-		num = 3,
-		initialAnchor = "LEFT",
-		tooltipAnchor = "ANCHOR_TOP",
-		growthX = "RIGHT",
-		onlyShowPlayer = Settings["unitframes-only-focus-debuffs"],
-		size = {
-			width = (AuraSize * 3) + 4,
-			height = AuraSize,
-		},
-		anchor = {
-			point = "LEFT",
-			relativeTo = Buffs,
-			relativePoint = "RIGHT",
-			x = 2,
-		},
-		callbacks = {
-			postCreateIcon = factory.PostCreateIcon,
-			postUpdateIcon = factory.PostUpdateIcon,
-		},
-	})
+	local Buffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Buffs", nil, (AuraSize * 3) + 4, AuraSize,
+		"LEFT", frame, "RIGHT", 2, 0, AuraSize, 2, 3,
+		"LEFT", "ANCHOR_TOP", "RIGHT", nil, factory.PostCreateIcon, factory.PostUpdateIcon, nil, nil, nil)
+	local Debuffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Debuffs", nil, (AuraSize * 3) + 4, AuraSize,
+		"LEFT", Buffs, "RIGHT", 2, 0, AuraSize, 2, 3,
+		"LEFT", "ANCHOR_TOP", "RIGHT", nil, factory.PostCreateIcon, factory.PostUpdateIcon, nil, Settings["unitframes-only-focus-debuffs"], nil)
 
 	frame.Buffs = Buffs
 	frame.Debuffs = Debuffs

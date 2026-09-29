@@ -38,3 +38,15 @@ def test_temporary_hooks_are_registered_explicitly():
     frames = source("Frames.lua")
     assert "Chat.TemporaryWindowHooks" in frames
     assert "hooks.FCF_OpenTemporaryWindow" in frames
+
+
+def test_data_text_module_is_cached_when_chat_frames_are_initialized():
+    frames = source("Frames.lua")
+    load_time_lookup = 'DT = HydraUI:GetModule("DataText")'
+
+    assert "local DT\n" in frames
+    assert frames.count(load_time_lookup) == 1
+    assert frames.index(load_time_lookup) > frames.index("function Chat:StyleChatFrames()")
+
+    focus_hooks = frames[frames.index("local OnEditFocusLost"):frames.index("local CheckForBottom")]
+    assert "HydraUI:GetModule" not in focus_hooks

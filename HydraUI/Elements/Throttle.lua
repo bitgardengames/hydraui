@@ -1,57 +1,24 @@
 local HydraUI = select(2, ...):get()
 
-local tinsert = table.insert
-local tremove = table.remove
 local GetTime = GetTime
 
 local Throttle = HydraUI:NewModule("Throttle")
-local Active = {}
-local Inactive = {}
+local Deadlines = {}
 
 function Throttle:IsThrottled(name)
-	for i = 1, #Active do
-		if (Active[i][1] == name) then
-			local Item = tremove(Active, i)
+	local Deadline = Deadlines[name]
 
-			if (GetTime() - Item[2] >= Item[3]) then
-				tinsert(Inactive, Item)
-
-				return false
-			end
-
-			return true
-		end
-	end
-end
-
-function Throttle:Exists(name)
-	for i = 1, #Active do
-		if (Active[i][1] == name) then
-			return true
-		end
+	if (Deadline and Deadline > GetTime()) then
+		return true
 	end
 
-	for i = 1, #Inactive do
-		if (Inactive[i][1] == name) then
-			return true
-		end
+	if (Deadline) then
+		Deadlines[name] = nil
 	end
 end
 
 function Throttle:Start(name, duration)
-	if (not self:Exists(name)) then
-		tinsert(Inactive, {name, GetTime(), duration})
-	end
-
 	if (not self:IsThrottled(name)) then
-		for i = 1, #Inactive do
-			if (Inactive[i][1] == name) then
-				Inactive[i][2] = GetTime()
-
-				tinsert(Active, tremove(Inactive, i))
-
-				break
-			end
-		end
+		Deadlines[name] = GetTime() + duration
 	end
 end

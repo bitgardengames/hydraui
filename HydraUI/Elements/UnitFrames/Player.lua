@@ -99,8 +99,8 @@ local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
 	end
 end
 
--- Resource descriptions are module constants
-spawning a frame only selects one.
+-- Resource descriptions are module constants;
+-- spawning a frame only selects one.
 local PlayerResourceDescriptors = {
 	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
 	DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},

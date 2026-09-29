@@ -84,22 +84,43 @@ function UF:SetPowerAttributes(power, value)
 	end
 end
 
-local AuraOnUpdate = function(self, ela)
-	self.ela = self.ela + ela
+local ActiveAuraTimers = setmetatable({}, {__mode = "k"})
+local AuraTimerFrame = CreateFrame("Frame")
+local AuraTimerElapsed = 0
 
-	if (self.ela > 0.1) then
-		local Now = (self.Expiration - GetTime())
+local UnregisterAuraTimer = function(button)
+	ActiveAuraTimers[button] = nil
 
-		if (Now > 0) then
-			self.Time:SetText(HydraUI:AuraFormatTime(Now))
-		else
-			self:SetScript("OnUpdate", nil)
-			self.Time:Hide()
-		end
-
-		self.ela = 0
+	if button.Time then
+		button.Time:Hide()
 	end
 end
+
+local RegisterAuraTimer = function(button, expiration)
+	button.Expiration = expiration
+	ActiveAuraTimers[button] = true
+	button.Time:Show()
+end
+
+AuraTimerFrame:SetScript("OnUpdate", function(_, elapsed)
+	AuraTimerElapsed = AuraTimerElapsed + elapsed
+
+	if (AuraTimerElapsed > 0.1) then
+		local Now = GetTime()
+
+		for Button in pairs(ActiveAuraTimers) do
+			local Remaining = Button.Expiration and (Button.Expiration - Now)
+
+			if (Remaining and Remaining > 0 and Button:IsShown()) then
+				Button.Time:SetText(HydraUI:AuraFormatTime(Remaining))
+			else
+				UnregisterAuraTimer(Button)
+			end
+		end
+
+		AuraTimerElapsed = 0
+	end
+end)
 
 UF.ThreatPostUpdate = function(self, unit, status, r, g, b)
 	if (status and status > 0) then
@@ -121,6 +142,8 @@ if HydraUI.IsVanilla then
 	LCD:Register("HydraUI")
 
 	UF.PostUpdateIcon = function(self, unit, button, index, position, duration, expiration, debuffType, isStealable)
+		UnregisterAuraTimer(button)
+
 		local Name, _, _, _, Duration, Expiration, Caster, _, _, SpellID = UnitAura(unit, index, button.filter)
 		local DurationNew, ExpirationNew = LCD:GetAuraDurationByUnit(unit, SpellID, Caster, Name)
 
@@ -128,8 +151,6 @@ if HydraUI.IsVanilla then
 			Duration = DurationNew
 			Expiration = ExpirationNew
 		end
-
-		button.Expiration = Expiration
 
 		if button.cd then
 			if (Duration and Duration > 0) then
@@ -156,15 +177,12 @@ if HydraUI.IsVanilla then
 		end
 
 		if (Expiration and Expiration ~= 0) then
-			button:SetScript("OnUpdate", AuraOnUpdate)
-			button.Time:Show()
-		else
-			button.Time:Hide()
+			RegisterAuraTimer(button, Expiration)
 		end
 	end
 else
 	UF.PostUpdateIcon = function(self, unit, button, index, position, duration, expiration, debuffType, isStealable)
-		button.Expiration = expiration
+		UnregisterAuraTimer(button)
 
 		if button.cd then
 			if (duration and duration > 0) then
@@ -191,10 +209,7 @@ else
 		end
 
 		if (expiration and expiration ~= 0) then
-			button:SetScript("OnUpdate", AuraOnUpdate)
-			button.Time:Show()
-		else
-			button.Time:Hide()
+			RegisterAuraTimer(button, expiration)
 		end
 	end
 end
@@ -208,6 +223,9 @@ local CancelAuraOnMouseUp = function(aura, button)
 end
 
 UF.PostCreateIcon = function(unit, button)
+	UnregisterAuraTimer(button)
+	button:HookScript("OnHide", UnregisterAuraTimer)
+
 	local ID = button:GetName():match("%d+")
 
 	if ID then
@@ -250,8 +268,6 @@ UF.PostCreateIcon = function(unit, button)
 	if (not Settings["unitframes-display-aura-timers"]) then
 		button.Time:SetParent(Hider)
 	end
-
-	button.ela = 0
 end
 
 UF.PostCastStart = function(self, unit)

@@ -45,8 +45,14 @@ function UF:BuildGroupFrame(frame, unit, descriptor)
 	frame:SetScript("OnEnter", UnitFrame_OnEnter); frame:SetScript("OnLeave", UnitFrame_OnLeave)
 	UF:CreateBackdrop(frame, "Blank", "BACKGROUND")
 	UF:CreateThreatIndicator(frame, HydraUI.Outline, UF.ThreatPostUpdate)
-	local health, healthBG = UF:CreateHealthBar(frame, Settings[prefix .. "-health-height"], Settings[descriptor.healthTextureKey], Settings[prefix .. "-health-reverse"], Settings[prefix .. "-health-orientation"], "BORDER")
-	local heal, absorbs = UF:CreateHealAndAbsorbBars(frame, health, Settings[prefix .. "-width"], Settings[prefix .. "-health-height"], Settings[descriptor.healthTextureKey], Settings[prefix .. "-health-reverse"], HydraUI.IsMainline)
+	local health, healthBG = UF:CreateHealthBar(frame, {
+		size = {height = Settings[prefix .. "-health-height"]},
+		bar = {texture = Settings[descriptor.healthTextureKey], reverseFill = Settings[prefix .. "-health-reverse"], orientation = Settings[prefix .. "-health-orientation"]},
+	})
+	local heal, absorbs = UF:CreateHealAndAbsorbBars(frame, {
+		health = health, size = {width = Settings[prefix .. "-width"], height = Settings[prefix .. "-health-height"]},
+		bar = {texture = Settings[descriptor.healthTextureKey], reverseFill = Settings[prefix .. "-health-reverse"]}, createAbsorb = HydraUI.IsMainline,
+	})
 	local highlight = UF:CreateMouseoverHighlight(frame, health, "Blank", Settings[descriptor.mouseoverKey])
 	local dead = health:CreateTexture(nil, "OVERLAY")
 	dead:SetAllPoints(health); dead:SetTexture(Assets:GetTexture("RenHorizonUp")); dead:SetVertexColor(.8,.8,.8); dead:SetAlpha(0); dead:SetDrawLayer("OVERLAY", 7)
@@ -56,7 +62,7 @@ function UF:BuildGroupFrame(frame, unit, descriptor)
 	local healthName = UF:CreateFontString(health, Settings[prefix .. "-font"], Settings[prefix .. "-font-size"], Settings[prefix .. "-font-flags"], "BOTTOM", "CENTER", 0, 1, "CENTER")
 	local healthBottom = UF:CreateFontString(health, Settings[prefix .. "-font"], Settings[prefix .. "-font-size"], Settings[prefix .. "-font-flags"], "TOP", "CENTER", 0, -1, "CENTER")
 	health.colorDisconnected, health.Smooth = true, true; UF:SetHealthAttributes(health, Settings[prefix .. "-health-color"])
-	local power, powerBG = UF:CreatePowerBar(frame, Settings[prefix .. "-power-height"], Settings[descriptor.powerTextureKey], Settings[prefix .. "-power-reverse"])
+	local power, powerBG = UF:CreatePowerBar(frame, {size = {height = Settings[prefix .. "-power-height"]}, bar = {texture = Settings[descriptor.powerTextureKey], reverseFill = Settings[prefix .. "-power-reverse"]}})
 	power.frequentUpdates = true; UF:SetPowerAttributes(power, Settings[prefix .. "-power-color"])
 	local debuffs = descriptor.createDebuffs(frame, health, descriptor.debuffFilter)
 	CreateAuraWatch(frame, health, descriptor)

@@ -23,12 +23,25 @@ class ComponentConstructorCoverage(unittest.TestCase):
         self.assertIn("Portrait requires style", source)
 
     def test_constructors_accept_options_and_normalize_them(self):
-        for constructor, kind in (("CreatePortrait", "Portrait"),
+        for constructor, kind in (("CreateHealthBar", "HealthBar"),
+                                  ("CreateHealAndAbsorbBars", "PredictionBars"),
+                                  ("CreatePowerBar", "PowerBar"),
+                                  ("CreatePortrait", "Portrait"),
                                   ("CreateCastbar", "Castbar"),
                                   ("CreateAuraContainer", "AuraContainer")):
             source = body(constructor)
             self.assertIn(f'function UF:{constructor}(frame, options)', source)
             self.assertIn(f'self:NormalizeComponentOptions("{kind}", options)', source)
+
+    def test_health_and_power_callers_use_named_groups(self):
+        for module in ("ComponentFactory", "GroupFrames"):
+            source = (ROOT / f"{module}.lua").read_text()
+            for constructor in ("CreateHealthBar", "CreateHealAndAbsorbBars", "CreatePowerBar"):
+                self.assertRegex(source, rf"{constructor}\(frame, \{{")
+        for module in ("Pet", "TargetTarget"):
+            source = (ROOT / f"{module}.lua").read_text()
+            self.assertIn("CreateAuraContainer(frame, {", source)
+            self.assertNotRegex(source, r'CreateFrame\("Frame", frame:GetName\(\) \.\. "(?:Buffs|Debuffs)"')
 
     def test_castbar_and_aura_callers_use_named_groups(self):
         for module in ("Player", "Target", "Focus", "Boss"):

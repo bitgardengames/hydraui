@@ -30,6 +30,10 @@ Elements\Languages\zhTW.lua
 Elements\Styles.lua
 Elements\Defaults.lua
 Elements\GUI\GUI.lua
+Elements\GUI\Pages.lua
+Elements\GUI\Navigation.lua
+Elements\GUI\Frame.lua
+Elements\GUI\Updates.lua
 Elements\GUI\WidgetCore.lua
 Elements\GUI\Dialog.lua
 Elements\GUI\Buttons.lua

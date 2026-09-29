@@ -4,6 +4,27 @@ import re
 
 CORE = Path("HydraUI/Elements/GUI/WidgetCore.lua").read_text()
 SLIDERS = Path("HydraUI/Elements/GUI/Sliders.lua").read_text()
+GUI = Path("HydraUI/Elements/GUI/GUI.lua").read_text()
+NAVIGATION = Path("HydraUI/Elements/GUI/Navigation.lua").read_text()
+FRAME = Path("HydraUI/Elements/GUI/Frame.lua").read_text()
+
+
+class Viewport:
+    """Small executable model of the shared Lua RowViewport contract."""
+
+    def __init__(self, rows, shown, render):
+        self.rows = rows
+        self.shown = shown
+        self.render = render
+        self.offset = 1
+        self.scrollbar = 1
+
+    def set_offset(self, offset):
+        self.offset = dropdown_offset(offset, len(self.rows()), self.shown)
+        self.scrollbar = self.offset
+        for slot in range(self.shown):
+            index = self.offset + slot - 1
+            self.render(slot, self.rows()[index] if index < len(self.rows()) else None)
 
 
 def dropdown_offset(offset, count, shown):
@@ -52,3 +73,40 @@ def test_persistence_has_id_and_widget_opt_outs():
     assert '["profile-copy"] = true' in CORE
     assert "widget and widget.IsSavingDisabled" in CORE
     assert "if not Core.ShouldPersist(id, widget) then return false end" in CORE
+
+
+def test_shared_viewport_supports_widget_and_navigation_sources():
+    bound = []
+    widgets = Viewport(lambda: ["w1", "w2", "w3"], 2, lambda slot, row: bound.append((slot, row)))
+    navigation = Viewport(lambda: ["general", "profiles"], 1, lambda slot, row: bound.append((slot, row)))
+    widgets.set_offset(2)
+    navigation.set_offset(2)
+    assert bound == [(0, "w2"), (1, "w3"), (0, "profiles")]
+
+
+def test_shared_viewport_clamps_empty_data_and_synchronizes_scrollbar():
+    rendered = []
+    viewport = Viewport(lambda: [], 4, lambda slot, row: rendered.append(row))
+    viewport.set_offset(99)
+    assert viewport.offset == viewport.scrollbar == 1
+    assert rendered == [None] * 4
+
+
+def test_shared_viewport_reuses_visible_slots_while_scrolling():
+    pool = [object(), object()]
+    bindings = {}
+    viewport = Viewport(lambda: list(range(6)), len(pool), lambda slot, row: bindings.__setitem__(pool[slot], row))
+    viewport.set_offset(1)
+    identities = set(bindings)
+    viewport.set_offset(4)
+    assert set(bindings) == identities
+    assert list(bindings.values()) == [3, 4]
+
+
+def test_lua_viewport_owns_rendering_scrollbar_and_mousewheel_contracts():
+    assert "function RowViewport:GetRow" in GUI
+    assert "function RowViewport:AttachMouseWheel" in GUI
+    assert "function RowViewport:SyncScrollBar" in GUI
+    assert "RenderRow = options.RenderRow" in GUI
+    assert "SetSelectionOffset" not in NAVIGATION
+    assert "WindowScrollBarOnValueChanged" not in FRAME

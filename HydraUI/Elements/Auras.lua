@@ -6,7 +6,6 @@ local Auras = HydraUI:NewModule("Auras")
 
 -- Big thank you to Tukz for allowing me to derive my aura code from Tukui
 
-local select = select
 local unpack = unpack
 local UnitAura = UnitAura
 local GetTime = GetTime
@@ -42,40 +41,81 @@ Defaults["auras-duration-align"] = "CENTER"
 
 Auras.Headers = {}
 
-local OnUpdate = function(button, elapsed)
-	local TimeLeft
+local ActiveButtons = {}
+local ActiveButtonCount = 0
+local UpdateElapsed = 0
+local Updater = CreateFrame("Frame")
 
-	if button.Enchant then
-		local Expiration = select(button.Enchant, GetWeaponEnchantInfo())
-
-		if Expiration then
-			TimeLeft = Expiration / 1e3
-		else
-			TimeLeft = 0
-		end
-	else
-		TimeLeft = button.TimeLeft - elapsed
+local UnregisterButton = function(button)
+	if ActiveButtons[button] then
+		ActiveButtons[button] = nil
+		ActiveButtonCount = ActiveButtonCount - 1
 	end
 
-	button.TimeLeft = TimeLeft
+	button.ExpirationTime = nil
+	button.TimeLeft = nil
+	button.Dur = nil
+	button.Enchant = nil
+	button.LastDuration = nil
+	button.Duration:SetText("")
 
-	if (TimeLeft <= 0) then
-		button.TimeLeft = nil
-		button.Duration:SetText("")
-
-		if button.Enchant then
-			button.Dur = nil
-		end
-
-		button:SetScript("OnUpdate", nil)
-	else
-		button.Duration:SetText(HydraUI:FormatTime(TimeLeft))
+	if (ActiveButtonCount == 0) then
+		UpdateElapsed = 0
+		Updater:Hide()
 	end
 end
 
+local RegisterButton = function(button)
+	if (not ActiveButtons[button]) then
+		ActiveButtons[button] = true
+		ActiveButtonCount = ActiveButtonCount + 1
+	end
+
+	Updater:Show()
+end
+
+Updater:SetScript("OnUpdate", function(self, elapsed)
+	UpdateElapsed = UpdateElapsed + elapsed
+
+	if (UpdateElapsed < 0.1) then
+		return
+	end
+
+	UpdateElapsed = 0
+
+	local Now = GetTime()
+	local _, MainHandExpiration, _, _, _, OffHandExpiration = GetWeaponEnchantInfo()
+
+	for Button in pairs(ActiveButtons) do
+		local TimeLeft
+
+		if (Button.Enchant == 2) then
+			TimeLeft = MainHandExpiration and MainHandExpiration / 1e3 or 0
+		elseif (Button.Enchant == 6) then
+			TimeLeft = OffHandExpiration and OffHandExpiration / 1e3 or 0
+		else
+			TimeLeft = Button.ExpirationTime - Now
+		end
+
+		Button.TimeLeft = TimeLeft
+
+		if (TimeLeft <= 0) then
+			UnregisterButton(Button)
+		else
+			local FormattedDuration = HydraUI:FormatTime(TimeLeft)
+
+			if (FormattedDuration ~= Button.LastDuration) then
+				Button.LastDuration = FormattedDuration
+				Button.Duration:SetText(FormattedDuration)
+			end
+		end
+	end
+end)
+
+Updater:Hide()
+
 local UpdateTempEnchant = function(button, slot)
 	local Enchant = (slot == 16 and 2) or 6
-	local Expiration = select(Enchant, GetWeaponEnchantInfo())
 	local Icon = GetInventoryItemTexture("player", slot)
 	--[[local Quality = GetInventoryItemQuality("player", slot)
 
@@ -89,19 +129,9 @@ local UpdateTempEnchant = function(button, slot)
 
 	button.Backdrop:SetBackdropBorderColor(0, 0, 0)
 
-	if Expiration then
-		if (not button.Dur) then
-			button.Dur = Expiration / 1e3
-		end
-
-		button.Enchant = Enchant
-		button:SetScript("OnUpdate", OnUpdate)
-	else
-		button.Dur = nil
-		button.Enchant = nil
-		button.TimeLeft = nil
-		button:SetScript("OnUpdate", nil)
-	end
+	button.ExpirationTime = nil
+	button.Enchant = Enchant
+	RegisterButton(button)
 
 	if Icon then
 		button:SetAlpha(1)
@@ -171,25 +201,18 @@ function Auras:UpdateAura(button, index)
 	local Name, Texture, Count, DType, Duration, ExpirationTime, Caster, IsStealable, ShouldConsolidate, SpellID, CanApplyAura, IsBossDebuff = UnitAura(button:GetParent():GetAttribute("unit"), index, button.Filter) -- button:GetID()
 
 	if (not Name) then
+		UnregisterButton(button)
 		return
 	end
 
 	if (Duration > 0 and ExpirationTime) then
-		local TimeLeft = ExpirationTime - GetTime()
-
-		if (not button.TimeLeft) then
-			button.TimeLeft = TimeLeft
-			button:SetScript("OnUpdate", OnUpdate)
-		else
-			button.TimeLeft = TimeLeft
-		end
-
+		button.Enchant = nil
+		button.ExpirationTime = ExpirationTime
+		button.TimeLeft = ExpirationTime - GetTime()
 		button.Dur = Duration
+		RegisterButton(button)
 	else
-		button.TimeLeft = nil
-		button.Dur = nil
-		button.Duration:SetText("")
-		button:SetScript("OnUpdate", nil)
+		UnregisterButton(button)
 	end
 
 	if (Count > 1) then

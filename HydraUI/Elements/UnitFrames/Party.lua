@@ -125,31 +125,17 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["party-power-color"])
 
 	-- Debuffs
-	local Debuffs = CreateFrame("Frame", self:GetName() .. "Debuffs", Health)
-	Debuffs.PostCreateIcon = UF.PostCreateIcon
-	Debuffs.PostUpdateIcon = UF.PostUpdateIcon
-	Debuffs.CustomFilter = PartyDebuffFilter
-
-	if (Settings["party-point"] == "LEFT") or (Settings["party-point"] == "RIGHT") then
-		Debuffs:SetSize(24 * 3 + (2 * 2), 24)
-		Debuffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 2)
-		Debuffs.size = 24
-		Debuffs.num = 3
-		Debuffs.spacing = 1
-		Debuffs.initialAnchor = "BOTTOMLEFT"
-		Debuffs.tooltipAnchor = "ANCHOR_TOP"
-		Debuffs["growth-x"] = "RIGHT"
-	else
-		Debuffs:SetSize(24 * 3 + (2 * 2), 24 * 2 + 2)
-		Debuffs:SetPoint("TOPLEFT", self, "TOPRIGHT", 2, 0)
-		Debuffs.size = 24
-		Debuffs.num = 6
-		Debuffs.spacing = 1
-		Debuffs.initialAnchor = "TOPLEFT"
-		Debuffs.tooltipAnchor = "ANCHOR_TOP"
-		Debuffs["growth-x"] = "RIGHT"
-		Debuffs["growth-y"] = "DOWN"
-	end
+	local Horizontal = (Settings["party-point"] == "LEFT") or (Settings["party-point"] == "RIGHT")
+	local Debuffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Debuffs", parent = Health,
+		width = 24 * 3 + (2 * 2), height = Horizontal and 24 or 24 * 2 + 2,
+		point = Horizontal and "BOTTOMLEFT" or "TOPLEFT", relativeTo = self,
+		relativePoint = Horizontal and "TOPLEFT" or "TOPRIGHT", x = Horizontal and 0 or 2, y = Horizontal and 2 or 0,
+		size = 24, num = Horizontal and 3 or 6, spacing = 1,
+		initialAnchor = Horizontal and "BOTTOMLEFT" or "TOPLEFT", tooltipAnchor = "ANCHOR_TOP",
+		growthX = "RIGHT", growthY = Horizontal and nil or "DOWN",
+		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon, customFilter = PartyDebuffFilter,
+	})
 
 	if UF.BuffIDs[HydraUI.UserClass] then
 		local Auras = CreateFrame("Frame", nil, Health)

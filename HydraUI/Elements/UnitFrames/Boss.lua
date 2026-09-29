@@ -93,83 +93,29 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["unitframes-boss-power-color"])
 
 	-- Auras
-	local Buffs = CreateFrame("Frame", self:GetName() .. "Buffs", self)
-	Buffs:SetSize(Settings["unitframes-player-width"], Settings["unitframes-boss-buff-size"])
-	Buffs:SetPoint("RIGHT", self, "LEFT", -2, 0)
-	Buffs.size = Settings["unitframes-boss-buff-size"]
-	Buffs.spacing = 2
-	Buffs.num = 3
-	Buffs.initialAnchor = "TOPRIGHT"
-	Buffs.tooltipAnchor = "ANCHOR_TOP"
-	Buffs["growth-x"] = "LEFT"
-	Buffs["growth-y"] = "UP"
-	Buffs.PostCreateIcon = UF.PostCreateIcon
-	Buffs.PostUpdateIcon = UF.PostUpdateIcon
-
-	local Debuffs = CreateFrame("Frame", self:GetName() .. "Debuffs", self)
-	Debuffs:SetSize(Settings["unitframes-player-width"], Settings["unitframes-boss-debuff-size"])
-	Debuffs:SetPoint("LEFT", self, "RIGHT", 2, 0)
-	Debuffs.size = Settings["unitframes-boss-debuff-size"]
-	Debuffs.spacing = 2
-	Debuffs.num = 4
-	Debuffs.initialAnchor = "TOPLEFT"
-	Debuffs.tooltipAnchor = "ANCHOR_TOP"
-	Debuffs["growth-x"] = "RIGHT"
-	Debuffs["growth-y"] = "UP"
-	Debuffs.PostCreateIcon = UF.PostCreateIcon
-	Debuffs.PostUpdateIcon = UF.PostUpdateIcon
-	Debuffs.onlyShowPlayer = Settings["unitframes-only-player-debuffs"]
-
-    -- Castbar
-    local Castbar = CreateFrame("StatusBar", self:GetName() .. " Casting Bar", self)
-	Castbar:SetSize(Settings["unitframes-boss-width"] - 28, 22)
-	Castbar:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", -1, -3)
-    Castbar:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-
-	local CastbarBG = Castbar:CreateTexture(nil, "ARTWORK")
-	CastbarBG:SetPoint("TOPLEFT", Castbar, 0, 0)
-	CastbarBG:SetPoint("BOTTOMRIGHT", Castbar, 0, 0)
-    CastbarBG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	CastbarBG:SetAlpha(0.2)
-
-    local Background = Castbar:CreateTexture(nil, "BACKGROUND")
-	Background:SetPoint("TOPLEFT", Castbar, -1, 1)
-    Background:SetPoint("BOTTOMRIGHT", Castbar, 1, -1)
-    Background:SetTexture(Assets:GetTexture("Blank"))
-    Background:SetVertexColor(0, 0, 0)
-
-    local Time = UF:CreateFontString(Castbar, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
+	local Buffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Buffs", width = Settings["unitframes-boss-width"], height = Settings["unitframes-boss-buff-size"],
+		point = "RIGHT", relativeTo = self, relativePoint = "LEFT", x = -2,
+		size = Settings["unitframes-boss-buff-size"], spacing = 2, num = 3,
+		initialAnchor = "TOPRIGHT", tooltipAnchor = "ANCHOR_TOP", growthX = "LEFT", growthY = "UP",
+		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
 	})
-
-    local Text = Castbar:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(Text, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	Text:SetPoint("LEFT", Castbar, 3, 0)
-	Text:SetSize(250 * 0.7, Settings["unitframes-font-size"])
-	Text:SetJustifyH("LEFT")
-
-    local Icon = Castbar:CreateTexture(nil, "OVERLAY")
-    Icon:SetSize(22, 22)
-	Icon:SetPoint("TOPRIGHT", Castbar, "TOPLEFT", -4, 0)
-    Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-
-    local IconBG = Castbar:CreateTexture(nil, "BACKGROUND")
-    IconBG:SetPoint("TOPLEFT", Icon, -1, 1)
-    IconBG:SetPoint("BOTTOMRIGHT", Icon, 1, -1)
-    IconBG:SetTexture(Assets:GetTexture("Blank"))
-    IconBG:SetVertexColor(0, 0, 0)
-
-    Castbar.bg = CastbarBG
-    Castbar.Time = Time
-    Castbar.Text = Text
-    Castbar.Icon = Icon
-    Castbar.showTradeSkills = true
-    Castbar.timeToHold = 0.3
-	Castbar.PostCastStart = UF.PostCastStart
-	Castbar.PostCastStop = UF.PostCastStop
-	Castbar.PostCastFail = UF.PostCastFail
-	Castbar.PostCastInterruptible = UF.PostCastInterruptible
+	local Debuffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Debuffs", width = Settings["unitframes-boss-width"], height = Settings["unitframes-boss-debuff-size"],
+		point = "LEFT", relativeTo = self, relativePoint = "RIGHT", x = 2,
+		size = Settings["unitframes-boss-debuff-size"], spacing = 2, num = 4,
+		initialAnchor = "TOPLEFT", tooltipAnchor = "ANCHOR_TOP", growthX = "RIGHT", growthY = "UP",
+		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon, onlyShowPlayer = Settings["unitframes-only-player-debuffs"],
+	})
+	local Castbar = UF:CreateCastbar(self, {
+		name = self:GetName() .. " Casting Bar", width = Settings["unitframes-boss-width"] - 28, height = 22,
+		point = "TOPRIGHT", relativeTo = self, relativePoint = "BOTTOMRIGHT", x = -1, y = -3,
+		texture = Settings["ui-widget-texture"], backgroundTexture = "Blank",
+		font = Settings["unitframes-font"], fontSize = Settings["unitframes-font-size"], fontFlags = Settings["unitframes-font-flags"],
+		textWidth = 250 * 0.7, iconSize = 22, iconX = -4, iconBackground = true,
+		showTradeSkills = true, timeToHold = 0.3, postCastStart = UF.PostCastStart,
+		postCastStop = UF.PostCastStop, postCastFail = UF.PostCastFail, postCastInterruptible = UF.PostCastInterruptible,
+	})
 
 	-- Tags
 	self:Tag(HealthLeft, Settings["unitframes-boss-health-left"])

@@ -74,87 +74,32 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["unitframes-focus-power-color"])
 
 	if Settings["focus-enable-castbar"] then
-		-- Castbar
-		local Castbar = CreateFrame("StatusBar", nil, self)
-		Castbar:SetSize(Settings["unitframes-focus-width"] - 30, 24)
-		Castbar:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", -1, -3)
-		Castbar:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-
-		local CastbarBG = Castbar:CreateTexture(nil, "ARTWORK")
-		CastbarBG:SetPoint("TOPLEFT", Castbar, 0, 0)
-		CastbarBG:SetPoint("BOTTOMRIGHT", Castbar, 0, 0)
-		CastbarBG:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-		CastbarBG:SetAlpha(0.2)
-
-		local Background = Castbar:CreateTexture(nil, "BACKGROUND")
-		Background:SetPoint("TOPLEFT", Castbar, -1, 1)
-		Background:SetPoint("BOTTOMRIGHT", Castbar, 1, -1)
-		Background:SetTexture(Assets:GetTexture("Blank"))
-		Background:SetVertexColor(0, 0, 0)
-
-		local Time = Castbar:CreateFontString(nil, "OVERLAY")
-		HydraUI:SetFontInfo(Time, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-		Time:SetPoint("RIGHT", Castbar, -3, 0)
-		Time:SetJustifyH("RIGHT")
-
-		local Text = Castbar:CreateFontString(nil, "OVERLAY")
-		HydraUI:SetFontInfo(Text, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-		Text:SetPoint("LEFT", Castbar, 3, 0)
-		Text:SetSize(250 * 0.7, Settings["unitframes-font-size"])
-		Text:SetJustifyH("LEFT")
-
-		local Icon = Castbar:CreateTexture(nil, "OVERLAY")
-		Icon:SetSize(24, 24)
-		Icon:SetPoint("TOPRIGHT", Castbar, "TOPLEFT", -4, 0)
-		Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-
-		local IconBG = Castbar:CreateTexture(nil, "BACKGROUND")
-		IconBG:SetPoint("TOPLEFT", Icon, -1, 1)
-		IconBG:SetPoint("BOTTOMRIGHT", Icon, 1, -1)
-		IconBG:SetTexture(Assets:GetTexture("Blank"))
-		IconBG:SetVertexColor(0, 0, 0)
-
-		-- Register it with oUF
-		Castbar.bg = CastbarBG
-		Castbar.Time = Time
-		Castbar.Text = Text
-		Castbar.Icon = Icon
-		Castbar.showTradeSkills = true
-		Castbar.timeToHold = 0.7
-		Castbar.PostCastStart = UF.PostCastStart
-		Castbar.PostCastStop = UF.PostCastStop
-		Castbar.PostCastFail = UF.PostCastFail
-		Castbar.PostCastInterruptible = UF.PostCastInterruptible
-
-		self.Castbar = Castbar
+		UF:CreateCastbar(self, {
+			width = Settings["unitframes-focus-width"] - 30, height = 24,
+			point = "TOPRIGHT", relativeTo = self, relativePoint = "BOTTOMRIGHT", x = -1, y = -3,
+			texture = Settings["ui-widget-texture"], backgroundTexture = "Blank",
+			font = Settings["unitframes-font"], fontSize = Settings["unitframes-font-size"], fontFlags = Settings["unitframes-font-flags"],
+			textWidth = 250 * 0.7, iconSize = 24, iconX = -4, iconBackground = true,
+			showTradeSkills = true, timeToHold = 0.7, postCastStart = UF.PostCastStart,
+			postCastStop = UF.PostCastStop, postCastFail = UF.PostCastFail, postCastInterruptible = UF.PostCastInterruptible,
+		})
 	end
 
 	-- Auras
-	local Buffs = CreateFrame("Frame", self:GetName() .. "Buffs", self)
-	Buffs:SetSize(((Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3) * 3) + 4, Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3)
-	Buffs:SetPoint("LEFT", self, "RIGHT", 2, 0)
-	Buffs.size = Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3
-	Buffs.spacing = 2
-	Buffs.num = 3
-	Buffs.initialAnchor = "LEFT"
-	Buffs.tooltipAnchor = "ANCHOR_TOP"
-	Buffs["growth-x"] = "RIGHT"
-	Buffs.PostCreateIcon = UF.PostCreateIcon
-	Buffs.PostUpdateIcon = UF.PostUpdateIcon
-	--Buffs.SetPosition = BuffsSetPosition
-
-	local Debuffs = CreateFrame("Frame", self:GetName() .. "Debuffs", self)
-	Debuffs:SetSize(((Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3) * 3) + 4, Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3)
-	Debuffs:SetPoint("LEFT", Buffs, "RIGHT", 2, 0)
-	Debuffs.size = Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3
-	Debuffs.spacing = 2
-	Debuffs.num = 3
-	Debuffs.initialAnchor = "LEFT"
-	Debuffs.tooltipAnchor = "ANCHOR_TOP"
-	Debuffs["growth-x"] = "RIGHT"
-	Debuffs.PostCreateIcon = UF.PostCreateIcon
-	Debuffs.PostUpdateIcon = UF.PostUpdateIcon
-	Debuffs.onlyShowPlayer = Settings["unitframes-only-focus-debuffs"]
+	local AuraSize = Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3
+	local Buffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Buffs", width = (AuraSize * 3) + 4, height = AuraSize,
+		point = "LEFT", relativeTo = self, relativePoint = "RIGHT", x = 2,
+		size = AuraSize, spacing = 2, num = 3, initialAnchor = "LEFT", tooltipAnchor = "ANCHOR_TOP", growthX = "RIGHT",
+		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
+	})
+	local Debuffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Debuffs", width = (AuraSize * 3) + 4, height = AuraSize,
+		point = "LEFT", relativeTo = Buffs, relativePoint = "RIGHT", x = 2,
+		size = AuraSize, spacing = 2, num = 3, initialAnchor = "LEFT", tooltipAnchor = "ANCHOR_TOP", growthX = "RIGHT",
+		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
+		onlyShowPlayer = Settings["unitframes-only-focus-debuffs"],
+	})
 
 	-- Tags
 	self:Tag(HealthLeft, Settings["unitframes-focus-health-left"])

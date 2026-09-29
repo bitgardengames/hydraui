@@ -6,28 +6,42 @@ if (not oUF) then
 	return
 end
 
-local ActiveCount = 0
 local Running = false
 local smoothing = {}
 local Frame = CreateFrame("Frame")
-local min, max, abs, pairs = math.min, math.max, math.abs, pairs
+local min, max, abs, pairs, next = math.min, math.max, math.abs, pairs, next
 local GetFramerate = GetFramerate
 local _
+local OnUpdate
+
+local function UpdateUpdater()
+	local ShouldRun = next(smoothing) ~= nil
+
+	if (ShouldRun ~= Running) then
+		Frame:SetScript("OnUpdate", ShouldRun and OnUpdate or nil)
+		Running = ShouldRun
+	end
+end
+
+local function SetSmoothing(bar, value)
+	smoothing[bar] = value
+	UpdateUpdater()
+end
 
 local function Smooth(self, value)
 	local _, Max = self:GetMinMaxValues()
 	
 	if (self.Max_ and self.Max_ ~= Max) then -- Fix target switches
 		self:SetValue_(value)
-		smoothing[self] = nil
+		SetSmoothing(self, nil)
 		self.Max_ = Max
 		return
 	end
 	
 	if (value ~= self:GetValue() or value == 0) then
-		smoothing[self] = value
+		SetSmoothing(self, value)
 	else
-		smoothing[self] = nil
+		SetSmoothing(self, nil)
 	end
 	
 	self.Max_ = Max
@@ -41,7 +55,7 @@ if HydraUI.IsMainline then
 	Smooth = function(self, value)
 		if ((issecretvalue(value) and not canaccessvalue(value))) then
 			self:SetValue_(value)
-			smoothing[self] = nil
+			SetSmoothing(self, nil)
 			self.Max_ = nil
 			return
 		end
@@ -50,14 +64,14 @@ if HydraUI.IsMainline then
 
 		if ((issecretvalue(Max) and not canaccessvalue(Max))) then
 			self:SetValue_(value)
-			smoothing[self] = nil
+			SetSmoothing(self, nil)
 			self.Max_ = nil
 			return
 		end
 
 		if (self.Max_ and self.Max_ ~= Max) then -- Fix target switches
 			self:SetValue_(value)
-			smoothing[self] = nil
+			SetSmoothing(self, nil)
 			self.Max_ = Max
 			return
 		end
@@ -66,11 +80,11 @@ if HydraUI.IsMainline then
 
 		if ((issecretvalue(Current) and not canaccessvalue(Current))) then
 			self:SetValue_(value)
-			smoothing[self] = nil
+			SetSmoothing(self, nil)
 		elseif (value ~= Current or value == 0) then
-			smoothing[self] = value
+			SetSmoothing(self, value)
 		else
-			smoothing[self] = nil
+			SetSmoothing(self, nil)
 		end
 
 		self.Max_ = Max
@@ -82,7 +96,7 @@ local SmoothBar = function(self, bar)
 	bar.SetValue = Smooth
 end
 
-local function OnUpdate()
+OnUpdate = function()
 	for bar, value in pairs(smoothing) do
 		local Current = bar:GetValue()
 		local New = Current + min((value - Current) / 3, max(value - Current, 30 / GetFramerate()))
@@ -95,7 +109,7 @@ local function OnUpdate()
 		
 		if (Current == value or abs(New - value) < 2) then
 			bar:SetValue_(value)
-			smoothing[bar] = nil
+			SetSmoothing(bar, nil)
 		end
 	end
 end
@@ -109,7 +123,7 @@ if HydraUI.IsMainline then
 			-- starts). Drop that animation rather than doing forbidden arithmetic.
 			if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(value) and not canaccessvalue(value))) then
 				bar:SetValue_(value)
-				smoothing[bar] = nil
+				SetSmoothing(bar, nil)
 			else
 				local New = Current + min((value - Current) / 3, max(value - Current, 30 / GetFramerate()))
 
@@ -121,7 +135,7 @@ if HydraUI.IsMainline then
 
 				if (Current == value or abs(New - value) < 2) then
 					bar:SetValue_(value)
-					smoothing[bar] = nil
+					SetSmoothing(bar, nil)
 				end
 			end
 		end
@@ -143,13 +157,6 @@ local Enable = function(self)
 		self:SmoothBar(self.Power)
 	end
 	
-	ActiveCount = ActiveCount + 1
-	
-	if (ActiveCount > 0 and not Running) then
-		Frame:SetScript("OnUpdate", OnUpdate)
-		Running = true
-	end
-	
 	return true
 end
 
@@ -157,31 +164,16 @@ local Disable = function(self)
 	if self.Health then
 		self.Health.SetValue = self.Health.SetValue_
 		
-		for bar in pairs(smoothing) do
-			if (bar == self.Health) then
-				smoothing[bar] = nil
-				break
-			end
-		end
+		smoothing[self.Health] = nil
 	end
 	
 	if self.Power then
 		self.Power.SetValue = self.Power.SetValue_
 		
-		for bar in pairs(smoothing) do
-			if (bar == self.Power) then
-				smoothing[bar] = nil
-				break
-			end
-		end
+		smoothing[self.Power] = nil
 	end
-	
-	ActiveCount = ActiveCount - 1
-	
-	if (ActiveCount <= 0 and Running) then
-		Frame:SetScript("OnUpdate", nil)
-		Running = false
-	end
+
+	UpdateUpdater()
 end
 
 oUF:AddElement("Smooth", Update, Enable, Disable)

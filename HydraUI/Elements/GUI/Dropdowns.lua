@@ -707,4 +707,3 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 
 	return Dropdown
 end
-

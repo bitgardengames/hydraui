@@ -434,7 +434,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Auras"], func
 	left:CreateSwitch("auras-enable", Settings["auras-enable"], Language["Enable Auras Module"], Language["Enable the HydraUI auras module"], ReloadUI):RequiresReload(true)
 
 	left:CreateHeader(Language["Display"])
-	left:CreateSwitch("auras-show", Settings["auras-show"], Language["Display Auras"], Language["Display the players buff and debuffs"], UpdateAuraDisplay)
+	left:CreateSwitch("auras-show", Settings["auras-show"], Language["Display Auras"], Language["Display the player's buffs and debuffs"], UpdateAuraDisplay)
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSlider("auras-size", Settings["auras-size"], 20, 50, 2, Language["Size"], Language["Set the size of auras"], ReloadUI):RequiresReload(true)

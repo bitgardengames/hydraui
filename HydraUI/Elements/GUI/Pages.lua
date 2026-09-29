@@ -121,4 +121,3 @@ function GUI:AddWidgets(category, name, arg1, arg2)
 		self:QueuePage(Page)
 	end
 end
-

@@ -238,7 +238,7 @@ if HydraUI.IsMainline then
 			{974, "TOPRIGHT", {0.73, 0.61, 0.33}}, -- Earth Shield
 		},
 
-		["EVOKER"] = { -- Requires ID's
+		["EVOKER"] = { -- Requires IDs
 
 		}
 	}

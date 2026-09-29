@@ -4,7 +4,7 @@ local BagsFrame = HydraUI:NewModule("Bags Frame")
 
 -- Default settings values
 Defaults["bags-loot-from-left"] = false
-Defaults["bags-frame-visiblity"] = "SHOW"
+Defaults["bags-frame-visibility"] = "SHOW"
 Defaults["bags-frame-opacity"] = 40
 Defaults["bags-frame-max"] = 100
 Defaults["bags-frame-size"] = 32
@@ -33,7 +33,7 @@ else
 end
 
 local BagsFrameButtonOnEnter = function(self)
-	if (Settings["bags-frame-visiblity"] == "MOUSEOVER") then
+	if (Settings["bags-frame-visibility"] == "MOUSEOVER") then
 		BagsFrame:SetAlpha(Settings["bags-frame-max"] / 100)
 	end
 end
@@ -43,7 +43,7 @@ local BagsFrameOnEnter = function(self)
 end
 
 local BagsFrameButtonOnLeave = function(self)
-	if (Settings["bags-frame-visiblity"] == "MOUSEOVER") then
+	if (Settings["bags-frame-visibility"] == "MOUSEOVER") then
 		BagsFrame:SetAlpha(Settings["bags-frame-opacity"] / 100)
 	end
 end
@@ -61,7 +61,7 @@ function BagsFrame:SetAlpha(alpha)
 end
 
 function BagsFrame:UpdateVisibility()
-	if (Settings["bags-frame-visiblity"] == "HIDE") then
+	if (Settings["bags-frame-visibility"] == "HIDE") then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self:SetAlpha(0)
@@ -71,7 +71,7 @@ function BagsFrame:UpdateVisibility()
 		end
 
 		self.Panel:Hide()
-	elseif (Settings["bags-frame-visiblity"] == "MOUSEOVER") then
+	elseif (Settings["bags-frame-visibility"] == "MOUSEOVER") then
 		self.Panel:SetScript("OnEnter", BagsFrameOnEnter)
 		self.Panel:SetScript("OnLeave", BagsFrameOnLeave)
 		self:SetAlpha(Settings["bags-frame-opacity"] / 100)
@@ -81,7 +81,7 @@ function BagsFrame:UpdateVisibility()
 		end
 
 		self.Panel:Show()
-	elseif (Settings["bags-frame-visiblity"] == "SHOW") then
+	elseif (Settings["bags-frame-visibility"] == "SHOW") then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self:SetAlpha(Settings["bags-frame-max"] / 100)
@@ -275,9 +275,9 @@ end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Action Bars"], function(left, right)
 	right:CreateHeader(Language["Bags Frame"])
-	right:CreateDropdown("bags-frame-visiblity", Settings["bags-frame-visiblity"], {[Language["Hide"]] = "HIDE", [Language["Mouseover"]] = "MOUSEOVER", [Language["Show"]] = "SHOW"}, Language["Set Visibility"], Language["Set the visibility of the bag frame"], UpdateBagVisibility)
+	right:CreateDropdown("bags-frame-visibility", Settings["bags-frame-visibility"], {[Language["Hide"]] = "HIDE", [Language["Mouseover"]] = "MOUSEOVER", [Language["Show"]] = "SHOW"}, Language["Set Visibility"], Language["Set the visibility of the bag frame"], UpdateBagVisibility)
 	right:CreateSlider("bags-frame-size", Settings["bags-frame-size"], 12, 60, 2, Language["Set Bag Size"], Language["Set the size of the bag frame slots"], UpdateBagFrameSize)
-	right:CreateSlider("bags-frame-opacity", Settings["bags-frame-opacity"], 0, 100, 10, Language["Set Faded Opacity"], Language["Set the opacity of the bags frame when visiblity is set to Mouseover"], UpdateBagVisibility, nil, "%")
-	right:CreateSlider("bags-frame-max", Settings["bags-frame-max"], 0, 100, 10, Language["Set Max Opacity"], Language["Set the max opacity of the bags frame when visiblity is set to Mouseover"], UpdateBagVisibility, nil, "%")
-	right:CreateSwitch("bags-loot-from-left", Settings["bags-loot-from-left"], Language["Loot Left To Right"], Language["When looting, new items will be placed into the leftmost bag"], SetInsertItemsLeftToRight)
+	right:CreateSlider("bags-frame-opacity", Settings["bags-frame-opacity"], 0, 100, 10, Language["Set Faded Opacity"], Language["Set the opacity of the bags frame when visibility is set to Mouseover"], UpdateBagVisibility, nil, "%")
+	right:CreateSlider("bags-frame-max", Settings["bags-frame-max"], 0, 100, 10, Language["Set Max Opacity"], Language["Set the max opacity of the bags frame when visibility is set to Mouseover"], UpdateBagVisibility, nil, "%")
+	right:CreateSwitch("bags-loot-from-left", Settings["bags-loot-from-left"], Language["Loot Left to Right"], Language["When looting, new items will be placed in the leftmost bag"], SetInsertItemsLeftToRight)
 end)

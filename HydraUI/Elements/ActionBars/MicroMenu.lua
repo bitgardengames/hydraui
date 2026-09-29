@@ -87,14 +87,14 @@ else
 end
 
 -- Default settings values
-Defaults["micro-buttons-visiblity"] = "SHOW"
+Defaults["micro-buttons-visibility"] = "SHOW"
 Defaults["micro-buttons-opacity"] = 40
 Defaults["micro-buttons-max"] = 100
 Defaults["micro-buttons-per-row"] = #MicroButtons.Buttons
 Defaults["micro-buttons-gap"] = 2
 
 local ButtonOnEnter = function(self)
-	if (Settings["micro-buttons-visiblity"] == "MOUSEOVER") then
+	if (Settings["micro-buttons-visibility"] == "MOUSEOVER") then
 		self:GetParent():SetAlpha(Settings["micro-buttons-max"] / 100)
 	end
 end
@@ -104,7 +104,7 @@ local PanelOnEnter = function(self)
 end
 
 local ButtonOnLeave = function(self)
-	if (Settings["micro-buttons-visiblity"] == "MOUSEOVER") then
+	if (Settings["micro-buttons-visibility"] == "MOUSEOVER") then
 		self:GetParent():SetAlpha(Settings["micro-buttons-opacity"] / 100)
 	end
 end
@@ -114,17 +114,17 @@ local PanelOnLeave = function(self)
 end
 
 function MicroButtons:UpdateVisibility()
-	if (Settings["micro-buttons-visiblity"] == "HIDE") then
+	if (Settings["micro-buttons-visibility"] == "HIDE") then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self.Panel:SetAlpha(0)
 		self.Panel:Hide()
-	elseif (Settings["micro-buttons-visiblity"] == "MOUSEOVER") then
+	elseif (Settings["micro-buttons-visibility"] == "MOUSEOVER") then
 		self.Panel:SetScript("OnEnter", PanelOnEnter)
 		self.Panel:SetScript("OnLeave", PanelOnLeave)
 		self.Panel:SetAlpha(Settings["micro-buttons-opacity"] / 100)
 		self.Panel:Show()
-	elseif (Settings["micro-buttons-visiblity"] == "SHOW") then
+	elseif (Settings["micro-buttons-visibility"] == "SHOW") then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self.Panel:SetAlpha(Settings["micro-buttons-max"] / 100)
@@ -330,9 +330,9 @@ end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Action Bars"], function(left, right)
 	right:CreateHeader(Language["Micro Menu Buttons"])
-	right:CreateDropdown("micro-buttons-visiblity", Settings["micro-buttons-visiblity"], {[Language["Hide"]] = "HIDE", [Language["Mouseover"]] = "MOUSEOVER", [Language["Show"]] = "SHOW"}, Language["Set Visibility"], Language["Set the visibility of the micro menu buttons"], UpdateMicroVisibility)
-	right:CreateSlider("micro-buttons-opacity", Settings["micro-buttons-opacity"], 0, 100, 10, Language["Set Faded Opacity"], Language["Set the opacity of the micro menu buttons when visiblity is set to Mouseover"], UpdateMicroVisibility, nil, "%")
-	right:CreateSlider("micro-buttons-max", Settings["micro-buttons-max"], 0, 100, 10, Language["Set Max Opacity"], Language["Set the max opacity of the micro menu buttons when visiblity is set to Mouseover"], UpdateMicroVisibility, nil, "%")
+	right:CreateDropdown("micro-buttons-visibility", Settings["micro-buttons-visibility"], {[Language["Hide"]] = "HIDE", [Language["Mouseover"]] = "MOUSEOVER", [Language["Show"]] = "SHOW"}, Language["Set Visibility"], Language["Set the visibility of the micro menu buttons"], UpdateMicroVisibility)
+	right:CreateSlider("micro-buttons-opacity", Settings["micro-buttons-opacity"], 0, 100, 10, Language["Set Faded Opacity"], Language["Set the opacity of the micro menu buttons when visibility is set to Mouseover"], UpdateMicroVisibility, nil, "%")
+	right:CreateSlider("micro-buttons-max", Settings["micro-buttons-max"], 0, 100, 10, Language["Set Max Opacity"], Language["Set the max opacity of the micro menu buttons when visibility is set to Mouseover"], UpdateMicroVisibility, nil, "%")
 	right:CreateSlider("micro-buttons-per-row", Settings["micro-buttons-per-row"], 1, #MicroButtons.Buttons, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateMicroPositions)
 	right:CreateSlider("micro-buttons-gap", Settings["micro-buttons-gap"], -1, 10, 1, Language["Button Spacing"], Language["Set the spacing between micro buttons"], UpdateMicroPositions)
 end)

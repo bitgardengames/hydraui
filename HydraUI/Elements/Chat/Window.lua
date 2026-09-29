@@ -278,7 +278,7 @@ end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Right"], Language["Chat"], function(left, right)
 	left:CreateHeader(Language["General"])
-	left:CreateSwitch("right-window-enable", Settings["right-window-enable"], Language["Enable Right Window"], Language["Enable the right side window, for placing chat or addons into"], ReloadUI):RequiresReload(true)
+	left:CreateSwitch("right-window-enable", Settings["right-window-enable"], Language["Enable Right Window"], Language["Enable the right-side window for chat or add-ons"], ReloadUI):RequiresReload(true)
 	left:CreateSlider("right-window-width", Settings["right-window-width"], 300, 650, 1, Language["Window Width"], Language["Set the width of the window"], UpdateWidth)
 	left:CreateSlider("right-window-height", Settings["right-window-height"], 40, 350, 1, Language["Window Height"], Language["Set the height of the window"], UpdateHeight)
 

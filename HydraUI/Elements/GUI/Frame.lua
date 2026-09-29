@@ -452,4 +452,3 @@ function GUI:CreateGUI()
 
 	self.Loaded = true
 end
-

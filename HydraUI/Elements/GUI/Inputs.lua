@@ -583,4 +583,3 @@ function GUI:CreateImportWindow()
 
 	return Window
 end
-

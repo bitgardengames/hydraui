@@ -667,7 +667,7 @@ end
 
 local UpdateActiveProfile = function(value)
 	if (value ~= HydraUI:GetActiveProfileName()) then
-		HydraUI:DisplayPopup(Language["Attention"], format(Language['Are you sure you would like to change to the current profile to "%s"?'], value), ACCEPT, AcceptNewProfile, CANCEL, nil, value)
+		HydraUI:DisplayPopup(Language["Attention"], format(Language['Are you sure you want to change the current profile to "%s"?'], value), ACCEPT, AcceptNewProfile, CANCEL, nil, value)
 	end
 end
 
@@ -743,11 +743,11 @@ local CopyProfileOnAccept = function(from)
 end
 
 local PromptDelete = function(value)
-	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you would like to delete %s"], value), ACCEPT, DeleteProfile, CANCEL, nil, value)
+	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you want to delete %s?"], value), ACCEPT, DeleteProfile, CANCEL, nil, value)
 end
 
 local CopyProfile = function(value)
-	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you would like to copy %s to %s?"], value, HydraUI:GetActiveProfileName()), ACCEPT, CopyProfileOnAccept, CANCEL, nil, value)
+	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you want to copy %s to %s?"], value, HydraUI:GetActiveProfileName()), ACCEPT, CopyProfileOnAccept, CANCEL, nil, value)
 end
 
 GUI:AddWidgets(Language["General"], Language["Profiles"], function(left, right)
@@ -763,7 +763,7 @@ GUI:AddWidgets(Language["General"], Language["Profiles"], function(left, right)
 	left:CreateDropdown("profile-copy", HydraUI:GetActiveProfileName(), HydraUI:GetProfileList(), Language["Copy From"], Language["Copy the settings from another profile"], CopyProfile)
 
 	left:CreateHeader(Language["Manage"])
-	left:CreateButton("", Language["Restore"], Language["Restore To Default"], Language["Restore the currently selected profile to default settings"], RestoreToDefault):RequiresReload(true)
+	left:CreateButton("", Language["Restore"], Language["Restore to Default"], Language["Restore the currently selected profile to default settings"], RestoreToDefault):RequiresReload(true)
 	left:CreateButton("", Language["Delete"], Language["Delete Unused Profiles"], Language["Delete any profiles that are not currently in use by any characters"], DeleteUnused)
 
 	left:CreateHeader(Language["Sharing is caring"])

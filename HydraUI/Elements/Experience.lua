@@ -699,10 +699,10 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Experience"],
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("experience-display-level", Settings["experience-display-level"], Language["Display Level"], Language["Display your current level in the experience bar"], UpdateExperience)
-	left:CreateSwitch("experience-display-progress", Settings["experience-display-progress"], Language["Display Progress Value"], Language["Display your current progress information in the experience bar"], UpdateDisplayProgress)
-	left:CreateSwitch("experience-display-percent", Settings["experience-display-percent"], Language["Display Percent Value"], Language["Display your current percent information in the experience bar"], UpdateDisplayPercent)
+	left:CreateSwitch("experience-display-progress", Settings["experience-display-progress"], Language["Display Progress Value"], Language["Display your current progress in the experience bar"], UpdateDisplayProgress)
+	left:CreateSwitch("experience-display-percent", Settings["experience-display-percent"], Language["Display Percent Value"], Language["Display your current percentage in the experience bar"], UpdateDisplayPercent)
 	left:CreateSwitch("experience-display-rested-value", Settings["experience-display-rested-value"], Language["Display Rested Value"], Language["Display your current rested value on the experience bar"], UpdateExperience)
-	left:CreateSwitch("experience-show-tooltip", Settings["experience-show-tooltip"], Language["Enable Tooltip"], Language["Display a tooltip when mousing over the experience bar"], UpdateTooltipSetting)
+	left:CreateSwitch("experience-show-tooltip", Settings["experience-show-tooltip"], Language["Enable Tooltip"], Language["Display a tooltip when hovering over the experience bar"], UpdateTooltipSetting)
 	left:CreateSwitch("experience-animate", Settings["experience-animate"], Language["Animate Experience Changes"], Language["Smoothly animate changes to the experience bar"])
 
 	right:CreateHeader(Language["Size"])
@@ -719,6 +719,6 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Experience"],
 	right:CreateDropdown("experience-percent-visibility", Settings["experience-percent-visibility"], {[Language["Always Show"]] = "ALWAYS", [Language["Mouseover"]] = "MOUSEOVER"}, Language["Percent Text"], Language["Set when to display the percent information"], UpdatePercentVisibility)
 
 	left:CreateHeader("Mouseover")
-	left:CreateSwitch("experience-mouseover", Settings["experience-mouseover"], Language["Display On Mouseover"], Language["Only display the experience bar while mousing over it"], UpdateMouseover)
-	left:CreateSlider("experience-mouseover-opacity", Settings["experience-mouseover-opacity"], 0, 100, 5, Language["Mouseover Opacity"], Language["Set the opacity of the experience bar while not mousing over it"], UpdateMouseoverOpacity, nil, "%")
+	left:CreateSwitch("experience-mouseover", Settings["experience-mouseover"], Language["Display on Mouseover"], Language["Only display the experience bar while hovering over it"], UpdateMouseover)
+	left:CreateSlider("experience-mouseover-opacity", Settings["experience-mouseover-opacity"], 0, 100, 5, Language["Mouseover Opacity"], Language["Set the opacity of the experience bar while not hovering over it"], UpdateMouseoverOpacity, nil, "%")
 end)

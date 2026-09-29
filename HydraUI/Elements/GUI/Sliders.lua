@@ -352,4 +352,3 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 
 	return Slider
 end
-

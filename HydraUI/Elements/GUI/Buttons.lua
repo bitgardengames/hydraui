@@ -522,4 +522,3 @@ GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, labe
 
 	return Bar
 end
-

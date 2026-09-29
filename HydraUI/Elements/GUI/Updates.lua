@@ -212,4 +212,3 @@ function GUI:CreateUpdateAlert()
 		self.Text:SetPoint("LEFT", self, 30, -1)
 	end)
 end
-

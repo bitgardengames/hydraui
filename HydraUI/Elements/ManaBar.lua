@@ -164,5 +164,5 @@ end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Unit Frames"], function(left, right)
 	right:CreateHeader(Language["Mana Bar"])
-	right:CreateSwitch("unitframes-show-mana-bar", Settings["unitframes-show-mana-bar"], Language["Enable Mana Bar"], Language["Enable a mana bar for Druids/Priests/Shaman"], UpdateEnableManaBar)
+	right:CreateSwitch("unitframes-show-mana-bar", Settings["unitframes-show-mana-bar"], Language["Enable Mana Bar"], Language["Enable a mana bar for druids, priests, and shamans"], UpdateEnableManaBar)
 end)

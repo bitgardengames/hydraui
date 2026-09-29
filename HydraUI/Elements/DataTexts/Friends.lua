@@ -12,6 +12,51 @@ local Label = TUTORIAL_TITLE22
 local PresenceID, AccountName, BattleTag, IsBattleTagPresence, CharacterName, BNetIDGameAccount, Client, IsOnline, LastOnline, IsAFK, IsDND
 local ClientInfo = {}
 local FriendList = {}
+local GroupPool = {}
+local RowPool = {}
+
+local AcquireGroup = function()
+	local Index = #GroupPool
+	local Group = GroupPool[Index]
+
+	if Group then
+		GroupPool[Index] = nil
+		return Group
+	end
+
+	return {}
+end
+
+local AcquireRow = function()
+	local Index = #RowPool
+	local Row = RowPool[Index]
+
+	if Row then
+		RowPool[Index] = nil
+		return Row
+	end
+
+	return {}
+end
+
+local ReleaseRow = function(Row)
+	Row[1] = nil
+	Row[2] = nil
+	RowPool[#RowPool + 1] = Row
+end
+
+local ResetFriendList = function()
+	for Client, Group in next, FriendList do
+		for i = #Group, 1, -1 do
+			ReleaseRow(Group[i])
+			Group[i] = nil
+		end
+
+		GroupPool[#GroupPool + 1] = Group
+	end
+
+	wipe(FriendList)
+end
 
 local ClientToName = {
 	App = Language["B.Net"],
@@ -330,11 +375,14 @@ local OnEnter = function(self)
 
 			if RealClient then
 				if (not FriendList[RealClient]) then
-					FriendList[RealClient] = {}
+					FriendList[RealClient] = AcquireGroup()
 					NumClients = NumClients + 1
 				end
 
-				tinsert(FriendList[RealClient], {Left, Right})
+				local Row = AcquireRow()
+				Row[1] = Left
+				Row[2] = Right
+				FriendList[RealClient][#FriendList[RealClient] + 1] = Row
 			end
 		end
 	end
@@ -368,11 +416,14 @@ local OnEnter = function(self)
 			local NameInfo = format("|cFFFFFFFF|cFF%s%s|r |cFF%s%s|r|cFFFFFFFF|r", LevelColor, FriendInfo.level, ClassColor, Name)
 
 			if (not FriendList[ProjectIDToName[1]]) then
-				FriendList[ProjectIDToName[1]] = {}
+				FriendList[ProjectIDToName[1]] = AcquireGroup()
 				NumClients = NumClients + 1
 			end
 
-			tinsert(FriendList[ProjectIDToName[1]], {NameInfo, FriendInfo.area})
+			local Row = AcquireRow()
+			Row[1] = NameInfo
+			Row[2] = FriendInfo.area
+			FriendList[ProjectIDToName[1]][#FriendList[ProjectIDToName[1]] + 1] = Row
 		end
 	end
 
@@ -399,7 +450,7 @@ local OnEnter = function(self)
 
 	GameTooltip:Show()
 
-	wipe(FriendList)
+	ResetFriendList()
 
 	self.TooltipShown = true
 end

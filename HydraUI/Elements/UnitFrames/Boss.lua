@@ -230,109 +230,73 @@ end
 
 local UpdateWidth = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			UF:SetFrameWidth(HydraUI.UnitFrames["boss"..i], value)
-		end
+		UF:SetFrameWidth("boss"..i, value)
 	end
 end
 
 local UpdateHealthHeight = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			UF:SetHealthHeight(HydraUI.UnitFrames["boss"..i], value, Settings["unitframes-boss-power-height"])
-		end
+		UF:SetHealthHeight("boss"..i, value, Settings["unitframes-boss-power-height"])
 	end
 end
 
 local UpdatePowerHeight = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			UF:SetPowerHeight(HydraUI.UnitFrames["boss"..i], value, Settings["unitframes-boss-health-height"])
-		end
+		UF:SetPowerHeight("boss"..i, value, Settings["unitframes-boss-health-height"])
 	end
 end
 
 local UpdateHealthColor = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			UF:ApplyHealthAttributes(HydraUI.UnitFrames["boss"..i], value)
-		end
+		UF:ApplyHealthAttributes("boss"..i, value)
 	end
 end
 
 local UpdateHealthFill = function(value)
 	for i = 1, 8 do
-		local Frame = HydraUI.UnitFrames["boss"..i]
-
-		if Frame then
-			UF:SetHealthReverseFill(Frame, value)
-		end
+		UF:SetHealthReverseFill("boss"..i, value)
 	end
 end
 
 local UpdatePowerColor = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			UF:ApplyPowerAttributes(HydraUI.UnitFrames["boss"..i], value)
-		end
+		UF:ApplyPowerAttributes("boss"..i, value)
 	end
 end
 
 local UpdatePowerFill = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			UF:SetPowerReverseFill(HydraUI.UnitFrames["boss"..i], value)
-		end
+		UF:SetPowerReverseFill("boss"..i, value)
 	end
 end
 
 local UpdateEnableBuffs = function(value)
 	for i = 1, 8 do
-		local Frame = HydraUI.UnitFrames["boss"..i]
-
-		if Frame then
-			UF:SetElementEnabled(Frame, value, "Auras")
-		end
+		UF:SetElementEnabled("boss"..i, value, "Auras")
 	end
 end
 
 local UpdateBuffSize = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i].Buffs.size = value
-			HydraUI.UnitFrames["boss"..i].Buffs:SetSize(Settings["unitframes-boss-width"], value)
-			HydraUI.UnitFrames["boss"..i].Buffs:ForceUpdate()
-		end
+		UF:SetAuraSize("boss"..i, value, "Buffs", Settings["unitframes-boss-width"])
 	end
 end
 
 local UpdateDebuffSize = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i].Debuffs.size = value
-			HydraUI.UnitFrames["boss"..i].Debuffs:SetSize(Settings["unitframes-boss-width"], value)
-			HydraUI.UnitFrames["boss"..i].Debuffs:ForceUpdate()
-		end
+		UF:SetAuraSize("boss"..i, value, "Debuffs", Settings["unitframes-boss-width"])
 	end
 end
 
 local UpdateHealthTexture = function(value)
 	for i = 1, 8 do
-		local Frame = HydraUI.UnitFrames["boss"..i]
-
-		if Frame then
-			UF:SetHealthTexture(Frame, value)
-		end
+		UF:SetHealthTexture("boss"..i, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
 	for i = 1, 8 do
-		local Frame = HydraUI.UnitFrames["boss"..i]
-
-		if Frame then
-			UF:SetPowerTexture(Frame, value)
-		end
+		UF:SetPowerTexture("boss"..i, value)
 	end
 end
 

@@ -175,109 +175,51 @@ HydraUI.StyleFuncs["targettarget"] = function(self, unit)
 end
 
 local UpdateTargetTargetWidth = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetFrameWidth(Frame, value)
-	end
+	UF:SetFrameWidth("targettarget", value)
 end
 
 local UpdateTargetTargetHealthHeight = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetHealthHeight(Frame, value, Settings["unitframes-targettarget-power-height"])
-	end
+	UF:SetHealthHeight("targettarget", value, Settings["unitframes-targettarget-power-height"])
 end
 
 local UpdateTargetTargetPowerHeight = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetPowerHeight(Frame, value, Settings["unitframes-targettarget-health-height"])
-	end
+	UF:SetPowerHeight("targettarget", value, Settings["unitframes-targettarget-health-height"])
 end
 
 local UpdateTargetTargetHealthColor = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:ApplyHealthAttributes(Frame, value)
-	end
+	UF:ApplyHealthAttributes("targettarget", value)
 end
 
 local UpdateTargetTargetHealthFill = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetHealthReverseFill(Frame, value)
-	end
+	UF:SetHealthReverseFill("targettarget", value)
 end
 
 local UpdateTargetTargetPowerColor = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:ApplyPowerAttributes(Frame, value)
-	end
+	UF:ApplyPowerAttributes("targettarget", value)
 end
 
 local UpdateTargetTargetPowerFill = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetPowerReverseFill(Frame, value)
-	end
+	UF:SetPowerReverseFill("targettarget", value)
 end
 
 local UpdateEnableDebuffs = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetElementEnabled(Frame, value, "Debuffs")
-	end
+	UF:SetElementEnabled("targettarget", value, "Debuffs")
 end
 
 local UpdateDebuffSize = function(value)
-	if HydraUI.UnitFrames["targettarget"] then
-		HydraUI.UnitFrames["targettarget"].Debuffs.size = value
-		HydraUI.UnitFrames["targettarget"].Debuffs:SetSize(Settings["unitframes-targettarget-width"], value)
-		HydraUI.UnitFrames["targettarget"].Debuffs:ForceUpdate()
-	end
+	UF:SetAuraSize("targettarget", value, "Debuffs", Settings["unitframes-targettarget-width"])
 end
 
 local UpdateDebuffPosition = function(value)
-	if HydraUI.UnitFrames["targettarget"] then
-		local Unit = HydraUI.UnitFrames["targettarget"]
-
-		Unit.Debuffs:ClearAllPoints()
-
-		if (value == "TOP") then
-			Unit.Debuffs:SetPoint("BOTTOM", self, "TOP", 0, 2)
-			Unit.Debuffs["growth-x"] = "LEFT"
-			Unit.Debuffs["growth-y"] = "UP"
-		else
-			Unit.Debuffs:SetPoint("TOP", self, "BOTTOM", 0, -2)
-			Unit.Debuffs["growth-x"] = "LEFT"
-			Unit.Debuffs["growth-y"] = "DOWN"
-		end
-	end
+	UF:SetAuraPosition("targettarget", value, "Debuffs", "LEFT")
 end
 
 local UpdateHealthTexture = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetHealthTexture(Frame, value)
-	end
+	UF:SetHealthTexture("targettarget", value)
 end
 
 local UpdatePowerTexture = function(value)
-	local Frame = HydraUI.UnitFrames["targettarget"]
-
-	if Frame then
-		UF:SetPowerTexture(Frame, value)
-	end
+	UF:SetPowerTexture("targettarget", value)
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Target of Target"], Language["Unit Frames"], function(left, right)

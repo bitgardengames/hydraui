@@ -57,6 +57,10 @@ Elements\Alerts.lua
 Elements\Popup.lua
 Elements\Gold.lua
 Elements\Chat.lua
+Elements\Chat\History.lua
+Elements\Chat\Links.lua
+Elements\Chat\Window.lua
+Elements\Chat\Frames.lua
 Elements\ChatBubbles.lua
 Elements\Experience.lua
 Elements\Reputation.lua

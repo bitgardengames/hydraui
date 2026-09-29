@@ -371,7 +371,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Chat"], funct
 	right:CreateSlider("chat-tab-font-size", Settings["chat-tab-font-size"], 8, 32, 1, Language["Font Size"], Language["Set the font size of the chat frame tabs"], UpdateChatTabFont)
 	right:CreateDropdown("chat-tab-font-flags", Settings["chat-tab-font-flags"], Assets:GetFlagsList(), Language["Font Flags"], Language["Set the font flags of the chat frame tabs"], UpdateChatTabFont)
 	right:CreateColorSelection("chat-tab-font-color", Settings["chat-tab-font-color"], Language["Font Color"], Language["Set the color of the chat frame tabs"], UpdateChatTabFont)
-	right:CreateColorSelection("chat-tab-font-color-mouseover", Settings["chat-tab-font-color-mouseover"], Language["Font Color Mouseover"], Language["Set the color of the chat frame tab while mousing over it"])
+	right:CreateColorSelection("chat-tab-font-color-mouseover", Settings["chat-tab-font-color-mouseover"], Language["Font Color Mouseover"], Language["Set the color of the chat frame tab while hovering over it"])
 end)
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Left"], Language["Chat"], function(left, right)

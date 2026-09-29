@@ -288,4 +288,3 @@ function GUI:ScrollSelections()
 	self.SelectionViewport:SetOffset(self.Offset, RowsChanged)
 	self.LastRenderedSelectionOffset = self.SelectionViewport.LastRenderedOffset
 end
-

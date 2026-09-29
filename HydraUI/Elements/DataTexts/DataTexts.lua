@@ -262,7 +262,7 @@ local ResetOnAccept = function()
 end
 
 local ResetGold = function()
-	HydraUI:DisplayPopup(Language["Attention"], Language["Are you sure you would like to reset all stored gold information?"], ACCEPT, ResetOnAccept, CANCEL)
+	HydraUI:DisplayPopup(Language["Attention"], Language["Are you sure you want to reset all stored gold information?"], ACCEPT, ResetOnAccept, CANCEL)
 end
 
 local UpdateTimeFormat = function(value)
@@ -303,9 +303,9 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Data Texts"],
 	left:CreateDropdown("data-text-extra-middle", Settings["data-text-extra-middle"], DT.List, Language["Set Middle Text"], Language["Set the information to be displayed in the middle data text anchor"], UpdateWindowMiddleText)
 	left:CreateDropdown("data-text-extra-right", Settings["data-text-extra-right"], DT.List, Language["Set Right Text"], Language["Set the information to be displayed in the right data text anchor"], UpdateWindowRightText)
 
-	left:CreateHeader(Language["Mini Map Texts"])
-	left:CreateDropdown("data-text-minimap-top", Settings["data-text-minimap-top"], DT.List, Language["Set Top Text"], Language["Set the information to be displayed in the top mini map data text anchor"], UpdateMinimapTopText)
-	left:CreateDropdown("data-text-minimap-bottom", Settings["data-text-minimap-bottom"], DT.List, Language["Set Bottom Text"], Language["Set the information to be displayed in the bottom mini map data text anchor"], UpdateMinimapBottomText)
+	left:CreateHeader(Language["Minimap Texts"])
+	left:CreateDropdown("data-text-minimap-top", Settings["data-text-minimap-top"], DT.List, Language["Set Top Text"], Language["Set the information to be displayed in the top minimap data text anchor"], UpdateMinimapTopText)
+	left:CreateDropdown("data-text-minimap-bottom", Settings["data-text-minimap-bottom"], DT.List, Language["Set Bottom Text"], Language["Set the information to be displayed in the bottom minimap data text anchor"], UpdateMinimapBottomText)
 
 	right:CreateHeader(Language["Font"])
 	right:CreateDropdown("data-text-font", Settings["data-text-font"], Assets:GetFontList(), Language["Font"], Language["Set the font of the data texts"], UpdateFont, "Font")
@@ -320,10 +320,10 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Data Texts"],
 	right:CreateHeader(Language["Styling"])
 	right:CreateSwitch("data-text-enable-tooltips", Settings["data-text-enable-tooltips"], Language["Enable Tooltips"], Language["Display tooltip information when hovering over data texts"], UpdateEnableTooltips)
 	right:CreateSwitch("data-text-hover-tooltips", Settings["data-text-hover-tooltips"], Language["Hover Tooltips"], Language["Display tooltip information directly by the data text instead of at the default tooltip location"])
-	right:CreateSwitch("data-text-24-hour", Settings["data-text-24-hour"], Language["Enable 24 Hour Time"], Language["Display time in a 24 hour format"], UpdateTimeFormat)
+	right:CreateSwitch("data-text-24-hour", Settings["data-text-24-hour"], Language["Enable 24 Hour Time"], Language["Display time in a 24-hour format"], UpdateTimeFormat)
 
 	right:CreateHeader(Language["Gold"])
-	right:CreateButton("", Language["Reset"], Language["Reset Gold"], Language["Reset stored information for each characters gold"], ResetGold)
+	right:CreateButton("", Language["Reset"], Language["Reset Gold"], Language["Reset stored gold information for each character"], ResetGold)
 	right:CreateInput("gold-reset", HydraUI.UserName, Language["Delete Character Data"], Language["Remove the stored data for a character. Enter the character name and hit enter."], DeleteGoldData):DisableSaving()
 
 	--left:CreateHeader(Language["Misc."])

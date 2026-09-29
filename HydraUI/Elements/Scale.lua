@@ -21,7 +21,7 @@ local ScaleOnAccept = function()
 end
 
 local SetSuggestedScale = function()
-	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you would like to change your UI scale to %s?"], (768 / select(2, GetPhysicalScreenSize()))), ACCEPT, ScaleOnAccept, CANCEL)
+	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you want to change your UI scale to %s?"], (768 / select(2, GetPhysicalScreenSize()))), ACCEPT, ScaleOnAccept, CANCEL)
 end
 
 local UpdateScaleCVar = function(value)
@@ -29,7 +29,7 @@ local UpdateScaleCVar = function(value)
 end
 
 local SetScaleFromSlider = function(value)
-	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you would like to change your UI scale to %s?"], value), ACCEPT, UpdateScaleCVar, CANCEL, nil, value)
+	HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure you want to change your UI scale to %s?"], value), ACCEPT, UpdateScaleCVar, CANCEL, nil, value)
 end
 
 local UseUIScale = function(value)

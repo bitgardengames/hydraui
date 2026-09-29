@@ -300,11 +300,11 @@ local ToggleBindingMode = function()
 end
 
 local SaveChanges = function()
-	HydraUI:DisplayPopup(Language["Attention"], Language["Are you sure you would like to save these key binding changes?"], ACCEPT, OnAccept, CANCEL, OnCancel)
+	HydraUI:DisplayPopup(Language["Attention"], Language["Are you sure you want to save these key binding changes?"], ACCEPT, OnAccept, CANCEL, OnCancel)
 end
 
 local DiscardChanges = function()
-	HydraUI:DisplayPopup(Language["Attention"], Language["Are you sure you would like to discard these key binding changes?"], ACCEPT, ReloadUI, CANCEL)
+	HydraUI:DisplayPopup(Language["Attention"], Language["Are you sure you want to discard these key binding changes?"], ACCEPT, ReloadUI, CANCEL)
 end
 
 GUI:AddWidgets(Language["General"], Language["Action Bars"], function(left, right)

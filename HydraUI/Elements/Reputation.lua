@@ -381,9 +381,9 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Reputation"],
 	left:CreateSwitch("reputation-enable", true, Language["Enable Reputation Module"], Language["Enable the HydraUI reputation module"], ReloadUI):RequiresReload(true)
 
 	left:CreateHeader(Language["Styling"])
-	left:CreateSwitch("reputation-display-progress", Settings["reputation-display-progress"], Language["Display Progress Value"], Language["Display your current progress information in the reputation bar"], UpdateDisplayProgress)
-	left:CreateSwitch("reputation-display-percent", Settings["reputation-display-percent"], Language["Display Percent Value"], Language["Display your current percent information in the reputation bar"], UpdateDisplayPercent)
-	left:CreateSwitch("reputation-show-tooltip", Settings["reputation-show-tooltip"], Language["Enable Tooltip"], Language["Display a tooltip when mousing over the reputation bar"])
+	left:CreateSwitch("reputation-display-progress", Settings["reputation-display-progress"], Language["Display Progress Value"], Language["Display your current progress in the reputation bar"], UpdateDisplayProgress)
+	left:CreateSwitch("reputation-display-percent", Settings["reputation-display-percent"], Language["Display Percent Value"], Language["Display your current percentage in the reputation bar"], UpdateDisplayPercent)
+	left:CreateSwitch("reputation-show-tooltip", Settings["reputation-show-tooltip"], Language["Enable Tooltip"], Language["Display a tooltip when hovering over the reputation bar"])
 	left:CreateSwitch("reputation-animate", Settings["reputation-animate"], Language["Animate Reputation Changes"], Language["Smoothly animate changes to the reputation bar"])
 
 	right:CreateHeader(Language["Size"])
@@ -395,6 +395,6 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Reputation"],
 	right:CreateDropdown("reputation-percent-visibility", Settings["reputation-percent-visibility"], {[Language["Always Show"]] = "ALWAYS", [Language["Mouseover"]] = "MOUSEOVER"}, Language["Percent Text"], Language["Set when to display the percent information"], UpdatePercentVisibility)
 
 	left:CreateHeader("Mouseover")
-	left:CreateSwitch("reputation-mouseover", Settings["reputation-mouseover"], Language["Display On Mouseover"], Language["Only display the reputation bar while mousing over it"], UpdateMouseover)
-	left:CreateSlider("reputation-mouseover-opacity", Settings["reputation-mouseover-opacity"], 0, 100, 5, Language["Mouseover Opacity"], Language["Set the opacity of the reputation bar while not mousing over it"], UpdateMouseoverOpacity, nil, "%")
+	left:CreateSwitch("reputation-mouseover", Settings["reputation-mouseover"], Language["Display on Mouseover"], Language["Only display the reputation bar while hovering over it"], UpdateMouseover)
+	left:CreateSlider("reputation-mouseover-opacity", Settings["reputation-mouseover-opacity"], 0, 100, 5, Language["Mouseover Opacity"], Language["Set the opacity of the reputation bar while not hovering over it"], UpdateMouseoverOpacity, nil, "%")
 end)

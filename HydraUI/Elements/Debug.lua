@@ -178,9 +178,9 @@ GUI:AddWidgets(Language["Info"], Language["Debug"], function(left, right)
 	right:CreateDoubleLine("dbg-quests", Language["Quests"], GetQuests())
 	right:CreateDoubleLine("dbg-trial", Language["Trial Account"], IsTrialAccount() and YES or NO)
 
-	right:CreateHeader(Language["AddOns Information"])
-	right:CreateDoubleLine("dbg-total-addons", Language["Total AddOns"], C_AddOns.GetNumAddOns())
-	right:CreateDoubleLine("dbg-loaded-addons", Language["Loaded AddOns"], GetNumLoadedAddOns())
+	right:CreateHeader(Language["Add-on Information"])
+	right:CreateDoubleLine("dbg-total-addons", Language["Total Add-ons"], C_AddOns.GetNumAddOns())
+	right:CreateDoubleLine("dbg-loaded-addons", Language["Loaded Add-ons"], GetNumLoadedAddOns())
 	right:CreateDoubleLine("dbg-loaded-plugins", Language["Loaded Plugins"], #HydraUI.Plugins)
 end)
 

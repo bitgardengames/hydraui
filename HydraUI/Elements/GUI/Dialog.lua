@@ -214,4 +214,3 @@ Dialog.CreateDialogEditBox = function(Window, options)
 
 	return Input
 end
-

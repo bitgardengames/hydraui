@@ -812,8 +812,8 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Tooltips"], f
 	left:CreateSlider("tooltips-health-bar-height", Settings["tooltips-health-bar-height"], 2, 30, 1, Language["Health Bar Height"], Language["Set the height of the tooltip health bar"], UpdateHealthBarHeight)
 
 	left:CreateHeader(Language["Information"])
-	left:CreateSwitch("tooltips-show-target", Settings["tooltips-show-target"], Language["Display Target"], Language["Display the units current target"])
-	left:CreateSwitch("tooltips-show-id", Settings["tooltips-show-id"], Language["Display ID's"], Language["Display item and spell ID's in the tooltip"])
+	left:CreateSwitch("tooltips-show-target", Settings["tooltips-show-target"], Language["Display Target"], Language["Display the unit's current target"])
+	left:CreateSwitch("tooltips-show-id", Settings["tooltips-show-id"], Language["Display IDs"], Language["Display item and spell IDs in the tooltip"])
 	left:CreateSwitch("tooltips-display-realm", Settings["tooltips-display-realm"], Language["Display Realm"], Language["Display character realms"])
 	left:CreateSwitch("tooltips-display-title", Settings["tooltips-display-title"], Language["Display Title"], Language["Display character titles"])
 	left:CreateSwitch("tooltips-display-rank", Settings["tooltips-display-rank"], Language["Display Guild Rank"], Language["Display character guild ranks"])

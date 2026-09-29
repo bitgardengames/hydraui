@@ -44,7 +44,7 @@ end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Raid Pets"], Language["Unit Frames"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("raid-pets-enable", Settings["raid-pets-enable"], Language["Enable Raid Pet Frames"], Language["Enable the Raid pet frames module"], ReloadUI):RequiresReload(true)
+	left:CreateSwitch("raid-pets-enable", Settings["raid-pets-enable"], Language["Enable Raid Pet Frames"], Language["Enable the raid pet frame module"], ReloadUI):RequiresReload(true)
 
 	right:CreateHeader(Language["Raid Pets Size"])
 	right:CreateSlider("raid-pets-width", Settings["raid-pets-width"], 40, 200, 1, Language["Width"], Language["Set the width of raid pet unit frames"], ReloadUI, nil):RequiresReload(true)

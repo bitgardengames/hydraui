@@ -49,10 +49,10 @@ GUI:AddWidgets(Language["General"], Language["General"], function(left, right)
 
 	left:CreateHeader(Language["Move UI"])
 	left:CreateButton("", Language["Toggle"], Language["Move UI"], Language["While toggled, you can drag some elements of HydraUI around the screen"], ToggleMove)
-	left:CreateButton("", Language["Restore"], Language["Restore To Defaults"], Language["Restore all HydraUI movable frames to their default locations"], ResetMovers)
+	left:CreateButton("", Language["Restore"], Language["Restore to Defaults"], Language["Restore all HydraUI movable frames to their default locations"], ResetMovers)
 
 	right:CreateHeader(Language["Settings Window"])
-	right:CreateSwitch("gui-hide-in-combat", Settings["gui-hide-in-combat"], Language["Hide In Combat"], Language["Hide the settings window when engaging in combat"])
+	right:CreateSwitch("gui-hide-in-combat", Settings["gui-hide-in-combat"], Language["Hide in Combat"], Language["Hide the settings window when engaging in combat"])
 	right:CreateSwitch("gui-enable-fade", Settings["gui-enable-fade"], Language["Fade While Moving"], Language["Fade out the settings window while moving"], UpdateGUIEnableFade)
 	right:CreateSlider("gui-faded-alpha", Settings["gui-faded-alpha"], 0, 100, 10, Language["Set Faded Opacity"], Language["Set the opacity of the settings window while faded"], nil, nil, "%")
 
@@ -68,7 +68,7 @@ local AcceptNewStyle = function(value)
 end
 
 local UpdateStyle = function(value)
-	HydraUI:DisplayPopup(Language["Attention"], format(Language['Are you sure you would like to change to the current style to "%s"?'], value), ACCEPT, AcceptNewStyle, CANCEL, nil, value)
+	HydraUI:DisplayPopup(Language["Attention"], format(Language['Are you sure you want to change the current style to "%s"?'], value), ACCEPT, AcceptNewStyle, CANCEL, nil, value)
 end
 
 GUI:AddWidgets(Language["General"], Language["Styles"], function(left, right)

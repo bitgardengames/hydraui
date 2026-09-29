@@ -382,9 +382,9 @@ end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["General"], function(left, right)
 	right:CreateHeader(Language["Cooldown Alert"])
-	right:CreateSwitch("cooldowns-enable", Settings["cooldowns-enable"], Language["Enable Cooldown Alert"], Language["When an ability comes off cooldown the icon will flash as an alert"], UpdateEnableCooldownFlash)
+	right:CreateSwitch("cooldowns-enable", Settings["cooldowns-enable"], Language["Enable Cooldown Alert"], Language["Flash an icon when an ability comes off cooldown"], UpdateEnableCooldownFlash)
 	right:CreateSwitch("cooldowns-text", Settings["cooldowns-text"], Language["Enable Cooldown Text"], Language["Display text on the cooldown alert"])
 	right:CreateSlider("cooldowns-size", Settings["cooldowns-size"], 18, 100, 2, Language["Set Size"], Language["Set the size of the cooldown alert"], UpdateCooldownSize)
-	right:CreateSlider("cooldowns-hold", Settings["cooldowns-hold"], 0.2, 3, 0.1, Language["Set Hold Time"], Language["Set how long the alert will display before fading away"], UpdateCooldownHold, nil, "s")
+	right:CreateSlider("cooldowns-hold", Settings["cooldowns-hold"], 0.2, 3, 0.1, Language["Set Hold Time"], Language["Set how long the alert remains visible before fading"], UpdateCooldownHold, nil, "s")
 	right:CreateButton("", Language["Test"], Language["Test Cooldown"], Language["Test the cooldown alert"], TestCooldown)
 end)

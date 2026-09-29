@@ -314,4 +314,3 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 
 	return Switch
 end
-

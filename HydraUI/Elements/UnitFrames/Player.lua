@@ -49,46 +49,66 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 
 	self.AuraParent = self
 
-	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
+	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
 
 	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(self, {
-		height = Settings["unitframes-player-health-height"],
-		texture = Settings.PlayerHealthTexture,
-		reverseFill = Settings["unitframes-player-health-reverse"],
-		backgroundLayer = "BORDER",
-	})
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
-		width = Settings["unitframes-player-width"],
-		height = Settings["unitframes-player-health-height"],
-		texture = Settings.PlayerHealthTexture,
-		reverseFill = Settings["unitframes-player-health-reverse"],
-		createAbsorb = HydraUI.IsMainline,
-	})
+	local Health, HealthBG = UF:CreateHealthBar(
+		self,
+		Settings["unitframes-player-health-height"],
+		Settings.PlayerHealthTexture,
+		Settings["unitframes-player-health-reverse"],
+		nil,
+		"BORDER"
+	)
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
+		self,
+		Health,
+		Settings["unitframes-player-width"],
+		Settings["unitframes-player-health-height"],
+		Settings.PlayerHealthTexture,
+		Settings["unitframes-player-health-reverse"],
+		HydraUI.IsMainline
+	)
 
-	local HealthLeft = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
-	})
+	local HealthLeft = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"LEFT",
+		"LEFT",
+		3,
+		0,
+		"LEFT"
+	)
 
-	local HealthRight = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
-	})
+	local HealthRight = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"RIGHT",
+		"RIGHT",
+		-3,
+		0,
+		"RIGHT"
+	)
 
     -- Portrait
-	UF:CreatePortrait(self, {
-		style = Settings["player-portrait-style"],
-		width = Settings["player-portrait-style"] == "OVERLAY" and Settings["unitframes-player-width"] or 55,
-		height = Settings["player-portrait-style"] == "OVERLAY" and Settings["unitframes-player-health-height"] or Settings["unitframes-player-health-height"] + Settings["unitframes-player-power-height"] + 1,
-		point = Settings["player-portrait-style"] == "OVERLAY" and "CENTER" or "RIGHT",
-		relativeTo = Settings["player-portrait-style"] == "OVERLAY" and Health or self,
-		relativePoint = Settings["player-portrait-style"] == "OVERLAY" and "CENTER" or "LEFT",
-		x = Settings["player-portrait-style"] == "OVERLAY" and 0 or -3,
-		alpha = Settings["player-portrait-style"] == "OVERLAY" and Settings["player-overlay-alpha"] / 100 or nil,
-		backgroundTexture = Settings["Blank"],
-		backgroundVisible = Settings["player-enable-portrait"],
-	})
+	UF:CreatePortrait(
+		self,
+		Settings["player-portrait-style"],
+		Settings["player-portrait-style"] == "OVERLAY" and Settings["unitframes-player-width"] or 55,
+		Settings["player-portrait-style"] == "OVERLAY" and Settings["unitframes-player-health-height"] or Settings["unitframes-player-health-height"] + Settings["unitframes-player-power-height"] + 1,
+		Settings["player-portrait-style"] == "OVERLAY" and "CENTER" or "RIGHT",
+		Settings["player-portrait-style"] == "OVERLAY" and Health or self,
+		Settings["player-portrait-style"] == "OVERLAY" and "CENTER" or "LEFT",
+		Settings["player-portrait-style"] == "OVERLAY" and 0 or -3,
+		nil,
+		Settings["player-portrait-style"] == "OVERLAY" and Settings["player-overlay-alpha"] / 100 or nil,
+		Settings["Blank"],
+		Settings["player-enable-portrait"]
+	)
 
 	local Combat = Health:CreateTexture(nil, "OVERLAY")
 	Combat:SetSize(20, 20)
@@ -116,7 +136,7 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 		PvPIndicator:SetPoint("CENTER", Health, 5, -6)
 	end
 
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
 
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 
@@ -254,18 +274,44 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 	if Settings["unitframes-player-enable-castbar"] then
 		local Anchor = CreateFrame("Frame", "HydraUI Casting Bar", self)
 		Anchor:SetSize(Settings["unitframes-player-cast-width"], Settings["unitframes-player-cast-height"])
-		UF:CreateCastbar(self, {
-			width = Settings["unitframes-player-cast-width"] - Settings["unitframes-player-cast-height"] - 1,
-			height = Settings["unitframes-player-cast-height"], point = "RIGHT", relativeTo = Anchor, relativePoint = "RIGHT",
-			texture = Settings["ui-widget-texture"], backgroundTexture = "Blank",
-			backgroundTopLeft = {-(Settings["unitframes-player-cast-height"] + 2), 1}, backgroundBottomRight = {1, -1},
-			font = Settings["unitframes-font"], fontSize = Settings["unitframes-font-size"], fontFlags = Settings["unitframes-font-flags"],
-			timeX = -5, textX = 5, textWidth = Settings["unitframes-player-cast-width"] * 0.7,
-			iconSize = Settings["unitframes-player-cast-height"], createSafeZone = true,
-			showTradeSkills = true, timeToHold = 0.7, classColor = Settings["unitframes-player-cast-classcolor"],
-			postCastStart = UF.PostCastStart, postCastStop = UF.PostCastStop, postCastFail = UF.PostCastFail,
-			postCastInterruptible = UF.PostCastInterruptible,
-		})
+		UF:CreateCastbar(
+			self,
+			nil,
+			Settings["unitframes-player-cast-width"] - Settings["unitframes-player-cast-height"] - 1,
+			Settings["unitframes-player-cast-height"],
+			"RIGHT",
+			Anchor,
+			"RIGHT",
+			nil,
+			nil,
+			Settings["ui-widget-texture"],
+			nil,
+			"Blank",
+			-(Settings["unitframes-player-cast-height"] + 2),
+			1,
+			1,
+			-1,
+			nil,
+			nil,
+			nil,
+			Settings["unitframes-font"],
+			Settings["unitframes-font-size"],
+			Settings["unitframes-font-flags"],
+			-5,
+			5,
+			Settings["unitframes-player-cast-width"] * 0.7,
+			Settings["unitframes-player-cast-height"],
+			nil,
+			nil,
+			true,
+			true,
+			0.7,
+			Settings["unitframes-player-cast-classcolor"],
+			UF.PostCastStart,
+			UF.PostCastStop,
+			UF.PostCastFail,
+			UF.PostCastInterruptible
+		)
 		self.CastAnchor = Anchor
 	end
 
@@ -408,19 +454,50 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 	self.ThreatIndicator = Threat
 
 	-- Auras
-	local Buffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Buffs", width = Settings["unitframes-player-width"], height = Settings.PlayerBuffSize,
-		size = Settings.PlayerBuffSize, spacing = Settings.PlayerBuffSpacing, num = 40,
-		initialAnchor = "BOTTOMLEFT", tooltipAnchor = "ANCHOR_TOP", growthX = "RIGHT", growthY = "UP",
-		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
-	})
-	local Debuffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Debuffs", width = Settings["unitframes-player-width"], height = 28,
-		size = Settings.PlayerDebuffSize, spacing = Settings.PlayerDebuffSpacing, num = 16,
-		initialAnchor = "BOTTOMRIGHT", tooltipAnchor = "ANCHOR_TOP", growthX = "LEFT", growthY = "UP",
-		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
-		onlyShowPlayer = Settings["unitframes-only-player-debuffs"],
-	})
+	local Buffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Buffs",
+		nil,
+		Settings["unitframes-player-width"],
+		Settings.PlayerBuffSize,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		Settings.PlayerBuffSize,
+		Settings.PlayerBuffSpacing,
+		40,
+		"BOTTOMLEFT",
+		"ANCHOR_TOP",
+		"RIGHT",
+		"UP",
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon
+	)
+	local Debuffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Debuffs",
+		nil,
+		Settings["unitframes-player-width"],
+		28,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		Settings.PlayerDebuffSize,
+		Settings.PlayerDebuffSpacing,
+		16,
+		"BOTTOMRIGHT",
+		"ANCHOR_TOP",
+		"LEFT",
+		"UP",
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon,
+		nil,
+		Settings["unitframes-only-player-debuffs"]
+	)
 	if Settings["player-move-resource"] then
 		if Settings["unitframes-show-player-buffs"] then
 			Buffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 2)

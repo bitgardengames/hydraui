@@ -51,28 +51,29 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
-	UF:CreateThreatIndicator(self, { backdrop = HydraUI.Outline, postUpdate = UF.ThreatPostUpdate })
+	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
+	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
 
 	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(self, {
-		height = Settings["party-health-height"],
-		texture = Settings.PartyHealthTexture,
-		reverseFill = Settings["party-health-reverse"],
-		orientation = Settings["party-health-orientation"],
-		backgroundLayer = "BORDER",
-	})
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
-		width = Settings["party-width"],
-		height = Settings["party-health-height"],
-		texture = Settings.PartyHealthTexture,
-		reverseFill = Settings["party-health-reverse"],
-		createAbsorb = HydraUI.IsMainline,
-	})
+	local Health, HealthBG = UF:CreateHealthBar(
+		self,
+		Settings["party-health-height"],
+		Settings.PartyHealthTexture,
+		Settings["party-health-reverse"],
+		Settings["party-health-orientation"],
+		"BORDER"
+	)
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
+		self,
+		Health,
+		Settings["party-width"],
+		Settings["party-health-height"],
+		Settings.PartyHealthTexture,
+		Settings["party-health-reverse"],
+		HydraUI.IsMainline
+	)
 
-	local Highlight = UF:CreateMouseoverHighlight(self, Health, {
-		texture = "Blank", enabled = Settings.PartyEnableMouseover,
-	})
+	local Highlight = UF:CreateMouseoverHighlight(self, Health, "Blank", Settings.PartyEnableMouseover)
 
 	local HealthDead = Health:CreateTexture(nil, "OVERLAY")
 	HealthDead:SetAllPoints(Health)
@@ -97,15 +98,29 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 	Health.DeadAnim.Out:SetGroup(Health.DeadAnim)
 	Health.DeadAnim.Out:SetOrder(2)
 
-	local HealthName = UF:CreateFontString(Health, {
-		font = Settings["party-font"], size = Settings["party-font-size"], flags = Settings["party-font-flags"],
-		point = "BOTTOM", relativePoint = "CENTER", x = 0, y = 1, justify = "CENTER",
-	})
+	local HealthName = UF:CreateFontString(
+		Health,
+		Settings["party-font"],
+		Settings["party-font-size"],
+		Settings["party-font-flags"],
+		"BOTTOM",
+		"CENTER",
+		0,
+		1,
+		"CENTER"
+	)
 
-	local HealthBottom = UF:CreateFontString(Health, {
-		font = Settings["party-font"], size = Settings["party-font-size"], flags = Settings["party-font-flags"],
-		point = "TOP", relativePoint = "CENTER", x = 0, y = -1, justify = "CENTER",
-	})
+	local HealthBottom = UF:CreateFontString(
+		Health,
+		Settings["party-font"],
+		Settings["party-font-size"],
+		Settings["party-font-flags"],
+		"TOP",
+		"CENTER",
+		0,
+		-1,
+		"CENTER"
+	)
 
 	-- Attributes
 	Health.colorDisconnected = true
@@ -113,11 +128,7 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["party-health-color"])
 
-	local Power, PowerBG = UF:CreatePowerBar(self, {
-		height = Settings["party-power-height"],
-		texture = Settings.PartyPowerTexture,
-		reverseFill = Settings["party-power-reverse"],
-	})
+	local Power, PowerBG = UF:CreatePowerBar(self, Settings["party-power-height"], Settings.PartyPowerTexture, Settings["party-power-reverse"])
 
 	-- Attributes
 	Power.frequentUpdates = true
@@ -126,16 +137,28 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 
 	-- Debuffs
 	local Horizontal = (Settings["party-point"] == "LEFT") or (Settings["party-point"] == "RIGHT")
-	local Debuffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Debuffs", parent = Health,
-		width = 24 * 3 + (2 * 2), height = Horizontal and 24 or 24 * 2 + 2,
-		point = Horizontal and "BOTTOMLEFT" or "TOPLEFT", relativeTo = self,
-		relativePoint = Horizontal and "TOPLEFT" or "TOPRIGHT", x = Horizontal and 0 or 2, y = Horizontal and 2 or 0,
-		size = 24, num = Horizontal and 3 or 6, spacing = 1,
-		initialAnchor = Horizontal and "BOTTOMLEFT" or "TOPLEFT", tooltipAnchor = "ANCHOR_TOP",
-		growthX = "RIGHT", growthY = Horizontal and nil or "DOWN",
-		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon, customFilter = PartyDebuffFilter,
-	})
+	local Debuffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Debuffs",
+		Health,
+		24 * 3 + (2 * 2),
+		Horizontal and 24 or 24 * 2 + 2,
+		Horizontal and "BOTTOMLEFT" or "TOPLEFT",
+		self,
+		Horizontal and "TOPLEFT" or "TOPRIGHT",
+		Horizontal and 0 or 2,
+		Horizontal and 2 or 0,
+		24,
+		1,
+		Horizontal and 3 or 6,
+		Horizontal and "BOTTOMLEFT" or "TOPLEFT",
+		"ANCHOR_TOP",
+		"RIGHT",
+		Horizontal and nil or "DOWN",
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon,
+		PartyDebuffFilter
+	)
 
 	if UF.BuffIDs[HydraUI.UserClass] then
 		local Auras = CreateFrame("Frame", nil, Health)
@@ -214,7 +237,7 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 	PhaseIndicator.Icon:SetAllPoints()
 
 	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
 
     -- Resurrect
 	local Resurrect = Health:CreateTexture(nil, "OVERLAY")

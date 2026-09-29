@@ -29,35 +29,53 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
+	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
 
 	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(self, {
-		height = Settings["unitframes-boss-health-height"],
-		texture = Settings.BossHealthTexture,
-		reverseFill = Settings["unitframes-boss-health-reverse"],
-		backgroundLayer = "BORDER",
-	})
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
-		width = Settings["unitframes-boss-width"],
-		height = Settings["unitframes-boss-health-height"],
-		texture = Settings.BossHealthTexture,
-		reverseFill = Settings["unitframes-boss-health-reverse"],
-		createAbsorb = HydraUI.IsMainline,
-	})
+	local Health, HealthBG = UF:CreateHealthBar(
+		self,
+		Settings["unitframes-boss-health-height"],
+		Settings.BossHealthTexture,
+		Settings["unitframes-boss-health-reverse"],
+		nil,
+		"BORDER"
+	)
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
+		self,
+		Health,
+		Settings["unitframes-boss-width"],
+		Settings["unitframes-boss-health-height"],
+		Settings.BossHealthTexture,
+		Settings["unitframes-boss-health-reverse"],
+		HydraUI.IsMainline
+	)
 
-	local HealthLeft = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
-	})
+	local HealthLeft = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"LEFT",
+		"LEFT",
+		3,
+		0,
+		"LEFT"
+	)
 
-	local HealthRight = UF:CreateFontString(Health, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
-	})
+	local HealthRight = UF:CreateFontString(
+		Health,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"RIGHT",
+		"RIGHT",
+		-3,
+		0,
+		"RIGHT"
+	)
 
 	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
 
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 
@@ -69,21 +87,31 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["unitframes-boss-health-color"])
 
-	local Power, PowerBG = UF:CreatePowerBar(self, {
-		height = Settings["unitframes-boss-power-height"],
-		texture = Settings.BossPowerTexture,
-		reverseFill = false,
-	})
+	local Power, PowerBG = UF:CreatePowerBar(self, Settings["unitframes-boss-power-height"], Settings.BossPowerTexture, false)
 
-	local PowerLeft = UF:CreateFontString(Power, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
-	})
+	local PowerLeft = UF:CreateFontString(
+		Power,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"LEFT",
+		"LEFT",
+		3,
+		0,
+		"LEFT"
+	)
 
-	local PowerRight = UF:CreateFontString(Power, {
-		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
-		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
-	})
+	local PowerRight = UF:CreateFontString(
+		Power,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		"RIGHT",
+		"RIGHT",
+		-3,
+		0,
+		"RIGHT"
+	)
 
 	-- Attributes
 	Power.frequentUpdates = true
@@ -93,29 +121,88 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["unitframes-boss-power-color"])
 
 	-- Auras
-	local Buffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Buffs", width = Settings["unitframes-boss-width"], height = Settings["unitframes-boss-buff-size"],
-		point = "RIGHT", relativeTo = self, relativePoint = "LEFT", x = -2,
-		size = Settings["unitframes-boss-buff-size"], spacing = 2, num = 3,
-		initialAnchor = "TOPRIGHT", tooltipAnchor = "ANCHOR_TOP", growthX = "LEFT", growthY = "UP",
-		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon,
-	})
-	local Debuffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Debuffs", width = Settings["unitframes-boss-width"], height = Settings["unitframes-boss-debuff-size"],
-		point = "LEFT", relativeTo = self, relativePoint = "RIGHT", x = 2,
-		size = Settings["unitframes-boss-debuff-size"], spacing = 2, num = 4,
-		initialAnchor = "TOPLEFT", tooltipAnchor = "ANCHOR_TOP", growthX = "RIGHT", growthY = "UP",
-		postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon, onlyShowPlayer = Settings["unitframes-only-player-debuffs"],
-	})
-	local Castbar = UF:CreateCastbar(self, {
-		name = self:GetName() .. " Casting Bar", width = Settings["unitframes-boss-width"] - 28, height = 22,
-		point = "TOPRIGHT", relativeTo = self, relativePoint = "BOTTOMRIGHT", x = -1, y = -3,
-		texture = Settings["ui-widget-texture"], backgroundTexture = "Blank",
-		font = Settings["unitframes-font"], fontSize = Settings["unitframes-font-size"], fontFlags = Settings["unitframes-font-flags"],
-		textWidth = 250 * 0.7, iconSize = 22, iconX = -4, iconBackground = true,
-		showTradeSkills = true, timeToHold = 0.3, postCastStart = UF.PostCastStart,
-		postCastStop = UF.PostCastStop, postCastFail = UF.PostCastFail, postCastInterruptible = UF.PostCastInterruptible,
-	})
+	local Buffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Buffs",
+		nil,
+		Settings["unitframes-boss-width"],
+		Settings["unitframes-boss-buff-size"],
+		"RIGHT",
+		self,
+		"LEFT",
+		-2,
+		nil,
+		Settings["unitframes-boss-buff-size"],
+		2,
+		3,
+		"TOPRIGHT",
+		"ANCHOR_TOP",
+		"LEFT",
+		"UP",
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon
+	)
+	local Debuffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Debuffs",
+		nil,
+		Settings["unitframes-boss-width"],
+		Settings["unitframes-boss-debuff-size"],
+		"LEFT",
+		self,
+		"RIGHT",
+		2,
+		nil,
+		Settings["unitframes-boss-debuff-size"],
+		2,
+		4,
+		"TOPLEFT",
+		"ANCHOR_TOP",
+		"RIGHT",
+		"UP",
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon,
+		nil,
+		Settings["unitframes-only-player-debuffs"]
+	)
+	local Castbar = UF:CreateCastbar(
+		self,
+		self:GetName() .. " Casting Bar",
+		Settings["unitframes-boss-width"] - 28,
+		22,
+		"TOPRIGHT",
+		self,
+		"BOTTOMRIGHT",
+		-1,
+		-3,
+		Settings["ui-widget-texture"],
+		nil,
+		"Blank",
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		Settings["unitframes-font"],
+		Settings["unitframes-font-size"],
+		Settings["unitframes-font-flags"],
+		nil,
+		nil,
+		250 * 0.7,
+		22,
+		-4,
+		true,
+		nil,
+		true,
+		0.3,
+		nil,
+		UF.PostCastStart,
+		UF.PostCastStop,
+		UF.PostCastFail,
+		UF.PostCastInterruptible
+	)
 
 	-- Tags
 	self:Tag(HealthLeft, Settings["unitframes-boss-health-left"])

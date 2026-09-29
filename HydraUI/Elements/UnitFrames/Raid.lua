@@ -56,28 +56,29 @@ HydraUI.StyleFuncs["raid"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
-	UF:CreateThreatIndicator(self, { backdrop = HydraUI.Outline, postUpdate = UF.ThreatPostUpdate })
+	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
+	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
 
 	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(self, {
-		height = Settings["raid-health-height"],
-		texture = Settings.RaidHealthTexture,
-		reverseFill = Settings["raid-health-reverse"],
-		orientation = Settings["raid-health-orientation"],
-		backgroundLayer = "BORDER",
-	})
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
-		width = Settings["raid-width"],
-		height = Settings["raid-health-height"],
-		texture = Settings.RaidHealthTexture,
-		reverseFill = Settings["raid-health-reverse"],
-		createAbsorb = HydraUI.IsMainline,
-	})
+	local Health, HealthBG = UF:CreateHealthBar(
+		self,
+		Settings["raid-health-height"],
+		Settings.RaidHealthTexture,
+		Settings["raid-health-reverse"],
+		Settings["raid-health-orientation"],
+		"BORDER"
+	)
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
+		self,
+		Health,
+		Settings["raid-width"],
+		Settings["raid-health-height"],
+		Settings.RaidHealthTexture,
+		Settings["raid-health-reverse"],
+		HydraUI.IsMainline
+	)
 
-	local Highlight = UF:CreateMouseoverHighlight(self, Health, {
-		texture = "Blank", enabled = Settings.RaidEnableMouseover,
-	})
+	local Highlight = UF:CreateMouseoverHighlight(self, Health, "Blank", Settings.RaidEnableMouseover)
 
 	local HealthDead = Health:CreateTexture(nil, "OVERLAY")
 	HealthDead:SetAllPoints(Health)
@@ -102,15 +103,29 @@ HydraUI.StyleFuncs["raid"] = function(self, unit)
 	Health.DeadAnim.Out:SetGroup(Health.DeadAnim)
 	Health.DeadAnim.Out:SetOrder(2)
 
-	local HealthName = UF:CreateFontString(Health, {
-		font = Settings["raid-font"], size = Settings["raid-font-size"], flags = Settings["raid-font-flags"],
-		point = "BOTTOM", relativePoint = "CENTER", x = 0, y = 1, justify = "CENTER",
-	})
+	local HealthName = UF:CreateFontString(
+		Health,
+		Settings["raid-font"],
+		Settings["raid-font-size"],
+		Settings["raid-font-flags"],
+		"BOTTOM",
+		"CENTER",
+		0,
+		1,
+		"CENTER"
+	)
 
-	local HealthBottom = UF:CreateFontString(Health, {
-		font = Settings["raid-font"], size = Settings["raid-font-size"], flags = Settings["raid-font-flags"],
-		point = "TOP", relativePoint = "CENTER", x = 0, y = -1, justify = "CENTER",
-	})
+	local HealthBottom = UF:CreateFontString(
+		Health,
+		Settings["raid-font"],
+		Settings["raid-font-size"],
+		Settings["raid-font-flags"],
+		"TOP",
+		"CENTER",
+		0,
+		-1,
+		"CENTER"
+	)
 
 	-- Attributes
 	Health.colorDisconnected = true
@@ -118,11 +133,7 @@ HydraUI.StyleFuncs["raid"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["raid-health-color"])
 
-	local Power, PowerBG = UF:CreatePowerBar(self, {
-		height = Settings["raid-power-height"],
-		texture = Settings.RaidPowerTexture,
-		reverseFill = Settings["raid-power-reverse"],
-	})
+	local Power, PowerBG = UF:CreatePowerBar(self, Settings["raid-power-height"], Settings.RaidPowerTexture, Settings["raid-power-reverse"])
 
 	-- Attributes
 	Power.frequentUpdates = true
@@ -177,13 +188,28 @@ HydraUI.StyleFuncs["raid"] = function(self, unit)
 	end
 
 	-- Debuffs
-	local Debuffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Debuffs", parent = Health, width = 24, height = 24,
-		point = "CENTER", relativeTo = Health, relativePoint = "CENTER",
-		size = 24, num = 1, spacing = 0, initialAnchor = "TOPLEFT", tooltipAnchor = "ANCHOR_TOP",
-		growthX = "RIGHT", growthY = "DOWN", postCreateIcon = UF.PostCreateIcon,
-		postUpdateIcon = UF.PostUpdateIcon, customFilter = RaidDebuffFilter,
-	})
+	local Debuffs = UF:CreateAuraContainer(
+		self,
+		self:GetName() .. "Debuffs",
+		Health,
+		24,
+		24,
+		"CENTER",
+		Health,
+		"CENTER",
+		nil,
+		nil,
+		24,
+		0,
+		1,
+		"TOPLEFT",
+		"ANCHOR_TOP",
+		"RIGHT",
+		"DOWN",
+		UF.PostCreateIcon,
+		UF.PostUpdateIcon,
+		RaidDebuffFilter
+	)
 	self.Debuffs = Debuffs
 
 	-- Leader
@@ -216,7 +242,7 @@ HydraUI.StyleFuncs["raid"] = function(self, unit)
 	PhaseIndicator.Icon:SetAllPoints()
 
 	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
 
     -- Resurrect
 	local Resurrect = Health:CreateTexture(nil, "OVERLAY")

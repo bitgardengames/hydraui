@@ -94,17 +94,35 @@ Tooltips.HappinessLevels = {
 	[3] = Language["Happy"]
 }
 
+local Objects = {}
+
+local StoreObjects = function(...)
+	local Count = select("#", ...)
+
+	for i = 1, Count do
+		Objects[i] = select(i, ...)
+	end
+
+	return Count
+end
+
 function Tooltips:UpdateFonts(tooltip)
-	for i = 1, tooltip:GetNumRegions() do
-		local Region = select(i, tooltip:GetRegions())
+	local NumObjects = StoreObjects(tooltip:GetRegions())
+
+	for i = 1, NumObjects do
+		local Region = Objects[i]
 
 		if (Region:GetObjectType() == "FontString") then
 			HydraUI:SetFontInfo(Region, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
 		end
 	end
 
-	for i = 1, tooltip:GetNumChildren() do
-		local Child = select(i, tooltip:GetChildren())
+	wipe(Objects)
+
+	NumObjects = StoreObjects(tooltip:GetChildren())
+
+	for i = 1, NumObjects do
+		local Child = Objects[i]
 
 		if (Child and Child.GetName and Child:GetName() ~= nil and find(Child:GetName(), "MoneyFrame")) then
 			local Prefix = _G[Child:GetName() .. "PrefixText"]
@@ -120,6 +138,8 @@ function Tooltips:UpdateFonts(tooltip)
 		end
 	end
 
+	wipe(Objects)
+
 	if tooltip.numMoneyFrames then
 		local MoneyFrame
 
@@ -127,8 +147,10 @@ function Tooltips:UpdateFonts(tooltip)
 			MoneyFrame = _G[tooltip:GetName() .. "MoneyFrame" .. i]
 
 			if MoneyFrame then
-				for j = 1, MoneyFrame:GetNumChildren() do
-					local Region = select(j, MoneyFrame:GetChildren())
+				NumObjects = StoreObjects(MoneyFrame:GetChildren())
+
+				for j = 1, NumObjects do
+					local Region = Objects[j]
 
 					if (Region and Region.GetName and Region:GetName()) then
 						local Text = _G[Region:GetName() .. "Text"]
@@ -138,6 +160,8 @@ function Tooltips:UpdateFonts(tooltip)
 						end
 					end
 				end
+
+				wipe(Objects)
 			end
 		end
 	end

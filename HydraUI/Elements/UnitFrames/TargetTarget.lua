@@ -48,53 +48,29 @@ HydraUI.StyleFuncs["targettarget"] = function(self, unit)
 	UF:BuildSingleUnitFrame(self, unit, TargetTargetFrameConfig)
 end
 
-local UpdateTargetTargetWidth = function(value)
-	UF:SetFrameWidth("targettarget", value)
-end
+local UpdateTargetTargetWidth = UF:CreateUnitUpdater("targettarget", "Width")
 
-local UpdateTargetTargetHealthHeight = function(value)
-	UF:SetHealthHeight("targettarget", value, Settings["unitframes-targettarget-power-height"])
-end
+local UpdateTargetTargetHealthHeight = UF:CreateUnitUpdater("targettarget", "HealthHeight", {powerHeight = "unitframes-targettarget-power-height"})
 
-local UpdateTargetTargetPowerHeight = function(value)
-	UF:SetPowerHeight("targettarget", value, Settings["unitframes-targettarget-health-height"])
-end
+local UpdateTargetTargetPowerHeight = UF:CreateUnitUpdater("targettarget", "PowerHeight", {healthHeight = "unitframes-targettarget-health-height"})
 
-local UpdateTargetTargetHealthColor = function(value)
-	UF:ApplyHealthAttributes("targettarget", value)
-end
+local UpdateTargetTargetHealthColor = UF:CreateUnitUpdater("targettarget", "HealthColor")
 
-local UpdateTargetTargetHealthFill = function(value)
-	UF:SetHealthReverseFill("targettarget", value)
-end
+local UpdateTargetTargetHealthFill = UF:CreateUnitUpdater("targettarget", "HealthReverse")
 
-local UpdateTargetTargetPowerColor = function(value)
-	UF:ApplyPowerAttributes("targettarget", value)
-end
+local UpdateTargetTargetPowerColor = UF:CreateUnitUpdater("targettarget", "PowerColor")
 
-local UpdateTargetTargetPowerFill = function(value)
-	UF:SetPowerReverseFill("targettarget", value)
-end
+local UpdateTargetTargetPowerFill = UF:CreateUnitUpdater("targettarget", "PowerReverse")
 
-local UpdateEnableDebuffs = function(value)
-	UF:SetElementEnabled("targettarget", value, "Debuffs")
-end
+local UpdateEnableDebuffs = UF:CreateUnitUpdater("targettarget", "ElementEnabled", {element = "Debuffs"})
 
-local UpdateDebuffSize = function(value)
-	UF:SetAuraSize("targettarget", value, "Debuffs", Settings["unitframes-targettarget-width"])
-end
+local UpdateDebuffSize = UF:CreateUnitUpdater("targettarget", "AuraSize", {element = "Debuffs", width = "unitframes-targettarget-width"})
 
-local UpdateDebuffPosition = function(value)
-	UF:SetAuraPosition("targettarget", value, "Debuffs", "LEFT")
-end
+local UpdateDebuffPosition = UF:CreateUnitUpdater("targettarget", "AuraPosition", {element = "Debuffs", growthX = "LEFT"})
 
-local UpdateHealthTexture = function(value)
-	UF:SetHealthTexture("targettarget", value)
-end
+local UpdateHealthTexture = UF:CreateUnitUpdater("targettarget", "HealthTexture")
 
-local UpdatePowerTexture = function(value)
-	UF:SetPowerTexture("targettarget", value)
-end
+local UpdatePowerTexture = UF:CreateUnitUpdater("targettarget", "PowerTexture")
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Target of Target"], Language["Unit Frames"], function(left, right)
 	left:CreateHeader(Language["Styling"])

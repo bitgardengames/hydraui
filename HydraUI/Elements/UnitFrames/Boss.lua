@@ -64,77 +64,19 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 	UF:BuildSingleUnitFrame(self, unit, BossFrameConfig)
 end
 
-local UpdateWidth = function(value)
-	for i = 1, 8 do
-		UF:SetFrameWidth("boss"..i, value)
-	end
-end
-
-local UpdateHealthHeight = function(value)
-	for i = 1, 8 do
-		UF:SetHealthHeight("boss"..i, value, Settings["unitframes-boss-power-height"])
-	end
-end
-
-local UpdatePowerHeight = function(value)
-	for i = 1, 8 do
-		UF:SetPowerHeight("boss"..i, value, Settings["unitframes-boss-health-height"])
-	end
-end
-
-local UpdateHealthColor = function(value)
-	for i = 1, 8 do
-		UF:ApplyHealthAttributes("boss"..i, value)
-	end
-end
-
-local UpdateHealthFill = function(value)
-	for i = 1, 8 do
-		UF:SetHealthReverseFill("boss"..i, value)
-	end
-end
-
-local UpdatePowerColor = function(value)
-	for i = 1, 8 do
-		UF:ApplyPowerAttributes("boss"..i, value)
-	end
-end
-
-local UpdatePowerFill = function(value)
-	for i = 1, 8 do
-		UF:SetPowerReverseFill("boss"..i, value)
-	end
-end
-
-local UpdateEnableBuffs = function(value)
-	for i = 1, 8 do
-		UF:SetElementEnabled("boss"..i, value, "Auras")
-	end
-end
-
-local UpdateBuffSize = function(value)
-	for i = 1, 8 do
-		UF:SetAuraSize("boss"..i, value, "Buffs", Settings["unitframes-boss-width"])
-	end
-end
-
-local UpdateDebuffSize = function(value)
-	for i = 1, 8 do
-		UF:SetAuraSize("boss"..i, value, "Debuffs", Settings["unitframes-boss-width"])
-	end
-end
-
-local UpdateHealthTexture = function(value)
-	for i = 1, 8 do
-		UF:SetHealthTexture("boss"..i, value)
-	end
-end
-
-local UpdatePowerTexture = function(value)
-	for i = 1, 8 do
-		UF:SetPowerTexture("boss"..i, value)
-	end
-end
+local BossUpdaterOptions = {count = 8}
+local UpdateWidth = UF:CreateUnitUpdater("boss", "Width", BossUpdaterOptions)
+local UpdateHealthHeight = UF:CreateUnitUpdater("boss", "HealthHeight", {count = 8, powerHeight = "unitframes-boss-power-height"})
+local UpdatePowerHeight = UF:CreateUnitUpdater("boss", "PowerHeight", {count = 8, healthHeight = "unitframes-boss-health-height"})
+local UpdateHealthColor = UF:CreateUnitUpdater("boss", "HealthColor", BossUpdaterOptions)
+local UpdateHealthFill = UF:CreateUnitUpdater("boss", "HealthReverse", BossUpdaterOptions)
+local UpdatePowerColor = UF:CreateUnitUpdater("boss", "PowerColor", BossUpdaterOptions)
+local UpdatePowerFill = UF:CreateUnitUpdater("boss", "PowerReverse", BossUpdaterOptions)
+local UpdateEnableBuffs = UF:CreateUnitUpdater("boss", "ElementEnabled", {count = 8, element = "Auras", component = "Buffs"})
+local UpdateBuffSize = UF:CreateUnitUpdater("boss", "AuraSize", {count = 8, element = "Buffs", width = "unitframes-boss-width"})
+local UpdateDebuffSize = UF:CreateUnitUpdater("boss", "AuraSize", {count = 8, element = "Debuffs", width = "unitframes-boss-width"})
+local UpdateHealthTexture = UF:CreateUnitUpdater("boss", "HealthTexture", BossUpdaterOptions)
+local UpdatePowerTexture = UF:CreateUnitUpdater("boss", "PowerTexture", BossUpdaterOptions)
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Bosses"], Language["Unit Frames"], function(left, right)
 	left:CreateHeader(Language["Styling"])

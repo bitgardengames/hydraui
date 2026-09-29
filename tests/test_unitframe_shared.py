@@ -50,6 +50,17 @@ def constructor_block(source: str, constructor: str) -> str:
 
 
 class SharedUnitFrameCoverage(unittest.TestCase):
+    def test_singleton_settings_use_shared_update_factory(self):
+        shared = (ROOT / "ComponentFactory.lua").read_text()
+        self.assertIn("function UF:CreateUnitUpdater(unit, operation, options)", shared)
+        for operation in ("Width", "HealthHeight", "PowerHeight", "HealthColor",
+                          "PowerColor", "HealthReverse", "PowerReverse",
+                          "HealthTexture", "PowerTexture", "AuraSize",
+                          "AuraSpacing", "ElementEnabled"):
+            self.assertIn(f"function UnitOperations.{operation}", shared)
+        for module in ("Focus", "Pet", "TargetTarget", "Boss", "Target", "Player"):
+            self.assertIn("UF:CreateUnitUpdater(", (ROOT / f"{module}.lua").read_text())
+
     def test_single_unit_styles_delegate_with_family_descriptors(self):
         for module, prefix in (("Player", "unitframes-player"),
                                ("Target", "unitframes-target"),

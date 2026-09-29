@@ -41,6 +41,54 @@ Defaults.PlayerResourceTexture = "HydraUI 4"
 
 local UF = HydraUI:GetModule("Unit Frames")
 
+local function UpdatePlayerAuraAnchors(frame, resourceDetached)
+	if not frame.Buffs or not frame.Debuffs then return end
+	if resourceDetached == nil then resourceDetached = Settings["player-move-resource"] end
+	local anchor = resourceDetached and frame or frame.AuraParent
+	frame.Buffs:ClearAllPoints()
+	frame.Debuffs:ClearAllPoints()
+	if Settings["unitframes-show-player-buffs"] then
+		frame.Buffs:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 2)
+		frame.Debuffs:SetPoint("BOTTOM", frame.Buffs, "TOP", 0, 2)
+	else
+		frame.Debuffs:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 2)
+	end
+end
+
+local function UpdatePlayerPowerLayout(frame, powerHeight, detached, healthHeight)
+	if not frame.Power then return end
+	powerHeight = powerHeight or Settings["unitframes-player-power-height"]
+	healthHeight = healthHeight or Settings["unitframes-player-health-height"]
+	if detached == nil then detached = Settings["player-move-power"] end
+	frame.Power:ClearAllPoints()
+	frame.Power:SetHeight(powerHeight)
+	if detached then
+		frame:SetHeight(healthHeight + 2)
+		frame.Power:SetPoint("BOTTOMLEFT", frame.PowerAnchor, 1, 1)
+		frame.Power:SetPoint("BOTTOMRIGHT", frame.PowerAnchor, -1, 1)
+	else
+		frame:SetHeight(healthHeight + powerHeight + 3)
+		frame.Power:SetPoint("BOTTOMLEFT", frame, 1, 1)
+		frame.Power:SetPoint("BOTTOMRIGHT", frame, -1, 1)
+	end
+end
+
+local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
+	resourceHeight = resourceHeight or Settings["player-resource-height"]
+	if detached == nil then detached = Settings["player-move-resource"] end
+	if frame.ClassResource then
+		frame.ClassResource:SetHeight(resourceHeight)
+		frame.ClassResource:SetDetached(detached)
+	end
+	UpdatePlayerAuraAnchors(frame, detached)
+	if frame.ThreatIndicator then
+		frame.ThreatIndicator:ClearAllPoints()
+		local anchor = detached and frame or frame.AuraParent
+		frame.ThreatIndicator:SetPoint("TOPLEFT", anchor, -1, 1)
+		frame.ThreatIndicator:SetPoint("BOTTOMRIGHT", frame, 1, -1)
+	end
+end
+
 -- Resource descriptions are module constants; spawning a frame only selects one.
 local PlayerResourceDescriptors = {
 	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
@@ -101,14 +149,8 @@ local function BuildPlayerComponents(factory, self, unit)
 		PowerAnchor:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-power-height"])
 		PowerAnchor:SetPoint("CENTER", HydraUI.UIParent, 0, -133)
 		HydraUI:CreateMover(PowerAnchor)
-		Power:ClearAllPoints()
-		if Settings["player-move-power"] then
-			Power:SetPoint("BOTTOMLEFT", PowerAnchor, 1, 1)
-			Power:SetPoint("BOTTOMRIGHT", PowerAnchor, -1, 1)
-		else
-			Power:SetPoint("BOTTOMLEFT", self, 1, 1)
-			Power:SetPoint("BOTTOMRIGHT", self, -1, 1)
-		end
+		self.PowerAnchor = PowerAnchor
+		UpdatePlayerPowerLayout(self)
 		factory:CreateBackdrop(Power, "Blank", "BACKGROUND")
 		-- Mana regen
 		if (Settings["unitframes-show-mana-timer"] and not HydraUI.IsMainline) then
@@ -171,7 +213,6 @@ local function BuildPlayerComponents(factory, self, unit)
 			}
 		end
 
-		self.PowerAnchor = PowerAnchor
 	end
     -- Castbar
 	if Settings["unitframes-player-enable-castbar"] then
@@ -312,22 +353,9 @@ local function BuildPlayerComponents(factory, self, unit)
 	local Debuffs = factory:CreateAuraContainer(self, self:GetName() .. "Debuffs", nil, Settings["unitframes-player-width"], 28,
 		nil, nil, nil, 0, 0, Settings.PlayerDebuffSize, Settings.PlayerDebuffSpacing, 16,
 		"BOTTOMRIGHT", "ANCHOR_TOP", "LEFT", "UP", UF.PostCreateIcon, UF.PostUpdateIcon, nil, Settings["unitframes-only-player-debuffs"], nil)
-	if Settings["player-move-resource"] then
-		if Settings["unitframes-show-player-buffs"] then
-			Buffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 2)
-			Debuffs:SetPoint("BOTTOM", Buffs, "TOP", 0, 2)
-
-		else
-			Debuffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 2)
-		end
-	else
-		if Settings["unitframes-show-player-buffs"] then
-			Buffs:SetPoint("BOTTOMLEFT", self.AuraParent, "TOPLEFT", 0, 2)
-			Debuffs:SetPoint("BOTTOM", Buffs, "TOP", 0, 2)
-		else
-			Debuffs:SetPoint("BOTTOMLEFT", self.AuraParent, "TOPLEFT", 0, 2)
-		end
-	end
+	self.Buffs = Buffs
+	self.Debuffs = Debuffs
+	UpdatePlayerAuraAnchors(self)
 
 	-- Resurrect
 	local Resurrect = Health:CreateTexture(nil, "OVERLAY")
@@ -336,11 +364,10 @@ local function BuildPlayerComponents(factory, self, unit)
 	Resurrect:Hide()
 
 	self.CombatIndicator = Combat
-	self.Buffs = Buffs
-	self.Debuffs = Debuffs
 	self.ResurrectIndicator = Resurrect
 	self.LeaderIndicator = Leader
 	self.PvPIndicator = PvPIndicator
+	UpdatePlayerResourceLayout(self)
 end
 
 local PlayerFrameConfig = {
@@ -373,28 +400,20 @@ local UpdatePlayerWidth = function(value)
 	if Frame.ClassResource and not Settings["player-move-resource"] then Frame.ClassResource:SetWidth(value) end
 end
 local UpdatePlayerHealthHeight = function(value)
-	UF:SetHealthHeight("player", value, Settings["unitframes-player-power-height"])
+	local frame = HydraUI.UnitFrames["player"]
+	if not frame then return end
+	frame.Health:SetHeight(value)
+	UpdatePlayerPowerLayout(frame, nil, nil, value)
 end
 
-local UpdatePlayerHealthFill = function(value)
-	UF:SetHealthReverseFill("player", value)
-end
+local UpdatePlayerHealthFill = UF:CreateUnitUpdater("player", "HealthReverse")
 
 local UpdatePlayerPowerHeight = function(value)
-	local Frame = HydraUI.UnitFrames["player"]
-
-	if Frame then
-		if Settings["player-move-power"] then
-			Frame.Power:SetHeight(value)
-		else
-			UF:SetPowerHeight("player", value, Settings["unitframes-player-health-height"])
-		end
-	end
+	local frame = HydraUI.UnitFrames["player"]
+	if frame then UpdatePlayerPowerLayout(frame, value) end
 end
 
-local UpdatePlayerPowerFill = function(value)
-	UF:SetPowerReverseFill("player", value)
-end
+local UpdatePlayerPowerFill = UF:CreateUnitUpdater("player", "PowerReverse")
 
 local UpdatePlayerCastBarSize = function()
 	if HydraUI.UnitFrames["player"].Castbar then
@@ -410,13 +429,9 @@ local UpdateCastClassColor = function(value)
 	end
 end
 
-local UpdatePlayerHealthColor = function(value)
-	UF:ApplyHealthAttributes("player", value)
-end
+local UpdatePlayerHealthColor = UF:CreateUnitUpdater("player", "HealthColor")
 
-local UpdatePlayerPowerColor = function(value)
-	UF:ApplyPowerAttributes("player", value)
-end
+local UpdatePlayerPowerColor = UF:CreateUnitUpdater("player", "PowerColor")
 
 local UpdatePlayerEnablePortrait = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
@@ -456,60 +471,24 @@ end
 
 local UpdateResourceBarHeight = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
-	if Frame and Frame.ClassResource then Frame.ClassResource:SetHeight(value) end
+	if Frame then UpdatePlayerResourceLayout(Frame, value) end
 end
 local UpdateResourceTexture = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
 	if Frame and Frame.ClassResource then Frame.ClassResource:SetTexture(value) end
 end
-local UpdateBuffSize = function(value)
-	UF:SetAuraSize("player", value, "Buffs", Settings["unitframes-player-width"])
-end
+local UpdateBuffSize = UF:CreateUnitUpdater("player", "AuraSize", {element = "Buffs", width = "unitframes-player-width"})
 
-local UpdateBuffSpacing = function(value)
-	if HydraUI.UnitFrames["player"] then
-		HydraUI.UnitFrames["player"].Buffs.spacing = value
-		HydraUI.UnitFrames["player"].Buffs:ForceUpdate()
-	end
-end
+local UpdateBuffSpacing = UF:CreateUnitUpdater("player", "AuraSpacing", {element = "Buffs"})
 
-local UpdateDebuffSize = function(value)
-	UF:SetAuraSize("player", value, "Debuffs", Settings["unitframes-player-width"])
-end
+local UpdateDebuffSize = UF:CreateUnitUpdater("player", "AuraSize", {element = "Debuffs", width = "unitframes-player-width"})
 
-local UpdateDebuffSpacing = function(value)
-	if HydraUI.UnitFrames["player"] then
-		HydraUI.UnitFrames["player"].Debuffs.spacing = value
-		HydraUI.UnitFrames["player"].Debuffs:ForceUpdate()
-	end
-end
+local UpdateDebuffSpacing = UF:CreateUnitUpdater("player", "AuraSpacing", {element = "Debuffs"})
 
 local UpdateDisplayedAuras = function()
-	if (not HydraUI.UnitFrames["player"]) then
-		return
-	end
-
 	local Player = HydraUI.UnitFrames["player"]
-
-	Player.Buffs:ClearAllPoints()
-	Player.Debuffs:ClearAllPoints()
-
-	if Settings["player-move-resource"] then
-		if Settings["unitframes-show-player-buffs"] then
-			Player.Buffs:SetPoint("BOTTOMLEFT", Player, "TOPLEFT", 0, 2)
-			Player.Debuffs:SetPoint("BOTTOM", Player.Buffs, "TOP", 0, 2)
-
-		else
-			Player.Debuffs:SetPoint("BOTTOMLEFT", Player, "TOPLEFT", 0, 2)
-		end
-	else
-		if Settings["unitframes-show-player-buffs"] then
-			Player.Buffs:SetPoint("BOTTOMLEFT", Player.AuraParent, "TOPLEFT", 0, 2)
-			Player.Debuffs:SetPoint("BOTTOM", Player.Buffs, "TOP", 0, 2)
-		else
-			Player.Debuffs:SetPoint("BOTTOMLEFT", Player.AuraParent, "TOPLEFT", 0, 2)
-		end
-	end
+	if not Player then return end
+	UpdatePlayerAuraAnchors(Player)
 
 	if Settings["unitframes-show-player-buffs"] then
 		Player.Buffs:Show()
@@ -525,63 +504,17 @@ local UpdateDisplayedAuras = function()
 end
 
 local UpdateResourcePosition = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
-
-		Frame.Debuffs:ClearAllPoints()
-		Frame.ThreatIndicator:ClearAllPoints()
-
-		if value then
-			if Settings["unitframes-show-player-buffs"] then
-				Frame.Buffs:ClearAllPoints()
-				Frame.Buffs:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, 2)
-				Frame.Debuffs:SetPoint("BOTTOM", Frame.Buffs, "TOP", 0, 2)
-			else
-				Frame.Debuffs:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, 2)
-			end
-
-			Frame.ThreatIndicator:SetPoint("TOPLEFT", Frame, -1, 1)
-			Frame.ThreatIndicator:SetPoint("BOTTOMRIGHT", Frame, 1, -1)
-		else
-			if Settings["unitframes-show-player-buffs"] then
-				Frame.Buffs:ClearAllPoints()
-				Frame.Buffs:SetPoint("BOTTOMLEFT", Frame.AuraParent, "TOPLEFT", 0, 2)
-				Frame.Debuffs:SetPoint("BOTTOM", Frame.Buffs, "TOP", 0, 2)
-			else
-				Frame.Debuffs:SetPoint("BOTTOMLEFT", Frame.AuraParent, "TOPLEFT", 0, 2)
-			end
-
-			Frame.ThreatIndicator:SetPoint("TOPLEFT", Frame.AuraParent, -1, 1)
-			Frame.ThreatIndicator:SetPoint("BOTTOMRIGHT", 1, -1)
-		end
-
-		if Frame.ClassResource then Frame.ClassResource:SetDetached(value) end
-	end
+	local frame = HydraUI.UnitFrames["player"]
+	if not frame then return end
+	UpdatePlayerResourceLayout(frame, nil, value)
 end
 
 local UpdatePowerBarPosition = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
-
-		Frame.Power:ClearAllPoints()
-
-		if value then
-			Frame:SetHeight(Settings["unitframes-player-health-height"] + 2)
-
-			Frame.Power:SetPoint("BOTTOMLEFT", Frame.PowerAnchor, 1, 1)
-			Frame.Power:SetPoint("BOTTOMRIGHT", Frame.PowerAnchor, -1, 1)
-		else
-			Frame:SetHeight(Settings["unitframes-player-health-height"] + Settings["unitframes-player-power-height"] + 3)
-
-			Frame.Power:SetPoint("BOTTOMLEFT", Frame, 1, 1)
-			Frame.Power:SetPoint("BOTTOMRIGHT", Frame, -1, 1)
-		end
-	end
+	local frame = HydraUI.UnitFrames["player"]
+	if frame then UpdatePlayerPowerLayout(frame, nil, value) end
 end
 
-local UpdateHealthTexture = function(value)
-	UF:SetHealthTexture("player", value)
-end
+local UpdateHealthTexture = UF:CreateUnitUpdater("player", "HealthTexture")
 
 local UpdatePowerTexture = function(value)
 	local Frame = HydraUI.UnitFrames["player"]

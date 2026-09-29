@@ -95,45 +95,19 @@ HydraUI.StyleFuncs["target"] = function(self, unit)
 	UF:BuildSingleUnitFrame(self, unit, TargetFrameConfig)
 end
 
-local UpdateTargetWidth = function(value)
-	local Frame = HydraUI.UnitFrames["target"]
+local UpdateTargetWidth = UF:CreateUnitUpdater("target", "Width", {widthElements = {"Buffs", "Debuffs"}})
 
-	if Frame then
-		UF:SetFrameWidth("target", value)
+local UpdateTargetHealthHeight = UF:CreateUnitUpdater("target", "HealthHeight", {powerHeight = "unitframes-target-power-height"})
 
-		if Frame.Buffs then
-			Frame.Buffs:SetWidth(value)
-		end
+local UpdateTargetHealthFill = UF:CreateUnitUpdater("target", "HealthReverse")
 
-		if Frame.Debuffs then
-			Frame.Debuffs:SetWidth(value)
-		end
-	end
-end
+local UpdateTargetPowerHeight = UF:CreateUnitUpdater("target", "PowerHeight", {healthHeight = "unitframes-target-health-height"})
 
-local UpdateTargetHealthHeight = function(value)
-	UF:SetHealthHeight("target", value, Settings["unitframes-target-power-height"])
-end
+local UpdateTargetPowerFill = UF:CreateUnitUpdater("target", "PowerReverse")
 
-local UpdateTargetHealthFill = function(value)
-	UF:SetHealthReverseFill("target", value)
-end
+local UpdateTargetHealthColor = UF:CreateUnitUpdater("target", "HealthColor")
 
-local UpdateTargetPowerHeight = function(value)
-	UF:SetPowerHeight("target", value, Settings["unitframes-target-health-height"])
-end
-
-local UpdateTargetPowerFill = function(value)
-	UF:SetPowerReverseFill("target", value)
-end
-
-local UpdateTargetHealthColor = function(value)
-	UF:ApplyHealthAttributes("target", value)
-end
-
-local UpdateTargetPowerColor = function(value)
-	UF:ApplyPowerAttributes("target", value)
-end
+local UpdateTargetPowerColor = UF:CreateUnitUpdater("target", "PowerColor")
 
 local UpdateTargetCastBarSize = function()
 	if HydraUI.UnitFrames["target"].Castbar then
@@ -173,27 +147,13 @@ local UpdateOverlayAlpha = function(value)
 	end
 end
 
-local UpdateBuffSize = function(value)
-	UF:SetAuraSize("target", value, "Buffs", Settings["unitframes-target-width"])
-end
+local UpdateBuffSize = UF:CreateUnitUpdater("target", "AuraSize", {element = "Buffs", width = "unitframes-target-width"})
 
-local UpdateBuffSpacing = function(value)
-	if HydraUI.UnitFrames["target"] then
-		HydraUI.UnitFrames["target"].Buffs.spacing = value
-		HydraUI.UnitFrames["target"].Buffs:ForceUpdate()
-	end
-end
+local UpdateBuffSpacing = UF:CreateUnitUpdater("target", "AuraSpacing", {element = "Buffs"})
 
-local UpdateDebuffSize = function(value)
-	UF:SetAuraSize("target", value, "Debuffs", Settings["unitframes-target-width"])
-end
+local UpdateDebuffSize = UF:CreateUnitUpdater("target", "AuraSize", {element = "Debuffs", width = "unitframes-target-width"})
 
-local UpdateDebuffSpacing = function(value)
-	if HydraUI.UnitFrames["target"] then
-		HydraUI.UnitFrames["target"].Debuffs.spacing = value
-		HydraUI.UnitFrames["target"].Debuffs:ForceUpdate()
-	end
-end
+local UpdateDebuffSpacing = UF:CreateUnitUpdater("target", "AuraSpacing", {element = "Debuffs"})
 
 local UpdateDisplayedAuras = function()
 	if (not HydraUI.UnitFrames["target"]) then
@@ -223,13 +183,9 @@ local UpdateDisplayedAuras = function()
 	end
 end
 
-local UpdateHealthTexture = function(value)
-	UF:SetHealthTexture("target", value)
-end
+local UpdateHealthTexture = UF:CreateUnitUpdater("target", "HealthTexture")
 
-local UpdatePowerTexture = function(value)
-	UF:SetPowerTexture("target", value)
-end
+local UpdatePowerTexture = UF:CreateUnitUpdater("target", "PowerTexture")
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Target"], Language["Unit Frames"], function(left, right)
 	left:CreateHeader(Language["Styling"])

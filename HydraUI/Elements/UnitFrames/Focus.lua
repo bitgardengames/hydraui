@@ -61,50 +61,25 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 	UF:BuildSingleUnitFrame(self, unit, FocusFrameConfig)
 end
 
-local UpdateFocusWidth = function(value)
-	UF:SetFrameWidth("focus", value)
-end
+local UpdateFocusWidth = UF:CreateUnitUpdater("focus", "Width")
 
-local UpdateFocusHealthHeight = function(value)
-	UF:SetHealthHeight("focus", value, Settings["unitframes-focus-power-height"])
-end
+local UpdateFocusHealthHeight = UF:CreateUnitUpdater("focus", "HealthHeight", {powerHeight = "unitframes-focus-power-height"})
 
-local UpdateFocusPowerHeight = function(value)
-	UF:SetPowerHeight("focus", value, Settings["unitframes-focus-health-height"])
-end
+local UpdateFocusPowerHeight = UF:CreateUnitUpdater("focus", "PowerHeight", {healthHeight = "unitframes-focus-health-height"})
 
-local UpdateFocusHealthColor = function(value)
-	UF:ApplyHealthAttributes("focus", value)
-end
+local UpdateFocusHealthColor = UF:CreateUnitUpdater("focus", "HealthColor")
 
-local UpdateFocusHealthFill = function(value)
-	UF:SetHealthReverseFill("focus", value)
-end
+local UpdateFocusHealthFill = UF:CreateUnitUpdater("focus", "HealthReverse")
 
-local UpdateFocusPowerColor = function(value)
-	UF:ApplyPowerAttributes("focus", value)
-end
+local UpdateFocusPowerColor = UF:CreateUnitUpdater("focus", "PowerColor")
 
-local UpdateShowFocusBuffs = function(value)
-	local Frame = HydraUI.UnitFrames["focus"]
+local UpdateShowFocusBuffs = UF:CreateUnitUpdater("focus", "ElementEnabled", {element = "Auras", component = "Buffs", forceUpdate = true})
 
-	if Frame then
-		UF:SetElementEnabled("focus", value, "Auras")
-		Frame:UpdateAllElements("ForceUpdate")
-	end
-end
+local UpdateFocusPowerFill = UF:CreateUnitUpdater("focus", "PowerReverse")
 
-local UpdateFocusPowerFill = function(value)
-	UF:SetPowerReverseFill("focus", value)
-end
+local UpdateHealthTexture = UF:CreateUnitUpdater("focus", "HealthTexture")
 
-local UpdateHealthTexture = function(value)
-	UF:SetHealthTexture("focus", value)
-end
-
-local UpdatePowerTexture = function(value)
-	UF:SetPowerTexture("focus", value)
-end
+local UpdatePowerTexture = UF:CreateUnitUpdater("focus", "PowerTexture")
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Focus"], Language["Unit Frames"], function(left, right)
 	left:CreateHeader(Language["Styling"])

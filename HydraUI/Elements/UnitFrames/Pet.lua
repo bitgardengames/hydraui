@@ -64,61 +64,33 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 	UF:BuildSingleUnitFrame(self, unit, PetFrameConfig)
 end
 
-local UpdatePetWidth = function(value)
-	UF:SetFrameWidth("pet", value)
-end
+local UpdatePetWidth = UF:CreateUnitUpdater("pet", "Width")
 
-local UpdatePetHealthHeight = function(value)
-	UF:SetHealthHeight("pet", value, Settings["unitframes-pet-power-height"])
-end
+local UpdatePetHealthHeight = UF:CreateUnitUpdater("pet", "HealthHeight", {powerHeight = "unitframes-pet-power-height"})
 
-local UpdatePetPowerHeight = function(value)
-	UF:SetPowerHeight("pet", value, Settings["unitframes-pet-health-height"])
-end
+local UpdatePetPowerHeight = UF:CreateUnitUpdater("pet", "PowerHeight", {healthHeight = "unitframes-pet-health-height"})
 
-local UpdatePetHealthColor = function(value)
-	UF:ApplyHealthAttributes("pet", value)
-end
+local UpdatePetHealthColor = UF:CreateUnitUpdater("pet", "HealthColor")
 
-local UpdatePetHealthFill = function(value)
-	UF:SetHealthReverseFill("pet", value)
-end
+local UpdatePetHealthFill = UF:CreateUnitUpdater("pet", "HealthReverse")
 
-local UpdatePetPowerColor = function(value)
-	UF:ApplyPowerAttributes("pet", value)
-end
+local UpdatePetPowerColor = UF:CreateUnitUpdater("pet", "PowerColor")
 
-local UpdatePetPowerFill = function(value)
-	UF:SetPowerReverseFill("pet", value)
-end
+local UpdatePetPowerFill = UF:CreateUnitUpdater("pet", "PowerReverse")
 
-local UpdateEnableBuffs = function(value)
-	UF:SetElementEnabled("pet", value, "Buffs")
-end
+local UpdateEnableBuffs = UF:CreateUnitUpdater("pet", "ElementEnabled", {element = "Buffs"})
 
-local UpdateBuffSize = function(value)
-	UF:SetAuraSize("pet", value, "Buffs", Settings["unitframes-pet-width"])
-end
+local UpdateBuffSize = UF:CreateUnitUpdater("pet", "AuraSize", {element = "Buffs", width = "unitframes-pet-width"})
 
-local UpdateBuffPosition = function(value)
-	UF:SetAuraPosition("pet", value, "Buffs", "LEFT")
-end
+local UpdateBuffPosition = UF:CreateUnitUpdater("pet", "AuraPosition", {element = "Buffs", growthX = "LEFT"})
 
-local UpdateDebuffSize = function(value)
-	UF:SetAuraSize("pet", value, "Debuffs", Settings["unitframes-pet-width"])
-end
+local UpdateDebuffSize = UF:CreateUnitUpdater("pet", "AuraSize", {element = "Debuffs", width = "unitframes-pet-width"})
 
-local UpdateDebuffPosition = function(value)
-	UF:SetAuraPosition("pet", value, "Debuffs", "LEFT", "Buffs", Settings["unitframes-pet-buff-pos"])
-end
+local UpdateDebuffPosition = UF:CreateUnitUpdater("pet", "AuraPosition", {element = "Debuffs", growthX = "LEFT", companion = "Buffs", companionPosition = "unitframes-pet-buff-pos"})
 
-local UpdateHealthTexture = function(value)
-	UF:SetHealthTexture("pet", value)
-end
+local UpdateHealthTexture = UF:CreateUnitUpdater("pet", "HealthTexture")
 
-local UpdatePowerTexture = function(value)
-	UF:SetPowerTexture("pet", value)
-end
+local UpdatePowerTexture = UF:CreateUnitUpdater("pet", "PowerTexture")
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Pet"], Language["Unit Frames"], function(left, right)
 	left:CreateHeader(Language["Styling"])

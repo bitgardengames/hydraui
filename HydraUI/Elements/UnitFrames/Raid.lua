@@ -35,63 +35,160 @@ Defaults.RaidEnableMouseover = true
 local UF = HydraUI:GetModule("Unit Frames")
 
 local Ignore = {}
-if HydraUI.IsWrath then Ignore[GetSpellInfo(69127)] = true end
+if HydraUI.IsWrath then
+	Ignore[GetSpellInfo(69127)] = true
+end
+
 local RaidDebuffFilter = function(self, unit, icon, name, texture, count, dtype, duration, timeLeft, caster, stealable, nameplateshow, id, canapply, boss, player)
-	if Ignore[name] then return false end
+	if Ignore[name] then
+		return false
+	end
+
 	return boss or (count and count > 0) or (duration > 0 and timeLeft and not player and not canapply)
 end
+
 local function CreateRaidDebuffs(frame, health, filter)
 	return UF:CreateAuraContainer(frame, frame:GetName() .. "Debuffs", health, 24, 24,
 		"CENTER", health, "CENTER", 0, 0, 24, 0, 1,
 		"TOPLEFT", "ANCHOR_TOP", "RIGHT", "DOWN", UF.PostCreateIcon, UF.PostUpdateIcon, filter, nil, nil)
 end
 local function UpdateRaidAnchorSize()
-	if not UF.RaidAnchor then return end
-	UF.RaidAnchor:SetWidth(floor(40/Settings["raid-max-columns"])*Settings["raid-width"]+(floor(40/Settings["raid-max-columns"])*Settings["raid-x-offset"]-2))
-	UF.RaidAnchor:SetHeight((Settings["raid-health-height"]+Settings["raid-power-height"])*(Settings["raid-max-columns"]+Settings["raid-y-offset"])-1)
+	if not UF.RaidAnchor then
+		return
+	end
+
+	local rows = floor(40 / Settings["raid-max-columns"])
+	local width = rows * Settings["raid-width"] + (rows * Settings["raid-x-offset"] - 2)
+	local height = (Settings["raid-health-height"] + Settings["raid-power-height"])
+		* (Settings["raid-max-columns"] + Settings["raid-y-offset"]) - 1
+
+	UF.RaidAnchor:SetSize(width, height)
 end
+
 local RaidGroup = {
-	prefix="raid", header="raid", petHeader="raid-pets", healthTextureKey="RaidHealthTexture", powerTextureKey="RaidPowerTexture", mouseoverKey="RaidEnableMouseover",
-	debuffFilter=RaidDebuffFilter, createDebuffs=CreateRaidDebuffs, dispelSize=22,
-	indicators={ auraWatch=true, role=true, leaderX=3, phasePoint="LEFT" }, testStart=-24,
-	afterUpdate=function(operation) if operation=="width" or operation=="healthHeight" or operation=="powerHeight" then UpdateRaidAnchorSize() end end,
+	prefix = "raid",
+	header = "raid",
+	petHeader = "raid-pets",
+	healthTextureKey = "RaidHealthTexture",
+	powerTextureKey = "RaidPowerTexture",
+	mouseoverKey = "RaidEnableMouseover",
+	debuffFilter = RaidDebuffFilter,
+	createDebuffs = CreateRaidDebuffs,
+	dispelSize = 22,
+	indicators = {
+		auraWatch = true,
+		role = true,
+		leaderX = 3,
+		phasePoint = "LEFT",
+	},
+	testStart = -24,
+	afterUpdate = function(operation)
+		if operation == "width" or operation == "healthHeight" or operation == "powerHeight" then
+			UpdateRaidAnchorSize()
+		end
+	end,
 }
-HydraUI.StyleFuncs["raid"] = function(frame, unit) UF:BuildGroupFrame(frame, unit, RaidGroup) end
-local function Update(operation,value) UF:UpdateGroupFrames(RaidGroup,operation,value) end
-local function UpdateRaidWidth(v) Update("width",v) end
-local function UpdateRaidHealthHeight(v) Update("healthHeight",v) end
-local function UpdateRaidHealthColor(v) Update("healthColor",v) end
-local function UpdateRaidHealthOrientation(v) Update("healthOrientation",v) end
-local function UpdateRaidHealthReverseFill(v) Update("healthReverse",v) end
-local function UpdateEnableRaidPower(v) Update("powerEnabled",v) end
-local function UpdateRaidPowerHeight(v) Update("powerHeight",v) end
-local function UpdateRaidPowerReverseFill(v) Update("powerReverse",v) end
-local function UpdateRaidPowerColor(v) Update("powerColor",v) end
-local function UpdateRaidShowHighlight(v) Update("highlight",v) end
-local function UpdateHealthTexture(v) Update("healthTexture",v) end
-local function UpdatePowerTexture(v) Update("powerTexture",v) end
-local function TestRaid() UF:ToggleGroupTest(RaidGroup) end
-local function UpdateShowSolo(v) _G["HydraUI Raid"]:SetAttribute("showSolo",v) end
-local function SetRaidAttribute(attribute,value) HydraUI.UnitFrames["raid"]:SetAttribute(attribute,value); UpdateRaidAnchorSize() end
-local function UpdateRaidXOffset(v) SetRaidAttribute("xoffset",v) end
-local function UpdateRaidYOffset(v) SetRaidAttribute("yoffset",v) end
-local function UpdateRaidUnitsPerColumn(v) SetRaidAttribute("unitsPerColumn",v) end
-local function UpdateRaidMaxColumns(v) SetRaidAttribute("maxColumns",v) end
-local function UpdateRaidColumnSpacing(v) SetRaidAttribute("columnSpacing",v) end
-local function UpdateRaidColumnAnchor(v) SetRaidAttribute("columnAnchorPoint",v) end
-local function UpdateRaidPoint(v) SetRaidAttribute("point",v) end
+
+HydraUI.StyleFuncs["raid"] = function(frame, unit)
+	UF:BuildGroupFrame(frame, unit, RaidGroup)
+end
+
+local function Update(operation, value)
+	UF:UpdateGroupFrames(RaidGroup, operation, value)
+end
+local function UpdateRaidWidth(value)
+	Update("width", value)
+end
+local function UpdateRaidHealthHeight(value)
+	Update("healthHeight", value)
+end
+local function UpdateRaidHealthColor(value)
+	Update("healthColor", value)
+end
+local function UpdateRaidHealthOrientation(value)
+	Update("healthOrientation", value)
+end
+local function UpdateRaidHealthReverseFill(value)
+	Update("healthReverse", value)
+end
+local function UpdateEnableRaidPower(value)
+	Update("powerEnabled", value)
+end
+local function UpdateRaidPowerHeight(value)
+	Update("powerHeight", value)
+end
+local function UpdateRaidPowerReverseFill(value)
+	Update("powerReverse", value)
+end
+local function UpdateRaidPowerColor(value)
+	Update("powerColor", value)
+end
+local function UpdateRaidShowHighlight(value)
+	Update("highlight", value)
+end
+local function UpdateHealthTexture(value)
+	Update("healthTexture", value)
+end
+local function UpdatePowerTexture(value)
+	Update("powerTexture", value)
+end
+local function TestRaid()
+	UF:ToggleGroupTest(RaidGroup)
+end
+local function UpdateShowSolo(value)
+	_G["HydraUI Raid"]:SetAttribute("showSolo", value)
+end
+
+local function SetRaidAttribute(attribute, value)
+	HydraUI.UnitFrames["raid"]:SetAttribute(attribute, value)
+	UpdateRaidAnchorSize()
+end
+
+local function UpdateRaidXOffset(value)
+	SetRaidAttribute("xoffset", value)
+end
+local function UpdateRaidYOffset(value)
+	SetRaidAttribute("yoffset", value)
+end
+local function UpdateRaidUnitsPerColumn(value)
+	SetRaidAttribute("unitsPerColumn", value)
+end
+local function UpdateRaidMaxColumns(value)
+	SetRaidAttribute("maxColumns", value)
+end
+local function UpdateRaidColumnSpacing(value)
+	SetRaidAttribute("columnSpacing", value)
+end
+local function UpdateRaidColumnAnchor(value)
+	SetRaidAttribute("columnAnchorPoint", value)
+end
+local function UpdateRaidPoint(value)
+	SetRaidAttribute("point", value)
+end
+
 local function UpdateRaidSortingMethod(value)
 	local header = HydraUI.UnitFrames["raid"]
+
 	if value == "CLASS" then
-		header:SetAttribute("groupingOrder", "DEATHKNIGHT,DEMONHUNTER,DRUID,HUNTER,MAGE,MONK,PALADIN,PRIEST,SHAMAN,WARLOCK,WARRIOR"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", "CLASS")
+		header:SetAttribute("groupingOrder", "DEATHKNIGHT,DEMONHUNTER,DRUID,HUNTER,MAGE,MONK,PALADIN,PRIEST,SHAMAN,WARLOCK,WARRIOR")
+		header:SetAttribute("sortMethod", "NAME")
+		header:SetAttribute("groupBy", "CLASS")
 	elseif value == "ROLE" then
-		header:SetAttribute("groupingOrder", "TANK,HEALER,DAMAGER,NONE"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", "ASSIGNEDROLE")
+		header:SetAttribute("groupingOrder", "TANK,HEALER,DAMAGER,NONE")
+		header:SetAttribute("sortMethod", "NAME")
+		header:SetAttribute("groupBy", "ASSIGNEDROLE")
 	elseif value == "NAME" then
-		header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", nil)
+		header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
+		header:SetAttribute("sortMethod", "NAME")
+		header:SetAttribute("groupBy", nil)
 	elseif value == "MTMA" then
-		header:SetAttribute("groupingOrder", "MAINTANK,MAINASSIST,NONE"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", "ROLE")
+		header:SetAttribute("groupingOrder", "MAINTANK,MAINASSIST,NONE")
+		header:SetAttribute("sortMethod", "NAME")
+		header:SetAttribute("groupBy", "ROLE")
 	else
-		header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8"); header:SetAttribute("sortMethod", "INDEX"); header:SetAttribute("groupBy", "GROUP")
+		header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
+		header:SetAttribute("sortMethod", "INDEX")
+		header:SetAttribute("groupBy", "GROUP")
 	end
 end
 

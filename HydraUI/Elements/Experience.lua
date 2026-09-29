@@ -261,9 +261,9 @@ end
 
 function Experience:Update()
 	Rested = GetXPExhaustion()
-    XP = UnitXP("player")
-    MaxXP = UnitXPMax("player")
-    RestingText = IsResting() and ("|cFF" .. Settings["experience-rested-color"] .. "zZz|r") or ""
+	XP = UnitXP("player")
+	MaxXP = UnitXPMax("player")
+	RestingText = IsResting() and ("|cFF" .. Settings["experience-rested-color"] .. "zZz|r") or ""
 
 	local QuestLogXP = 0
 	local ZoneName

@@ -19,34 +19,34 @@ function Vehicle:OnLeave()
 end
 
 function Vehicle:OnEvent()
-    if CanExitVehicle() then
-        if UnitOnTaxi("player") then
-            self.Text:SetText(Language["Land Early"])
+	if CanExitVehicle() then
+		if UnitOnTaxi("player") then
+			self.Text:SetText(Language["Land Early"])
 
 			self:SetScript("OnEnter", self.OnEnter)
 			self:SetScript("OnLeave", self.OnLeave)
-        else
-            self.Text:SetText(LEAVE_VEHICLE)
+		else
+			self.Text:SetText(LEAVE_VEHICLE)
 
 			self:SetScript("OnEnter", nil)
 			self:SetScript("OnLeave", nil)
-        end
+		end
 
-        self:Show()
+		self:Show()
 		self.FadeIn:Play()
-    else
+	else
 		self.FadeOut:Play()
-    end
+	end
 end
 
 function Vehicle:OnMouseUp()
-    if UnitOnTaxi("player") then
-        TaxiRequestEarlyLanding()
+	if UnitOnTaxi("player") then
+		TaxiRequestEarlyLanding()
 
 		HydraUI:print(Language["Requested early landing."])
-    else
-        VehicleExit()
-    end
+	else
+		VehicleExit()
+	end
 
 	self.FadeOut:Play()
 end

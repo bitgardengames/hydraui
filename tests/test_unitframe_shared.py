@@ -96,14 +96,17 @@ class SharedUnitFrameCoverage(unittest.TestCase):
             self.assertIn("UF:BuildGroupFrame(frame, unit,", source)
 
     def test_group_descriptors_keep_family_specific_options(self):
-        party = (ROOT / "Party.lua").read_text()
-        raid = (ROOT / "Raid.lua").read_text()
-        self.assertIn('healthTextureKey = "PartyHealthTexture"', party)
-        self.assertIn('mouseoverKey = "PartyEnableMouseover"', party)
-        self.assertIn("PartyDebuffFilter", party)
-        self.assertIn('healthTextureKey="RaidHealthTexture"', raid)
-        self.assertIn('mouseoverKey="RaidEnableMouseover"', raid)
-        self.assertIn("RaidDebuffFilter", raid)
+        cases = (
+            ("Party", "PartyHealthTexture", "PartyEnableMouseover", "PartyDebuffFilter"),
+            ("Raid", "RaidHealthTexture", "RaidEnableMouseover", "RaidDebuffFilter"),
+        )
+
+        for module, health_texture, mouseover, debuff_filter in cases:
+            with self.subTest(module=module):
+                source = (ROOT / f"{module}.lua").read_text()
+                self.assertRegex(source, rf'healthTextureKey\s*=\s*"{health_texture}"')
+                self.assertRegex(source, rf'mouseoverKey\s*=\s*"{mouseover}"')
+                self.assertIn(debuff_filter, source)
 
     def test_group_updates_reuse_operation_and_header_iterator(self):
         shared = (ROOT / "GroupFrames.lua").read_text()

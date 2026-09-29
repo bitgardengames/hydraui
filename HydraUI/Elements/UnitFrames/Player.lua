@@ -275,423 +275,122 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 		ResourceAnchor:SetPoint("CENTER", HydraUI.UIParent, 0, -120)
 		HydraUI:CreateMover(ResourceAnchor)
 
-		if (HydraUI.UserClass == "ROGUE" or HydraUI.UserClass == "DRUID") then
-			local ComboPoints = CreateFrame("Frame", self:GetName() .. "ComboPoints", self, "BackdropTemplate")
-			ComboPoints:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			ComboPoints:SetBackdrop(HydraUI.Backdrop)
-			ComboPoints:SetBackdropColor(0, 0, 0)
-			ComboPoints:SetBackdropBorderColor(0, 0, 0)
+		-- Descriptors are the only class/client-specific part of the resource bar.
+		local function SelectResourceDescriptor(class)
+			local descriptors = {
+				ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline },
+				DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline },
+				DEATHKNIGHT = { field = "Runes", count = 6, colorSetting = "color-runes", runes = true },
+				MONK = { field = "ClassPower", alias = "Chi", count = 6, colorSetting = "color-chi", stagger = true },
+				EVOKER = { field = "ClassPower", alias = "Essence", count = 6, colorSetting = "color-essence" },
+			}
 
-			if Settings["player-move-resource"] then
-				ComboPoints:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				ComboPoints:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
+			if class == "WARLOCK" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) then
+				return { field = "ClassPower", alias = "SoulShards", count = HydraUI.IsMainline and 5 or (HydraUI.IsMists and 4 or 3), colorSetting = "color-soul-shards" }
+			elseif class == "MAGE" and HydraUI.IsMainline then
+				return { field = "ClassPower", alias = "ArcaneCharges", count = 4, colorSetting = "color-arcane-charges" }
+			elseif class == "PALADIN" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) then
+				return { field = "ClassPower", alias = "HolyPower", count = 5, colorSetting = "color-holy-power" }
+			elseif class == "SHAMAN" and not HydraUI.IsMainline then
+				return { field = "Totems", count = 4, color = function(i) return unpack(HydraUI.TotemColors[i]) end, postUpdate = UF.PostUpdateTotems, totems = true }
 			end
 
-			local Max = HydraUI.UserClass == "DRUID" and 5 or (not HydraUI.IsMainline and 5 or 7)
-			local Width = (Settings["unitframes-player-width"] / Max) - 1
-
-			for i = 1, Max do
-				ComboPoints[i] = CreateFrame("StatusBar", self:GetName() .. "ComboPoint" .. i, ComboPoints)
-				ComboPoints[i]:SetSize(Width, Settings["player-resource-height"])
-				ComboPoints[i]:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				ComboPoints[i]:SetStatusBarColor(HydraUI.ComboPoints[i][1], HydraUI.ComboPoints[i][2], HydraUI.ComboPoints[i][3])
-				ComboPoints[i]:SetWidth(i == 1 and Width - 1 or Width)
-
-				ComboPoints[i].BG = ComboPoints:CreateTexture(nil, "BORDER")
-				ComboPoints[i].BG:SetAllPoints(ComboPoints[i])
-				ComboPoints[i].BG:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				ComboPoints[i].BG:SetVertexColor(HydraUI.ComboPoints[i][1], HydraUI.ComboPoints[i][2], HydraUI.ComboPoints[i][3])
-				ComboPoints[i].BG:SetAlpha(0.3)
-
-				if HydraUI.IsMainline then
-					ComboPoints[i].Charged = ComboPoints[i]:CreateTexture(nil, "ARTWORK")
-					ComboPoints[i].Charged:SetAllPoints()
-					ComboPoints[i].Charged:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-					ComboPoints[i].Charged:SetVertexColor(HydraUI:HexToRGB(Settings["color-combo-charged"]))
-					ComboPoints[i].Charged:Hide()
-				end
-
-				if (i == 1) then
-					ComboPoints[i]:SetPoint("LEFT", ComboPoints, 1, 0)
-				else
-					ComboPoints[i]:SetPoint("TOPLEFT", ComboPoints[i-1], "TOPRIGHT", 1, 0)
-				end
-			end
-
-			self.ComboPoints = ComboPoints
-			self.AuraParent = ComboPoints
-		elseif (HydraUI.UserClass == "WARLOCK" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)) then
-			local Count = 3
-
-			if HydraUI.IsMainline then
-				Count = 5
-			elseif HydraUI.IsMists then
-				Count = 4
-			end
-
-			local SoulShards = CreateFrame("Frame", self:GetName() .. "SoulShards", self, "BackdropTemplate")
-			SoulShards:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			SoulShards:SetBackdrop(HydraUI.Backdrop)
-			SoulShards:SetBackdropColor(0, 0, 0)
-			SoulShards:SetBackdropBorderColor(0, 0, 0)
-
-			if Settings["player-move-resource"] then
-				SoulShards:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				SoulShards:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
-			end
-
-			local Width = (Settings["unitframes-player-width"] / Count) - 1
-
-			for i = 1, Count do
-				SoulShards[i] = CreateFrame("StatusBar", self:GetName() .. "SoulShard" .. i, SoulShards)
-				SoulShards[i]:SetSize(Width, Settings["player-resource-height"])
-				SoulShards[i]:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				SoulShards[i]:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-soul-shards"]))
-				SoulShards[i]:SetWidth(i == 1 and Width - 1 or Width)
-
-				SoulShards[i].bg = SoulShards:CreateTexture(nil, "BORDER")
-				SoulShards[i].bg:SetAllPoints(SoulShards[i])
-				SoulShards[i].bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				SoulShards[i].bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-soul-shards"]))
-				SoulShards[i].bg:SetAlpha(0.3)
-
-				if (i == 1) then
-					SoulShards[i]:SetPoint("LEFT", SoulShards, 1, 0)
-				else
-					SoulShards[i]:SetPoint("TOPLEFT", SoulShards[i-1], "TOPRIGHT", 1, 0)
-				end
-			end
-
-			self.ClassPower = SoulShards
-			self.SoulShards = SoulShards
-			self.AuraParent = SoulShards
-		elseif (HydraUI.UserClass == "MAGE" and HydraUI.IsMainline) then
-			local ArcaneCharges = CreateFrame("Frame", self:GetName() .. "ArcaneCharges", self, "BackdropTemplate")
-			ArcaneCharges:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			ArcaneCharges:SetBackdrop(HydraUI.Backdrop)
-			ArcaneCharges:SetBackdropColor(0, 0, 0)
-			ArcaneCharges:SetBackdropBorderColor(0, 0, 0)
-
-			if Settings["player-move-resource"] then
-				ArcaneCharges:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				ArcaneCharges:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
-			end
-
-			local Width = (Settings["unitframes-player-width"] / 4) - 1
-
-			for i = 1, 4 do
-				ArcaneCharges[i] = CreateFrame("StatusBar", self:GetName() .. "ArcaneCharge" .. i, ArcaneCharges)
-				ArcaneCharges[i]:SetSize(Width, Settings["player-resource-height"])
-				ArcaneCharges[i]:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				ArcaneCharges[i]:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-arcane-charges"]))
-				ArcaneCharges[i]:SetWidth(i == 1 and Width - 1 or Width)
-
-				ArcaneCharges[i].bg = ArcaneCharges:CreateTexture(nil, "BORDER")
-				ArcaneCharges[i].bg:SetAllPoints(ArcaneCharges[i])
-				ArcaneCharges[i].bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				ArcaneCharges[i].bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-arcane-charges"]))
-				ArcaneCharges[i].bg:SetAlpha(0.3)
-
-				if (i == 1) then
-					ArcaneCharges[i]:SetPoint("LEFT", ArcaneCharges, 1, 0)
-				else
-					ArcaneCharges[i]:SetPoint("TOPLEFT", ArcaneCharges[i-1], "TOPRIGHT", 1, 0)
-				end
-			end
-
-			self.ClassPower = ArcaneCharges
-			self.ArcaneCharges = ArcaneCharges
-			self.AuraParent = ArcaneCharges
-		elseif (HydraUI.UserClass == "MONK") then
-			local Chi = CreateFrame("Frame", self:GetName() .. "Chi", self, "BackdropTemplate")
-			Chi:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			Chi:SetBackdrop(HydraUI.Backdrop)
-			Chi:SetBackdropColor(0, 0, 0)
-			Chi:SetBackdropBorderColor(0, 0, 0)
-
-			if Settings["player-move-resource"] then
-				Chi:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				Chi:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
-			end
-
-			local Width = (Settings["unitframes-player-width"] / 6) - 1
-
-			for i = 1, 6 do
-				Chi[i] = CreateFrame("StatusBar", self:GetName() .. "Chi" .. i, Chi)
-				Chi[i]:SetSize(Width, Settings["player-resource-height"])
-				Chi[i]:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Chi[i]:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-chi"]))
-				Chi[i]:SetWidth(i == 1 and Width - 1 or Width)
-
-				Chi[i].bg = Chi:CreateTexture(nil, "BORDER")
-				Chi[i].bg:SetAllPoints(Chi[i])
-				Chi[i].bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Chi[i].bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-chi"]))
-				Chi[i].bg:SetAlpha(0.3)
-
-				if (i == 1) then
-					Chi[i]:SetPoint("LEFT", Chi, 1, 0)
-				else
-					Chi[i]:SetPoint("TOPLEFT", Chi[i-1], "TOPRIGHT", 1, 0)
-				end
-			end
-
-			local Stagger = CreateFrame("StatusBar", nil, self)
-			Stagger:SetSize(Settings["unitframes-player-width"] - 2, Settings["player-resource-height"])
-			Stagger:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-			Stagger:Hide()
-
-			if Settings["player-move-resource"] then
-				Stagger:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				Stagger:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 1, 0)
-			end
-
-			Stagger.bg = Stagger:CreateTexture(nil, "ARTWORK")
-			Stagger.bg:SetAllPoints()
-			Stagger.bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-			Stagger.bg.multiplier = 0.3
-
-			Stagger.Backdrop = Stagger:CreateTexture(nil, "BACKGROUND")
-			Stagger.Backdrop:SetPoint("TOPLEFT", Stagger, -1, 1)
-			Stagger.Backdrop:SetPoint("BOTTOMRIGHT", Stagger, 1, -1)
-			Stagger.Backdrop:SetColorTexture(0, 0, 0)
-
-			self.Stagger = Stagger
-			self.ClassPower = Chi
-			self.Chi = Chi
-			self.AuraParent = Chi
-		elseif (HydraUI.UserClass == "DEATHKNIGHT") then
-			local Runes = CreateFrame("Frame", self:GetName() .. "Runes", self, "BackdropTemplate")
-			Runes:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			Runes:SetBackdrop(HydraUI.Backdrop)
-			Runes:SetBackdropColor(0, 0, 0)
-			Runes:SetBackdropBorderColor(0, 0, 0)
-			Runes.sortOrder = "asc" -- desc
-
-			if Settings["player-move-resource"] then
-				Runes:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				Runes:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
-			end
-
-			local Width = (Settings["unitframes-player-width"] / 6) - 1
-
-			for i = 1, 6 do
-				Runes[i] = CreateFrame("StatusBar", self:GetName() .. "Rune" .. i, Runes)
-				Runes[i]:SetSize(Width, Settings["player-resource-height"])
-				Runes[i]:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Runes[i]:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-runes"]))
-				Runes[i]:SetWidth(i == 1 and Width - 1 or Width)
-				Runes[i].Duration = 0
-
-				Runes[i].bg = Runes[i]:CreateTexture(nil, "BORDER")
-				Runes[i].bg:SetAllPoints(Runes[i])
-				Runes[i].bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Runes[i].bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-runes"]))
-				Runes[i].bg:SetAlpha(0.2)
-
-				Runes[i].Shine = Runes[i]:CreateTexture(nil, "ARTWORK")
-				Runes[i].Shine:SetAllPoints(Runes[i])
-				Runes[i].Shine:SetTexture(Assets:GetTexture("pHishTex28"))
-				Runes[i].Shine:SetVertexColor(0.8, 0.8, 0.8)
-				Runes[i].Shine:SetAlpha(0)
-				Runes[i].Shine:SetDrawLayer("ARTWORK", 7)
-
-				Runes[i].ReadyAnim = LibMotion:CreateAnimationGroup()
-
-				Runes[i].ReadyAnim.In = LibMotion:CreateAnimation(Runes[i].Shine, "Fade")
-				Runes[i].ReadyAnim.In:SetGroup(Runes[i].ReadyAnim)
-				Runes[i].ReadyAnim.In:SetOrder(1)
-				Runes[i].ReadyAnim.In:SetEasing("in")
-				Runes[i].ReadyAnim.In:SetDuration(0.2)
-				Runes[i].ReadyAnim.In:SetChange(0.5)
-
-				Runes[i].ReadyAnim.Out = LibMotion:CreateAnimation(Runes[i].Shine, "Fade")
-				Runes[i].ReadyAnim.Out:SetGroup(Runes[i].ReadyAnim)
-				Runes[i].ReadyAnim.Out:SetOrder(2)
-				Runes[i].ReadyAnim.Out:SetEasing("out")
-				Runes[i].ReadyAnim.Out:SetDuration(0.2)
-				Runes[i].ReadyAnim.Out:SetChange(0)
-
-				if (i == 1) then
-					Runes[i]:SetPoint("LEFT", Runes, 1, 0)
-				else
-					Runes[i]:SetPoint("TOPLEFT", Runes[i-1], "TOPRIGHT", 1, 0)
-				end
-			end
-
-			self.Runes = Runes
-			self.AuraParent = Runes
-		elseif (HydraUI.UserClass == "PALADIN" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)) then
-			local Count = 5
-
-			local HolyPower = CreateFrame("Frame", self:GetName() .. "HolyPower", self, "BackdropTemplate")
-			HolyPower:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			HolyPower:SetBackdrop(HydraUI.Backdrop)
-			HolyPower:SetBackdropColor(0, 0, 0)
-			HolyPower:SetBackdropBorderColor(0, 0, 0)
-
-			if Settings["player-move-resource"] then
-				HolyPower:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				HolyPower:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
-			end
-
-			local Width = (Settings["unitframes-player-width"] / Count) - 1
-
-			for i = 1, Count do
-				HolyPower[i] = CreateFrame("StatusBar", self:GetName() .. "HolyPower" .. i, HolyPower)
-				HolyPower[i]:SetSize(Width, Settings["player-resource-height"])
-				HolyPower[i]:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				HolyPower[i]:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-holy-power"]))
-				HolyPower[i]:SetWidth(i == 1 and Width - 1 or Width)
-
-				HolyPower[i].bg = HolyPower:CreateTexture(nil, "BORDER")
-				HolyPower[i].bg:SetAllPoints(HolyPower[i])
-				HolyPower[i].bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				HolyPower[i].bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-holy-power"]))
-				HolyPower[i].bg:SetAlpha(0.3)
-
-				if (i == 1) then
-					HolyPower[i]:SetPoint("LEFT", HolyPower, 1, 0)
-				else
-					HolyPower[i]:SetPoint("TOPLEFT", HolyPower[i-1], "TOPRIGHT", 1, 0)
-				end
-			end
-
-			self.ClassPower = HolyPower
-			self.HolyPower = HolyPower
-			self.AuraParent = HolyPower
-		elseif (HydraUI.UserClass == "SHAMAN") and (not HydraUI.IsMainline) then
-			local Totems = CreateFrame("Frame", self:GetName() .. "Totems", self, "BackdropTemplate")
-			Totems:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			Totems:SetBackdrop(HydraUI.Backdrop)
-			Totems:SetBackdropColor(0, 0, 0)
-			Totems:SetBackdropBorderColor(0, 0, 0)
-			Totems.PostUpdate = UF.PostUpdateTotems
-
-			if Settings["player-move-resource"] then
-				Totems:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				Totems:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
-			end
-
-			--[[local TotemBar = CreateFrame("Frame", "HydraUI Totem Bar", HydraUI.UIParent)
-			TotemBar:SetSize(40 * 4 + 5, 40 + 2)
-			TotemBar:SetPoint("CENTER", HydraUI.UIParent, 0, -120)
-			TotemBar:SetMovable("CENTER", HydraUI.UIParent, 0, -120)
-			--HydraUI:CreateMover(TotemBar)
-			TotemBar:EnableMouse(true)
-			TotemBar:RegisterForDrag("LeftButton")
-			TotemBar:SetUserPlaced(true)
-			TotemBar:SetScript("OnDragStart", TotemBar.StartMoving)
-			TotemBar:SetScript("OnDragStop", TotemBar.StopMovingOrSizing)
-
-			TotemBar.bg = TotemBar:CreateTexture(nil, "BACKGROUND")
-			TotemBar.bg:SetAllPoints()
-			TotemBar.bg:SetTexture(Assets:GetTexture("Blank"))
-			TotemBar.bg:SetVertexColor(0, 0, 0)]]
-
-			local Width = (Settings["unitframes-player-width"] / 4) - 1
-
-			for i = 1, 4 do
-				Totems[i] = CreateFrame("Button", nil, self)
-				Totems[i]:SetSize(40, 40)
-
-				--[[Totems[i].bg = Totems:CreateTexture(nil, "BACKGROUND")
-				Totems[i].bg:SetAllPoints(Totems[i])
-				Totems[i].bg:SetTexture(Assets:GetTexture("Blank"))
-				Totems[i].bg:SetVertexColor(HydraUI.TotemColors[i][1], HydraUI.TotemColors[i][2], HydraUI.TotemColors[i][3], 0.3)
-
-				Totems[i].Icon = Totems[i]:CreateTexture(nil, "OVERLAY")
-				Totems[i].Icon:SetPoint("TOPLEFT", 0, 0)
-				Totems[i].Icon:SetPoint("BOTTOMRIGHT", 0, 0)
-				Totems[i].Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-
-				Totems[i].Cooldown = CreateFrame("Cooldown", nil, Totems[i], "CooldownFrameTemplate")
-				Totems[i].Cooldown:SetAllPoints()
-
-				local Cooldown = Totems[i].Cooldown:GetRegions()
-
-				if Cooldown then
-					HydraUI:SetFontInfo(Cooldown, Settings["unitframes-font"], 18, Settings["unitframes-font-flags"])
-				end]]
-
-				Totems[i].Bar = CreateFrame("StatusBar", self:GetName() .. "Totems" .. i, Totems)
-				Totems[i].Bar:SetSize(Width, Settings["player-resource-height"])
-				Totems[i].Bar:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Totems[i].Bar:SetStatusBarColor(HydraUI.TotemColors[i][1], HydraUI.TotemColors[i][2], HydraUI.TotemColors[i][3])
-				Totems[i].Bar:SetWidth(i == 1 and Width - 1 or Width)
-				Totems[i].Bar:EnableMouse(true)
-				Totems[i].Bar:SetID(i)
-				Totems[i].Bar:Hide()
-
-				Totems[i].bg = Totems:CreateTexture(nil, "BORDER")
-				Totems[i].bg:SetAllPoints(Totems[i].Bar)
-				Totems[i].bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Totems[i].bg:SetVertexColor(HydraUI.TotemColors[i][1], HydraUI.TotemColors[i][2], HydraUI.TotemColors[i][3])
-				Totems[i].bg:SetAlpha(0.3)
-
-				if (i == 1) then
-					--Totems[i]:SetPoint("LEFT", TotemBar, 1, 0)
-					Totems[i].Bar:SetPoint("LEFT", Totems, 1, 0)
-				else
-					--Totems[i]:SetPoint("LEFT", Totems[i-1], "RIGHT", 1, 0)
-					Totems[i].Bar:SetPoint("TOPLEFT", Totems[i-1].Bar, "TOPRIGHT", 1, 0)
-				end
-			end
-
-			self.ClassPower = Totems
-			self.Totems = Totems
-			self.AuraParent = Totems
-		elseif (HydraUI.UserClass == "EVOKER") then
-			local Essence = CreateFrame("Frame", self:GetName() .. "Essence", self, "BackdropTemplate")
-			Essence:SetSize(Settings["unitframes-player-width"], Settings["player-resource-height"] + 2)
-			Essence:SetBackdrop(HydraUI.Backdrop)
-			Essence:SetBackdropColor(0, 0, 0)
-			Essence:SetBackdropBorderColor(0, 0, 0)
-
-			if Settings["player-move-resource"] then
-				Essence:SetPoint("CENTER", ResourceAnchor, 0, 0)
-			else
-				Essence:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, -1)
-			end
-
-			local Width = (Settings["unitframes-player-width"] / 6) - 1
-
-			for i = 1, 6 do
-				Essence[i] = CreateFrame("StatusBar", self:GetName() .. "Essence" .. i, Essence)
-				Essence[i]:SetSize(Width, Settings["player-resource-height"])
-				Essence[i]:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Essence[i]:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-essence"]))
-				Essence[i]:SetWidth(i == 1 and Width - 1 or Width)
-
-				Essence[i].bg = Essence:CreateTexture(nil, "BORDER")
-				Essence[i].bg:SetAllPoints(Essence[i])
-				Essence[i].bg:SetTexture(Assets:GetTexture(Settings.PlayerResourceTexture))
-				Essence[i].bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-essence"]))
-				Essence[i].bg:SetAlpha(0.3)
-
-				if (i == 1) then
-					Essence[i]:SetPoint("LEFT", Essence, 1, 0)
-				else
-					Essence[i]:SetPoint("TOPLEFT", Essence[i-1], "TOPRIGHT", 1, 0)
-				end
-			end
-
-			self.ClassPower = Essence
-			self.Essence = Essence
-			self.AuraParent = Essence
+			return descriptors[class]
 		end
 
+		local function CreateResourceBar(frame, descriptor)
+			if not descriptor then return end
+			local resource = CreateFrame("Frame", frame:GetName() .. descriptor.field, frame, "BackdropTemplate")
+			resource:SetBackdrop(HydraUI.Backdrop)
+			resource:SetBackdropColor(0, 0, 0)
+			resource:SetBackdropBorderColor(0, 0, 0)
+			resource.Descriptor = descriptor
+			resource.PostUpdate = descriptor.postUpdate
+			resource.sortOrder = descriptor.runes and "asc" or nil
+
+			local function Segment(bar, i)
+				return descriptor.totems and bar[i].Bar or bar[i]
+			end
+			local function Count(bar)
+				local count = descriptor.countProvider and descriptor.countProvider() or descriptor.count
+				return math.max(1, math.min(count or descriptor.count, descriptor.count))
+			end
+			local function Anchor(bar, detached)
+				bar:ClearAllPoints()
+				bar:SetPoint(detached and "CENTER" or "BOTTOMLEFT", detached and ResourceAnchor or frame, detached and "CENTER" or "TOPLEFT", 0, detached and 0 or -1)
+				if bar.Stagger then
+					bar.Stagger:ClearAllPoints()
+					bar.Stagger:SetPoint(detached and "CENTER" or "BOTTOMLEFT", detached and ResourceAnchor or frame, detached and "CENTER" or "TOPLEFT", detached and 0 or 1, 0)
+				end
+			end
+			local NativeSetWidth, NativeSetHeight = resource.SetWidth, resource.SetHeight
+			function resource:SetWidth(width)
+				NativeSetWidth(self, width)
+				local count = Count(self)
+				local segmentWidth = (width / count) - 1
+				for i = 1, descriptor.count do Segment(self, i):SetWidth(i == 1 and segmentWidth - 1 or segmentWidth) end
+				if self.Stagger then self.Stagger:SetWidth(width - 2) end
+			end
+			function resource:SetHeight(height)
+				NativeSetHeight(self, height + 2)
+				for i = 1, descriptor.count do Segment(self, i):SetHeight(height) end
+				if self.Stagger then self.Stagger:SetHeight(height) end
+			end
+			function resource:SetTexture(texture)
+				texture = Assets:GetTexture(texture)
+				for i = 1, descriptor.count do
+					local segment = Segment(self, i)
+					segment:SetStatusBarTexture(texture)
+					segment.bg:SetTexture(texture)
+					if segment.Charged then segment.Charged:SetTexture(texture) end
+				end
+				if self.Stagger then self.Stagger:SetStatusBarTexture(texture); self.Stagger.bg:SetTexture(texture) end
+			end
+			function resource:SetDetached(detached) Anchor(self, detached) end
+
+			for i = 1, descriptor.count do
+				local owner = resource
+				if descriptor.totems then owner = CreateFrame("Button", nil, frame); resource[i] = owner end
+				local segment = CreateFrame("StatusBar", frame:GetName() .. descriptor.field .. i, owner)
+				if descriptor.totems then owner.Bar = segment; segment:EnableMouse(true); segment:SetID(i); segment:Hide() else resource[i] = segment end
+				local r, g, b = descriptor.color and descriptor.color(i) or HydraUI:HexToRGB(Settings[descriptor.colorSetting])
+				segment:SetStatusBarColor(r, g, b)
+				segment.bg = resource:CreateTexture(nil, "BORDER")
+				segment.bg:SetAllPoints(segment); segment.bg:SetVertexColor(r, g, b); segment.bg:SetAlpha(descriptor.runes and 0.2 or 0.3)
+				if descriptor.charged then
+					segment.Charged = segment:CreateTexture(nil, "ARTWORK"); segment.Charged:SetAllPoints()
+					segment.Charged:SetVertexColor(HydraUI:HexToRGB(Settings["color-combo-charged"])); segment.Charged:Hide()
+				end
+				if descriptor.runes then
+					segment.Duration = 0
+					segment.Shine = segment:CreateTexture(nil, "ARTWORK"); segment.Shine:SetAllPoints(); segment.Shine:SetTexture(Assets:GetTexture("pHishTex28")); segment.Shine:SetVertexColor(0.8, 0.8, 0.8); segment.Shine:SetAlpha(0); segment.Shine:SetDrawLayer("ARTWORK", 7)
+					segment.ReadyAnim = LibMotion:CreateAnimationGroup()
+					segment.ReadyAnim.In = LibMotion:CreateAnimation(segment.Shine, "Fade"); segment.ReadyAnim.In:SetGroup(segment.ReadyAnim); segment.ReadyAnim.In:SetOrder(1); segment.ReadyAnim.In:SetEasing("in"); segment.ReadyAnim.In:SetDuration(0.2); segment.ReadyAnim.In:SetChange(0.5)
+					segment.ReadyAnim.Out = LibMotion:CreateAnimation(segment.Shine, "Fade"); segment.ReadyAnim.Out:SetGroup(segment.ReadyAnim); segment.ReadyAnim.Out:SetOrder(2); segment.ReadyAnim.Out:SetEasing("out"); segment.ReadyAnim.Out:SetDuration(0.2); segment.ReadyAnim.Out:SetChange(0)
+				end
+				segment:SetPoint(i == 1 and "LEFT" or "TOPLEFT", i == 1 and resource or Segment(resource, i - 1), i == 1 and "LEFT" or "TOPRIGHT", i == 1 and 1 or 1, 0)
+			end
+
+			if descriptor.stagger then
+				local stagger = CreateFrame("StatusBar", nil, frame); stagger:Hide()
+				stagger.bg = stagger:CreateTexture(nil, "ARTWORK"); stagger.bg:SetAllPoints(); stagger.bg.multiplier = 0.3
+				stagger.Backdrop = stagger:CreateTexture(nil, "BACKGROUND"); stagger.Backdrop:SetPoint("TOPLEFT", stagger, -1, 1); stagger.Backdrop:SetPoint("BOTTOMRIGHT", stagger, 1, -1); stagger.Backdrop:SetColorTexture(0, 0, 0)
+				resource.Stagger, frame.Stagger = stagger, stagger
+			end
+
+			resource:SetWidth(Settings["unitframes-player-width"])
+			resource:SetHeight(Settings["player-resource-height"])
+			resource:SetTexture(Settings.PlayerResourceTexture)
+			resource:SetDetached(Settings["player-move-resource"])
+			frame[descriptor.field] = resource
+			if descriptor.alias then frame[descriptor.alias] = resource end
+			frame.ClassResource, frame.AuraParent = resource, resource
+			return resource
+		end
+
+		CreateResourceBar(self, SelectResourceDescriptor(HydraUI.UserClass))
 		self.ResourceAnchor = ResourceAnchor
 	end
-
 	-- Threat
 	local Threat = CreateFrame("Frame", nil, self, "BackdropTemplate")
 
@@ -769,81 +468,13 @@ local UpdateOnlyPlayerDebuffs = function(value)
 end
 
 local UpdatePlayerWidth = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
-
-		UF:SetFrameWidth("player", value)
-
-		-- Auras
-		Frame.Buffs:SetWidth(value)
-		Frame.Debuffs:SetWidth(value)
-
-		if Settings["player-move-power"] then
-			return
-		end
-
-		if Frame.ComboPoints then
-			Frame.ComboPoints:SetWidth(value)
-
-			local Max = UnitPowerMax("player", Enum.PowerType.ComboPoints)
-			local Width = (Settings["unitframes-player-width"] / Max) - 1
-
-			for i = 1, Max do
-				Frame.ComboPoints[i]:SetWidth(i == 1 and Width - 1 or Width)
-			end
-		elseif Frame.SoulShards then
-			Frame.SoulShards:SetWidth(value)
-
-			local Width = (Settings["unitframes-player-width"] / 5) - 1
-
-			for i = 1, 5 do
-				Frame.SoulShards[i]:SetWidth(i == 1 and Width - 1 or Width)
-			end
-		elseif Frame.ArcanePower then
-			Frame.ArcanePower:SetWidth(value)
-
-			local Width = (Settings["unitframes-player-width"] / 4) - 1
-
-			for i = 1, 4 do
-				Frame.ArcanePower[i]:SetWidth(i == 1 and Width - 1 or Width)
-			end
-		elseif Frame.Totems then
-			Frame.Totems:SetWidth(value)
-
-			local Width = (Settings["unitframes-player-width"] / 4) - 1
-
-			for i = 1, 4 do
-				Frame.Totems[i]:SetWidth(i == 1 and Width - 1 or Width)
-			end
-		elseif Frame.Chi then
-			Frame.Chi:SetWidth(value)
-			Frame.Stagger:SetWidth(value)
-
-			local Width = (Settings["unitframes-player-width"] / 6) - 1
-
-			for i = 1, 6 do
-				Frame.Chi[i]:SetWidth(i == 1 and Width - 1 or Width)
-			end
-		elseif Frame.Runes then
-			Frame.Runes:SetWidth(value)
-
-			local Width = (Settings["unitframes-player-width"] / 6) - 1
-
-			for i = 1, 6 do
-				Frame.Runes[i]:SetWidth(i == 1 and Width - 1 or Width)
-			end
-		elseif Frame.HolyPower then
-			Frame.HolyPower:SetWidth(value)
-
-			local Width = (Settings["unitframes-player-width"] / 5) - 1
-
-			for i = 1, 5 do
-				Frame.HolyPower[i]:SetWidth(i == 1 and Width - 1 or Width)
-			end
-		end
-	end
+	local Frame = HydraUI.UnitFrames["player"]
+	if not Frame then return end
+	UF:SetFrameWidth("player", value)
+	Frame.Buffs:SetWidth(value)
+	Frame.Debuffs:SetWidth(value)
+	if Frame.ClassResource and not Settings["player-move-resource"] then Frame.ClassResource:SetWidth(value) end
 end
-
 local UpdatePlayerHealthHeight = function(value)
 	UF:SetHealthHeight("player", value, Settings["unitframes-player-power-height"])
 end
@@ -927,104 +558,13 @@ local UpdatePlayerEnablePVPIndicator = function(value)
 end
 
 local UpdateResourceBarHeight = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
-
-		if Frame.ComboPoints then
-			Frame.ComboPoints:SetHeight(value + 2)
-
-			local Max = UnitPowerMax("player", Enum.PowerType.ComboPoints)
-
-			for i = 1, Max do
-				Frame.ComboPoints[i]:SetHeight(value)
-			end
-		elseif Frame.SoulShards then
-			Frame.SoulShards:SetHeight(value + 2)
-
-			for i = 1, 5 do
-				Frame.SoulShards[i]:SetHeight(value)
-			end
-		elseif Frame.ArcanePower then
-			Frame.ArcanePower:SetHeight(value + 2)
-
-			for i = 1, 4 do
-				Frame.ArcanePower[i]:SetHeight(value)
-			end
-		elseif Frame.Chi then
-			Frame.Chi:SetHeight(value + 2)
-			Frame.Stagger:SetHeight(value)
-
-			for i = 1, 6 do
-				Frame.Chi[i]:SetHeight(value)
-			end
-		elseif Frame.Runes then
-			Frame.Runes:SetHeight(value + 2)
-
-			for i = 1, 6 do
-				Frame.Runes[i]:SetHeight(value)
-			end
-		elseif Frame.HolyPower then
-			Frame.HolyPower:SetHeight(value + 2)
-
-			for i = 1, 5 do
-				Frame.HolyPower[i]:SetHeight(value)
-			end
-		elseif Frame.Totems then
-			Frame.Totems:SetHeight(value + 2)
-
-			for i = 1, 4 do
-				Frame.Totems[i]:SetHeight(value)
-			end
-		end
-	end
+	local Frame = HydraUI.UnitFrames["player"]
+	if Frame and Frame.ClassResource then Frame.ClassResource:SetHeight(value) end
 end
-
 local UpdateResourceTexture = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
-
-		if Frame.ComboPoints then
-			for i = 1, #Frame.ComboPoints do
-				Frame.ComboPoints[i]:SetStatusBarTexture(Assets:GetTexture(value))
-				Frame.ComboPoints[i].bg:SetTexture(Assets:GetTexture(value))
-			end
-		elseif Frame.SoulShards then
-			for i = 1, 5 do
-				Frame.SoulShards[i]:SetStatusBarTexture(Assets:GetTexture(value))
-				Frame.SoulShards[i].bg:SetTexture(Assets:GetTexture(value))
-			end
-		elseif Frame.ArcanePower then
-			for i = 1, 4 do
-				Frame.ArcanePower[i]:SetStatusBarTexture(Assets:GetTexture(value))
-				Frame.ArcanePower[i].bg:SetTexture(Assets:GetTexture(value))
-			end
-		elseif Frame.Chi then
-			Frame.Stagger:SetStatusBarTexture(Assets:GetTexture(value))
-			Frame.Stagger.bg:SetTexture(Assets:GetTexture(value))
-
-			for i = 1, 6 do
-				Frame.Chi[i]:SetStatusBarTexture(Assets:GetTexture(value))
-				Frame.Chi[i].bg:SetTexture(Assets:GetTexture(value))
-			end
-		elseif Frame.Runes then
-			for i = 1, 6 do
-				Frame.Runes[i]:SetStatusBarTexture(Assets:GetTexture(value))
-				Frame.Runes[i].bg:SetTexture(Assets:GetTexture(value))
-			end
-		elseif Frame.HolyPower then
-			for i = 1, 5 do
-				Frame.HolyPower[i]:SetStatusBarTexture(Assets:GetTexture(value))
-				Frame.HolyPower[i].bg:SetTexture(Assets:GetTexture(value))
-			end
-		elseif Frame.Totems then
-			for i = 1, 4 do
-				Frame.Totems[i]:SetStatusBarTexture(Assets:GetTexture(value))
-				Frame.Totems[i].bg:SetTexture(Assets:GetTexture(value))
-			end
-		end
-	end
+	local Frame = HydraUI.UnitFrames["player"]
+	if Frame and Frame.ClassResource then Frame.ClassResource:SetTexture(value) end
 end
-
 local UpdateBuffSize = function(value)
 	UF:SetAuraSize("player", value, "Buffs", Settings["unitframes-player-width"])
 end
@@ -1118,66 +658,7 @@ local UpdateResourcePosition = function(value)
 			Frame.ThreatIndicator:SetPoint("BOTTOMRIGHT", 1, -1)
 		end
 
-		if Frame.ComboPoints then
-			Frame.ComboPoints:ClearAllPoints()
-
-			if value then
-				Frame.ComboPoints:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-			else
-				Frame.ComboPoints:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-			end
-		elseif Frame.SoulShards then
-			Frame.SoulShards:ClearAllPoints()
-
-			if value then
-				Frame.SoulShards:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-			else
-				Frame.SoulShards:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-			end
-		elseif Frame.ArcanePower then
-			Frame.ArcanePower:ClearAllPoints()
-
-			if value then
-				Frame.ArcanePower:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-			else
-				Frame.ArcanePower:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-			end
-		elseif Frame.Chi then
-			Frame.Chi:ClearAllPoints()
-			Frame.Stagger:ClearAllPoints()
-
-			if value then
-				Frame.Chi:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-				Frame.Stagger:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-			else
-				Frame.Chi:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-				Frame.Stagger:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-			end
-		elseif Frame.Runes then
-			Frame.Runes:ClearAllPoints()
-
-			if value then
-				Frame.Runes:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-			else
-				Frame.Runes:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-			end
-		elseif Frame.HolyPower then
-			Frame.HolyPower:ClearAllPoints()
-
-			if value then
-				Frame.HolyPower:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-			else
-				Frame.HolyPower:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-			end
-		elseif Frame.Totems then
-			Frame.Totems:ClearAllPoints()
-
-			if value then
-				Frame.Totems:SetPoint("CENTER", Frame.ResourceAnchor, 0, 0)
-			else
-				Frame.Totems:SetPoint("BOTTOMLEFT", Frame, "TOPLEFT", 0, -1)
-			end
-		end
+		if Frame.ClassResource then Frame.ClassResource:SetDetached(value) end
 	end
 end
 

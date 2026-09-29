@@ -47,7 +47,11 @@ end
 -- Style modules remain responsible for choosing settings and frame-specific behavior.
 function UF:CreateBackdrop(frame, texture, layer, relativeTo, colorR, colorG, colorB)
 	local backdrop = frame:CreateTexture(nil, layer or "BACKGROUND")
-	if relativeTo then backdrop:SetAllPoints(relativeTo) else backdrop:SetAllPoints() end
+	if relativeTo then
+		backdrop:SetAllPoints(relativeTo)
+	else
+		backdrop:SetAllPoints()
+	end
 	backdrop:SetTexture(Assets:GetTexture(texture))
 	backdrop:SetVertexColor(colorR or 0, colorG or 0, colorB or 0)
 	return backdrop
@@ -74,7 +78,9 @@ function UF:CreateHealthBar(frame, height, texture, reverseFill, orientation, ba
 	health:SetHeight(height)
 	health:SetStatusBarTexture(Assets:GetTexture(texture))
 	health:SetReverseFill(reverseFill)
-	if orientation then health:SetOrientation(orientation) end
+	if orientation then
+		health:SetOrientation(orientation)
+	end
 
 	local background = frame:CreateTexture(nil, backgroundLayer or "BORDER")
 	background:SetAllPoints(health)
@@ -144,7 +150,9 @@ function UF:CreateMouseoverHighlight(frame, health, texture, enabled, colorR, co
 	frame.Highlight = highlight
 	frame:HookScript("OnEnter", function(owner) owner.Highlight:SetAlpha(alpha or 0.15) end)
 	frame:HookScript("OnLeave", function(owner) owner.Highlight:SetAlpha(0) end)
-	if not enabled then highlight:Hide() end
+	if not enabled then
+		highlight:Hide()
+	end
 	return highlight
 end
 
@@ -181,7 +189,9 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 	frame:RegisterForClicks("AnyUp")
 	frame:SetScript("OnEnter", UnitFrame_OnEnter)
 	frame:SetScript("OnLeave", UnitFrame_OnLeave)
-	if config.debuffColors then frame.colors.debuff = HydraUI.DebuffColors end
+	if config.debuffColors then
+		frame.colors.debuff = HydraUI.DebuffColors
+	end
 
 	self:CreateBackdrop(frame, config.backdropTexture or "Blank", config.backdropLayer or "BACKGROUND")
 	if config.threat ~= false then
@@ -206,7 +216,9 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 	local r, g, b = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 	frame.colors.health = {r, g, b}
 	health.Smooth = true
-	if config.healthSmoothKey then health.Smooth = Setting(config.healthSmoothKey) end
+	if config.healthSmoothKey then
+		health.Smooth = Setting(config.healthSmoothKey)
+	end
 	health.frequentUpdates = config.healthFrequentUpdates
 	health.colorTapping = config.colorTapping
 	health.colorDisconnected = config.colorDisconnected
@@ -215,7 +227,9 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 	local power, powerLeft, powerRight
 	if config.power ~= false and (not config.powerEnabledKey or Setting(config.powerEnabledKey)) then
 		local powerReverse = config.powerReverse
-		if powerReverse == nil then powerReverse = FamilySetting(config, "-power-reverse") end
+		if powerReverse == nil then
+			powerReverse = FamilySetting(config, "-power-reverse")
+		end
 		power = self:CreatePowerBar(frame, FamilySetting(config, "-power-height"), Setting(config.powerTextureKey), powerReverse)
 		power.frequentUpdates = true
 		power.colorReaction = config.powerReaction
@@ -229,8 +243,12 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 		end
 	end
 
-	if healthLeft then frame:Tag(healthLeft, FamilySetting(config, "-health-left")) end
-	if healthRight then frame:Tag(healthRight, FamilySetting(config, "-health-right")) end
+	if healthLeft then
+		frame:Tag(healthLeft, FamilySetting(config, "-health-left"))
+	end
+	if healthRight then
+		frame:Tag(healthRight, FamilySetting(config, "-health-right"))
+	end
 	frame.Health, frame.HealthLeft, frame.HealthRight = health, healthLeft, healthRight
 	frame.Power, frame.PowerLeft, frame.PowerRight = power, powerLeft, powerRight
 
@@ -239,13 +257,27 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 		frame:Tag(middle, config.middleTag)
 		frame.HealthMiddle = middle
 	end
-	if config.mouseoverKey then self:CreateMouseoverHighlight(frame, health, "Blank", Setting(config.mouseoverKey)) end
-	if config.raidTarget then frame.RaidTargetIndicator = self:CreateRaidTargetIndicator(health, 16) end
-	if config.range then frame.Range = config.range end
-	if config.portrait then config.portrait(self, frame, unit) end
-	if config.cast then config.cast(self, frame, unit) end
-	if config.auras then config.auras(self, frame, unit) end
-	if config.postBuild then config.postBuild(self, frame, unit) end
+	if config.mouseoverKey then
+		self:CreateMouseoverHighlight(frame, health, "Blank", Setting(config.mouseoverKey))
+	end
+	if config.raidTarget then
+		frame.RaidTargetIndicator = self:CreateRaidTargetIndicator(health, 16)
+	end
+	if config.range then
+		frame.Range = config.range
+	end
+	if config.portrait then
+		config.portrait(self, frame, unit)
+	end
+	if config.cast then
+		config.cast(self, frame, unit)
+	end
+	if config.auras then
+		config.auras(self, frame, unit)
+	end
+	if config.postBuild then
+		config.postBuild(self, frame, unit)
+	end
 	return frame
 end
 
@@ -260,7 +292,9 @@ function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relat
 
 	portrait:SetSize(width, height)
 	portrait:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
-	if alpha then portrait:SetAlpha(alpha) end
+	if alpha then
+		portrait:SetAlpha(alpha)
+	end
 
 	if style ~= "OVERLAY" then
 		local background = frame:CreateTexture(nil, "BACKGROUND")
@@ -268,7 +302,9 @@ function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relat
 		background:SetPoint("BOTTOMRIGHT", portrait, 1, -1)
 		background:SetTexture(Assets:GetTexture(backgroundTexture))
 		background:SetVertexColor(0, 0, 0)
-		if backgroundVisible == false then background:Hide() end
+		if backgroundVisible == false then
+			background:Hide()
+		end
 		portrait.BG = background
 	end
 
@@ -335,7 +371,9 @@ end
 function UF:CreateAuraContainer(frame, name, parent, width, height, point, relativeTo, relativePoint, x, y, iconSize, spacing, num, initialAnchor, tooltipAnchor, growthX, growthY, postCreateIcon, postUpdateIcon, customFilter, onlyShowPlayer, showStealableBuffs)
 	local auras = CreateFrame("Frame", name, parent or frame)
 	auras:SetSize(width, height)
-	if point then auras:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0) end
+	if point then
+		auras:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
+	end
 	auras.size = iconSize
 	auras.spacing = spacing
 	auras.num = num
@@ -492,11 +530,15 @@ local function SetHeaderHealthTexture(frame, resolvedTexture)
 	frame.Health:SetStatusBarTexture(resolvedTexture)
 	frame.Health.bg:SetTexture(resolvedTexture)
 	frame.HealBar:SetStatusBarTexture(resolvedTexture)
-	if frame.AbsorbsBar then frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture) end
+	if frame.AbsorbsBar then
+		frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture)
+	end
 end
 
 function UF:SetHeaderHealthTexture(header, value)
-	if not header then return end
+	if not header then
+		return
+	end
 	local texture = Assets:GetTexture(value)
 	self:ForEachHeaderChild(header, SetHeaderHealthTexture, texture)
 end
@@ -565,7 +607,9 @@ function UnitOperations.Width(UF, frame, value, options)
 	if options and options.widthElements then
 		for i = 1, #options.widthElements do
 			local element = frame[options.widthElements[i]]
-			if element then element:SetWidth(value) end
+			if element then
+				element:SetWidth(value)
+			end
 		end
 	end
 end
@@ -608,14 +652,20 @@ function UnitOperations.HealthReverse(UF, frame, value)
 	end
 end
 
-function UnitOperations.PowerReverse(UF, frame, value) frame.Power:SetReverseFill(value) end
+function UnitOperations.PowerReverse(UF, frame, value)
+	frame.Power:SetReverseFill(value)
+end
 
 function UnitOperations.HealthTexture(UF, frame, value)
 	local texture = Assets:GetTexture(value)
 	frame.Health:SetStatusBarTexture(texture)
 	frame.Health.bg:SetTexture(texture)
-	if frame.HealBar then frame.HealBar:SetStatusBarTexture(texture) end
-	if frame.AbsorbsBar then frame.AbsorbsBar:SetStatusBarTexture(texture) end
+	if frame.HealBar then
+		frame.HealBar:SetStatusBarTexture(texture)
+	end
+	if frame.AbsorbsBar then
+		frame.AbsorbsBar:SetStatusBarTexture(texture)
+	end
 end
 
 function UnitOperations.PowerTexture(UF, frame, value)
@@ -626,7 +676,9 @@ end
 
 function UnitOperations.AuraSize(UF, frame, value, options)
 	local auras = frame[options.element]
-	if not auras then return end
+	if not auras then
+		return
+	end
 	auras.size = value
 	auras:SetSize(Settings[options.width], value)
 	auras:ForceUpdate()
@@ -634,29 +686,43 @@ end
 
 function UnitOperations.AuraSpacing(UF, frame, value, options)
 	local auras = frame[options.element]
-	if not auras then return end
+	if not auras then
+		return
+	end
 	auras.spacing = value
 	auras:ForceUpdate()
 end
 
 function UnitOperations.ElementEnabled(UF, frame, value, options)
-	if not frame[options.component or options.element] then return end
-	if value then frame:EnableElement(options.element) else frame:DisableElement(options.element) end
-	if options.forceUpdate then frame:UpdateAllElements("ForceUpdate") end
+	if not frame[options.component or options.element] then
+		return
+	end
+	if value then
+		frame:EnableElement(options.element)
+	else
+		frame:DisableElement(options.element)
+	end
+	if options.forceUpdate then
+		frame:UpdateAllElements("ForceUpdate")
+	end
 end
 
 function UnitOperations.AuraPosition(UF, frame, value, options)
 	local auras = frame[options.element]
-	if not auras then return end
+	if not auras then
+		return
+	end
 	local relativeTo = frame
 	if options.companion and Settings[options.companionPosition] == value and frame[options.companion] then
 		relativeTo = frame[options.companion]
 	end
 	auras:ClearAllPoints()
 	if value == "TOP" then
-		auras:SetPoint("BOTTOM", relativeTo, "TOP", 0, 2); auras["growth-y"] = "UP"
+		auras:SetPoint("BOTTOM", relativeTo, "TOP", 0, 2)
+		auras["growth-y"] = "UP"
 	else
-		auras:SetPoint("TOP", relativeTo, "BOTTOM", 0, -2); auras["growth-y"] = "DOWN"
+		auras:SetPoint("TOP", relativeTo, "BOTTOM", 0, -2)
+		auras["growth-y"] = "DOWN"
 	end
 	auras["growth-x"] = options.growthX
 end
@@ -669,13 +735,17 @@ function UF:CreateUnitUpdater(unit, operation, options)
 		return function(value)
 			for i = 1, options.count do
 				local frame = HydraUI.UnitFrames[unit .. i]
-				if frame then update(self, frame, value, options) end
+				if frame then
+					update(self, frame, value, options)
+				end
 			end
 		end
 	end
 	return function(value)
 		local frame = HydraUI.UnitFrames[unit]
-		if frame then update(self, frame, value, options) end
+		if frame then
+			update(self, frame, value, options)
+		end
 	end
 end
 

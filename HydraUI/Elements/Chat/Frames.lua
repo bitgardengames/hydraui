@@ -8,7 +8,9 @@ local DT
 Chat.StyledFrames = Chat.StyledFrames or {}
 Chat.TemporaryWindowHooks = Chat.TemporaryWindowHooks or {}
 function Chat:ForEachStyledFrame(callback)
-	for frame in pairs(self.StyledFrames) do callback(frame) end
+	for frame in pairs(self.StyledFrames) do
+		callback(frame)
+	end
 end
 
 Chat.RemoveTextures = {
@@ -103,14 +105,26 @@ local OnEditFocusLost = function(self)
 	Chat.EditBox:SetAlpha(0)
 	Chat.EditBox:EnableMouse(false)
 
-	if Left then Left:SetAlpha(1) end
-	if Middle then Middle:SetAlpha(1) end
-	if Right then Right:SetAlpha(1) end
+	if Left then
+		Left:SetAlpha(1)
+	end
+	if Middle then
+		Middle:SetAlpha(1)
+	end
+	if Right then
+		Right:SetAlpha(1)
+	end
 
 	if Settings["data-text-enable-tooltips"] then
-		if Left then Left:EnableMouse(true) end
-		if Middle then Middle:EnableMouse(true) end
-		if Right then Right:EnableMouse(true) end
+		if Left then
+			Left:EnableMouse(true)
+		end
+		if Middle then
+			Middle:EnableMouse(true)
+		end
+		if Right then
+			Right:EnableMouse(true)
+		end
 	end
 end
 
@@ -532,18 +546,27 @@ function Chat:StyleChatFrames()
 end
 
 function Chat:InstallFrameHooks()
- hooksecurefunc("ChatEdit_UpdateHeader", UpdateHeader)
- local hooks = self.TemporaryWindowHooks
- hooks.FCF_OpenTemporaryWindow = OpenTemporaryWindow
- hooks.FCF_RestorePositionAndDimensions = function() Chat:MoveChatFrames() end
- hooks.FCF_SavePositionAndDimensions = hooks.FCF_RestorePositionAndDimensions
- for name, callback in pairs(hooks) do hooksecurefunc(name, callback) end
- if UIParent_ManageFramePositions then hooksecurefunc("UIParent_ManageFramePositions", hooks.FCF_RestorePositionAndDimensions) end
+	hooksecurefunc("ChatEdit_UpdateHeader", UpdateHeader)
+
+	local hooks = self.TemporaryWindowHooks
+	hooks.FCF_OpenTemporaryWindow = OpenTemporaryWindow
+	hooks.FCF_RestorePositionAndDimensions = function()
+		Chat:MoveChatFrames()
+	end
+	hooks.FCF_SavePositionAndDimensions = hooks.FCF_RestorePositionAndDimensions
+
+	for name, callback in pairs(hooks) do
+		hooksecurefunc(name, callback)
+	end
+
+	if UIParent_ManageFramePositions then
+		hooksecurefunc("UIParent_ManageFramePositions", hooks.FCF_RestorePositionAndDimensions)
+	end
 end
 
 function Chat:SetLinkTooltips(enabled)
- self:ForEachStyledFrame(function(frame)
-  frame:SetScript("OnHyperlinkEnter", enabled and OnHyperlinkEnter or nil)
-  frame:SetScript("OnHyperlinkLeave", enabled and OnHyperlinkLeave or nil)
- end)
+	self:ForEachStyledFrame(function(frame)
+		frame:SetScript("OnHyperlinkEnter", enabled and OnHyperlinkEnter or nil)
+		frame:SetScript("OnHyperlinkLeave", enabled and OnHyperlinkLeave or nil)
+	end)
 end

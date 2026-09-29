@@ -27,11 +27,21 @@ AutoVendor.Filter = {
 }
 
 -- Temporary during DF prepatch
-if C_Container and C_Container.GetContainerNumSlots then GetContainerNumSlots = C_Container.GetContainerNumSlots end
-if C_Container and C_Container.GetContainerItemLink then GetContainerItemLink = C_Container.GetContainerItemLink end
-if C_Container and C_Container.GetContainerItemID then GetContainerItemID = C_Container.GetContainerItemID end
-if C_Container and C_Container.GetContainerItemInfo then GetContainerItemInfo = C_Container.GetContainerItemInfo end
-if C_Container and C_Container.UseContainerItem then UseContainerItem = C_Container.UseContainerItem end
+if C_Container and C_Container.GetContainerNumSlots then
+	GetContainerNumSlots = C_Container.GetContainerNumSlots
+end
+if C_Container and C_Container.GetContainerItemLink then
+	GetContainerItemLink = C_Container.GetContainerItemLink
+end
+if C_Container and C_Container.GetContainerItemID then
+	GetContainerItemID = C_Container.GetContainerItemID
+end
+if C_Container and C_Container.GetContainerItemInfo then
+	GetContainerItemInfo = C_Container.GetContainerItemInfo
+end
+if C_Container and C_Container.UseContainerItem then
+	UseContainerItem = C_Container.UseContainerItem
+end
 
 function HydraUI:GetTrashValue()
 	local Profit = 0

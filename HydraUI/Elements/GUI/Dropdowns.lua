@@ -246,7 +246,9 @@ local AnchorDropdownRows = function(self, first, last)
 end
 
 local SyncDropdownScrollBar = function(self)
-	if self.RowViewport then self.RowViewport:SyncScrollBar() end
+	if self.RowViewport then
+		self.RowViewport:SyncScrollBar()
+	end
 end
 
 local ScrollMenu = function(self)
@@ -308,8 +310,12 @@ local AddDropdownScrollBar = function(self)
 		UpdateRows = function(Owner, Rows, OldRows, OldOffset, OldLast, Offset, Last)
 			-- Preserve the cheap single hide/show operation for one-row wheel movement.
 			if not OldOffset then
-				for i = Offset, Last do Rows[i]:Show() end
-				for i = Last + 1, #Rows do Rows[i]:Hide() end
+				for i = Offset, Last do
+					Rows[i]:Show()
+				end
+				for i = Last + 1, #Rows do
+					Rows[i]:Hide()
+				end
 			elseif Offset == OldOffset + 1 then
 				Rows[OldOffset]:Hide()
 				Rows[Last]:Show()
@@ -317,8 +323,14 @@ local AddDropdownScrollBar = function(self)
 				Rows[OldLast]:Hide()
 				Rows[Offset]:Show()
 			else
-				for i = OldOffset, OldLast do if (i < Offset) or (i > Last) then Rows[i]:Hide() end end
-				for i = Offset, Last do Rows[i]:Show() end
+				for i = OldOffset, OldLast do
+					if (i < Offset) or (i > Last) then
+						Rows[i]:Hide()
+					end
+				end
+				for i = Offset, Last do
+					Rows[i]:Show()
+				end
 			end
 		end,
 	})
@@ -406,7 +418,9 @@ DropdownUpdateList = function(self)
 		Menu.LastRenderedOffset = Menu.RowViewport.LastRenderedOffset
 	else
 		local First, Last = GUI.GetVisibleRowRange(Menu.Offset, Count, DROPDOWN_MAX_SHOWN)
-		for i = First, Last do Menu[i]:Show() end
+		for i = First, Last do
+			Menu[i]:Show()
+		end
 		AnchorDropdownRows(Menu, First, Last)
 	end
 end

@@ -42,8 +42,12 @@ Defaults.PlayerResourceTexture = "HydraUI 4"
 local UF = HydraUI:GetModule("Unit Frames")
 
 local function UpdatePlayerAuraAnchors(frame, resourceDetached)
-	if not frame.Buffs or not frame.Debuffs then return end
-	if resourceDetached == nil then resourceDetached = Settings["player-move-resource"] end
+	if not frame.Buffs or not frame.Debuffs then
+		return
+	end
+	if resourceDetached == nil then
+		resourceDetached = Settings["player-move-resource"]
+	end
 	local anchor = resourceDetached and frame or frame.AuraParent
 	frame.Buffs:ClearAllPoints()
 	frame.Debuffs:ClearAllPoints()
@@ -56,10 +60,14 @@ local function UpdatePlayerAuraAnchors(frame, resourceDetached)
 end
 
 local function UpdatePlayerPowerLayout(frame, powerHeight, detached, healthHeight)
-	if not frame.Power then return end
+	if not frame.Power then
+		return
+	end
 	powerHeight = powerHeight or Settings["unitframes-player-power-height"]
 	healthHeight = healthHeight or Settings["unitframes-player-health-height"]
-	if detached == nil then detached = Settings["player-move-power"] end
+	if detached == nil then
+		detached = Settings["player-move-power"]
+	end
 	frame.Power:ClearAllPoints()
 	frame.Power:SetHeight(powerHeight)
 	if detached then
@@ -75,7 +83,9 @@ end
 
 local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
 	resourceHeight = resourceHeight or Settings["player-resource-height"]
-	if detached == nil then detached = Settings["player-move-resource"] end
+	if detached == nil then
+		detached = Settings["player-move-resource"]
+	end
 	if frame.ClassResource then
 		frame.ClassResource:SetHeight(resourceHeight)
 		frame.ClassResource:SetDetached(detached)
@@ -89,7 +99,8 @@ local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
 	end
 end
 
--- Resource descriptions are module constants; spawning a frame only selects one.
+-- Resource descriptions are module constants
+spawning a frame only selects one.
 local PlayerResourceDescriptors = {
 	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
 	DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
@@ -240,7 +251,9 @@ local function BuildPlayerComponents(factory, self, unit)
 		end
 
 		local function CreateResourceBar(frame, descriptor)
-			if not descriptor then return end
+			if not descriptor then
+				return
+			end
 			local resource = CreateFrame("Frame", frame:GetName() .. descriptor.field, frame, "BackdropTemplate")
 			resource:SetBackdrop(HydraUI.Backdrop)
 			resource:SetBackdropColor(0, 0, 0)
@@ -269,13 +282,21 @@ local function BuildPlayerComponents(factory, self, unit)
 				NativeSetWidth(self, width)
 				local count = Count(self)
 				local segmentWidth = (width / count) - 1
-				for i = 1, descriptor.count do Segment(self, i):SetWidth(i == 1 and segmentWidth - 1 or segmentWidth) end
-				if self.Stagger then self.Stagger:SetWidth(width - 2) end
+				for i = 1, descriptor.count do
+					Segment(self, i):SetWidth(i == 1 and segmentWidth - 1 or segmentWidth)
+				end
+				if self.Stagger then
+					self.Stagger:SetWidth(width - 2)
+				end
 			end
 			function resource:SetHeight(height)
 				NativeSetHeight(self, height + 2)
-				for i = 1, descriptor.count do Segment(self, i):SetHeight(height) end
-				if self.Stagger then self.Stagger:SetHeight(height) end
+				for i = 1, descriptor.count do
+					Segment(self, i):SetHeight(height)
+				end
+				if self.Stagger then
+					self.Stagger:SetHeight(height)
+				end
 			end
 			function resource:SetTexture(texture)
 				texture = Assets:GetTexture(texture)
@@ -283,39 +304,81 @@ local function BuildPlayerComponents(factory, self, unit)
 					local segment = Segment(self, i)
 					segment:SetStatusBarTexture(texture)
 					segment.bg:SetTexture(texture)
-					if segment.Charged then segment.Charged:SetTexture(texture) end
+					if segment.Charged then
+						segment.Charged:SetTexture(texture)
+					end
 				end
-				if self.Stagger then self.Stagger:SetStatusBarTexture(texture); self.Stagger.bg:SetTexture(texture) end
+				if self.Stagger then
+					self.Stagger:SetStatusBarTexture(texture)
+					self.Stagger.bg:SetTexture(texture)
+				end
 			end
-			function resource:SetDetached(detached) Anchor(self, detached) end
+			function resource:SetDetached(detached)
+				Anchor(self, detached)
+			end
 
 			for i = 1, descriptor.count do
 				local owner = resource
-				if descriptor.totems then owner = CreateFrame("Button", nil, frame); resource[i] = owner end
+				if descriptor.totems then
+					owner = CreateFrame("Button", nil, frame)
+					resource[i] = owner
+				end
 				local segment = CreateFrame("StatusBar", frame:GetName() .. descriptor.field .. i, owner)
-				if descriptor.totems then owner.Bar = segment; segment:EnableMouse(true); segment:SetID(i); segment:Hide() else resource[i] = segment end
+				if descriptor.totems then
+					owner.Bar = segment
+					segment:EnableMouse(true)
+					segment:SetID(i)
+					segment:Hide()
+				else
+					resource[i] = segment
+				end
 				local r, g, b = descriptor.color and descriptor.color(i) or HydraUI:HexToRGB(Settings[descriptor.colorSetting])
 				segment:SetStatusBarColor(r, g, b)
 				segment.bg = resource:CreateTexture(nil, "BORDER")
-				segment.bg:SetAllPoints(segment); segment.bg:SetVertexColor(r, g, b); segment.bg:SetAlpha(descriptor.runes and 0.2 or 0.3)
+				segment.bg:SetAllPoints(segment)
+				segment.bg:SetVertexColor(r, g, b)
+				segment.bg:SetAlpha(descriptor.runes and 0.2 or 0.3)
 				if descriptor.charged then
-					segment.Charged = segment:CreateTexture(nil, "ARTWORK"); segment.Charged:SetAllPoints()
-					segment.Charged:SetVertexColor(HydraUI:HexToRGB(Settings["color-combo-charged"])); segment.Charged:Hide()
+					segment.Charged = segment:CreateTexture(nil, "ARTWORK")
+					segment.Charged:SetAllPoints()
+					segment.Charged:SetVertexColor(HydraUI:HexToRGB(Settings["color-combo-charged"]))
+					segment.Charged:Hide()
 				end
 				if descriptor.runes then
 					segment.Duration = 0
-					segment.Shine = segment:CreateTexture(nil, "ARTWORK"); segment.Shine:SetAllPoints(); segment.Shine:SetTexture(Assets:GetTexture("pHishTex28")); segment.Shine:SetVertexColor(0.8, 0.8, 0.8); segment.Shine:SetAlpha(0); segment.Shine:SetDrawLayer("ARTWORK", 7)
+					segment.Shine = segment:CreateTexture(nil, "ARTWORK")
+					segment.Shine:SetAllPoints()
+					segment.Shine:SetTexture(Assets:GetTexture("pHishTex28"))
+					segment.Shine:SetVertexColor(0.8, 0.8, 0.8)
+					segment.Shine:SetAlpha(0)
+					segment.Shine:SetDrawLayer("ARTWORK", 7)
 					segment.ReadyAnim = LibMotion:CreateAnimationGroup()
-					segment.ReadyAnim.In = LibMotion:CreateAnimation(segment.Shine, "Fade"); segment.ReadyAnim.In:SetGroup(segment.ReadyAnim); segment.ReadyAnim.In:SetOrder(1); segment.ReadyAnim.In:SetEasing("in"); segment.ReadyAnim.In:SetDuration(0.2); segment.ReadyAnim.In:SetChange(0.5)
-					segment.ReadyAnim.Out = LibMotion:CreateAnimation(segment.Shine, "Fade"); segment.ReadyAnim.Out:SetGroup(segment.ReadyAnim); segment.ReadyAnim.Out:SetOrder(2); segment.ReadyAnim.Out:SetEasing("out"); segment.ReadyAnim.Out:SetDuration(0.2); segment.ReadyAnim.Out:SetChange(0)
+					segment.ReadyAnim.In = LibMotion:CreateAnimation(segment.Shine, "Fade")
+					segment.ReadyAnim.In:SetGroup(segment.ReadyAnim)
+					segment.ReadyAnim.In:SetOrder(1)
+					segment.ReadyAnim.In:SetEasing("in")
+					segment.ReadyAnim.In:SetDuration(0.2)
+					segment.ReadyAnim.In:SetChange(0.5)
+					segment.ReadyAnim.Out = LibMotion:CreateAnimation(segment.Shine, "Fade")
+					segment.ReadyAnim.Out:SetGroup(segment.ReadyAnim)
+					segment.ReadyAnim.Out:SetOrder(2)
+					segment.ReadyAnim.Out:SetEasing("out")
+					segment.ReadyAnim.Out:SetDuration(0.2)
+					segment.ReadyAnim.Out:SetChange(0)
 				end
 				segment:SetPoint(i == 1 and "LEFT" or "TOPLEFT", i == 1 and resource or Segment(resource, i - 1), i == 1 and "LEFT" or "TOPRIGHT", i == 1 and 1 or 1, 0)
 			end
 
 			if descriptor.stagger then
-				local stagger = CreateFrame("StatusBar", nil, frame); stagger:Hide()
-				stagger.bg = stagger:CreateTexture(nil, "ARTWORK"); stagger.bg:SetAllPoints(); stagger.bg.multiplier = 0.3
-				stagger.Backdrop = stagger:CreateTexture(nil, "BACKGROUND"); stagger.Backdrop:SetPoint("TOPLEFT", stagger, -1, 1); stagger.Backdrop:SetPoint("BOTTOMRIGHT", stagger, 1, -1); stagger.Backdrop:SetColorTexture(0, 0, 0)
+				local stagger = CreateFrame("StatusBar", nil, frame)
+				stagger:Hide()
+				stagger.bg = stagger:CreateTexture(nil, "ARTWORK")
+				stagger.bg:SetAllPoints()
+				stagger.bg.multiplier = 0.3
+				stagger.Backdrop = stagger:CreateTexture(nil, "BACKGROUND")
+				stagger.Backdrop:SetPoint("TOPLEFT", stagger, -1, 1)
+				stagger.Backdrop:SetPoint("BOTTOMRIGHT", stagger, 1, -1)
+				stagger.Backdrop:SetColorTexture(0, 0, 0)
 				resource.Stagger, frame.Stagger = stagger, stagger
 			end
 
@@ -324,7 +387,9 @@ local function BuildPlayerComponents(factory, self, unit)
 			resource:SetTexture(Settings.PlayerResourceTexture)
 			resource:SetDetached(Settings["player-move-resource"])
 			frame[descriptor.field] = resource
-			if descriptor.alias then frame[descriptor.alias] = resource end
+			if descriptor.alias then
+				frame[descriptor.alias] = resource
+			end
 			frame.ClassResource, frame.AuraParent = resource, resource
 			return resource
 		end
@@ -395,15 +460,21 @@ end
 
 local UpdatePlayerWidth = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
-	if not Frame then return end
+	if not Frame then
+		return
+	end
 	UF:SetFrameWidth("player", value)
 	Frame.Buffs:SetWidth(value)
 	Frame.Debuffs:SetWidth(value)
-	if Frame.ClassResource and not Settings["player-move-resource"] then Frame.ClassResource:SetWidth(value) end
+	if Frame.ClassResource and not Settings["player-move-resource"] then
+		Frame.ClassResource:SetWidth(value)
+	end
 end
 local UpdatePlayerHealthHeight = function(value)
 	local frame = HydraUI.UnitFrames["player"]
-	if not frame then return end
+	if not frame then
+		return
+	end
 	frame.Health:SetHeight(value)
 	UpdatePlayerPowerLayout(frame, nil, nil, value)
 end
@@ -412,7 +483,9 @@ local UpdatePlayerHealthFill = UF:CreateUnitUpdater("player", "HealthReverse")
 
 local UpdatePlayerPowerHeight = function(value)
 	local frame = HydraUI.UnitFrames["player"]
-	if frame then UpdatePlayerPowerLayout(frame, value) end
+	if frame then
+		UpdatePlayerPowerLayout(frame, value)
+	end
 end
 
 local UpdatePlayerPowerFill = UF:CreateUnitUpdater("player", "PowerReverse")
@@ -473,11 +546,15 @@ end
 
 local UpdateResourceBarHeight = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
-	if Frame then UpdatePlayerResourceLayout(Frame, value) end
+	if Frame then
+		UpdatePlayerResourceLayout(Frame, value)
+	end
 end
 local UpdateResourceTexture = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
-	if Frame and Frame.ClassResource then Frame.ClassResource:SetTexture(value) end
+	if Frame and Frame.ClassResource then
+		Frame.ClassResource:SetTexture(value)
+	end
 end
 local UpdateBuffSize = UF:CreateUnitUpdater("player", "AuraSize", {element = "Buffs", width = "unitframes-player-width"})
 
@@ -489,7 +566,9 @@ local UpdateDebuffSpacing = UF:CreateUnitUpdater("player", "AuraSpacing", {eleme
 
 local UpdateDisplayedAuras = function()
 	local Player = HydraUI.UnitFrames["player"]
-	if not Player then return end
+	if not Player then
+		return
+	end
 	UpdatePlayerAuraAnchors(Player)
 
 	if Settings["unitframes-show-player-buffs"] then
@@ -507,13 +586,17 @@ end
 
 local UpdateResourcePosition = function(value)
 	local frame = HydraUI.UnitFrames["player"]
-	if not frame then return end
+	if not frame then
+		return
+	end
 	UpdatePlayerResourceLayout(frame, nil, value)
 end
 
 local UpdatePowerBarPosition = function(value)
 	local frame = HydraUI.UnitFrames["player"]
-	if frame then UpdatePlayerPowerLayout(frame, nil, value) end
+	if frame then
+		UpdatePlayerPowerLayout(frame, nil, value)
+	end
 end
 
 local UpdateHealthTexture = UF:CreateUnitUpdater("player", "HealthTexture")

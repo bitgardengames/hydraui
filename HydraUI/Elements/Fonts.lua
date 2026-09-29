@@ -32,7 +32,9 @@ Defaults["replacement-ui-font"] = "Roboto"
 Defaults["ui-font-offset"] = 0
 
 function Fonts:UpdateFont(object)
-	if not object then return end
+	if not object then
+		return
+	end
 
 	local _, Size, Outline = object:GetFont()
 

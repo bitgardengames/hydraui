@@ -121,7 +121,10 @@ def test_lua_viewport_hides_rows_outside_a_replaced_collection_on_first_render()
         )
     ]
     assert "if rowsChanged or (not OldRows) then" in default_renderer
-    assert "for i = Last + 1, Count do Rows[i]:Hide() end" in default_renderer
+    assert re.search(
+        r"for i = Last \+ 1, Count do\s+Rows\[i\]:Hide\(\)\s+end",
+        default_renderer,
+    )
 
 
 def test_vertical_scroll_consumers_use_shared_controls_with_distinct_options():

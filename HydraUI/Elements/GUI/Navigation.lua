@@ -5,7 +5,9 @@ local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = 0.25, 0.1
 local MAX_WIDGETS_SHOWN = 15
 local tinsert, tsort = table.insert, table.sort
 local type = type
-local SortByName = function(a, b) return a.Name < b.Name end
+local SortByName = function(a, b)
+	return a.Name < b.Name
+end
 
 function GUI:SortMenuButtons()
 	tsort(self.CategoryOrder, SortByName)
@@ -182,7 +184,9 @@ local WindowSubButtonOnMouseDown = function(self)
 end
 
 function GUI:CreateWindow(page)
-	if page.Button then return page end
+	if page.Button then
+		return page
+	end
 	if page.Parent and (not page.Parent.Defined) then
 		error(format("GUI page '%s/%s' references missing parent '%s'", page.Category.Name, page.Name, page.Parent.Name), 2)
 	end

@@ -336,39 +336,75 @@ if HydraUI.IsMainline then
 	end
 
 	Methods["HealthDeficit"] = function(unit)
-		if UnitIsDead(unit) then return "|cFFEE4D4D" .. DEAD .. "|r" end
-		if UnitIsGhost(unit) then return "|cFFEEEEEE" .. Language["Ghost"] .. "|r" end
-		if not UnitIsConnected(unit) then return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r" end
-		if UnitIsAFK(unit) then return "|cFFEEEEEE" .. AFK .. "|r" end
+		if UnitIsDead(unit) then
+			return "|cFFEE4D4D" .. DEAD .. "|r"
+		end
+		if UnitIsGhost(unit) then
+			return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
+		end
+		if not UnitIsConnected(unit) then
+			return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
+		end
+		if UnitIsAFK(unit) then
+			return "|cFFEEEEEE" .. AFK .. "|r"
+		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then return "" end
+		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+			return ""
+		end
 		local Deficit = Max - Current
-		if ((Deficit ~= 0) or (Current ~= Max)) then return "-" .. HydraUI:Comma(Deficit) end
+		if ((Deficit ~= 0) or (Current ~= Max)) then
+			return "-" .. HydraUI:Comma(Deficit)
+		end
 	end
 
 	Methods["HealthDeficit:Short"] = function(unit)
-		if UnitIsDead(unit) then return "|cFFEE4D4D" .. DEAD .. "|r" end
-		if UnitIsGhost(unit) then return "|cFFEEEEEE" .. Language["Ghost"] .. "|r" end
-		if not UnitIsConnected(unit) then return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r" end
-		if UnitIsAFK(unit) then return "|cFFEEEEEE" .. AFK .. "|r" end
+		if UnitIsDead(unit) then
+			return "|cFFEE4D4D" .. DEAD .. "|r"
+		end
+		if UnitIsGhost(unit) then
+			return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
+		end
+		if not UnitIsConnected(unit) then
+			return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
+		end
+		if UnitIsAFK(unit) then
+			return "|cFFEEEEEE" .. AFK .. "|r"
+		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then return "" end
+		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+			return ""
+		end
 		local Deficit = Max - Current
-		if ((Deficit ~= 0) or (Current ~= Max)) then return "-" .. HydraUI:ShortValue(Deficit) end
+		if ((Deficit ~= 0) or (Current ~= Max)) then
+			return "-" .. HydraUI:ShortValue(Deficit)
+		end
 	end
 
 	Methods["GroupStatus"] = function(unit)
-		if UnitIsDead(unit) then return "|cFFEE4D4D" .. DEAD .. "|r" end
-		if UnitIsGhost(unit) then return "|cFFEEEEEE" .. Language["Ghost"] .. "|r" end
-		if not UnitIsConnected(unit) then return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r" end
-		if UnitIsAFK(unit) then return "|cFFEEEEEE" .. AFK .. "|r" end
+		if UnitIsDead(unit) then
+			return "|cFFEE4D4D" .. DEAD .. "|r"
+		end
+		if UnitIsGhost(unit) then
+			return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
+		end
+		if not UnitIsConnected(unit) then
+			return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
+		end
+		if UnitIsAFK(unit) then
+			return "|cFFEEEEEE" .. AFK .. "|r"
+		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then return "" end
+		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+			return ""
+		end
 		local Color = Methods["HealthColor"](unit)
-		if (Max == 0) then return Color .. "0|r" end
+		if (Max == 0) then
+			return Color .. "0|r"
+		end
 		return Color .. floor(Current / Max * 100 + 0.5) .. "|r"
 	end
 

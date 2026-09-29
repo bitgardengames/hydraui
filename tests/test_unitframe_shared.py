@@ -102,7 +102,7 @@ class SharedUnitFrameCoverage(unittest.TestCase):
                 self.assertNotIn(f'Settings["{parent_prefix}-health-reverse"]', predictions)
 
     def test_live_health_texture_update_reaches_every_prediction_texture(self):
-        shared = (ROOT / "UnitFrames.lua").read_text()
+        shared = (ROOT / "ComponentFactory.lua").read_text()
         update = re.search(
             r"local function SetHeaderHealthTexture\(frame, resolvedTexture\)(.*?)"
             r"function UF:SetHeaderHealthTexture\(header, value\)(.*?)\nend",
@@ -135,20 +135,21 @@ if __name__ == "__main__":
 class UnitFrameSpawnerCoverage(unittest.TestCase):
     def test_load_delegates_to_focused_spawners(self):
         source = (ROOT / "UnitFrames.lua").read_text()
+        spawning = (ROOT / "Spawning.lua").read_text()
         for helper in ("SpawnSingletonFrames", "SpawnBossFrames", "SpawnPartyHeaders",
                        "SpawnRaidHeaders", "SpawnNameplates"):
-            self.assertIn(f"function UF:{helper}", source)
+            self.assertIn(f"function UF:{helper}", spawning)
             self.assertIn(f"self:{helper}()", source)
 
     def test_singleton_descriptors_are_self_describing(self):
-        source = (ROOT / "UnitFrames.lua").read_text()
+        source = (ROOT / "Spawning.lua").read_text()
         block = source[source.index("local SingletonUnits"):source.index("UF.SingletonUnits")]
         for field in ("unit", "globalName", "enabled", "dimensions", "defaultAnchor"):
             self.assertIn(f"{field} =", block)
         self.assertIn("postSpawn =", block)
 
     def test_growth_and_header_helpers_cover_shared_inputs(self):
-        source = (ROOT / "UnitFrames.lua").read_text()
+        source = (ROOT / "Spawning.lua").read_text()
         growth = re.search(r"function UF:GetGrowthOffsets.*?\nend", source, re.S).group()
         for point in ("LEFT", "RIGHT", "TOP", "BOTTOM"):
             self.assertIn(f'point == "{point}"', growth)
@@ -157,3 +158,37 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
                           "showParty", "showRaid", "point", "xOffset", "yOffset"):
             self.assertIn(f'"{attribute}"', attrs)
         self.assertGreaterEqual(source.count("self:GetGrowthOffsets("), 2)
+
+
+class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
+    def test_manifest_loads_support_modules_before_coordinator(self):
+        manifest = (ROOT / "UnitFrames.xml").read_text()
+        coordinator = manifest.index('file="UnitFrames.lua"')
+        for module in ("ComponentFactory", "AuraSupport", "CastSupport",
+                       "TotemSupport", "Spawning"):
+            self.assertLess(manifest.index(f'file="{module}.lua"'), coordinator)
+
+    def test_public_apis_remain_installed_on_uf(self):
+        expected = {
+            "ComponentFactory.lua": ("CreateHealthBar", "CreatePowerBar", "CreatePortrait",
+                                     "CreateCastbar", "CreateAuraContainer",
+                                     "NormalizeComponentOptions", "SetHealthTexture",
+                                     "SetHealthHeight", "SetHealthReverseFill"),
+            "AuraSupport.lua": ("PostCreateIcon", "PostUpdateIcon",
+                                "PostCreateAuraWatchIcon"),
+            "CastSupport.lua": ("PostCastStart", "PostCastStop", "PostCastFail"),
+            "TotemSupport.lua": ("PostUpdateTotems",),
+            "Spawning.lua": ("SpawnSingletonFrames", "SpawnBossFrames",
+                             "BuildHeaderAttributes", "SpawnPartyHeaders",
+                             "SpawnRaidHeaders", "SpawnNameplates"),
+        }
+        for filename, methods in expected.items():
+            source = (ROOT / filename).read_text()
+            for method in methods:
+                self.assertRegex(source, rf"UF[.:]{method}\b")
+
+    def test_coordinator_delegates_constructor_installation(self):
+        source = (ROOT / "UnitFrames.lua").read_text()
+        for module in ("ComponentFactory", "AuraSupport", "CastSupport",
+                       "TotemSupport", "Spawning"):
+            self.assertIn(f"ns.UnitFrame{module}(UF, Hider)", source)

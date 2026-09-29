@@ -4,7 +4,7 @@ import re
 import unittest
 
 ROOT = Path(__file__).parents[1] / "HydraUI/Elements/UnitFrames"
-SHARED = (ROOT / "UnitFrames.lua").read_text()
+SHARED = (ROOT / "ComponentFactory.lua").read_text()
 
 
 def body(name):

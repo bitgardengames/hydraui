@@ -364,227 +364,147 @@ end
 
 local UpdatePartyWidth = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				Unit:SetWidth(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			Unit:SetWidth(value)
+		end, value)
 	end
 end
 
 local UpdatePartyHealthHeight = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				Unit:SetHeight(value + Settings["party-power-height"] + 3)
-				Unit.Health:SetHeight(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			Unit:SetHeight(value + Settings["party-power-height"] + 3)
+			Unit.Health:SetHeight(value)
+		end, value)
 	end
 end
 
 local UpdatePartyHealthColor = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			UF:SetHealthAttributes(Unit.Health, value)
 
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				UF:SetHealthAttributes(Unit.Health, value)
-
-				Unit.Health:ForceUpdate()
-			end
-		end
+			Unit.Health:ForceUpdate()
+		end, value)
 	end
 end
 
 local UpdateEnablePartyPower = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit:EnableElement("Power")
-					Unit:SetHeight(Settings["party-health-height"] + Settings["party-power-height"] + 3)
-				else
-					Unit:DisableElement("Power")
-					Unit:SetHeight(Settings["party-health-height"] + 2)
-				end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			if value then
+				Unit:EnableElement("Power")
+				Unit:SetHeight(Settings["party-health-height"] + Settings["party-power-height"] + 3)
+			else
+				Unit:DisableElement("Power")
+				Unit:SetHeight(Settings["party-health-height"] + 2)
 			end
-		end
+		end, value)
 	end
 end
 
 local UpdatePartyPowerHeight = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				Unit:SetHeight(value + Settings["party-health-height"] + 3)
-				Unit.Power:SetHeight(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			Unit:SetHeight(value + Settings["party-health-height"] + 3)
+			Unit.Power:SetHeight(value)
+		end, value)
 	end
 end
 
 local UpdatePartyHealthOrientation = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				Unit.Health:SetOrientation(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			Unit.Health:SetOrientation(value)
+		end, value)
 	end
 end
 
 local UpdatePartyHealthReverseFill = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			Unit.Health:SetReverseFill(value)
+			Unit.HealBar:SetReverseFill(value)
+			Unit.HealBar:ClearAllPoints()
 
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
+			if value then
+				Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
 
-			if Unit then
-				Unit.Health:SetReverseFill(value)
-				Unit.HealBar:SetReverseFill(value)
-				Unit.HealBar:ClearAllPoints()
+				if Unit.AbsorbsBar then
+					Unit.AbsorbsBar:SetReverseFill(value)
+					Unit.AbsorbsBar:ClearAllPoints()
+					Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
+				end
+			else
+				Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
 
-				if value then
-					Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-
-					if Unit.AbsorbsBar then
-						Unit.AbsorbsBar:SetReverseFill(value)
-						Unit.AbsorbsBar:ClearAllPoints()
-						Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-					end
-				else
-					Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-
-					if Unit.AbsorbsBar then
-						Unit.AbsorbsBar:SetReverseFill(value)
-						Unit.AbsorbsBar:ClearAllPoints()
-						Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-					end
+				if Unit.AbsorbsBar then
+					Unit.AbsorbsBar:SetReverseFill(value)
+					Unit.AbsorbsBar:ClearAllPoints()
+					Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
 				end
 			end
-		end
+		end, value)
 	end
 end
 
 local UpdatePartyPowerReverseFill = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				Unit.Power:SetReverseFill(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			Unit.Power:SetReverseFill(value)
+		end, value)
 	end
 end
 
 local UpdatePartyPowerColor = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			UF:SetPowerAttributes(Unit.Power, value)
 
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				UF:SetPowerAttributes(Unit.Power, value)
-
-				Unit.Power:ForceUpdate()
-			end
-		end
+			Unit.Power:ForceUpdate()
+		end, value)
 	end
 end
 
 local UpdatePartyShowDebuffs = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit:EnableElement("Debuffs")
-				else
-					Unit:DisableElement("Debuffs")
-				end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			if value then
+				Unit:EnableElement("Debuffs")
+			else
+				Unit:DisableElement("Debuffs")
 			end
-		end
+		end, value)
+	end
+end
+
+local SetHighlightShown = function(Unit, value)
+	if value then
+		Unit.Highlight:Show()
+	else
+		Unit.Highlight:Hide()
 	end
 end
 
 local UpdatePartyShowHighlight = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], SetHighlightShown, value)
 
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit.Highlight:Show()
-				else
-					Unit.Highlight:Hide()
-				end
-			end
-		end
-
-		for i = 1, HydraUI.UnitFrames["party-pets"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party-pets"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit.Highlight:Show()
-				else
-					Unit.Highlight:Hide()
-				end
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party-pets"], SetHighlightShown, value)
 	end
 end
 
 local UpdatePartyShowRole = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit:EnableElement("GroupRoleIndicator")
-				else
-					Unit:DisableElement("GroupRoleIndicator")
-				end
-
-				Unit:UpdateAllElements("ForceUpdate")
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			if value then
+				Unit:EnableElement("GroupRoleIndicator")
+			else
+				Unit:DisableElement("GroupRoleIndicator")
 			end
-		end
+
+			Unit:UpdateAllElements("ForceUpdate")
+		end, value)
 	end
 end
 
@@ -638,12 +558,10 @@ local TestParty = function()
 				Header:SetAttribute("startingIndex", -4)
 			end
 
-			for i = 1, select("#", Header:GetChildren()) do
-				local Frame = select(i, Header:GetChildren())
-
+			UF:ForEachHeaderChild(Header, function(Frame)
 				UnregisterUnitWatch(Frame)
 				Frame:Hide()
-			end
+			end)
 		end
 
 		if Pets then
@@ -653,12 +571,10 @@ local TestParty = function()
 				Pets:SetAttribute("startingIndex", -4)
 			end
 
-			for i = 1, select("#", Pets:GetChildren()) do
-				local Frame = select(i, Pets:GetChildren())
-
+			UF:ForEachHeaderChild(Pets, function(Frame)
 				UnregisterUnitWatch(Frame)
 				Frame:Hide()
-			end
+			end)
 		end
 
 		Testing = false
@@ -670,14 +586,12 @@ local TestParty = function()
 				Header:SetAttribute("startingIndex", -4)
 			end
 
-			for i = 1, select("#", Header:GetChildren()) do
-				local Frame = select(i, Header:GetChildren())
-
+			UF:ForEachHeaderChild(Header, function(Frame)
 				Frame.unit = "player"
 				UnregisterUnitWatch(Frame)
 				RegisterUnitWatch(Frame, true)
 				Frame:Show()
-			end
+			end)
 		end
 
 		if Pets then
@@ -687,14 +601,12 @@ local TestParty = function()
 				Pets:SetAttribute("startingIndex", -4)
 			end
 
-			for i = 1, select("#", Pets:GetChildren()) do
-				local Frame = select(i, Pets:GetChildren())
-
+			UF:ForEachHeaderChild(Pets, function(Frame)
 				Frame.unit = UnitExists("pet") and "pet" or "player"
 				UnregisterUnitWatch(Frame)
 				RegisterUnitWatch(Frame, true)
 				Frame:Show()
-			end
+			end)
 		end
 
 		Testing = true
@@ -707,11 +619,7 @@ end
 
 local UpdateHealthTexture = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
 			Unit.Health:SetStatusBarTexture(Assets:GetTexture(value))
 			Unit.Health.bg:SetTexture(Assets:GetTexture(value))
 			Unit.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
@@ -719,20 +627,16 @@ local UpdateHealthTexture = function(value)
 			if Unit.AbsorbsBar then
 				Unit.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
 			end
-		end
+		end, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
 			Unit.Power:SetStatusBarTexture(Assets:GetTexture(value))
 			Unit.Power.bg:SetTexture(Assets:GetTexture(value))
-		end
+		end, value)
 	end
 end
 

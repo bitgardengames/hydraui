@@ -23,6 +23,21 @@ Defaults["unitframes-display-aura-timers"] = true
 
 local UF = HydraUI:NewModule("Unit Frames")
 
+-- Secure group headers return their children as multiple values. Capture those
+-- values once so settings updates do not repeatedly query the header while it
+-- is being iterated.
+function UF:ForEachHeaderChild(header, operation, value)
+	if not header then
+		return
+	end
+
+	local Children = {header:GetChildren()}
+
+	for Index = 1, #Children do
+		operation(Children[Index], value, Index)
+	end
+end
+
 HydraUI.UnitFrames = {}
 HydraUI.StyleFuncs = {}
 
@@ -669,21 +684,15 @@ end
 
 local UpdatePartyShowRole = function(value)
 	if HydraUI.UnitFrames["party"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["party"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["party"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit:EnableElement("GroupRoleIndicator")
-				else
-					Unit:DisableElement("GroupRoleIndicator")
-				end
-
-				Unit:UpdateAllElements("ForceUpdate")
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
+			if value then
+				Unit:EnableElement("GroupRoleIndicator")
+			else
+				Unit:DisableElement("GroupRoleIndicator")
 			end
-		end
+
+			Unit:UpdateAllElements("ForceUpdate")
+		end, value)
 	end
 end
 
@@ -742,23 +751,17 @@ end
 
 local UpdateRaidShowPower = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit:EnableElement("Power")
-					Unit:SetHeight(Settings["party-health-height"] + Settings["party-power-height"] + 3)
-				else
-					Unit:DisableElement("Power")
-					Unit:SetHeight(Settings["party-health-height"] + 2)
-				end
-
-				Unit:UpdateAllElements("ForceUpdate")
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			if value then
+				Unit:EnableElement("Power")
+				Unit:SetHeight(Settings["party-health-height"] + Settings["party-power-height"] + 3)
+			else
+				Unit:DisableElement("Power")
+				Unit:SetHeight(Settings["party-health-height"] + 2)
 			end
-		end
+
+			Unit:UpdateAllElements("ForceUpdate")
+		end, value)
 	end
 end
 

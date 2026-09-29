@@ -125,36 +125,24 @@ end
 
 local UpdateHealthTexture = function(value)
 	if HydraUI.UnitFrames["partypet"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["partypet"], function(Unit, value)
+			Unit.Health:SetStatusBarTexture(Assets:GetTetxure(value))
+			Unit.Health.bg:SetStatusBarTexture(Assets:GetTetxure(value))
+			Unit.Health.HealBar:SetStatusBarTexture(Assets:GetTetxure(value))
 
-		for i = 1, HydraUI.UnitFrames["partypet"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["partypet"]:GetChildren())
-
-			if Unit then
-				Unit.Health:SetStatusBarTexture(Assets:GetTetxure(value))
-				Unit.Health.bg:SetStatusBarTexture(Assets:GetTetxure(value))
-				Unit.Health.HealBar:SetStatusBarTexture(Assets:GetTetxure(value))
-
-				if Unit.AbsorbsBar then
-					Unit.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
-				end
+			if Unit.AbsorbsBar then
+				Unit.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
 			end
-		end
+		end, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
 	if HydraUI.UnitFrames["partypet"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["partypet"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["partypet"]:GetChildren())
-
-			if Unit then
-				Unit.Power:SetStatusBarTexture(Assets:GetTexture(value))
-				Unit.Power.bg:SetTexture(Assets:GetTexture(value))
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["partypet"], function(Unit, value)
+			Unit.Power:SetStatusBarTexture(Assets:GetTexture(value))
+			Unit.Power.bg:SetTexture(Assets:GetTexture(value))
+		end, value)
 	end
 end
 

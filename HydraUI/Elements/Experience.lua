@@ -63,6 +63,8 @@ local UpdateDisplayProgress = function(value)
 	else
 		Experience.Progress:Hide()
 	end
+
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateDisplayPercent = function(value)
@@ -75,6 +77,8 @@ local UpdateDisplayPercent = function(value)
 	else
 		Experience.Percentage:Hide()
 	end
+
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateBarWidth = function(value)
@@ -83,6 +87,7 @@ local UpdateBarWidth = function(value)
 	end
 
 	Experience:SetWidth(value)
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateBarHeight = function(value)
@@ -92,6 +97,7 @@ local UpdateBarHeight = function(value)
 
 	Experience:SetHeight(value)
 	Experience.Bar.Spark:SetHeight(value)
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateProgressVisibility = function(value)
@@ -104,6 +110,8 @@ local UpdateProgressVisibility = function(value)
 	elseif (value == "ALWAYS" and Settings["experience-display-progress"]) then
 		Experience.Progress:Show()
 	end
+
+	Experience:MarkTooltipDirty()
 end
 
 local UpdatePercentVisibility = function(value)
@@ -116,10 +124,29 @@ local UpdatePercentVisibility = function(value)
 	elseif (value == "ALWAYS" and Settings["experience-display-percent"]) then
 		Experience.Percentage:Show()
 	end
+
+	Experience:MarkTooltipDirty()
 end
 
 function Experience:OnMouseUp()
 	ToggleCharacter("PaperDollFrame")
+end
+
+function Experience:UpdateTooltipTimer()
+	if (GameTooltip:IsOwned(self) and GameTooltip:IsShown() and self.Gained > 0) then
+		self:SetScript("OnUpdate", self.OnUpdate)
+	else
+		self:SetScript("OnUpdate", nil)
+		self.Elapsed = 0
+	end
+end
+
+function Experience:MarkTooltipDirty()
+	self.TooltipDirty = true
+
+	if (GameTooltip:IsOwned(self) and GameTooltip:IsShown()) then
+		self:UpdateTooltip()
+	end
 end
 
 function Experience:CreateBar()
@@ -345,11 +372,6 @@ function Experience:Update()
 		self.Bar:SetValue(XP)
 	end
 
-	if self.TooltipShown then
-		GameTooltip:ClearLines()
-		self:OnEnter()
-	end
-
 	if (MaxXP ~= self.LastMax) then
 		self.Gained = self.LastMax - self.LastXP + XP + self.Gained
 	else
@@ -362,6 +384,8 @@ function Experience:Update()
 
 	self.LastXP = XP
 	self.LastMax = MaxXP
+
+	self:MarkTooltipDirty()
 end
 
 function Experience:PLAYER_LEVEL_UP()
@@ -374,6 +398,8 @@ function Experience:PLAYER_LEVEL_UP()
 		--self:SetScript("OnLeave", nil)
 		--self:SetScript("OnEvent", nil)
 	end
+
+	self:MarkTooltipDirty()
 end
 
 function Experience:QUEST_LOG_UPDATE()
@@ -407,14 +433,104 @@ function Experience:OnEvent(event)
 end
 
 function Experience:OnUpdate(elapsed)
+	if (not GameTooltip:IsOwned(self) or not GameTooltip:IsShown() or self.Gained <= 0) then
+		self:UpdateTooltipTimer()
+		return
+	end
+
 	self.Elapsed = self.Elapsed + elapsed
 
 	if (self.Elapsed > 1) then
-		GameTooltip:ClearLines()
-		self:OnEnter()
-
 		self.Elapsed = 0
+		self:MarkTooltipDirty()
 	end
+end
+
+function Experience:UpdateTooltip()
+	if (not GameTooltip:IsOwned(self)) then
+		return
+	end
+
+	if (not self.TooltipDirty) then
+		self:UpdateTooltipTimer()
+		return
+	end
+
+	local RestedXP = GetXPExhaustion()
+	local CurrentXP = UnitXP("player")
+	local MaximumXP = UnitXPMax("player")
+	local Percent = floor((CurrentXP / MaximumXP * 100 + 0.05) * 10) / 10
+	local Remaining = MaximumXP - CurrentXP
+	local RemainingPercent = floor((Remaining / MaximumXP * 100 + 0.05) * 10) / 10
+	local QuestXP = self.Bar.QuestXP or 0
+	local SessionPerHour
+	local SessionTimeToLevel
+	local SessionDuration
+
+	if (self.Gained > 0) then
+		local Duration = GetTime() - self.StartTime
+		local PerSec = self.Gained / Duration
+
+		SessionPerHour = HydraUI:Comma(((PerSec * 60) * 60))
+		SessionTimeToLevel = HydraUI:FormatFullTime(Remaining / PerSec)
+		SessionDuration = HydraUI:FormatFullTime(Duration)
+	end
+
+	local Values = table.concat({
+		UnitLevel("player"),
+		CurrentXP,
+		MaximumXP,
+		RestedXP or "",
+		QuestXP,
+		self.Gained,
+		SessionPerHour or "",
+		SessionTimeToLevel or "",
+		SessionDuration or "",
+	}, "\031")
+
+	self.TooltipDirty = false
+
+	if (Values == self.TooltipValues) then
+		self:UpdateTooltipTimer()
+		return
+	end
+
+	self.TooltipValues = Values
+	GameTooltip:ClearLines()
+	GameTooltip:AddLine(LEVEL .. " " .. UnitLevel("player"))
+	GameTooltip:AddLine(" ")
+	GameTooltip:AddLine(Language["Current Experience"])
+	GameTooltip:AddDoubleLine(format("%s / %s", HydraUI:Comma(CurrentXP), HydraUI:Comma(MaximumXP)), format("%s%%", Percent), 1, 1, 1, 1, 1, 1)
+
+	GameTooltip:AddLine(" ")
+	GameTooltip:AddLine(Language["Remaining Experience"])
+	GameTooltip:AddDoubleLine(format("%s", HydraUI:Comma(Remaining)), format("%s%%", RemainingPercent), 1, 1, 1, 1, 1, 1)
+
+	if RestedXP then
+		local RestedPercent = floor((RestedXP / MaximumXP * 100 + 0.05) * 10) / 10
+
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine(Language["Rested Experience"])
+		GameTooltip:AddDoubleLine(HydraUI:Comma(RestedXP), format("%s%%", RestedPercent), 1, 1, 1, 1, 1, 1)
+	end
+
+	if (QuestXP > 0) then
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine(Language["Quest Experience"])
+		GameTooltip:AddDoubleLine(HydraUI:Comma(QuestXP), format("%s%%", floor((QuestXP / MaximumXP * 100 + 0.05) * 10) / 10), 1, 1, 1, 1, 1, 1)
+	end
+
+	if (self.Gained > 0) then
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine(Language["Session Stats"])
+		GameTooltip:AddDoubleLine(Language["Experience gained"], HydraUI:Comma(self.Gained), 1, 1, 1, 1, 1, 1)
+		GameTooltip:AddDoubleLine(Language["Per hour"], SessionPerHour, 1, 1, 1, 1, 1, 1)
+		GameTooltip:AddDoubleLine(Language["Time to level:"], SessionTimeToLevel, 1, 1, 1, 1, 1, 1)
+		GameTooltip:AddDoubleLine(Language["Duration"], SessionDuration, 1, 1, 1, 1, 1, 1)
+	end
+
+	GameTooltip:Show()
+	self:UpdateTooltipTimer()
 end
 
 function Experience:OnEnter()
@@ -439,57 +555,9 @@ function Experience:OnEnter()
 	end
 
 	GameTooltip:SetOwner(self, "ANCHOR_BOTTOM", 0, -8)
-
-	Rested = GetXPExhaustion()
-	XP = UnitXP("player")
-	Max = UnitXPMax("player")
-
-	local Percent = floor((XP / Max * 100 + 0.05) * 10) / 10
-	local Remaining = Max - XP
-	local RemainingPercent = floor((Remaining / Max * 100 + 0.05) * 10) / 10
-
-	GameTooltip:AddLine(LEVEL .. " " .. UnitLevel("player"))
-	GameTooltip:AddLine(" ")
-	GameTooltip:AddLine(Language["Current Experience"])
-	GameTooltip:AddDoubleLine(format("%s / %s", HydraUI:Comma(XP), HydraUI:Comma(Max)), format("%s%%", Percent), 1, 1, 1, 1, 1, 1)
-
-	GameTooltip:AddLine(" ")
-	GameTooltip:AddLine(Language["Remaining Experience"])
-	GameTooltip:AddDoubleLine(format("%s", HydraUI:Comma(Remaining)), format("%s%%", RemainingPercent), 1, 1, 1, 1, 1, 1)
-
-	if Rested then
-		local RestedPercent = floor((Rested / Max * 100 + 0.05) * 10) / 10
-
-		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine(Language["Rested Experience"])
-		GameTooltip:AddDoubleLine(HydraUI:Comma(Rested), format("%s%%", RestedPercent), 1, 1, 1, 1, 1, 1)
-	end
-
-	if (self.Bar.QuestXP and self.Bar.QuestXP > 0) then
-		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine(Language["Quest Experience"])
-		GameTooltip:AddDoubleLine(HydraUI:Comma(self.Bar.QuestXP), format("%s%%", floor((self.Bar.QuestXP / Max * 100 + 0.05) * 10) / 10), 1, 1, 1, 1, 1, 1)
-	end
-
-	-- Advanced information
-	if (self.Gained > 0) then
-		local Now = GetTime()
-		local Duration = (Now - self.StartTime)
-		local PerSec = self.Gained / Duration
-
-		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine(Language["Session Stats"])
-		GameTooltip:AddDoubleLine(Language["Experience gained"], HydraUI:Comma(self.Gained), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine(Language["Per hour"], HydraUI:Comma(((PerSec * 60) * 60)), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine(Language["Time to level:"], HydraUI:FormatFullTime((Max - XP) / PerSec), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine(Language["Duration"], HydraUI:FormatFullTime(Duration), 1, 1, 1, 1, 1, 1)
-	end
-
-	self.TooltipShown = true
-
-	GameTooltip:Show()
-
-	self:SetScript("OnUpdate", self.OnUpdate)
+	self.TooltipDirty = true
+	self.TooltipValues = nil
+	self:UpdateTooltip()
 end
 
 function Experience:OnLeave()
@@ -499,8 +567,6 @@ function Experience:OnLeave()
 
 	if Settings["experience-show-tooltip"] then
 		GameTooltip:Hide()
-
-		self.TooltipShown = false
 	end
 
 	if (Settings["experience-display-progress"] and Settings["experience-progress-visibility"] == "MOUSEOVER") then
@@ -516,6 +582,8 @@ function Experience:OnLeave()
 	end
 
 	self:SetScript("OnUpdate", nil)
+	self.Elapsed = 0
+	self.TooltipValues = nil
 end
 
 function Experience:Load()
@@ -559,6 +627,7 @@ local UpdateBarColor = function(value)
 
 	Experience.Bar:SetStatusBarColor(HydraUI:HexToRGB(value))
 	Experience.Bar.BG:SetVertexColor(HydraUI:HexToRGB(value))
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateRestedColor = function(value)
@@ -567,6 +636,7 @@ local UpdateRestedColor = function(value)
 	end
 
 	Experience.Bar.Rested:SetStatusBarColor(HydraUI:HexToRGB(value))
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateQuestColor = function(value)
@@ -575,10 +645,26 @@ local UpdateQuestColor = function(value)
 	end
 
 	Experience.Bar.Quest:SetStatusBarColor(HydraUI:HexToRGB(value))
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateExperience = function()
 	Experience:Update()
+end
+
+local UpdateTooltipSetting = function(value)
+	if (not Settings["experience-enable"]) then
+		return
+	end
+
+	Experience.TooltipDirty = true
+
+	if (not value and GameTooltip:IsOwned(Experience)) then
+		GameTooltip:Hide()
+		Experience:UpdateTooltipTimer()
+	elseif value and GameTooltip:IsOwned(Experience) and GameTooltip:IsShown() then
+		Experience:UpdateTooltip()
+	end
 end
 
 local UpdateMouseover = function(value)
@@ -591,6 +677,8 @@ local UpdateMouseover = function(value)
 	else
 		Experience:SetAlpha(1)
 	end
+
+	Experience:MarkTooltipDirty()
 end
 
 local UpdateMouseoverOpacity = function(value)
@@ -601,6 +689,8 @@ local UpdateMouseoverOpacity = function(value)
 	if Settings["experience-mouseover"] then
 		Experience:SetAlpha(value / 100)
 	end
+
+	Experience:MarkTooltipDirty()
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Experience"], function(left, right)
@@ -612,7 +702,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Experience"],
 	left:CreateSwitch("experience-display-progress", Settings["experience-display-progress"], Language["Display Progress Value"], Language["Display your current progress information in the experience bar"], UpdateDisplayProgress)
 	left:CreateSwitch("experience-display-percent", Settings["experience-display-percent"], Language["Display Percent Value"], Language["Display your current percent information in the experience bar"], UpdateDisplayPercent)
 	left:CreateSwitch("experience-display-rested-value", Settings["experience-display-rested-value"], Language["Display Rested Value"], Language["Display your current rested value on the experience bar"], UpdateExperience)
-	left:CreateSwitch("experience-show-tooltip", Settings["experience-show-tooltip"], Language["Enable Tooltip"], Language["Display a tooltip when mousing over the experience bar"])
+	left:CreateSwitch("experience-show-tooltip", Settings["experience-show-tooltip"], Language["Enable Tooltip"], Language["Display a tooltip when mousing over the experience bar"], UpdateTooltipSetting)
 	left:CreateSwitch("experience-animate", Settings["experience-animate"], Language["Animate Experience Changes"], Language["Smoothly animate changes to the experience bar"])
 
 	right:CreateHeader(Language["Size"])

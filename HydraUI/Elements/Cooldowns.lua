@@ -22,6 +22,7 @@ local ItemTables = {}
 local Spells = {}
 local ContainerItemID
 local CooldownTimer
+local CooldownDeadline
 
 if C_Container then
 	ContainerItemID = C_Container.GetContainerItemID
@@ -128,25 +129,35 @@ local function IsTrackedCooldown(kind, duration)
 	return duration and (duration > MinTreshold or (kind == "spell" and duration == MinTreshold))
 end
 
+local function FindEarliestDeadline(records, deadline)
+	for _, Record in pairs(records) do
+		if (Record.Deadline and (not deadline or Record.Deadline < deadline)) then
+			deadline = Record.Deadline
+		end
+	end
+
+	return deadline
+end
+
 function Cooldowns:ScheduleNext()
+	local Deadline = FindEarliestDeadline(ActiveSpells)
+	Deadline = FindEarliestDeadline(ActiveItems, Deadline)
+
+	if (Deadline == CooldownDeadline) then
+		return
+	end
+
 	if CooldownTimer then
 		CooldownTimer:Cancel()
 		CooldownTimer = nil
 	end
 
-	local Deadline
-
-	for _, Records in pairs({ActiveSpells, ActiveItems}) do
-		for _, Record in pairs(Records) do
-			if (Record.Deadline and (not Deadline or Record.Deadline < Deadline)) then
-				Deadline = Record.Deadline
-			end
-		end
-	end
+	CooldownDeadline = Deadline
 
 	if Deadline then
 		CooldownTimer = C_Timer.NewTimer(math.max(0, Deadline - GetTime()), function()
 			CooldownTimer = nil
+			CooldownDeadline = nil
 			Cooldowns:OnUpdate()
 		end)
 	end
@@ -175,26 +186,31 @@ local function UpdateRecord(records, kind, id, start, duration)
 	end
 end
 
--- Called by the one-shot deadline timer, rather than once per frame.
-function Cooldowns:OnUpdate()
-	local Now = GetTime()
+local function UpdateExpiredRecords(records, kind, now)
+	for ID, Record in pairs(records) do
+		if (Record.Deadline <= now) then
+			local Start, Duration = GetCooldown(kind, ID)
 
-	for _, Entry in pairs({{ActiveSpells, "spell"}, {ActiveItems, "item"}}) do
-		local Records, Kind = Entry[1], Entry[2]
-
-		for ID, Record in pairs(Records) do
-			if (Record.Deadline <= Now) then
-				local Start, Duration = GetCooldown(Kind, ID)
-
-				if (Start and IsTrackedCooldown(Kind, Duration) and Start + Duration > Now) then
-					Record.Deadline = Start + Duration
-				else
-					self:ShowReady(Kind, ID)
-					ReleaseRecord(Records, ID)
-				end
+			if (Start and IsTrackedCooldown(kind, Duration) and Start + Duration > now) then
+				Record.Deadline = Start + Duration
+			else
+				Cooldowns:ShowReady(kind, ID)
+				ReleaseRecord(records, ID)
 			end
 		end
 	end
+end
+
+-- Called by the one-shot deadline timer, rather than once per frame.
+function Cooldowns:OnUpdate()
+	if (ActiveCount == 0) then
+		return
+	end
+
+	local Now = GetTime()
+
+	UpdateExpiredRecords(ActiveSpells, "spell", Now)
+	UpdateExpiredRecords(ActiveItems, "item", Now)
 
 	self:ScheduleNext()
 end

@@ -121,88 +121,94 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["unitframes-boss-power-color"])
 
 	-- Auras
-	local Buffs = UF:CreateAuraContainer(
-		self,
-		self:GetName() .. "Buffs",
-		nil,
-		Settings["unitframes-boss-width"],
-		Settings["unitframes-boss-buff-size"],
-		"RIGHT",
-		self,
-		"LEFT",
-		-2,
-		nil,
-		Settings["unitframes-boss-buff-size"],
-		2,
-		3,
-		"TOPRIGHT",
-		"ANCHOR_TOP",
-		"LEFT",
-		"UP",
-		UF.PostCreateIcon,
-		UF.PostUpdateIcon
-	)
-	local Debuffs = UF:CreateAuraContainer(
-		self,
-		self:GetName() .. "Debuffs",
-		nil,
-		Settings["unitframes-boss-width"],
-		Settings["unitframes-boss-debuff-size"],
-		"LEFT",
-		self,
-		"RIGHT",
-		2,
-		nil,
-		Settings["unitframes-boss-debuff-size"],
-		2,
-		4,
-		"TOPLEFT",
-		"ANCHOR_TOP",
-		"RIGHT",
-		"UP",
-		UF.PostCreateIcon,
-		UF.PostUpdateIcon,
-		nil,
-		Settings["unitframes-only-player-debuffs"]
-	)
-	local Castbar = UF:CreateCastbar(
-		self,
-		self:GetName() .. " Casting Bar",
-		Settings["unitframes-boss-width"] - 28,
-		22,
-		"TOPRIGHT",
-		self,
-		"BOTTOMRIGHT",
-		-1,
-		-3,
-		Settings["ui-widget-texture"],
-		nil,
-		"Blank",
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		nil,
-		nil,
-		250 * 0.7,
-		22,
-		-4,
-		true,
-		nil,
-		true,
-		0.3,
-		nil,
-		UF.PostCastStart,
-		UF.PostCastStop,
-		UF.PostCastFail,
-		UF.PostCastInterruptible
-	)
+	local Buffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Buffs",
+		iconSize = Settings["unitframes-boss-buff-size"],
+		spacing = 2,
+		num = 3,
+		initialAnchor = "TOPRIGHT",
+		tooltipAnchor = "ANCHOR_TOP",
+		growthX = "LEFT",
+		growthY = "UP",
+		size = {
+			width = Settings["unitframes-boss-width"],
+			height = Settings["unitframes-boss-buff-size"],
+		},
+		anchor = {
+			point = "RIGHT",
+			relativeTo = self,
+			relativePoint = "LEFT",
+			x = -2,
+		},
+		callbacks = {
+			postCreateIcon = UF.PostCreateIcon,
+			postUpdateIcon = UF.PostUpdateIcon,
+		},
+	})
+	local Debuffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Debuffs",
+		iconSize = Settings["unitframes-boss-debuff-size"],
+		spacing = 2,
+		num = 4,
+		initialAnchor = "TOPLEFT",
+		tooltipAnchor = "ANCHOR_TOP",
+		growthX = "RIGHT",
+		growthY = "UP",
+		onlyShowPlayer = Settings["unitframes-only-player-debuffs"],
+		size = {
+			width = Settings["unitframes-boss-width"],
+			height = Settings["unitframes-boss-debuff-size"],
+		},
+		anchor = {
+			point = "LEFT",
+			relativeTo = self,
+			relativePoint = "RIGHT",
+			x = 2,
+		},
+		callbacks = {
+			postCreateIcon = UF.PostCreateIcon,
+			postUpdateIcon = UF.PostUpdateIcon,
+		},
+	})
+	local Castbar = UF:CreateCastbar(self, {
+		name = self:GetName() .. " Casting Bar",
+		showTradeSkills = true,
+		timeToHold = 0.3,
+		size = {
+			width = Settings["unitframes-boss-width"] - 28,
+			height = 22,
+		},
+		anchor = {
+			point = "TOPRIGHT",
+			relativeTo = self,
+			relativePoint = "BOTTOMRIGHT",
+			x = -1,
+			y = -3,
+		},
+		bar = {
+			texture = Settings["ui-widget-texture"],
+		},
+		background = {
+			texture = "Blank",
+		},
+		text = {
+			font = Settings["unitframes-font"],
+			fontSize = Settings["unitframes-font-size"],
+			fontFlags = Settings["unitframes-font-flags"],
+			width = 250 * 0.7,
+		},
+		icon = {
+			size = 22,
+			x = -4,
+			background = true,
+		},
+		callbacks = {
+			postCastStart = UF.PostCastStart,
+			postCastStop = UF.PostCastStop,
+			postCastFail = UF.PostCastFail,
+			postCastInterruptible = UF.PostCastInterruptible,
+		},
+	})
 
 	-- Tags
 	self:Tag(HealthLeft, Settings["unitframes-boss-health-left"])

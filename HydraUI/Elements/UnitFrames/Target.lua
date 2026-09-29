@@ -85,20 +85,24 @@ HydraUI.StyleFuncs["target"] = function(self, unit)
 	)
 
     -- Portrait
-	UF:CreatePortrait(
-		self,
-		Settings["target-portrait-style"],
-		Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-width"] or 55,
-		Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-health-height"] or Settings["unitframes-target-health-height"] + Settings["unitframes-target-power-height"] + 1,
-		Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "LEFT",
-		Settings["target-portrait-style"] == "OVERLAY" and Health or self,
-		Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "RIGHT",
-		Settings["target-portrait-style"] == "OVERLAY" and 0 or 3,
-		nil,
-		Settings["target-portrait-style"] == "OVERLAY" and Settings["target-overlay-alpha"] / 100 or nil,
-		Settings["Blank"],
-		Settings["target-enable-portrait"]
-	)
+	UF:CreatePortrait(self, {
+		style = Settings["target-portrait-style"],
+		alpha = Settings["target-portrait-style"] == "OVERLAY" and Settings["target-overlay-alpha"] / 100 or nil,
+		size = {
+			width = Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-width"] or 55,
+			height = Settings["target-portrait-style"] == "OVERLAY" and Settings["unitframes-target-health-height"] or Settings["unitframes-target-health-height"] + Settings["unitframes-target-power-height"] + 1,
+		},
+		anchor = {
+			point = Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "LEFT",
+			relativeTo = Settings["target-portrait-style"] == "OVERLAY" and Health or self,
+			relativePoint = Settings["target-portrait-style"] == "OVERLAY" and "CENTER" or "RIGHT",
+			x = Settings["target-portrait-style"] == "OVERLAY" and 0 or 3,
+		},
+		background = {
+			texture = Settings["Blank"],
+			visible = Settings["target-enable-portrait"],
+		},
+	})
 
 	-- Target Icon
 	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
@@ -147,51 +151,50 @@ HydraUI.StyleFuncs["target"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["unitframes-target-power-color"])
 
 	-- Auras
-	local Buffs = UF:CreateAuraContainer(
-		self,
-		self:GetName() .. "Buffs",
-		nil,
-		Settings["unitframes-target-width"],
-		28,
-		"BOTTOMLEFT",
-		self,
-		"TOPLEFT",
-		nil,
-		2,
-		Settings.TargetBuffSize,
-		Settings.TargetBuffSpacing,
-		16,
-		"TOPLEFT",
-		"ANCHOR_TOP",
-		"RIGHT",
-		"UP",
-		UF.PostCreateIcon,
-		UF.PostUpdateIcon
-	)
-	local Debuffs = UF:CreateAuraContainer(
-		self,
-		self:GetName() .. "Debuffs",
-		nil,
-		Settings["unitframes-target-width"],
-		28,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		Settings.TargetDebuffSize,
-		Settings.TargetDebuffSpacing,
-		16,
-		"TOPRIGHT",
-		"ANCHOR_TOP",
-		"LEFT",
-		"UP",
-		UF.PostCreateIcon,
-		UF.PostUpdateIcon,
-		nil,
-		Settings["unitframes-only-player-debuffs"],
-		true
-	)
+	local Buffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Buffs",
+		iconSize = Settings.TargetBuffSize,
+		spacing = Settings.TargetBuffSpacing,
+		num = 16,
+		initialAnchor = "TOPLEFT",
+		tooltipAnchor = "ANCHOR_TOP",
+		growthX = "RIGHT",
+		growthY = "UP",
+		size = {
+			width = Settings["unitframes-target-width"],
+			height = 28,
+		},
+		anchor = {
+			point = "BOTTOMLEFT",
+			relativeTo = self,
+			relativePoint = "TOPLEFT",
+			y = 2,
+		},
+		callbacks = {
+			postCreateIcon = UF.PostCreateIcon,
+			postUpdateIcon = UF.PostUpdateIcon,
+		},
+	})
+	local Debuffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Debuffs",
+		iconSize = Settings.TargetDebuffSize,
+		spacing = Settings.TargetDebuffSpacing,
+		num = 16,
+		initialAnchor = "TOPRIGHT",
+		tooltipAnchor = "ANCHOR_TOP",
+		growthX = "LEFT",
+		growthY = "UP",
+		onlyShowPlayer = Settings["unitframes-only-player-debuffs"],
+		showStealableBuffs = true,
+		size = {
+			width = Settings["unitframes-target-width"],
+			height = 28,
+		},
+		callbacks = {
+			postCreateIcon = UF.PostCreateIcon,
+			postUpdateIcon = UF.PostUpdateIcon,
+		},
+	})
 	if Settings["unitframes-show-player-buffs"] then
 		Debuffs:SetPoint("BOTTOM", Buffs, "TOP", 0, 2)
 	else
@@ -202,44 +205,47 @@ HydraUI.StyleFuncs["target"] = function(self, unit)
 	if Settings["unitframes-target-enable-castbar"] then
 		local Anchor = CreateFrame("Frame", "HydraUI Target Casting Bar", self)
 		Anchor:SetSize(Settings["unitframes-target-cast-width"], Settings["unitframes-target-cast-height"])
-		UF:CreateCastbar(
-			self,
-			nil,
-			Settings["unitframes-target-cast-width"] - Settings["unitframes-target-cast-height"] - 1,
-			Settings["unitframes-target-cast-height"],
-			"RIGHT",
-			Anchor,
-			"RIGHT",
-			nil,
-			nil,
-			Settings["ui-widget-texture"],
-			nil,
-			"Blank",
-			-(Settings["unitframes-target-cast-height"] + 2),
-			1,
-			1,
-			-1,
-			nil,
-			nil,
-			nil,
-			Settings["unitframes-font"],
-			Settings["unitframes-font-size"],
-			Settings["unitframes-font-flags"],
-			-5,
-			5,
-			Settings["unitframes-target-cast-width"] * 0.7,
-			Settings["unitframes-target-cast-height"],
-			nil,
-			nil,
-			nil,
-			true,
-			0.3,
-			Settings["unitframes-target-cast-classcolor"],
-			UF.PostCastStart,
-			UF.PostCastStop,
-			UF.PostCastFail,
-			UF.PostCastInterruptible
-		)
+		UF:CreateCastbar(self, {
+		showTradeSkills = true,
+		timeToHold = 0.3,
+		classColor = Settings["unitframes-target-cast-classcolor"],
+		size = {
+			width = Settings["unitframes-target-cast-width"] - Settings["unitframes-target-cast-height"] - 1,
+			height = Settings["unitframes-target-cast-height"],
+		},
+		anchor = {
+			point = "RIGHT",
+			relativeTo = Anchor,
+			relativePoint = "RIGHT",
+		},
+		bar = {
+			texture = Settings["ui-widget-texture"],
+		},
+		background = {
+			texture = "Blank",
+			topLeftX = -(Settings["unitframes-target-cast-height"] + 2),
+			topLeftY = 1,
+			bottomRightX = 1,
+			bottomRightY = -1,
+		},
+		text = {
+			font = Settings["unitframes-font"],
+			fontSize = Settings["unitframes-font-size"],
+			fontFlags = Settings["unitframes-font-flags"],
+			timeX = -5,
+			textX = 5,
+			width = Settings["unitframes-target-cast-width"] * 0.7,
+		},
+		icon = {
+			size = Settings["unitframes-target-cast-height"],
+		},
+		callbacks = {
+			postCastStart = UF.PostCastStart,
+			postCastStop = UF.PostCastStop,
+			postCastFail = UF.PostCastFail,
+			postCastInterruptible = UF.PostCastInterruptible,
+		},
+	})
 		self.CastAnchor = Anchor
 	end
 

@@ -218,7 +218,46 @@ function UF:CreateFontString(parent, font, size, flags, point, relativePoint, x,
 	return text
 end
 
-function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relativePoint, x, y, alpha, backgroundTexture, backgroundVisible, backgroundR, backgroundG, backgroundB)
+local ComponentDefaults = {
+	Portrait = {anchor = {x = 0, y = 0}, background = {visible = true, r = 0, g = 0, b = 0}},
+	Castbar = {anchor = {x = 0, y = 0}, bar = {backgroundAlpha = 0.2}, background = {topLeftX = -1, topLeftY = 1, bottomRightX = 1, bottomRightY = -1, r = 0, g = 0, b = 0}, text = {timeX = -3, textX = 3}, icon = {x = -1}},
+	AuraContainer = {anchor = {x = 0, y = 0}, callbacks = {}},
+}
+
+-- Copy defaults into a fresh specification so callers can safely reuse their tables.
+-- All component validation lives here, keeping constructor failures close to the
+-- malformed declaration instead of manifesting as shifted positional arguments.
+function UF:NormalizeComponentOptions(kind, options)
+	assert(type(options) == "table", kind .. " options must be a table")
+	local defaults = assert(ComponentDefaults[kind], "unknown component type: " .. tostring(kind))
+	local normalized = {}
+	for key, value in pairs(defaults) do
+		if type(value) == "table" then
+			normalized[key] = {}
+			for nestedKey, nestedValue in pairs(value) do normalized[key][nestedKey] = nestedValue end
+		else normalized[key] = value end
+	end
+	for key, value in pairs(options) do
+		if type(value) == "table" and type(normalized[key]) == "table" then
+			for nestedKey, nestedValue in pairs(value) do normalized[key][nestedKey] = nestedValue end
+		else normalized[key] = value end
+	end
+	assert(type(normalized.size) == "table" and normalized.size.width and normalized.size.height, kind .. " requires size.width and size.height")
+	assert(type(normalized.anchor) == "table", kind .. " requires an anchor table")
+	if kind ~= "AuraContainer" then assert(normalized.anchor.point, kind .. " requires anchor.point") end
+	if kind == "Portrait" then assert(normalized.style, "Portrait requires style") end
+	if kind == "Castbar" then
+		assert(normalized.bar and normalized.bar.texture, "Castbar requires bar.texture")
+		assert(normalized.background and normalized.background.texture, "Castbar requires background.texture")
+		assert(normalized.text and normalized.text.font and normalized.text.fontSize, "Castbar requires text.font and text.fontSize")
+		assert(normalized.icon and normalized.icon.size, "Castbar requires icon.size")
+	end
+	return normalized
+end
+
+function UF:CreatePortrait(frame, options)
+	local spec = self:NormalizeComponentOptions("Portrait", options)
+	local style, size, anchor, background = spec.style, spec.size, spec.anchor, spec.background
 	local portrait
 	if style == "2D" then
 		portrait = frame:CreateTexture(nil, "OVERLAY")
@@ -227,17 +266,17 @@ function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relat
 		portrait = CreateFrame("PlayerModel", nil, frame)
 	end
 
-	portrait:SetSize(width, height)
-	portrait:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
-	if alpha then portrait:SetAlpha(alpha) end
+	portrait:SetSize(size.width, size.height)
+	portrait:SetPoint(anchor.point, anchor.relativeTo or frame, anchor.relativePoint, anchor.x, anchor.y)
+	if spec.alpha then portrait:SetAlpha(spec.alpha) end
 
 	if style ~= "OVERLAY" then
 		local background = frame:CreateTexture(nil, "BACKGROUND")
 		background:SetPoint("TOPLEFT", portrait, -1, 1)
 		background:SetPoint("BOTTOMRIGHT", portrait, 1, -1)
-		background:SetTexture(Assets:GetTexture(backgroundTexture))
-		background:SetVertexColor(backgroundR or 0, backgroundG or 0, backgroundB or 0)
-		if backgroundVisible == false then background:Hide() end
+		background:SetTexture(Assets:GetTexture(spec.background.texture))
+		background:SetVertexColor(spec.background.r, spec.background.g, spec.background.b)
+		if spec.background.visible == false then background:Hide() end
 		portrait.BG = background
 	end
 
@@ -245,43 +284,45 @@ function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relat
 	return portrait
 end
 
-function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativePoint, x, y, texture, barBackgroundAlpha, backgroundTexture, backgroundTopLeftX, backgroundTopLeftY, backgroundBottomRightX, backgroundBottomRightY, backgroundR, backgroundG, backgroundB, font, fontSize, fontFlags, timeX, textX, textWidth, iconSize, iconX, iconBackground, createSafeZone, showTradeSkills, timeToHold, classColor, postCastStart, postCastStop, postCastFail, postCastInterruptible)
-	local castbar = CreateFrame("StatusBar", name, frame)
-	castbar:SetSize(width, height)
-	castbar:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
-	castbar:SetStatusBarTexture(Assets:GetTexture(texture))
+function UF:CreateCastbar(frame, options)
+	local spec = self:NormalizeComponentOptions("Castbar", options)
+	local size, anchor, bar, backgroundSpec, textSpec, iconSpec, callbacks = spec.size, spec.anchor, spec.bar, spec.background, spec.text, spec.icon, spec.callbacks or {}
+	local castbar = CreateFrame("StatusBar", spec.name, frame)
+	castbar:SetSize(size.width, size.height)
+	castbar:SetPoint(anchor.point, anchor.relativeTo or frame, anchor.relativePoint, anchor.x, anchor.y)
+	castbar:SetStatusBarTexture(Assets:GetTexture(bar.texture))
 
 	local barBackground = castbar:CreateTexture(nil, "ARTWORK")
 	barBackground:SetAllPoints(castbar)
-	barBackground:SetTexture(Assets:GetTexture(texture))
-	barBackground:SetAlpha(barBackgroundAlpha or 0.2)
+	barBackground:SetTexture(Assets:GetTexture(bar.texture))
+	barBackground:SetAlpha(bar.backgroundAlpha)
 
 	local background = castbar:CreateTexture(nil, "BACKGROUND")
-	background:SetPoint("TOPLEFT", castbar, backgroundTopLeftX or -1, backgroundTopLeftY or 1)
-	background:SetPoint("BOTTOMRIGHT", castbar, backgroundBottomRightX or 1, backgroundBottomRightY or -1)
-	background:SetTexture(Assets:GetTexture(backgroundTexture))
-	background:SetVertexColor(backgroundR or 0, backgroundG or 0, backgroundB or 0)
+	background:SetPoint("TOPLEFT", castbar, backgroundSpec.topLeftX, backgroundSpec.topLeftY)
+	background:SetPoint("BOTTOMRIGHT", castbar, backgroundSpec.bottomRightX, backgroundSpec.bottomRightY)
+	background:SetTexture(Assets:GetTexture(backgroundSpec.texture))
+	background:SetVertexColor(backgroundSpec.r, backgroundSpec.g, backgroundSpec.b)
 
-	local time = UF:CreateFontString(castbar, font, fontSize, fontFlags, "RIGHT", "RIGHT", timeX or -3, 0, "RIGHT")
-	local text = UF:CreateFontString(castbar, font, fontSize, fontFlags, "LEFT", "LEFT", textX or 3, 0, "LEFT")
-	text:SetSize(textWidth, fontSize)
+	local time = UF:CreateFontString(castbar, textSpec.font, textSpec.fontSize, textSpec.fontFlags, "RIGHT", "RIGHT", textSpec.timeX, 0, "RIGHT")
+	local text = UF:CreateFontString(castbar, textSpec.font, textSpec.fontSize, textSpec.fontFlags, "LEFT", "LEFT", textSpec.textX, 0, "LEFT")
+	text:SetSize(textSpec.width, textSpec.fontSize)
 
 	local icon = castbar:CreateTexture(nil, "OVERLAY")
-	icon:SetSize(iconSize, iconSize)
-	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", iconX or -1, 0)
+	icon:SetSize(iconSpec.size, iconSpec.size)
+	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", iconSpec.x, 0)
 	icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-	if iconBackground then
+	if iconSpec.background then
 		local iconBG = castbar:CreateTexture(nil, "BACKGROUND")
 		iconBG:SetPoint("TOPLEFT", icon, -1, 1)
 		iconBG:SetPoint("BOTTOMRIGHT", icon, 1, -1)
-		iconBG:SetTexture(Assets:GetTexture(backgroundTexture))
-		iconBG:SetVertexColor(backgroundR or 0, backgroundG or 0, backgroundB or 0)
+		iconBG:SetTexture(Assets:GetTexture(backgroundSpec.texture))
+		iconBG:SetVertexColor(backgroundSpec.r, backgroundSpec.g, backgroundSpec.b)
 		icon.BG = iconBG
 	end
 
-	if createSafeZone then
+	if spec.safeZone then
 		local safeZone = castbar:CreateTexture(nil, "ARTWORK")
-		safeZone:SetTexture(Assets:GetTexture(texture))
+		safeZone:SetTexture(Assets:GetTexture(bar.texture))
 		safeZone:SetVertexColor(0.9, 0.15, 0.15, 0.75)
 		castbar.SafeZone = safeZone
 	end
@@ -290,35 +331,37 @@ function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativ
 	castbar.Time = time
 	castbar.Text = text
 	castbar.Icon = icon
-	castbar.showTradeSkills = showTradeSkills
-	castbar.timeToHold = timeToHold
-	castbar.ClassColor = classColor
-	castbar.PostCastStart = postCastStart
-	castbar.PostCastStop = postCastStop
-	castbar.PostCastFail = postCastFail
-	castbar.PostCastInterruptible = postCastInterruptible
+	castbar.showTradeSkills = spec.showTradeSkills
+	castbar.timeToHold = spec.timeToHold
+	castbar.ClassColor = spec.classColor
+	castbar.PostCastStart = callbacks.postCastStart
+	castbar.PostCastStop = callbacks.postCastStop
+	castbar.PostCastFail = callbacks.postCastFail
+	castbar.PostCastInterruptible = callbacks.postCastInterruptible
 	frame.Castbar = castbar
 	return castbar
 end
 
-function UF:CreateAuraContainer(frame, name, parent, width, height, point, relativeTo, relativePoint, x, y, size, spacing, num, initialAnchor, tooltipAnchor, growthX, growthY, postCreateIcon, postUpdateIcon, customFilter, onlyShowPlayer, showStealableBuffs)
-	local auras = CreateFrame("Frame", name, parent or frame)
-	auras:SetSize(width, height)
-	if point then
-		auras:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
+function UF:CreateAuraContainer(frame, options)
+	local spec = self:NormalizeComponentOptions("AuraContainer", options)
+	local anchor, callbacks = spec.anchor, spec.callbacks
+	local auras = CreateFrame("Frame", spec.name, spec.parent or frame)
+	auras:SetSize(spec.size.width, spec.size.height)
+	if anchor.point then
+		auras:SetPoint(anchor.point, anchor.relativeTo or frame, anchor.relativePoint, anchor.x, anchor.y)
 	end
-	auras.size = size
-	auras.spacing = spacing
-	auras.num = num
-	auras.initialAnchor = initialAnchor
-	auras.tooltipAnchor = tooltipAnchor
-	auras["growth-x"] = growthX
-	auras["growth-y"] = growthY
-	auras.PostCreateIcon = postCreateIcon
-	auras.PostUpdateIcon = postUpdateIcon
-	auras.CustomFilter = customFilter
-	auras.onlyShowPlayer = onlyShowPlayer
-	auras.showStealableBuffs = showStealableBuffs
+	auras.size = spec.iconSize
+	auras.spacing = spec.spacing
+	auras.num = spec.num
+	auras.initialAnchor = spec.initialAnchor
+	auras.tooltipAnchor = spec.tooltipAnchor
+	auras["growth-x"] = spec.growthX
+	auras["growth-y"] = spec.growthY
+	auras.PostCreateIcon = callbacks.postCreateIcon
+	auras.PostUpdateIcon = callbacks.postUpdateIcon
+	auras.CustomFilter = callbacks.customFilter
+	auras.onlyShowPlayer = spec.onlyShowPlayer
+	auras.showStealableBuffs = spec.showStealableBuffs
 	return auras
 end
 
@@ -1149,9 +1192,29 @@ end
 
 oUF:RegisterStyle("HydraUI", Style)
 
-function UF:Load()
+local SingletonUnits = {
+	{unit = "player", globalName = "HydraUI Player", enabled = "player-enable", dimensions = {width = "unitframes-player-width", health = "unitframes-player-health-height", power = "unitframes-player-power-height"}, defaultAnchor = {"TOPRIGHT", "CENTER", -68, -281}, postSpawn = "ConfigurePlayer"},
+	{unit = "target", globalName = "HydraUI Target", enabled = "target-enable", dimensions = {width = "unitframes-target-width", health = "unitframes-target-health-height", power = "unitframes-target-power-height"}, defaultAnchor = {"TOPLEFT", "CENTER", 68, -281}, postSpawn = "ConfigureTarget"},
+	{unit = "targettarget", globalName = "HydraUI Target Target", enabled = "tot-enable", dimensions = {width = "unitframes-targettarget-width", health = "unitframes-targettarget-health-height", power = "unitframes-targettarget-power-height"}, defaultAnchor = {"TOPRIGHT", "CENTER", 68, -341}, postSpawn = "ConfigureTargetTarget"},
+	{unit = "pet", globalName = "HydraUI Pet", enabled = "pet-enable", dimensions = {width = "unitframes-pet-width", health = "unitframes-pet-health-height", power = "unitframes-pet-power-height"}, defaultAnchor = {"TOPLEFT", "CENTER", -68, -341}, postSpawn = "ConfigurePet"},
+	{unit = "focus", globalName = "HydraUI Focus", enabled = "focus-enable", dimensions = {width = "unitframes-focus-width", health = "unitframes-focus-health-height", power = "unitframes-focus-power-height"}, defaultAnchor = {"RIGHT", "CENTER", -68, 304}, postSpawn = "ConfigureFocus"},
+}
+UF.SingletonUnits = SingletonUnits
+
+function UF:SpawnSingletonFrames()
+	for _, descriptor in ipairs(SingletonUnits) do
+		if Settings[descriptor.enabled] then
+			local dimensions = descriptor.dimensions
+			local frame = oUF:Spawn(descriptor.unit, descriptor.globalName)
+			frame:SetSize(Settings[dimensions.width], Settings[dimensions.health] + Settings[dimensions.power] + 3)
+			frame:SetPoint(descriptor.defaultAnchor[1], HydraUI.UIParent, descriptor.defaultAnchor[2], descriptor.defaultAnchor[3], descriptor.defaultAnchor[4])
+			frame:SetParent(HydraUI.UIParent)
+			HydraUI.UnitFrames[descriptor.unit] = frame
+		end
+	end
+
 	if Settings["player-enable"] then
-		local Player = oUF:Spawn("player", "HydraUI Player")
+		local Player = HydraUI.UnitFrames["player"]
 
 		if Settings["unitframes-player-enable-power"] and (not Settings["player-move-power"]) then
 			Player:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-health-height"] + Settings["unitframes-player-power-height"] + 3)
@@ -1197,7 +1260,7 @@ function UF:Load()
 	end
 
 	if Settings["target-enable"] then
-		local Target = oUF:Spawn("target", "HydraUI Target")
+		local Target = HydraUI.UnitFrames["target"]
 		Target:SetSize(Settings["unitframes-target-width"], Settings["unitframes-target-health-height"] + Settings["unitframes-target-power-height"] + 3)
 		Target:SetPoint("TOPLEFT", HydraUI.UIParent, "CENTER", 68, -281)
 		Target:SetParent(HydraUI.UIParent)
@@ -1232,7 +1295,7 @@ function UF:Load()
 	end
 
 	if Settings["tot-enable"] then
-		local TargetTarget = oUF:Spawn("targettarget", "HydraUI Target Target")
+		local TargetTarget = HydraUI.UnitFrames["targettarget"]
 		TargetTarget:SetSize(Settings["unitframes-targettarget-width"], Settings["unitframes-targettarget-health-height"] + Settings["unitframes-targettarget-power-height"] + 3)
 		TargetTarget:SetParent(HydraUI.UIParent)
 
@@ -1247,7 +1310,7 @@ function UF:Load()
 	end
 
 	if Settings["pet-enable"] then
-		local Pet = oUF:Spawn("pet", "HydraUI Pet")
+		local Pet = HydraUI.UnitFrames["pet"]
 		Pet:SetSize(Settings["unitframes-pet-width"], Settings["unitframes-pet-health-height"] + Settings["unitframes-pet-power-height"] + 3)
 		Pet:SetParent(HydraUI.UIParent)
 
@@ -1262,7 +1325,7 @@ function UF:Load()
 	end
 
 	if Settings["focus-enable"] then
-		local Focus = oUF:Spawn("focus", "HydraUI Focus")
+		local Focus = HydraUI.UnitFrames["focus"]
 		Focus:SetSize(Settings["unitframes-focus-width"], Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3)
 		Focus:SetPoint("RIGHT", HydraUI.UIParent, "CENTER", -68, 304)
 		Focus:SetParent(HydraUI.UIParent)
@@ -1277,6 +1340,9 @@ function UF:Load()
 		HydraUI:CreateMover(Focus)
 	end
 
+end
+
+function UF:SpawnBossFrames()
 	if Settings["unitframes-boss-enable"] then
 		for i = 1, 8 do
 			local Boss = oUF:Spawn("boss" .. i, "HydraUI Boss " .. i)
@@ -1295,23 +1361,30 @@ function UF:Load()
 		end
 	end
 
-	if Settings["party-enable"] then
-		local XOffset = 0
-		local YOffset = 0
+end
 
-		if (Settings["party-point"] == "LEFT") then
-			XOffset = Settings["party-spacing"]
-			YOffset = 0
-		elseif (Settings["party-point"] == "RIGHT") then
-			XOffset = -Settings["party-spacing"]
-			YOffset = 0
-		elseif (Settings["party-point"] == "TOP") then
-			XOffset = 0
-			YOffset = -Settings["party-spacing"]
-		elseif (Settings["party-point"] == "BOTTOM") then
-			XOffset = 0
-			YOffset = Settings["party-spacing"]
-		end
+function UF:GetGrowthOffsets(point, spacing)
+	if point == "LEFT" then return spacing, 0 end
+	if point == "RIGHT" then return -spacing, 0 end
+	if point == "TOP" then return 0, -spacing end
+	if point == "BOTTOM" then return 0, spacing end
+	return 0, 0
+end
+
+function UF:BuildHeaderAttributes(options)
+	assert(options.width and options.height, "header attributes require width and height")
+	return {
+		"initial-width", options.width, "initial-height", options.height,
+		"showSolo", options.showSolo, "showPlayer", options.showPlayer,
+		"showParty", options.showParty, "showRaid", options.showRaid,
+		"point", options.point, "xOffset", options.xOffset or 0,
+		"yOffset", options.yOffset or 0,
+	}
+end
+
+function UF:SpawnPartyHeaders()
+	if Settings["party-enable"] then
+		local XOffset, YOffset = self:GetGrowthOffsets(Settings["party-point"], Settings["party-spacing"])
 
 		local Party = oUF:SpawnHeader("HydraUI Party", nil, "party,solo",
 			"initial-width", Settings["party-width"],
@@ -1346,22 +1419,7 @@ function UF:Load()
 		HydraUI:CreateMover(self.PartyAnchor)
 
 		if Settings["party-pets-enable"] then
-			local XOffset = 0
-			local YOffset = 0
-
-			if (Settings["party-point"] == "LEFT") then
-				XOffset = Settings["party-spacing"]
-				YOffset = 0
-			elseif (Settings["party-point"] == "RIGHT") then
-				XOffset = - Settings["party-spacing"]
-				YOffset = 0
-			elseif (Settings["party-point"] == "TOP") then
-				XOffset = 0
-				YOffset = - Settings["party-spacing"]
-			elseif (Settings["party-point"] == "BOTTOM") then
-				XOffset = 0
-				YOffset = Settings["party-spacing"]
-			end
+			local XOffset, YOffset = self:GetGrowthOffsets(Settings["party-point"], Settings["party-spacing"])
 
 			local PartyPet = oUF:SpawnHeader("HydraUI Party Pets", "SecureGroupPetHeaderTemplate", "party,solo",
 				"initial-width", Settings["party-pets-width"],
@@ -1394,6 +1452,9 @@ function UF:Load()
 		end
 	end
 
+end
+
+function UF:SpawnRaidHeaders()
 	if Settings["raid-enable"] then
 		local Raid = oUF:SpawnHeader("HydraUI Raid", nil, "raid,solo",
 			"initial-width", Settings["raid-width"],
@@ -1481,6 +1542,9 @@ function UF:Load()
 		end
 	end
 
+end
+
+function UF:SpawnNameplates()
 	if Settings["nameplates-enable"] then
 		UF.NamePlateCVars.nameplateSelectedAlpha = (Settings["nameplates-selected-alpha"] / 100)
 		UF.NamePlateCVars.nameplateMinAlpha = (Settings["nameplates-unselected-alpha"] / 100)
@@ -1488,6 +1552,14 @@ function UF:Load()
 
 		oUF:SpawnNamePlates(nil, UF.NamePlateCallback, UF.NamePlateCVars)
 	end
+end
+
+function UF:Load()
+	self:SpawnSingletonFrames()
+	self:SpawnBossFrames()
+	self:SpawnPartyHeaders()
+	self:SpawnRaidHeaders()
+	self:SpawnNameplates()
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Unit Frames"], function(left, right)

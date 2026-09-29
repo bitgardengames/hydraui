@@ -130,3 +130,30 @@ class SharedUnitFrameCoverage(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UnitFrameSpawnerCoverage(unittest.TestCase):
+    def test_load_delegates_to_focused_spawners(self):
+        source = (ROOT / "UnitFrames.lua").read_text()
+        for helper in ("SpawnSingletonFrames", "SpawnBossFrames", "SpawnPartyHeaders",
+                       "SpawnRaidHeaders", "SpawnNameplates"):
+            self.assertIn(f"function UF:{helper}", source)
+            self.assertIn(f"self:{helper}()", source)
+
+    def test_singleton_descriptors_are_self_describing(self):
+        source = (ROOT / "UnitFrames.lua").read_text()
+        block = source[source.index("local SingletonUnits"):source.index("UF.SingletonUnits")]
+        for field in ("unit", "globalName", "enabled", "dimensions", "defaultAnchor"):
+            self.assertIn(f"{field} =", block)
+        self.assertIn("postSpawn =", block)
+
+    def test_growth_and_header_helpers_cover_shared_inputs(self):
+        source = (ROOT / "UnitFrames.lua").read_text()
+        growth = re.search(r"function UF:GetGrowthOffsets.*?\nend", source, re.S).group()
+        for point in ("LEFT", "RIGHT", "TOP", "BOTTOM"):
+            self.assertIn(f'point == "{point}"', growth)
+        attrs = re.search(r"function UF:BuildHeaderAttributes.*?\nend", source, re.S).group()
+        for attribute in ("initial-width", "initial-height", "showSolo", "showPlayer",
+                          "showParty", "showRaid", "point", "xOffset", "yOffset"):
+            self.assertIn(f'"{attribute}"', attrs)
+        self.assertGreaterEqual(source.count("self:GetGrowthOffsets("), 2)

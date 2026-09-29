@@ -38,7 +38,33 @@ end
 
 local function CreatePartyDebuffs(frame, health, filter)
 	local horizontal = Settings["party-point"] == "LEFT" or Settings["party-point"] == "RIGHT"
-	return UF:CreateAuraContainer(frame, frame:GetName().."Debuffs", health, 24*3+4, horizontal and 24 or 50, horizontal and "BOTTOMLEFT" or "TOPLEFT", frame, horizontal and "TOPLEFT" or "TOPRIGHT", horizontal and 0 or 2, horizontal and 2 or 0, 24, 1, horizontal and 3 or 6, horizontal and "BOTTOMLEFT" or "TOPLEFT", "ANCHOR_TOP", "RIGHT", horizontal and nil or "DOWN", UF.PostCreateIcon, UF.PostUpdateIcon, filter)
+	return UF:CreateAuraContainer(frame, {
+		name = frame:GetName().."Debuffs",
+		parent = health,
+		iconSize = 24,
+		spacing = 1,
+		num = horizontal and 3 or 6,
+		initialAnchor = horizontal and "BOTTOMLEFT" or "TOPLEFT",
+		tooltipAnchor = "ANCHOR_TOP",
+		growthX = "RIGHT",
+		growthY = horizontal and nil or "DOWN",
+		size = {
+			width = 24*3+4,
+			height = horizontal and 24 or 50,
+		},
+		anchor = {
+			point = horizontal and "BOTTOMLEFT" or "TOPLEFT",
+			relativeTo = frame,
+			relativePoint = horizontal and "TOPLEFT" or "TOPRIGHT",
+			x = horizontal and 0 or 2,
+			y = horizontal and 2 or 0,
+		},
+		callbacks = {
+			postCreateIcon = UF.PostCreateIcon,
+			postUpdateIcon = UF.PostUpdateIcon,
+			customFilter = filter,
+		},
+	})
 end
 
 local PartyGroup = {

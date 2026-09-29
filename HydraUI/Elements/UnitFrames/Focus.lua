@@ -88,92 +88,95 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 	UF:SetPowerAttributes(Power, Settings["unitframes-focus-power-color"])
 
 	if Settings["focus-enable-castbar"] then
-		UF:CreateCastbar(
-			self,
-			nil,
-			Settings["unitframes-focus-width"] - 30,
-			24,
-			"TOPRIGHT",
-			self,
-			"BOTTOMRIGHT",
-			-1,
-			-3,
-			Settings["ui-widget-texture"],
-			nil,
-			"Blank",
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			Settings["unitframes-font"],
-			Settings["unitframes-font-size"],
-			Settings["unitframes-font-flags"],
-			nil,
-			nil,
-			250 * 0.7,
-			24,
-			-4,
-			true,
-			nil,
-			true,
-			0.7,
-			nil,
-			UF.PostCastStart,
-			UF.PostCastStop,
-			UF.PostCastFail,
-			UF.PostCastInterruptible
-		)
+		UF:CreateCastbar(self, {
+		showTradeSkills = true,
+		timeToHold = 0.7,
+		size = {
+			width = Settings["unitframes-focus-width"] - 30,
+			height = 24,
+		},
+		anchor = {
+			point = "TOPRIGHT",
+			relativeTo = self,
+			relativePoint = "BOTTOMRIGHT",
+			x = -1,
+			y = -3,
+		},
+		bar = {
+			texture = Settings["ui-widget-texture"],
+		},
+		background = {
+			texture = "Blank",
+		},
+		text = {
+			font = Settings["unitframes-font"],
+			fontSize = Settings["unitframes-font-size"],
+			fontFlags = Settings["unitframes-font-flags"],
+			width = 250 * 0.7,
+		},
+		icon = {
+			size = 24,
+			x = -4,
+			background = true,
+		},
+		callbacks = {
+			postCastStart = UF.PostCastStart,
+			postCastStop = UF.PostCastStop,
+			postCastFail = UF.PostCastFail,
+			postCastInterruptible = UF.PostCastInterruptible,
+		},
+	})
 	end
 
 	-- Auras
 	local AuraSize = Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3
-	local Buffs = UF:CreateAuraContainer(
-		self,
-		self:GetName() .. "Buffs",
-		nil,
-		(AuraSize * 3) + 4,
-		AuraSize,
-		"LEFT",
-		self,
-		"RIGHT",
-		2,
-		nil,
-		AuraSize,
-		2,
-		3,
-		"LEFT",
-		"ANCHOR_TOP",
-		"RIGHT",
-		nil,
-		UF.PostCreateIcon,
-		UF.PostUpdateIcon
-	)
-	local Debuffs = UF:CreateAuraContainer(
-		self,
-		self:GetName() .. "Debuffs",
-		nil,
-		(AuraSize * 3) + 4,
-		AuraSize,
-		"LEFT",
-		Buffs,
-		"RIGHT",
-		2,
-		nil,
-		AuraSize,
-		2,
-		3,
-		"LEFT",
-		"ANCHOR_TOP",
-		"RIGHT",
-		nil,
-		UF.PostCreateIcon,
-		UF.PostUpdateIcon,
-		nil,
-		Settings["unitframes-only-focus-debuffs"]
-	)
+	local Buffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Buffs",
+		iconSize = AuraSize,
+		spacing = 2,
+		num = 3,
+		initialAnchor = "LEFT",
+		tooltipAnchor = "ANCHOR_TOP",
+		growthX = "RIGHT",
+		size = {
+			width = (AuraSize * 3) + 4,
+			height = AuraSize,
+		},
+		anchor = {
+			point = "LEFT",
+			relativeTo = self,
+			relativePoint = "RIGHT",
+			x = 2,
+		},
+		callbacks = {
+			postCreateIcon = UF.PostCreateIcon,
+			postUpdateIcon = UF.PostUpdateIcon,
+		},
+	})
+	local Debuffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Debuffs",
+		iconSize = AuraSize,
+		spacing = 2,
+		num = 3,
+		initialAnchor = "LEFT",
+		tooltipAnchor = "ANCHOR_TOP",
+		growthX = "RIGHT",
+		onlyShowPlayer = Settings["unitframes-only-focus-debuffs"],
+		size = {
+			width = (AuraSize * 3) + 4,
+			height = AuraSize,
+		},
+		anchor = {
+			point = "LEFT",
+			relativeTo = Buffs,
+			relativePoint = "RIGHT",
+			x = 2,
+		},
+		callbacks = {
+			postCreateIcon = UF.PostCreateIcon,
+			postUpdateIcon = UF.PostUpdateIcon,
+		},
+	})
 
 	-- Tags
 	self:Tag(HealthLeft, Settings["unitframes-focus-health-left"])

@@ -105,6 +105,119 @@ function UF:SetPowerAttributes(power, value)
 	end
 end
 
+-- Constructors for the common visual pieces accept resolved, explicit values.
+-- Style modules remain responsible for choosing settings and frame-specific behavior.
+function UF:CreateBackdrop(frame, config)
+	local backdrop = frame:CreateTexture(nil, config.layer or "BACKGROUND")
+	if config.relativeTo then backdrop:SetAllPoints(config.relativeTo) else backdrop:SetAllPoints() end
+	backdrop:SetTexture(Assets:GetTexture(config.texture))
+	backdrop:SetVertexColor(unpack(config.color or {0, 0, 0}))
+	return backdrop
+end
+
+function UF:CreateThreatIndicator(frame, config)
+	local threat = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+	threat:SetPoint("TOPLEFT", config.inset or -1, -(config.inset or -1))
+	threat:SetPoint("BOTTOMRIGHT", -(config.inset or -1), config.inset or -1)
+	threat:SetBackdrop(config.backdrop)
+	threat.PostUpdate = config.postUpdate
+	frame.ThreatIndicator = threat
+	return threat
+end
+
+function UF:CreateHealthBar(frame, config)
+	local health = CreateFrame("StatusBar", nil, frame)
+	health:SetPoint("TOPLEFT", frame, config.leftInset or 1, -(config.topInset or 1))
+	health:SetPoint("TOPRIGHT", frame, -(config.rightInset or 1), -(config.topInset or 1))
+	health:SetHeight(config.height)
+	health:SetStatusBarTexture(Assets:GetTexture(config.texture))
+	health:SetReverseFill(config.reverseFill)
+	if config.orientation then health:SetOrientation(config.orientation) end
+
+	local background = frame:CreateTexture(nil, config.backgroundLayer or "BORDER")
+	background:SetAllPoints(health)
+	background:SetTexture(Assets:GetTexture(config.texture))
+	background.multiplier = config.backgroundMultiplier or 0.2
+	health.bg = background
+	frame.Health = health
+	return health, background
+end
+
+local function AnchorPredictionBar(bar, health, reverseFill)
+	local point = reverseFill and "RIGHT" or "LEFT"
+	local relativePoint = reverseFill and "LEFT" or "RIGHT"
+	bar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
+end
+
+function UF:CreateHealAndAbsorbBars(frame, health, config)
+	local heal = CreateFrame("StatusBar", nil, health)
+	heal:SetSize(config.width, config.height)
+	heal:SetStatusBarTexture(Assets:GetTexture(config.texture))
+	heal:SetStatusBarColor(0, 0.48, 0)
+	heal:SetReverseFill(config.reverseFill)
+	heal:SetFrameLevel(health:GetFrameLevel() - 1)
+	AnchorPredictionBar(heal, health, config.reverseFill)
+	frame.HealBar = heal
+
+	local absorb
+	if config.createAbsorb then
+		absorb = CreateFrame("StatusBar", nil, health)
+		absorb:SetSize(config.width, config.height)
+		absorb:SetStatusBarTexture(Assets:GetTexture(config.texture))
+		absorb:SetStatusBarColor(0, 0.66, 1)
+		absorb:SetReverseFill(config.reverseFill)
+		absorb:SetFrameLevel(health:GetFrameLevel() - 2)
+		AnchorPredictionBar(absorb, health, config.reverseFill)
+		frame.AbsorbsBar = absorb
+	end
+	return heal, absorb
+end
+
+function UF:CreatePowerBar(frame, config)
+	local power = CreateFrame("StatusBar", nil, frame)
+	power:SetPoint("BOTTOMLEFT", frame, config.leftInset or 1, config.bottomInset or 1)
+	power:SetPoint("BOTTOMRIGHT", frame, -(config.rightInset or 1), config.bottomInset or 1)
+	power:SetHeight(config.height)
+	power:SetStatusBarTexture(Assets:GetTexture(config.texture))
+	power:SetReverseFill(config.reverseFill)
+	local background = power:CreateTexture(nil, config.backgroundLayer or "BORDER")
+	background:SetAllPoints(power)
+	background:SetTexture(Assets:GetTexture(config.texture))
+	background:SetAlpha(config.backgroundAlpha or 0.2)
+	power.bg = background
+	frame.Power = power
+	return power, background
+end
+
+function UF:CreateMouseoverHighlight(frame, health, config)
+	local highlight = health:CreateTexture(nil, "OVERLAY")
+	highlight:SetAllPoints(health)
+	highlight:SetTexture(Assets:GetTexture(config.texture))
+	highlight:SetVertexColor(unpack(config.color or {0.8, 0.8, 0.8}))
+	highlight:SetAlpha(0)
+	highlight:SetDrawLayer("OVERLAY", config.sublevel or 7)
+	frame.Highlight = highlight
+	frame:HookScript("OnEnter", function(owner) owner.Highlight:SetAlpha(config.alpha or 0.15) end)
+	frame:HookScript("OnLeave", function(owner) owner.Highlight:SetAlpha(0) end)
+	if not config.enabled then highlight:Hide() end
+	return highlight
+end
+
+function UF:CreateFontString(parent, config)
+	local text = parent:CreateFontString(nil, config.layer or "OVERLAY")
+	HydraUI:SetFontInfo(text, config.font, config.size, config.flags)
+	text:SetPoint(config.point, parent, config.relativePoint or config.point, config.x or 0, config.y or 0)
+	text:SetJustifyH(config.justify or config.point)
+	return text
+end
+
+function UF:CreateRaidTargetIndicator(health, config)
+	local indicator = health:CreateTexture(nil, config.layer or "OVERLAY")
+	indicator:SetSize(config.size or 16, config.size or 16)
+	indicator:SetPoint(config.point or "CENTER", health, config.relativePoint or "TOP", config.x or 0, config.y or 0)
+	return indicator
+end
+
 -- Shared update callbacks operate on existing frames and values so settings
 -- changes do not need to allocate per-frame closures or temporary tables.
 function UF:SetFrameWidth(unit, value)
@@ -232,6 +345,17 @@ function UF:SetHealthTexture(unit, value)
 	if frame.AbsorbsBar then
 		frame.AbsorbsBar:SetStatusBarTexture(texture)
 	end
+end
+
+function UF:SetHeaderHealthTexture(header, value)
+	if not header then return end
+	local texture = Assets:GetTexture(value)
+	self:ForEachHeaderChild(header, function(frame, resolvedTexture)
+		frame.Health:SetStatusBarTexture(resolvedTexture)
+		frame.Health.bg:SetTexture(resolvedTexture)
+		frame.HealBar:SetStatusBarTexture(resolvedTexture)
+		if frame.AbsorbsBar then frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture) end
+	end, texture)
 end
 
 function UF:SetPowerTexture(unit, value)

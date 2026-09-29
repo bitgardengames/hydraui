@@ -63,8 +63,8 @@ Elements\UnitFrames\PartyPets.lua
 Elements\UnitFrames\Raid.lua
 Elements\UnitFrames\RaidPets.lua
 Elements\UnitFrames\NamePlates.lua
-Elements\MiniMap.lua
-Elements\MiniMapButtons.lua
+Elements\Minimap.lua
+Elements\MinimapButtons.lua
 Elements\ZoneText.lua
 Elements\Update.lua
 Elements\AuraTemplate.xml

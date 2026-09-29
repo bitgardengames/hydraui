@@ -77,6 +77,7 @@ local DurationText = {
 }
 local DurationTextTimer
 local DurationTextDeadline
+local DurationTextUpdatingDue
 local DurationBoundaryOffset = 0.001
 
 local function GetNextDurationChange(remaining)
@@ -98,15 +99,7 @@ local function GetNextDurationChange(remaining)
 	return math.min(remaining, math.max(0, remaining - Boundary)) + DurationBoundaryOffset
 end
 
-function DurationText:ScheduleNext()
-	local Deadline
-
-	for _, Record in pairs(self.Buttons) do
-		if (Record.Deadline and (not Deadline or Record.Deadline < Deadline)) then
-			Deadline = Record.Deadline
-		end
-	end
-
+local function ScheduleDurationDeadline(Deadline)
 	if (Deadline == DurationTextDeadline) then
 		return
 	end
@@ -127,6 +120,24 @@ function DurationText:ScheduleNext()
 	end
 end
 
+function DurationText:ScheduleNext()
+	local Deadline
+
+	for _, Record in pairs(self.Buttons) do
+		if (Record.Deadline and (not Deadline or Record.Deadline < Deadline)) then
+			Deadline = Record.Deadline
+		end
+	end
+
+	ScheduleDurationDeadline(Deadline)
+end
+
+local function ScheduleRecord(record)
+	if (record.Deadline and (not DurationTextDeadline or record.Deadline < DurationTextDeadline)) then
+		ScheduleDurationDeadline(record.Deadline)
+	end
+end
+
 function DurationText:Unregister(button)
 	local Record = self.Buttons[button]
 
@@ -134,13 +145,17 @@ function DurationText:Unregister(button)
 		return
 	end
 
+	local WasScheduled = Record.Deadline == DurationTextDeadline
+
 	self.Buttons[button] = nil
 
 	if Record.OnUnregister then
 		Record.OnUnregister(button)
 	end
 
-	self:ScheduleNext()
+	if (not DurationTextUpdatingDue and WasScheduled) then
+		self:ScheduleNext()
+	end
 end
 
 function DurationText:UpdateButton(button, record, now)
@@ -148,7 +163,7 @@ function DurationText:UpdateButton(button, record, now)
 
 	if (not Remaining or Remaining <= 0) then
 		self:Unregister(button)
-		return
+		return false
 	end
 
 	local Text = record.Format(Remaining)
@@ -159,6 +174,8 @@ function DurationText:UpdateButton(button, record, now)
 	end
 
 	record.Deadline = now + GetNextDurationChange(Remaining)
+
+	return true
 end
 
 function DurationText:Register(button, text, formatter, getRemaining, onUnregister)
@@ -174,12 +191,15 @@ function DurationText:Register(button, text, formatter, getRemaining, onUnregist
 	Record.GetRemaining = getRemaining
 	Record.OnUnregister = onUnregister
 
-	self:UpdateButton(button, Record, GetTime())
-	self:ScheduleNext()
+	if (self:UpdateButton(button, Record, GetTime()) and not DurationTextUpdatingDue) then
+		ScheduleRecord(Record)
+	end
 end
 
 function DurationText:UpdateDue()
 	local Now = GetTime()
+
+	DurationTextUpdatingDue = true
 
 	for Button, Record in pairs(self.Buttons) do
 		if (Record.Deadline <= Now) then
@@ -191,6 +211,7 @@ function DurationText:UpdateDue()
 		end
 	end
 
+	DurationTextUpdatingDue = nil
 	self:ScheduleNext()
 end
 

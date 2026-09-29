@@ -66,20 +66,24 @@ if CompactRaidFrameManager then
 end
 
 local Style = function(self, unit)
-	if HydraUI.StyleFuncs[unit] then
-		HydraUI.StyleFuncs[unit](self, unit)
-	elseif (find(unit, "raid") and Settings["raid-enable"]) then
-		HydraUI.StyleFuncs["raid"](self, unit)
-	elseif (find(unit, "raidpet") and Settings["raid-pets-enable"]) then
-		HydraUI.StyleFuncs["raidpet"](self, unit)
-	elseif (find(unit, "partypet") and Settings["party-enable"] and Settings["party-pets-enable"]) then
-		HydraUI.StyleFuncs["partypet"](self, unit)
-	elseif (find(unit, "party") and not find(unit, "pet") and Settings["party-enable"]) then
-		HydraUI.StyleFuncs["party"](self, unit)
-	elseif (find(unit, "nameplate") and Settings["nameplates-enable"]) then
-		HydraUI.StyleFuncs["nameplate"](self, unit)
-	elseif find(unit, "boss%d") then
-		HydraUI.StyleFuncs["boss"](self, unit)
+	local StyleFunc = HydraUI.StyleFuncs[unit]
+
+	if (not StyleFunc) and find(unit, "raidpet") and Settings["raid-pets-enable"] then
+		StyleFunc = HydraUI.StyleFuncs["raidpet"]
+	elseif (not StyleFunc) and find(unit, "raid") and Settings["raid-enable"] then
+		StyleFunc = HydraUI.StyleFuncs["raid"]
+	elseif (not StyleFunc) and find(unit, "partypet") and Settings["party-enable"] and Settings["party-pets-enable"] then
+		StyleFunc = HydraUI.StyleFuncs["partypet"]
+	elseif (not StyleFunc) and find(unit, "party") and not find(unit, "pet") and Settings["party-enable"] then
+		StyleFunc = HydraUI.StyleFuncs["party"]
+	elseif (not StyleFunc) and find(unit, "nameplate") and Settings["nameplates-enable"] then
+		StyleFunc = HydraUI.StyleFuncs["nameplate"]
+	elseif (not StyleFunc) and find(unit, "boss%d") then
+		StyleFunc = HydraUI.StyleFuncs["boss"]
+	end
+
+	if StyleFunc then
+		StyleFunc(self, unit)
 	end
 end
 

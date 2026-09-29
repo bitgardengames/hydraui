@@ -198,6 +198,18 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
 
 
 class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
+    def test_style_dispatch_only_calls_registered_handlers(self):
+        source = (ROOT / "UnitFrames.lua").read_text()
+        style = source[source.index("local Style = function"):source.index("oUF:RegisterStyle")]
+        self.assertIn("if StyleFunc then", style)
+        self.assertIn("StyleFunc(self, unit)", style)
+        self.assertLess(style.index('find(unit, "raidpet")'), style.index('find(unit, "raid")'))
+        self.assertNotRegex(
+            style,
+            r'HydraUI\.StyleFuncs\["(?:raid|raidpet|partypet|party|nameplate|boss)"\]'
+            r'\(self, unit\)',
+        )
+
     def test_client_manifests_load_the_unit_frame_bundle(self):
         addon_root = ROOT.parents[1]
         manifests = tuple(addon_root.glob("HydraUI_*.toc"))

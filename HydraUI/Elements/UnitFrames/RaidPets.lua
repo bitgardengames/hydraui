@@ -11,70 +11,31 @@ Defaults["raid-pets-power-height"] = 0 -- NYI
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-HydraUI.StyleFuncs["raidpet"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
-
-	UF:CreateBackdrop(self, "Blank", "BORDER")
-	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["raid-pets-health-height"],
-		Settings["ui-widget-texture"],
-		Settings["raid-pets-health-reverse"],
-		Settings["raid-pets-health-orientation"],
-		"BACKGROUND"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["raid-pets-width"],
-		Settings["raid-pets-health-height"],
-		Settings["ui-widget-texture"],
-		Settings["raid-pets-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local Highlight = UF:CreateMouseoverHighlight(self, Health, "Blank", Settings.RaidEnableMouseover)
-
-	local HealthMiddle = UF:CreateFontString(
-		Health,
-		Settings["raid-font"],
-		Settings["raid-font-size"],
-		Settings["raid-font-flags"],
-		"CENTER",
-		"CENTER",
-		0,
-		0,
-		"CENTER"
-	)
-
-	-- Attributes
-	Health.frequentUpdates = true
-	Health.colorDisconnected = true
-	Health.Smooth = Settings["raid-pets-health-smooth"]
-
-	UF:SetHealthAttributes(Health, Settings["raid-pets-health-color"])
-
-	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
-
-	-- Tags
-	self:Tag(HealthMiddle, "[Name10]")
-
-	self.Range = {
+local RaidPetsFrameConfig = {
+	settingsPrefix = "raid-pets",
+	backdropLayer = "BORDER",
+	healthTextureKey = "ui-widget-texture",
+	healthBackgroundLayer = "BACKGROUND",
+	healthOrientation = true,
+	healthSmoothKey = "raid-pets-health-smooth",
+	healthFrequentUpdates = true,
+	healthTags = false,
+	fontKey = "raid-font",
+	fontSizeKey = "raid-font-size",
+	fontFlagsKey = "raid-font-flags",
+	middleTag = "[Name10]",
+	mouseoverKey = "RaidEnableMouseover",
+	power = false,
+	colorDisconnected = true,
+	raidTarget = true,
+	range = {
 		insideAlpha = Settings["raid-in-range"] / 100,
 		outsideAlpha = Settings["raid-out-of-range"] / 100,
-	}
+	},
+}
 
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.HealthMiddle = HealthMiddle
-	self.RaidTargetIndicator = RaidTarget
+HydraUI.StyleFuncs["raidpet"] = function(self, unit)
+	UF:BuildSingleUnitFrame(self, unit, RaidPetsFrameConfig)
 end
 
 local UpdateHealthTexture = function(value)

@@ -51,11 +51,14 @@ def constructor_block(source: str, constructor: str) -> str:
 
 class SharedUnitFrameCoverage(unittest.TestCase):
     def test_single_unit_styles_delegate_with_family_descriptors(self):
-        for module, prefix in (("Target", "unitframes-target"),
+        for module, prefix in (("Player", "unitframes-player"),
+                               ("Target", "unitframes-target"),
                                ("Focus", "unitframes-focus"),
                                ("TargetTarget", "unitframes-targettarget"),
                                ("Boss", "unitframes-boss"),
-                               ("Pet", "unitframes-pet")):
+                               ("Pet", "unitframes-pet"),
+                               ("PartyPets", "party-pets"),
+                               ("RaidPets", "raid-pets")):
             with self.subTest(module=module):
                 source = (ROOT / f"{module}.lua").read_text()
                 self.assertIn(f'settingsPrefix = "{prefix}"', source)
@@ -97,18 +100,29 @@ class SharedUnitFrameCoverage(unittest.TestCase):
         self.assertIn("self:ForEachHeaderChild(header, Operations[operation], value, descriptor)", update)
         self.assertNotIn("function(", update)
 
-    def test_pet_styles_never_reach_into_parent_dimensions_or_fill(self):
+    def test_pet_styles_map_their_own_family_settings_in_the_factory(self):
+        factory = (ROOT / "ComponentFactory.lua").read_text()
+        self.assertIn('FamilySetting(config, "-width")', factory)
+        self.assertIn('FamilySetting(config, "-health-height")', factory)
+        self.assertIn('FamilySetting(config, "-health-reverse")', factory)
         cases = (("PartyPets", "party-pets", "party"), ("RaidPets", "raid-pets", "raid"))
         for module, pet_prefix, parent_prefix in cases:
             with self.subTest(module=module):
                 source = (ROOT / f"{module}.lua").read_text()
-                predictions = constructor_block(source, "CreateHealAndAbsorbBars")
-                self.assertIn(f'Settings["{pet_prefix}-width"]', predictions)
-                self.assertIn(f'Settings["{pet_prefix}-health-height"]', predictions)
-                self.assertIn(f'Settings["{pet_prefix}-health-reverse"]', predictions)
-                self.assertNotIn(f'Settings["{parent_prefix}-width"]', predictions)
-                self.assertNotIn(f'Settings["{parent_prefix}-health-height"]', predictions)
-                self.assertNotIn(f'Settings["{parent_prefix}-health-reverse"]', predictions)
+                self.assertIn(f'settingsPrefix = "{pet_prefix}"', source)
+                self.assertNotIn("CreateHealAndAbsorbBars", source)
+                self.assertNotIn(f'Settings["{parent_prefix}-width"]', source)
+                self.assertNotIn(f'Settings["{parent_prefix}-health-height"]', source)
+                self.assertNotIn(f'Settings["{parent_prefix}-health-reverse"]', source)
+
+    def test_family_descriptors_declare_optional_components_and_client_branches(self):
+        player = (ROOT / "Player.lua").read_text()
+        boss = (ROOT / "Boss.lua").read_text()
+        self.assertIn('powerEnabledKey = "unitframes-player-enable-power"', player)
+        self.assertIn("HydraUI.IsMainline", player)
+        self.assertIn("HydraUI.IsVanilla or HydraUI.IsTBC", player)
+        self.assertIn("portrait = BuildPlayerComponents", player)
+        self.assertIn("threat = false", boss)
 
     def test_live_health_texture_update_reaches_every_prediction_texture(self):
         shared = (ROOT / "ComponentFactory.lua").read_text()

@@ -11,70 +11,31 @@ Defaults["party-pets-power-height"] = 0 -- NYI
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-HydraUI.StyleFuncs["partypet"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
-
-	UF:CreateBackdrop(self, "Blank", "BORDER")
-	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["party-pets-health-height"],
-		Settings["ui-widget-texture"],
-		Settings["party-pets-health-reverse"],
-		Settings["party-pets-health-orientation"],
-		"BACKGROUND"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["party-pets-width"],
-		Settings["party-pets-health-height"],
-		Settings["ui-widget-texture"],
-		Settings["party-pets-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local Highlight = UF:CreateMouseoverHighlight(self, Health, "Blank", Settings.PartyEnableMouseover)
-
-	local HealthMiddle = UF:CreateFontString(
-		Health,
-		Settings["party-font"],
-		Settings["party-font-size"],
-		Settings["party-font-flags"],
-		"CENTER",
-		"CENTER",
-		0,
-		0,
-		"CENTER"
-	)
-
-	-- Attributes
-	Health.frequentUpdates = true
-	Health.colorDisconnected = true
-	Health.Smooth = Settings["party-pets-health-smooth"]
-
-	UF:SetHealthAttributes(Health, Settings["party-pets-health-color"])
-
-	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
-
-	-- Tags
-	self:Tag(HealthMiddle, "[Name10]")
-
-	self.Range = {
+local PartyPetsFrameConfig = {
+	settingsPrefix = "party-pets",
+	backdropLayer = "BORDER",
+	healthTextureKey = "ui-widget-texture",
+	healthBackgroundLayer = "BACKGROUND",
+	healthOrientation = true,
+	healthSmoothKey = "party-pets-health-smooth",
+	healthFrequentUpdates = true,
+	healthTags = false,
+	fontKey = "party-font",
+	fontSizeKey = "party-font-size",
+	fontFlagsKey = "party-font-flags",
+	middleTag = "[Name10]",
+	mouseoverKey = "PartyEnableMouseover",
+	power = false,
+	colorDisconnected = true,
+	raidTarget = true,
+	range = {
 		insideAlpha = Settings["party-in-range"] / 100,
 		outsideAlpha = Settings["party-out-of-range"] / 100,
-	}
+	},
+}
 
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.HealthMiddle = HealthMiddle
-	self.RaidTargetIndicator = RaidTarget
+HydraUI.StyleFuncs["partypet"] = function(self, unit)
+	UF:BuildSingleUnitFrame(self, unit, PartyPetsFrameConfig)
 end
 
 local UpdateHealthTexture = function(value)

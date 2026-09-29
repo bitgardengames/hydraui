@@ -228,21 +228,36 @@ local MoveChatFrames = function()
 end
 
 function Chat:Load()
- if not Settings["chat-enable"] then return end
- -- Installation order is intentional: adapters, window, styling, persisted state.
- self:InstallLinkHooks()
- self:CreateChatWindow()
- self:StyleChatFrames()
- if not HydraUIData then HydraUIData = {} end
- if not HydraUIData.ChatInstalled then self:Install(); HydraUIData.ChatInstalled = true end
- self:MoveChatFrames()
- self:SetChatTypeInfo()
- self:RestoreHistory()
- self:InstallFrameHooks()
- DEFAULT_CHAT_FRAME:SetUserPlaced(true)
- if HydraUI.IsMainline then self:RegisterEvent("PLAYER_ENTERING_WORLD"); self:RegisterEvent("CVAR_UPDATE"); self:RegisterEvent("PLAYER_LEVEL_CHANGED") end
- self:RegisterEvent("UI_SCALE_CHANGED")
- self:SetScript("OnEvent", self.MoveChatFrames)
+	if not Settings["chat-enable"] then
+		return
+	end
+
+	-- Installation order is intentional: adapters, window, styling, persisted state.
+	self:InstallLinkHooks()
+	self:CreateChatWindow()
+	self:StyleChatFrames()
+
+	HydraUIData = HydraUIData or {}
+
+	if not HydraUIData.ChatInstalled then
+		self:Install()
+		HydraUIData.ChatInstalled = true
+	end
+
+	self:MoveChatFrames()
+	self:SetChatTypeInfo()
+	self:RestoreHistory()
+	self:InstallFrameHooks()
+	DEFAULT_CHAT_FRAME:SetUserPlaced(true)
+
+	if HydraUI.IsMainline then
+		self:RegisterEvent("PLAYER_ENTERING_WORLD")
+		self:RegisterEvent("CVAR_UPDATE")
+		self:RegisterEvent("PLAYER_LEVEL_CHANGED")
+	end
+
+	self:RegisterEvent("UI_SCALE_CHANGED")
+	self:SetScript("OnEvent", self.MoveChatFrames)
 end
 
 local UpdateChatFrameHeight = function(value)
@@ -331,11 +346,15 @@ local RunChatInstall = function()
 end
 
 local UpdateEnableFading = function(value)
-	Chat:ForEachStyledFrame(function(Frame) Frame:SetFading(value) end)
+	Chat:ForEachStyledFrame(function(frame)
+		frame:SetFading(value)
+	end)
 end
 
 local UpdateFadeTime = function(value)
-	Chat:ForEachStyledFrame(function(Frame) Frame:SetTimeVisible(value) end)
+	Chat:ForEachStyledFrame(function(frame)
+		frame:SetTimeVisible(value)
+	end)
 end
 
 local UpdateEnableLinks = function(value)

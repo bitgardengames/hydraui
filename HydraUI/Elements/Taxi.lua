@@ -15,18 +15,18 @@ function Taxi:OnLeave()
 end
 
 function Taxi:OnMouseUp()
-    if UnitOnTaxi("player") then
-        TaxiRequestEarlyLanding()
+	if UnitOnTaxi("player") then
+		TaxiRequestEarlyLanding()
 		self:Hide()
-    end
+	end
 end
 
 function Taxi:OnEvent()
-    if UnitOnTaxi("player") then
-        self:Show()
-    else
+	if UnitOnTaxi("player") then
+		self:Show()
+	else
 		self:Hide()
-    end
+	end
 end
 
 function Taxi:Load()
@@ -42,11 +42,11 @@ function Taxi:Load()
 	self:SetScript("OnLeave", self.OnLeave)
 	self:SetScript("OnEvent", self.OnEvent)
 
-    if UnitOnTaxi("player") then
-        self:Show()
-    else
+	if UnitOnTaxi("player") then
+		self:Show()
+	else
 		self:Hide()
-    end
+	end
 
 	self.Texture = self:CreateTexture(nil, "ARTWORK")
 	self.Texture:SetPoint("TOPLEFT", self, 1, -1)

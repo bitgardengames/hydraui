@@ -200,52 +200,52 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 		Debuffs:SetPoint("BOTTOM", self, "TOP", 0, 10)
 	end
 
-    -- Castbar
-    local Castbar = CreateFrame("StatusBar", nil, self)
-    Castbar:SetSize(Settings["nameplates-width"] - 2, Settings["nameplates-castbar-height"])
+	-- Castbar
+	local Castbar = CreateFrame("StatusBar", nil, self)
+	Castbar:SetSize(Settings["nameplates-width"] - 2, Settings["nameplates-castbar-height"])
 	Castbar:SetPoint("TOP", Health, "BOTTOM", 0, -4)
-    Castbar:SetStatusBarTexture(Assets:GetTexture(Settings.NPCastTexture))
+	Castbar:SetStatusBarTexture(Assets:GetTexture(Settings.NPCastTexture))
 
 	local CastbarBG = Castbar:CreateTexture(nil, "ARTWORK")
 	CastbarBG:SetPoint("TOPLEFT", Castbar, 0, 0)
 	CastbarBG:SetPoint("BOTTOMRIGHT", Castbar, 0, 0)
-    CastbarBG:SetTexture(Assets:GetTexture(Settings.NPCastTexture))
+	CastbarBG:SetTexture(Assets:GetTexture(Settings.NPCastTexture))
 	CastbarBG:SetAlpha(0.2)
 
-    local Background = Castbar:CreateTexture(nil, "BACKGROUND")
+	local Background = Castbar:CreateTexture(nil, "BACKGROUND")
 	Background:SetPoint("TOPLEFT", Castbar, -1, 1)
-    Background:SetPoint("BOTTOMRIGHT", Castbar, 1, -1)
-    Background:SetTexture(Assets:GetTexture("Blank"))
-    Background:SetVertexColor(0, 0, 0)
+	Background:SetPoint("BOTTOMRIGHT", Castbar, 1, -1)
+	Background:SetTexture(Assets:GetTexture("Blank"))
+	Background:SetVertexColor(0, 0, 0)
 
-    local Time = Castbar:CreateFontString(nil, "OVERLAY")
+	local Time = Castbar:CreateFontString(nil, "OVERLAY")
 	HydraUI:SetFontInfo(Time, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	Time:SetPoint("RIGHT", Castbar, "BOTTOMRIGHT", -4, -3)
 	Time:SetJustifyH("RIGHT")
 
-    local Text = Castbar:CreateFontString(nil, "OVERLAY")
+	local Text = Castbar:CreateFontString(nil, "OVERLAY")
 	HydraUI:SetFontInfo(Text, Settings["nameplates-font"], Settings["nameplates-font-size"], Settings["nameplates-font-flags"])
 	Text:SetPoint("LEFT", Castbar, "BOTTOMLEFT", 4, -3)
 	Text:SetWidth(Settings["nameplates-width"] / 2 + 4)
 	Text:SetJustifyH("LEFT")
 
-    local Icon = Castbar:CreateTexture(nil, "OVERLAY")
-    Icon:SetSize(Settings["nameplates-height"] + 12 + 2, Settings["nameplates-height"] + 12 + 2)
-    Icon:SetPoint("BOTTOMRIGHT", Castbar, "BOTTOMLEFT", -4, 0)
-    Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+	local Icon = Castbar:CreateTexture(nil, "OVERLAY")
+	Icon:SetSize(Settings["nameplates-height"] + 12 + 2, Settings["nameplates-height"] + 12 + 2)
+	Icon:SetPoint("BOTTOMRIGHT", Castbar, "BOTTOMLEFT", -4, 0)
+	Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
 
-    local IconBG = Castbar:CreateTexture(nil, "BACKGROUND")
-    IconBG:SetPoint("TOPLEFT", Icon, -1, 1)
-    IconBG:SetPoint("BOTTOMRIGHT", Icon, 1, -1)
-    IconBG:SetTexture(Assets:GetTexture("Blank"))
-    IconBG:SetVertexColor(0, 0, 0)
+	local IconBG = Castbar:CreateTexture(nil, "BACKGROUND")
+	IconBG:SetPoint("TOPLEFT", Icon, -1, 1)
+	IconBG:SetPoint("BOTTOMRIGHT", Icon, 1, -1)
+	IconBG:SetTexture(Assets:GetTexture("Blank"))
+	IconBG:SetVertexColor(0, 0, 0)
 
-    Castbar.bg = CastbarBG
-    Castbar.Time = Time
-    Castbar.Text = Text
-    Castbar.Icon = Icon
-    Castbar.showTradeSkills = true
-    Castbar.timeToHold = 0.7
+	Castbar.bg = CastbarBG
+	Castbar.Time = Time
+	Castbar.Text = Text
+	Castbar.Icon = Icon
+	Castbar.showTradeSkills = true
+	Castbar.timeToHold = 0.7
 	Castbar.ClassColor = Settings["nameplates-cast-classcolor"]
 	Castbar.PostCastStart = UF.PostCastStart
 	Castbar.PostCastStop = UF.PostCastStop
@@ -254,10 +254,10 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 
 	--[[ Elite icon
 	local EliteIndicator = Health:CreateTexture(nil, "OVERLAY")
-    EliteIndicator:SetSize(16, 16)
-    EliteIndicator:SetPoint("RIGHT", Health, "LEFT", -1, 0)
-    EliteIndicator:SetTexture(Assets:GetTexture("Small Star"))
-    EliteIndicator:Hide()]]
+	EliteIndicator:SetSize(16, 16)
+	EliteIndicator:SetPoint("RIGHT", Health, "LEFT", -1, 0)
+	EliteIndicator:SetTexture(Assets:GetTexture("Small Star"))
+	EliteIndicator:Hide()]]
 
 	-- Target
 	local TargetIndicator = CreateFrame("Frame", nil, self)
@@ -310,14 +310,14 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 end
 
 UF.NamePlateCVars = {
-    nameplateGlobalScale = 1,
-    NamePlateHorizontalScale = 1,
-    NamePlateVerticalScale = 1,
-    nameplateLargerScale = 1,
-    nameplateMaxScale = 1,
-    nameplateMinScale = 1,
-    nameplateSelectedScale = 1,
-    nameplateSelfScale = 1,
+	nameplateGlobalScale = 1,
+	NamePlateHorizontalScale = 1,
+	NamePlateVerticalScale = 1,
+	nameplateLargerScale = 1,
+	nameplateMaxScale = 1,
+	nameplateMinScale = 1,
+	nameplateSelectedScale = 1,
+	nameplateSelfScale = 1,
 }
 
 UF.NamePlateCallback = function(plate)

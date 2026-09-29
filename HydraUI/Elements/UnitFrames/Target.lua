@@ -57,7 +57,7 @@ local function BuildTargetComponents(factory, frame, unit)
 		Debuffs:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 0, 2)
 	end
 
-    -- Castbar
+	-- Castbar
 	if Settings["unitframes-target-enable-castbar"] then
 		local Anchor = CreateFrame("Frame", "HydraUI Target Casting Bar", frame)
 		Anchor:SetSize(Settings["unitframes-target-cast-width"], Settings["unitframes-target-cast-height"])

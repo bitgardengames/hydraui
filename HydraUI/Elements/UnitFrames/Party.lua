@@ -49,32 +49,90 @@ local PartyGroup = {
 	debuffFilter = PartyDebuffFilter, createDebuffs = CreatePartyDebuffs, dispelSize = 20, dispelAboveDebuffs = true,
 	indicators = { auraWatch = true, role = Settings["party-show-role"], leaderX = 0, phasePoint = "TOPRIGHT" }, testStart = -4,
 }
-HydraUI.StyleFuncs["party"] = function(frame, unit) UF:BuildGroupFrame(frame, unit, PartyGroup) end
+HydraUI.StyleFuncs["party"] = function(frame, unit)
+	UF:BuildGroupFrame(frame, unit, PartyGroup)
+end
 
-local function Update(operation, value) UF:UpdateGroupFrames(PartyGroup, operation, value) end
-local function UpdatePartyWidth(value) Update("width",value) end
-local function UpdatePartyHealthHeight(value) Update("healthHeight",value) end
-local function UpdatePartyHealthColor(value) Update("healthColor",value) end
-local function UpdatePartyHealthReverseFill(value) Update("healthReverse",value) end
-local function UpdateEnablePartyPower(value) Update("powerEnabled",value) end
-local function UpdatePartyPowerHeight(value) Update("powerHeight",value) end
-local function UpdatePartyPowerReverseFill(value) Update("powerReverse",value) end
-local function UpdatePartyPowerColor(value) Update("powerColor",value) end
-local function UpdatePartyShowDebuffs(value) Update("debuffs",value) end
-local function UpdatePartyShowHighlight(value) Update("highlight",value) end
-local function UpdatePartyShowRole(value) Update("role",value) end
-local function UpdateHealthTexture(value) Update("healthTexture",value) end
-local function UpdatePowerTexture(value) Update("powerTexture",value) end
-local function TestParty() UF:ToggleGroupTest(PartyGroup) end
-local function UpdateShowSolo(value) _G["HydraUI Party"]:SetAttribute("showSolo",value) end
+local function Update(operation, value)
+	UF:UpdateGroupFrames(PartyGroup, operation, value)
+end
+
+local function UpdatePartyWidth(value)
+	Update("width", value)
+end
+local function UpdatePartyHealthHeight(value)
+	Update("healthHeight", value)
+end
+local function UpdatePartyHealthColor(value)
+	Update("healthColor", value)
+end
+local function UpdatePartyHealthReverseFill(value)
+	Update("healthReverse", value)
+end
+local function UpdateEnablePartyPower(value)
+	Update("powerEnabled", value)
+end
+local function UpdatePartyPowerHeight(value)
+	Update("powerHeight", value)
+end
+local function UpdatePartyPowerReverseFill(value)
+	Update("powerReverse", value)
+end
+local function UpdatePartyPowerColor(value)
+	Update("powerColor", value)
+end
+local function UpdatePartyShowDebuffs(value)
+	Update("debuffs", value)
+end
+local function UpdatePartyShowHighlight(value)
+	Update("highlight", value)
+end
+local function UpdatePartyShowRole(value)
+	Update("role", value)
+end
+local function UpdateHealthTexture(value)
+	Update("healthTexture", value)
+end
+local function UpdatePowerTexture(value)
+	Update("powerTexture", value)
+end
+local function TestParty()
+	UF:ToggleGroupTest(PartyGroup)
+end
+local function UpdateShowSolo(value)
+	_G["HydraUI Party"]:SetAttribute("showSolo", value)
+end
+
 local function SetSpacing(header, value, point)
 	local x, y = 0, 0
-	if point == "LEFT" then x=value elseif point == "RIGHT" then x=-value elseif point == "TOP" then y=-value else y=value end
-	header:SetAttribute("xOffset",x); header:SetAttribute("yOffset",y)
+
+	if point == "LEFT" then
+		x = value
+	elseif point == "RIGHT" then
+		x = -value
+	elseif point == "TOP" then
+		y = -value
+	else
+		y = value
+	end
+
+	header:SetAttribute("xOffset", x)
+	header:SetAttribute("yOffset", y)
 end
+
 local function UpdatePartySpacing(value)
-	local header=HydraUI.UnitFrames["party"]
-	if header then local point=header:GetAttribute("point"); SetSpacing(header,value,point); if HydraUI.UnitFrames["party-pets"] then SetSpacing(HydraUI.UnitFrames["party-pets"],value,point) end end
+	local header = HydraUI.UnitFrames["party"]
+
+	if not header then
+		return
+	end
+
+	local point = header:GetAttribute("point")
+	SetSpacing(header, value, point)
+
+	if HydraUI.UnitFrames["party-pets"] then
+		SetSpacing(HydraUI.UnitFrames["party-pets"], value, point)
+	end
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Party"], Language["Unit Frames"], function(left, right)

@@ -105,7 +105,7 @@ local PlayerResourceDescriptors = {
 local function BuildPlayerComponents(factory, self, unit)
 	local Health = self.Health
 	self.AuraParent = self
-    -- Portrait
+	-- Portrait
 	factory:CreatePortrait(self,
 		Settings["player-portrait-style"],
 		Settings["player-portrait-style"] == "OVERLAY" and Settings["unitframes-player-width"] or 55,
@@ -121,14 +121,14 @@ local function BuildPlayerComponents(factory, self, unit)
 	Combat:SetSize(20, 20)
 	Combat:SetPoint("CENTER", Health)
 
-    local Leader = Health:CreateTexture(nil, "OVERLAY")
-    Leader:SetSize(16, 16)
-    Leader:SetPoint("LEFT", Health, "TOPLEFT", 3, 0)
-    Leader:SetTexture(Assets:GetTexture("Leader"))
-    Leader:SetVertexColor(HydraUI:HexToRGB("FFEB3B"))
-    Leader:Hide()
+	local Leader = Health:CreateTexture(nil, "OVERLAY")
+	Leader:SetSize(16, 16)
+	Leader:SetPoint("LEFT", Health, "TOPLEFT", 3, 0)
+	Leader:SetTexture(Assets:GetTexture("Leader"))
+	Leader:SetVertexColor(HydraUI:HexToRGB("FFEB3B"))
+	Leader:Hide()
 
-    -- PVP indicator
+	-- PVP indicator
 	local PvPIndicator = Health:CreateTexture(nil, "ARTWORK", nil, 1)
 
 	if HydraUI.IsMainline then
@@ -214,7 +214,7 @@ local function BuildPlayerComponents(factory, self, unit)
 		end
 
 	end
-    -- Castbar
+	-- Castbar
 	if Settings["unitframes-player-enable-castbar"] then
 		local Anchor = CreateFrame("Frame", "HydraUI Casting Bar", self)
 		Anchor:SetSize(Settings["unitframes-player-cast-width"], Settings["unitframes-player-cast-height"])
@@ -235,7 +235,9 @@ local function BuildPlayerComponents(factory, self, unit)
 		ResourceAnchor:SetPoint("CENTER", HydraUI.UIParent, 0, -120)
 		HydraUI:CreateMover(ResourceAnchor)
 
-		local function SelectResourceDescriptor(class) return PlayerResourceDescriptors[class] end
+		local function SelectResourceDescriptor(class)
+			return PlayerResourceDescriptors[class]
+		end
 
 		local function CreateResourceBar(frame, descriptor)
 			if not descriptor then return end

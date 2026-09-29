@@ -43,17 +43,21 @@ function Chat:CreateChatWindow()
 end
 
 Chat.Window = {
- SetChatDataTextWidth = function(_, width)
-  local dataText = HydraUI:GetModule("DataText")
-  local names = {"Chat-Left", "Chat-Middle", "Chat-Right"}
-  for i = 1, #names do
-   local anchor = dataText:GetAnchor(names[i])
-   if anchor then anchor:SetWidth(width / 3) end
-  end
- end,
- GetEmbedFrame = function()
-  return Window.Middle
- end,
+	SetChatDataTextWidth = function(_, width)
+		local dataText = HydraUI:GetModule("DataText")
+		local names = {"Chat-Left", "Chat-Middle", "Chat-Right"}
+
+		for i = 1, #names do
+			local anchor = dataText:GetAnchor(names[i])
+
+			if anchor then
+				anchor:SetWidth(width / 3)
+			end
+		end
+	end,
+	GetEmbedFrame = function()
+		return Window.Middle
+	end,
 }
 
 function Window:CreateSingleWindow()

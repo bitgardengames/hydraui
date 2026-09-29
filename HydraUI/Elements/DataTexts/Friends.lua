@@ -96,161 +96,37 @@ local GetClass = function(class)
 	end
 end
 
-ClientInfo["App"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
+local FormatAccountName = function(name, isAFK, isDND, afkToken, dndToken)
+	if isAFK then
+		return format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, afkToken)
+	elseif isDND then
+		return format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, dndToken)
 	end
 
-	return ClientToName[info.gameAccountInfo.clientProgram], name
+	return format("|cFF00FFF6%s|r", name)
 end
 
-ClientInfo["ANBS"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["BSAp"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["DST2"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["D3"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["Hero"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["Pro"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["S1"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["S2"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["VIPR"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["AUKS"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["ODIN"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
-ClientInfo["OSI"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
+-- DisplayName selects the value shown in the left column. Right selects the
+-- optional value shown in the area/rich-presence column.
+ClientInfo = {
+	App = {DisplayName = "accountName"},
+	ANBS = {DisplayName = "accountName", Right = "richPresence"},
+	BSAp = {DisplayName = "accountName", Right = "richPresence"},
+	DST2 = {DisplayName = "accountName", Right = "richPresence"},
+	D3 = {DisplayName = "accountName", Right = "richPresence"},
+	Hero = {DisplayName = "accountName", Right = "richPresence"},
+	Pro = {DisplayName = "accountName", Right = "richPresence"},
+	S1 = {DisplayName = "accountName", Right = "richPresence"},
+	S2 = {DisplayName = "accountName", Right = "richPresence"},
+	VIPR = {DisplayName = "accountName", Right = "richPresence"},
+	AUKS = {DisplayName = "accountName", Right = "richPresence"},
+	ODIN = {DisplayName = "accountName", Right = "richPresence"},
+	OSI = {DisplayName = "accountName", Right = "richPresence"},
+	WTCG = {DisplayName = "richPresence"},
+	Fen = {DisplayName = "richPresence"},
+	GRY = {DisplayName = "richPresence"},
+	W3 = {DisplayName = "accountName", Right = "richPresence", AFKToken = CHAT_FLAG_AFK, DNDToken = CHAT_FLAG_DND},
+}
 
 ClientInfo["WoW"] = function(name, info)
 	local Class = GetClass(info.gameAccountInfo.className)
@@ -285,60 +161,29 @@ ClientInfo["WoW"] = function(name, info)
 	return ProjectName, NameInfo, Area
 end
 
-ClientInfo["WTCG"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], info.gameAccountInfo.richPresence
-end
-
-ClientInfo["Fen"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], info.gameAccountInfo.richPresence
-end
-
-ClientInfo["GRY"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_AFK_MESSAGE)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, DEFAULT_DND_MESSAGE)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], info.gameAccountInfo.richPresence
-end
-
-ClientInfo["W3"] = function(name, info)
-	if info.gameAccountInfo.isGameAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif info.gameAccountInfo.isGameBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[info.gameAccountInfo.clientProgram], name, info.gameAccountInfo.richPresence
-end
-
 local GetClientInformation = function(client, name, info)
-	if ClientInfo[client] then
-		local RealClient, Left, Right = ClientInfo[client](name, info)
+	local Descriptor = ClientInfo[client]
 
-		return RealClient, Left, Right
+	if (not Descriptor) then
+		return
 	end
+
+	if (type(Descriptor) == "function") then
+		return Descriptor(name, info)
+	end
+
+	local GameAccountInfo = info.gameAccountInfo
+	local DisplayName
+
+	if (Descriptor.DisplayName == "richPresence") then
+		DisplayName = GameAccountInfo.richPresence
+	else
+		DisplayName = FormatAccountName(name, GameAccountInfo.isGameAFK, GameAccountInfo.isGameBusy, Descriptor.AFKToken or DEFAULT_AFK_MESSAGE, Descriptor.DNDToken or DEFAULT_DND_MESSAGE)
+	end
+
+	local Right = Descriptor.Right == "richPresence" and GameAccountInfo.richPresence or nil
+
+	return ClientToName[GameAccountInfo.clientProgram], DisplayName, Right
 end
 
 local OnEnter = function(self)

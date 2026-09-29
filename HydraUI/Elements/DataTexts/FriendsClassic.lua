@@ -97,187 +97,37 @@ local GetClass = function(class)
 	end
 end
 
-ClientInfo["App"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
+local FormatAccountName = function(name, isAFK, isDND)
+	if isAFK then
+		return format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
+	elseif isDND then
+		return format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
 	end
 
-	return ClientToName[Client], name
+	return format("|cFF00FFF6%s|r", name)
 end
 
-ClientInfo["ANBS"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["BSAp"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["DST2"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["D3"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["Hero"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["Pro"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["S1"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["S2"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["VIPR"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["AUKS"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["ODIN"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["OSI"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
+-- DisplayName selects the value shown in the left column. Right selects the
+-- optional value shown in the area/rich-presence column.
+ClientInfo = {
+	App = {DisplayName = "accountName"},
+	ANBS = {DisplayName = "accountName", Right = "richPresence"},
+	BSAp = {DisplayName = "accountName", Right = "richPresence"},
+	DST2 = {DisplayName = "accountName", Right = "richPresence"},
+	D3 = {DisplayName = "accountName", Right = "richPresence"},
+	Hero = {DisplayName = "accountName", Right = "richPresence"},
+	Pro = {DisplayName = "accountName", Right = "richPresence"},
+	S1 = {DisplayName = "accountName", Right = "richPresence"},
+	S2 = {DisplayName = "accountName", Right = "richPresence"},
+	VIPR = {DisplayName = "accountName", Right = "richPresence"},
+	AUKS = {DisplayName = "accountName", Right = "richPresence"},
+	ODIN = {DisplayName = "accountName", Right = "richPresence"},
+	OSI = {DisplayName = "accountName", Right = "richPresence"},
+	WTCG = {DisplayName = "accountName", Right = "richPresence"},
+	Fen = {DisplayName = "accountName", Right = "richPresence"},
+	GRY = {DisplayName = "accountName", Right = "richPresence"},
+	W3 = {DisplayName = "accountName", Right = "richPresence"},
+}
 
 ClientInfo["WoW"] = function(name, id)
 	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy, GUID, WoWProjectID, IsWoWMobile = BNGetGameAccountInfo(id)
@@ -318,68 +168,22 @@ ClientInfo["WoW"] = function(name, id)
 	return ProjectName, NameInfo, Area
 end
 
-ClientInfo["WTCG"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["Fen"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["GRY"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
-ClientInfo["W3"] = function(name, id)
-	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
-
-	if IsAFK then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_AFK)
-	elseif IsBusy then
-		name = format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, CHAT_FLAG_DND)
-	else
-		name = format("|cFF00FFF6%s|r", name)
-	end
-
-	return ClientToName[Client], name, RichPresence
-end
-
 local GetClientInformation = function(client, name, id)
-	if ClientInfo[client] then
-		local RealClient, Left, Right = ClientInfo[client](name, id)
+	local Descriptor = ClientInfo[client]
 
-		return RealClient, Left, Right
+	if (not Descriptor) then
+		return
 	end
+
+	if (type(Descriptor) == "function") then
+		return Descriptor(name, id)
+	end
+
+	local HasFocus, CharacterName, RealClient, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy = BNGetGameAccountInfo(id)
+	local DisplayName = FormatAccountName(name, IsAFK, IsBusy)
+	local Right = Descriptor.Right == "richPresence" and RichPresence or nil
+
+	return ClientToName[RealClient], DisplayName, Right
 end
 
 local OnEnter = function(self)

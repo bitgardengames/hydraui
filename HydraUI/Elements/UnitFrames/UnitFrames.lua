@@ -105,6 +105,92 @@ function UF:SetPowerAttributes(power, value)
 	end
 end
 
+-- Shared update callbacks operate on existing frames and values so settings
+-- changes do not need to allocate per-frame closures or temporary tables.
+function UF:SetFrameWidth(unit, value)
+	unit:SetWidth(value)
+end
+
+function UF:SetHealthHeight(unit, value, powerHeight)
+	unit.Health:SetHeight(value)
+	unit:SetHeight(value + powerHeight + 3)
+end
+
+function UF:SetPowerHeight(unit, value, healthHeight)
+	unit.Power:SetHeight(value)
+	unit:SetHeight(healthHeight + value + 3)
+end
+
+function UF:ApplyHealthAttributes(unit, value)
+	self:SetHealthAttributes(unit.Health, value)
+	unit.Health:ForceUpdate()
+end
+
+function UF:ApplyPowerAttributes(unit, value)
+	self:SetPowerAttributes(unit.Power, value)
+	unit.Power:ForceUpdate()
+end
+
+function UF:SetHealthReverseFill(unit, value)
+	local health = unit.Health
+	local healBar = unit.HealBar
+	local absorbsBar = unit.AbsorbsBar
+	local point = value and "RIGHT" or "LEFT"
+	local relativePoint = value and "LEFT" or "RIGHT"
+
+	health:SetReverseFill(value)
+
+	if healBar then
+		healBar:SetReverseFill(value)
+		healBar:ClearAllPoints()
+		healBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
+	end
+
+	if absorbsBar then
+		absorbsBar:SetReverseFill(value)
+		absorbsBar:ClearAllPoints()
+		absorbsBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
+	end
+end
+
+function UF:SetPowerReverseFill(unit, value)
+	unit.Power:SetReverseFill(value)
+end
+
+function UF:SetElementEnabled(unit, value, element)
+	if not unit[element] then
+		return
+	end
+
+	if value then
+		unit:EnableElement(element)
+	else
+		unit:DisableElement(element)
+	end
+end
+
+function UF:SetHealthTexture(unit, value)
+	local texture = Assets:GetTexture(value)
+
+	unit.Health:SetStatusBarTexture(texture)
+	unit.Health.bg:SetTexture(texture)
+
+	if unit.HealBar then
+		unit.HealBar:SetStatusBarTexture(texture)
+	end
+
+	if unit.AbsorbsBar then
+		unit.AbsorbsBar:SetStatusBarTexture(texture)
+	end
+end
+
+function UF:SetPowerTexture(unit, value)
+	local texture = Assets:GetTexture(value)
+
+	unit.Power:SetStatusBarTexture(texture)
+	unit.Power.bg:SetTexture(texture)
+end
+
 local UnregisterAuraTimer = function(button)
 	HydraUI.DurationText:Unregister(button)
 	button.LastAuraTime = nil

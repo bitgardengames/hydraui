@@ -231,7 +231,7 @@ end
 local UpdateWidth = function(value)
 	for i = 1, 8 do
 		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i]:SetWidth(value)
+			UF:SetFrameWidth(HydraUI.UnitFrames["boss"..i], value)
 		end
 	end
 end
@@ -239,8 +239,7 @@ end
 local UpdateHealthHeight = function(value)
 	for i = 1, 8 do
 		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i].Health:SetHeight(value)
-			HydraUI.UnitFrames["boss"..i]:SetHeight(value + Settings["unitframes-boss-power-height"] + 3)
+			UF:SetHealthHeight(HydraUI.UnitFrames["boss"..i], value, Settings["unitframes-boss-power-height"])
 		end
 	end
 end
@@ -248,8 +247,7 @@ end
 local UpdatePowerHeight = function(value)
 	for i = 1, 8 do
 		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i].Power:SetHeight(value)
-			HydraUI.UnitFrames["boss"..i]:SetHeight(value + Settings["unitframes-boss-health-height"] + 3)
+			UF:SetPowerHeight(HydraUI.UnitFrames["boss"..i], value, Settings["unitframes-boss-health-height"])
 		end
 	end
 end
@@ -257,40 +255,17 @@ end
 local UpdateHealthColor = function(value)
 	for i = 1, 8 do
 		if HydraUI.UnitFrames["boss"..i] then
-			UF:SetHealthAttributes(HydraUI.UnitFrames["boss"..i].Health, value)
-			HydraUI.UnitFrames["boss"..i].Health:ForceUpdate()
+			UF:ApplyHealthAttributes(HydraUI.UnitFrames["boss"..i], value)
 		end
 	end
 end
 
 local UpdateHealthFill = function(value)
-	local Unit
-
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			Unit = HydraUI.UnitFrames["boss"..i]
+		local Frame = HydraUI.UnitFrames["boss"..i]
 
-			Unit.Health:SetReverseFill(value)
-			Unit.HealBar:SetReverseFill(value)
-			Unit.HealBar:ClearAllPoints()
-
-			if value then
-				Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-
-				if Unit.AbsorbsBar then
-					Unit.AbsorbsBar:SetReverseFill(value)
-					Unit.AbsorbsBar:ClearAllPoints()
-					Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-				end
-			else
-				Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-
-				if Unit.AbsorbsBar then
-					Unit.AbsorbsBar:SetReverseFill(value)
-					Unit.AbsorbsBar:ClearAllPoints()
-					Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-				end
-			end
+		if Frame then
+			UF:SetHealthReverseFill(Frame, value)
 		end
 	end
 end
@@ -298,8 +273,7 @@ end
 local UpdatePowerColor = function(value)
 	for i = 1, 8 do
 		if HydraUI.UnitFrames["boss"..i] then
-			UF:SetPowerAttributes(HydraUI.UnitFrames["boss"..i].Power, value)
-			HydraUI.UnitFrames["boss"..i].Power:ForceUpdate()
+			UF:ApplyPowerAttributes(HydraUI.UnitFrames["boss"..i], value)
 		end
 	end
 end
@@ -307,19 +281,17 @@ end
 local UpdatePowerFill = function(value)
 	for i = 1, 8 do
 		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i].Power:SetReverseFill(value)
+			UF:SetPowerReverseFill(HydraUI.UnitFrames["boss"..i], value)
 		end
 	end
 end
 
 local UpdateEnableBuffs = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			if value then
-				HydraUI.UnitFrames["boss"..i]:EnableElement("Auras")
-			else
-				HydraUI.UnitFrames["boss"..i]:DisableElement("Auras")
-			end
+		local Frame = HydraUI.UnitFrames["boss"..i]
+
+		if Frame then
+			UF:SetElementEnabled(Frame, value, "Auras")
 		end
 	end
 end
@@ -346,23 +318,20 @@ end
 
 local UpdateHealthTexture = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i].Health:SetStatusBarTexture(Assets:GetTexture(value))
-			HydraUI.UnitFrames["boss"..i].Health.bg:SetTexture(Assets:GetTexture(value))
-			HydraUI.UnitFrames["boss"..i].HealBar:SetStatusBarTexture(Assets:GetTexture(value))
+		local Frame = HydraUI.UnitFrames["boss"..i]
 
-			if HydraUI.UnitFrames["boss"..i].AbsorbsBar then
-				HydraUI.UnitFrames["boss"..i].AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
-			end
+		if Frame then
+			UF:SetHealthTexture(Frame, value)
 		end
 	end
 end
 
 local UpdatePowerTexture = function(value)
 	for i = 1, 8 do
-		if HydraUI.UnitFrames["boss"..i] then
-			HydraUI.UnitFrames["boss"..i].Power:SetStatusBarTexture(Assets:GetTexture(value))
-			HydraUI.UnitFrames["boss"..i].Power.bg:SetTexture(Assets:GetTexture(value))
+		local Frame = HydraUI.UnitFrames["boss"..i]
+
+		if Frame then
+			UF:SetPowerTexture(Frame, value)
 		end
 	end
 end

@@ -215,88 +215,66 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 end
 
 local UpdatePetWidth = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		HydraUI.UnitFrames["pet"]:SetWidth(value)
+	local Frame = HydraUI.UnitFrames["pet"]
+
+	if Frame then
+		UF:SetFrameWidth(Frame, value)
 	end
 end
 
 local UpdatePetHealthHeight = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		HydraUI.UnitFrames["pet"].Health:SetHeight(value)
-		HydraUI.UnitFrames["pet"]:SetHeight(value + Settings["unitframes-pet-power-height"] + 3)
+	local Frame = HydraUI.UnitFrames["pet"]
+
+	if Frame then
+		UF:SetHealthHeight(Frame, value, Settings["unitframes-pet-power-height"])
 	end
 end
 
 local UpdatePetPowerHeight = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Frame = HydraUI.UnitFrames["pet"]
+	local Frame = HydraUI.UnitFrames["pet"]
 
-		Frame.Power:SetHeight(value)
-		Frame:SetHeight(Settings["unitframes-pet-health-height"] + value + 3)
+	if Frame then
+		UF:SetPowerHeight(Frame, value, Settings["unitframes-pet-health-height"])
 	end
 end
 
 local UpdatePetHealthColor = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Health = HydraUI.UnitFrames["pet"].Health
+	local Frame = HydraUI.UnitFrames["pet"]
 
-		UF:SetHealthAttributes(Health, value)
-
-		Health:ForceUpdate()
+	if Frame then
+		UF:ApplyHealthAttributes(Frame, value)
 	end
 end
 
 local UpdatePetHealthFill = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Unit = HydraUI.UnitFrames["pet"]
+	local Frame = HydraUI.UnitFrames["pet"]
 
-		Unit.Health:SetReverseFill(value)
-		Unit.HealBar:SetReverseFill(value)
-		Unit.HealBar:ClearAllPoints()
-
-		if value then
-			Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-
-			if Unit.AbsorbsBar then
-				Unit.AbsorbsBar:ClearAllPoints()
-				Unit.AbsorbsBar:SetReverseFill(value)
-				Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-			end
-		else
-			Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-
-			if Unit.AbsorbsBar then
-				Unit.AbsorbsBar:ClearAllPoints()
-				Unit.AbsorbsBar:SetReverseFill(value)
-				Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-			end
-		end
+	if Frame then
+		UF:SetHealthReverseFill(Frame, value)
 	end
 end
 
 local UpdatePetPowerColor = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Power = HydraUI.UnitFrames["pet"].Power
+	local Frame = HydraUI.UnitFrames["pet"]
 
-		UF:SetPowerAttributes(Power, value)
-
-		Power:ForceUpdate()
+	if Frame then
+		UF:ApplyPowerAttributes(Frame, value)
 	end
 end
 
 local UpdatePetPowerFill = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		HydraUI.UnitFrames["pet"].Power:SetReverseFill(value)
+	local Frame = HydraUI.UnitFrames["pet"]
+
+	if Frame then
+		UF:SetPowerReverseFill(Frame, value)
 	end
 end
 
 local UpdateEnableBuffs = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		if value then
-			HydraUI.UnitFrames["pet"]:EnableElement("Buffs")
-		else
-			HydraUI.UnitFrames["pet"]:DisableElement("Buffs")
-		end
+	local Frame = HydraUI.UnitFrames["pet"]
+
+	if Frame then
+		UF:SetElementEnabled(Frame, value, "Buffs")
 	end
 end
 
@@ -372,25 +350,18 @@ local UpdateDebuffPosition = function(value)
 end
 
 local UpdateHealthTexture = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Frame = HydraUI.UnitFrames["pet"]
+	local Frame = HydraUI.UnitFrames["pet"]
 
-		Frame.Health:SetStatusBarTexture(Assets:GetTexture(value))
-		Frame.Health.bg:SetTexture(Assets:GetTexture(value))
-		Frame.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
-
-		if Frame.AbsorbsBar then
-			Frame.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
-		end
+	if Frame then
+		UF:SetHealthTexture(Frame, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Frame = HydraUI.UnitFrames["pet"]
+	local Frame = HydraUI.UnitFrames["pet"]
 
-		Frame.Power:SetStatusBarTexture(Assets:GetTexture(value))
-		Frame.Power.bg:SetTexture(Assets:GetTexture(value))
+	if Frame then
+		UF:SetPowerTexture(Frame, value)
 	end
 end
 

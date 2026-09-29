@@ -207,7 +207,7 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	end
 
 	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, DROPDOWN_HEIGHT)
+	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
 	Anchor.ID = id
 	Anchor.Text = label
 	Anchor.Tooltip = tooltip

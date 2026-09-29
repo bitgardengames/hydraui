@@ -28,80 +28,9 @@ end
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-HydraUI.StyleFuncs["pet"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
-
-	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
-	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["unitframes-pet-health-height"],
-		Settings.PetHealthTexture,
-		Settings["unitframes-pet-health-reverse"],
-		nil,
-		"BORDER"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["unitframes-pet-width"],
-		Settings["unitframes-pet-health-height"],
-		Settings.PetHealthTexture,
-		Settings["unitframes-pet-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local HealthLeft = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"LEFT",
-		"LEFT",
-		3,
-		0,
-		"LEFT"
-	)
-
-	local HealthRight = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"RIGHT",
-		"RIGHT",
-		-3,
-		0,
-		"RIGHT"
-	)
-
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
-
-	-- Attributes
-	Health.colorTapping = true
-	Health.colorDisconnected = true
-	Health.Smooth = true
-	self.colors.health = {R, G, B}
-
-	UF:SetHealthAttributes(Health, Settings["unitframes-pet-health-color"])
-
-	-- Power Bar
-	local Power, PowerBG = UF:CreatePowerBar(self, Settings["unitframes-pet-power-height"], Settings.PetPowerTexture, Settings["unitframes-pet-power-reverse"])
-
-	-- Attributes
-	Power.frequentUpdates = true
-	Power.colorReaction = true
-	Power.Smooth = true
-
-	UF:SetPowerAttributes(Power, Settings["unitframes-pet-power-color"])
-
+local function BuildPetComponents(factory, frame, unit)
 	if Settings["unitframes-pet-buffs"] then
-		local Buffs = CreateFrame("Frame", self:GetName() .. "Buffs", self)
+		local Buffs = CreateFrame("Frame", frame:GetName() .. "Buffs", frame)
 		Buffs:SetSize(Settings["unitframes-pet-width"], Settings["unitframes-pet-buff-size"])
 		Buffs.size = Settings["unitframes-pet-buff-size"]
 		Buffs.spacing = 2
@@ -111,22 +40,22 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 		Buffs.PostUpdateIcon = UF.PostUpdateIcon
 
 		if (Settings["unitframes-pet-buff-pos"] == "TOP") then
-			Buffs:SetPoint("BOTTOM", self, "TOP", 0, 2)
+			Buffs:SetPoint("BOTTOM", frame, "TOP", 0, 2)
 			Buffs.initialAnchor = "TOPLEFT"
 			Buffs["growth-x"] = "RIGHT"
 			Buffs["growth-y"] = "UP"
 		else
-			Buffs:SetPoint("TOP", self, "BOTTOM", 0, -2)
+			Buffs:SetPoint("TOP", frame, "BOTTOM", 0, -2)
 			Buffs.initialAnchor = "TOPLEFT"
 			Buffs["growth-x"] = "RIGHT"
 			Buffs["growth-y"] = "DOWN"
 		end
 
-		self.Buffs = Buffs
+		frame.Buffs = Buffs
 	end
 
 	if Settings["unitframes-pet-debuffs"] then
-		local Debuffs = CreateFrame("Frame", self:GetName() .. "Debuffs", self)
+		local Debuffs = CreateFrame("Frame", frame:GetName() .. "Debuffs", frame)
 		Debuffs:SetSize(Settings["unitframes-pet-width"], Settings["unitframes-pet-debuff-size"])
 		Debuffs.size = Settings["unitframes-pet-debuff-size"]
 		Debuffs.spacing = 2
@@ -136,14 +65,14 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 		Debuffs.PostUpdateIcon = UF.PostUpdateIcon
 
 		if (Settings["unitframes-pet-debuff-pos"] == "TOP") then
-			if self.Buffs then
+			if frame.Buffs then
 				if (Settings["unitframes-pet-buff-pos"] == "TOP") then
-					Debuffs:SetPoint("BOTTOM", self.Buffs or self, "TOP", 0, 2)
+					Debuffs:SetPoint("BOTTOM", frame.Buffs or frame, "TOP", 0, 2)
 				else
-					Debuffs:SetPoint("BOTTOM", self, "TOP", 0, 2)
+					Debuffs:SetPoint("BOTTOM", frame, "TOP", 0, 2)
 				end
 			else
-				Debuffs:SetPoint("BOTTOM", self, "TOP", 0, 2)
+				Debuffs:SetPoint("BOTTOM", frame, "TOP", 0, 2)
 			end
 
 			Debuffs.initialAnchor = "TOPRIGHT"
@@ -151,33 +80,38 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 			Debuffs["growth-y"] = "DOWN"
 			Debuffs["growth-y"] = "UP"
 		else
-			if self.Buffs then
+			if frame.Buffs then
 				if (Settings["unitframes-pet-buff-pos"] == "BOTTOM") then
-					Debuffs:SetPoint("TOP", self.Buffs or self, "BOTTOM", 0, -2)
+					Debuffs:SetPoint("TOP", frame.Buffs or frame, "BOTTOM", 0, -2)
 				else
-					Debuffs:SetPoint("TOP", self, "BOTTOM", 0, -2)
+					Debuffs:SetPoint("TOP", frame, "BOTTOM", 0, -2)
 				end
 			else
-				Debuffs:SetPoint("TOP", self, "BOTTOM", 0, -2)
+				Debuffs:SetPoint("TOP", frame, "BOTTOM", 0, -2)
 			end
 		end
 
-		self.Debuffs = Debuffs
+		frame.Debuffs = Debuffs
 	end
 
-	self:Tag(HealthLeft, Settings["unitframes-pet-health-left"])
-	self:Tag(HealthRight, Settings["unitframes-pet-health-right"])
+end
 
-	self.Range = {
-		insideAlpha = 1,
-		outsideAlpha = 0.5,
-	}
+local SingleUnitRange = {insideAlpha = 1, outsideAlpha = 0.5}
+local PetFrameConfig = {
+	settingsPrefix = "unitframes-pet",
+	healthTextureKey = "PetHealthTexture",
+	powerTextureKey = "PetPowerTexture",
+	powerTags = false,
+	colorTapping = true,
+	colorDisconnected = true,
+	powerReaction = true,
+	raidTarget = true,
+	auras = BuildPetComponents,
+	range = SingleUnitRange,
+}
 
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.HealthLeft = HealthLeft
-	self.Power = Power
-	self.Power.bg = PowerBG
+HydraUI.StyleFuncs["pet"] = function(self, unit)
+	UF:BuildSingleUnitFrame(self, unit, PetFrameConfig)
 end
 
 local UpdatePetWidth = function(value)

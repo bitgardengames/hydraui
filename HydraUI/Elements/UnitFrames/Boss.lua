@@ -23,106 +23,10 @@ Defaults.BossPowerTexture = "HydraUI 4"
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-HydraUI.StyleFuncs["boss"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
-
-	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["unitframes-boss-health-height"],
-		Settings.BossHealthTexture,
-		Settings["unitframes-boss-health-reverse"],
-		nil,
-		"BORDER"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["unitframes-boss-width"],
-		Settings["unitframes-boss-health-height"],
-		Settings.BossHealthTexture,
-		Settings["unitframes-boss-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local HealthLeft = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"LEFT",
-		"LEFT",
-		3,
-		0,
-		"LEFT"
-	)
-
-	local HealthRight = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"RIGHT",
-		"RIGHT",
-		-3,
-		0,
-		"RIGHT"
-	)
-
-	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
-
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
-
-	-- Attributes
-	Health.Smooth = true
-	Health.colorTapping = true
-	Health.colorDisconnected = true
-	self.colors.health = {R, G, B}
-
-	UF:SetHealthAttributes(Health, Settings["unitframes-boss-health-color"])
-
-	local Power, PowerBG = UF:CreatePowerBar(self, Settings["unitframes-boss-power-height"], Settings.BossPowerTexture, false)
-
-	local PowerLeft = UF:CreateFontString(
-		Power,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"LEFT",
-		"LEFT",
-		3,
-		0,
-		"LEFT"
-	)
-
-	local PowerRight = UF:CreateFontString(
-		Power,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"RIGHT",
-		"RIGHT",
-		-3,
-		0,
-		"RIGHT"
-	)
-
-	-- Attributes
-	Power.frequentUpdates = true
-	Power.colorReaction = true
-	Power.Smooth = true
-
-	UF:SetPowerAttributes(Power, Settings["unitframes-boss-power-color"])
-
+local function BuildBossComponents(factory, frame, unit)
 	-- Auras
-	local Buffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Buffs",
+	local Buffs = factory:CreateAuraContainer(frame, {
+		name = frame:GetName() .. "Buffs",
 		iconSize = Settings["unitframes-boss-buff-size"],
 		spacing = 2,
 		num = 3,
@@ -136,17 +40,17 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 		},
 		anchor = {
 			point = "RIGHT",
-			relativeTo = self,
+			relativeTo = frame,
 			relativePoint = "LEFT",
 			x = -2,
 		},
 		callbacks = {
-			postCreateIcon = UF.PostCreateIcon,
-			postUpdateIcon = UF.PostUpdateIcon,
+			postCreateIcon = factory.PostCreateIcon,
+			postUpdateIcon = factory.PostUpdateIcon,
 		},
 	})
-	local Debuffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Debuffs",
+	local Debuffs = factory:CreateAuraContainer(frame, {
+		name = frame:GetName() .. "Debuffs",
 		iconSize = Settings["unitframes-boss-debuff-size"],
 		spacing = 2,
 		num = 4,
@@ -161,17 +65,17 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 		},
 		anchor = {
 			point = "LEFT",
-			relativeTo = self,
+			relativeTo = frame,
 			relativePoint = "RIGHT",
 			x = 2,
 		},
 		callbacks = {
-			postCreateIcon = UF.PostCreateIcon,
-			postUpdateIcon = UF.PostUpdateIcon,
+			postCreateIcon = factory.PostCreateIcon,
+			postUpdateIcon = factory.PostUpdateIcon,
 		},
 	})
-	local Castbar = UF:CreateCastbar(self, {
-		name = self:GetName() .. " Casting Bar",
+	local Castbar = factory:CreateCastbar(frame, {
+		name = frame:GetName() .. " Casting Bar",
 		showTradeSkills = true,
 		timeToHold = 0.3,
 		size = {
@@ -180,7 +84,7 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 		},
 		anchor = {
 			point = "TOPRIGHT",
-			relativeTo = self,
+			relativeTo = frame,
 			relativePoint = "BOTTOMRIGHT",
 			x = -1,
 			y = -3,
@@ -203,36 +107,35 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 			background = true,
 		},
 		callbacks = {
-			postCastStart = UF.PostCastStart,
-			postCastStop = UF.PostCastStop,
-			postCastFail = UF.PostCastFail,
-			postCastInterruptible = UF.PostCastInterruptible,
+			postCastStart = factory.PostCastStart,
+			postCastStop = factory.PostCastStop,
+			postCastFail = factory.PostCastFail,
+			postCastInterruptible = factory.PostCastInterruptible,
 		},
 	})
 
-	-- Tags
-	self:Tag(HealthLeft, Settings["unitframes-boss-health-left"])
-	self:Tag(HealthRight, Settings["unitframes-boss-health-right"])
-	self:Tag(PowerLeft, Settings["unitframes-boss-power-left"])
-	self:Tag(PowerRight, Settings["unitframes-boss-power-right"])
+	frame.Buffs = Buffs
+	frame.Debuffs = Debuffs
+end
 
-	self.Range = {
-		insideAlpha = 1,
-		outsideAlpha = 0.5,
-	}
+local SingleUnitRange = {insideAlpha = 1, outsideAlpha = 0.5}
+local BossFrameConfig = {
+	settingsPrefix = "unitframes-boss",
+	threat = false,
+	powerReverse = false,
+	healthTextureKey = "BossHealthTexture",
+	powerTextureKey = "BossPowerTexture",
+	powerTags = true,
+	colorTapping = true,
+	colorDisconnected = true,
+	powerReaction = true,
+	raidTarget = true,
+	auras = BuildBossComponents,
+	range = SingleUnitRange,
+}
 
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.HealthLeft = HealthLeft
-	self.HealthRight = HealthRight
-	self.Power = Power
-	self.Power.bg = PowerBG
-	self.PowerLeft = PowerLeft
-	self.PowerRight = PowerRight
-	self.Buffs = Buffs
-	self.Debuffs = Debuffs
-	self.Castbar = Castbar
-	self.RaidTargetIndicator = RaidTarget
+HydraUI.StyleFuncs["boss"] = function(self, unit)
+	UF:BuildSingleUnitFrame(self, unit, BossFrameConfig)
 end
 
 local UpdateWidth = function(value)

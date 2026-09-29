@@ -50,19 +50,28 @@ def constructor_block(source: str, constructor: str) -> str:
 
 
 class SharedUnitFrameCoverage(unittest.TestCase):
-    def test_every_style_constructs_shared_health_with_its_own_dimensions(self):
-        # Conceptually instantiate every registered style with unique family
-        # sentinels by ensuring its constructor arguments retain that prefix.
-        for module, prefix in STYLES.items():
+    def test_single_unit_styles_delegate_with_family_descriptors(self):
+        for module, prefix in (("Target", "unitframes-target"),
+                               ("Focus", "unitframes-focus"),
+                               ("TargetTarget", "unitframes-targettarget"),
+                               ("Boss", "unitframes-boss"),
+                               ("Pet", "unitframes-pet")):
             with self.subTest(module=module):
                 source = (ROOT / f"{module}.lua").read_text()
-                health = constructor_block(source, "CreateHealthBar")
-                predictions = constructor_block(source, "CreateHealAndAbsorbBars")
-                self.assertIn(f'Settings["{prefix}-health-height"]', health)
-                self.assertIn(f'Settings["{prefix}-health-reverse"]', health)
-                self.assertIn(f'Settings["{prefix}-width"]', predictions)
-                self.assertIn(f'Settings["{prefix}-health-height"]', predictions)
-                self.assertIn(f'Settings["{prefix}-health-reverse"]', predictions)
+                self.assertIn(f'settingsPrefix = "{prefix}"', source)
+                self.assertIn("UF:BuildSingleUnitFrame(self, unit,", source)
+                self.assertNotIn("UF:CreateHealthBar(", source)
+                self.assertNotIn("UF:CreatePowerBar(", source)
+
+    def test_single_unit_builder_resolves_family_settings_and_optional_hooks(self):
+        source = (ROOT / "ComponentFactory.lua").read_text()
+        build = source[source.index("function UF:BuildSingleUnitFrame"):source.index("function UF:NormalizeComponentOptions")]
+        self.assertIn('config.settingsPrefix .. suffix', source)
+        for hook in ("portrait", "cast", "auras", "postBuild"):
+            self.assertIn(f"config.{hook}", build)
+        for field in ("HealthLeft", "HealthRight", "PowerLeft", "PowerRight",
+                      "RaidTargetIndicator"):
+            self.assertIn(field, build)
 
     def test_party_and_raid_use_the_shared_group_builder(self):
         shared = (ROOT / "GroupFrames.lua").read_text()

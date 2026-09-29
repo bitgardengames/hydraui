@@ -85,24 +85,29 @@ function UF:SetPowerAttributes(power, value)
 end
 
 local ActiveAuraTimers = setmetatable({}, {__mode = "k"})
+local ActiveAuraTimerCount = 0
 local AuraTimerFrame = CreateFrame("Frame")
 local AuraTimerElapsed = 0
 
 local UnregisterAuraTimer = function(button)
-	ActiveAuraTimers[button] = nil
+	if ActiveAuraTimers[button] then
+		ActiveAuraTimers[button] = nil
+		ActiveAuraTimerCount = ActiveAuraTimerCount - 1
+	end
+
+	button.LastAuraTime = nil
 
 	if button.Time then
 		button.Time:Hide()
 	end
+
+	if (ActiveAuraTimerCount == 0) then
+		AuraTimerElapsed = 0
+		AuraTimerFrame:SetScript("OnUpdate", nil)
+	end
 end
 
-local RegisterAuraTimer = function(button, expiration)
-	button.Expiration = expiration
-	ActiveAuraTimers[button] = true
-	button.Time:Show()
-end
-
-AuraTimerFrame:SetScript("OnUpdate", function(_, elapsed)
+local UpdateAuraTimers = function(_, elapsed)
 	AuraTimerElapsed = AuraTimerElapsed + elapsed
 
 	if (AuraTimerElapsed > 0.1) then
@@ -112,7 +117,12 @@ AuraTimerFrame:SetScript("OnUpdate", function(_, elapsed)
 			local Remaining = Button.Expiration and (Button.Expiration - Now)
 
 			if (Remaining and Remaining > 0 and Button:IsShown()) then
-				Button.Time:SetText(HydraUI:AuraFormatTime(Remaining))
+				local FormattedTime = HydraUI:AuraFormatTime(Remaining)
+
+				if (FormattedTime ~= Button.LastAuraTime) then
+					Button.LastAuraTime = FormattedTime
+					Button.Time:SetText(FormattedTime)
+				end
 			else
 				UnregisterAuraTimer(Button)
 			end
@@ -120,7 +130,22 @@ AuraTimerFrame:SetScript("OnUpdate", function(_, elapsed)
 
 		AuraTimerElapsed = 0
 	end
-end)
+end
+
+local RegisterAuraTimer = function(button, expiration)
+	button.Expiration = expiration
+
+	if (not ActiveAuraTimers[button]) then
+		ActiveAuraTimers[button] = true
+		ActiveAuraTimerCount = ActiveAuraTimerCount + 1
+
+		if (ActiveAuraTimerCount == 1) then
+			AuraTimerFrame:SetScript("OnUpdate", UpdateAuraTimers)
+		end
+	end
+
+	button.Time:Show()
+end
 
 UF.ThreatPostUpdate = function(self, unit, status, r, g, b)
 	if (status and status > 0) then

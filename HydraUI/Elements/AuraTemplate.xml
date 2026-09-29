@@ -3,14 +3,14 @@
 		<Attributes>
 			<Attribute name="type" value="cancelaura"/>
 		</Attributes>
-		
+
 		<Scripts>
 			<OnLoad function="HydraUISkinAura"/>
 			<OnEnter function="HydraUIAuraOnEnter"/>
 			<OnLeave function="GameTooltip_Hide"/>
 		</Scripts>
 	</Button>
-	
+
 	<Button name="HydraUIAuraTemplate20" virtual="true" inherits="HydraUIAuraTemplate"><Size x="20" y="20"/></Button>
 	<Button name="HydraUIAuraTemplate22" virtual="true" inherits="HydraUIAuraTemplate"><Size x="22" y="22"/></Button>
 	<Button name="HydraUIAuraTemplate24" virtual="true" inherits="HydraUIAuraTemplate"><Size x="24" y="24"/></Button>

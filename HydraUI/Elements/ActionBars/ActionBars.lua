@@ -645,7 +645,11 @@ function AB:CreateActionBar(descriptor)
 	end
 
 	self:PositionButtons(bar, Settings[key .. "-button-max"], Settings[key .. "-per-row"], Settings[key .. "-button-size"], gap)
-	if Settings[key .. "-enable"] then self:EnableBar(bar) else self:DisableBar(bar) end
+	if Settings[key .. "-enable"] then
+		self:EnableBar(bar)
+	else
+		self:DisableBar(bar)
+	end
 	return bar
 end
 
@@ -664,7 +668,9 @@ function AB:ConfigureBar1Paging(bar)
 			elseif HasTempShapeshiftActionBar() then newstate = GetTempShapeshiftBarIndex() or newstate
 			elseif HasBonusActionBar() and GetActionBarPage() == 1 then newstate = GetBonusBarIndex() or newstate
 			else newstate = GetActionBarPage() or newstate end
-			for i = 1, 12 do Buttons[i]:SetAttribute("actionpage", newstate) end
+			for i = 1, 12 do
+				Buttons[i]:SetAttribute("actionpage", newstate)
+			end
 		]])
 		RegisterAttributeDriver(bar, "state-page", "[overridebar] 14; [shapeshift] 13; [possessbar] 16; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6; [bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; [form] 1; 1")
 	else
@@ -673,12 +679,16 @@ function AB:ConfigureBar1Paging(bar)
 			elseif HasOverrideActionBar and HasOverrideActionBar() then newstate = GetOverrideBarIndex()
 			elseif HasTempShapeshiftActionBar() then newstate = GetTempShapeshiftBarIndex()
 			elseif HasBonusActionBar() then newstate = GetBonusBarIndex() end
-			for i = 1, 12 do Buttons[i]:SetAttribute("actionpage", newstate) end
+			for i = 1, 12 do
+				Buttons[i]:SetAttribute("actionpage", newstate)
+			end
 		]])
 		RegisterAttributeDriver(bar, "state-page", "[overridebar] 14; [shapeshift] 13; [possessbar] 16; [vehicleui] 12; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6; [bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; [form] 1; 1")
 	end
 
-	if OverrideActionBar then self:Disable(OverrideActionBar) end
+	if OverrideActionBar then
+		self:Disable(OverrideActionBar)
+	end
 end
 
 local PetBarUpdateGridLayout = function()
@@ -954,9 +964,15 @@ function AB:CreateBars()
 		end
 	end
 
-	if (PetActionBar or PetActionBarFrame) then self:CreatePetBar() end
-	if (StanceBar or StanceBarFrame) then self:CreateStanceBar() end
-	if ExtraActionButton1 then self:CreateExtraBar() end
+	if (PetActionBar or PetActionBarFrame) then
+		self:CreatePetBar()
+	end
+	if (StanceBar or StanceBarFrame) then
+		self:CreateStanceBar()
+	end
+	if ExtraActionButton1 then
+		self:CreateExtraBar()
+	end
 	if (MultiCastActionBarFrame and MultiCastActionBarFrame.numActiveSlots and MultiCastActionBarFrame.numActiveSlots > 0) then
 		self:StyleTotemBar()
 	end
@@ -986,7 +1002,9 @@ end
 function AB:CreateMovers()
 	for _, bar in ipairs(self.Bars) do
 		local mover = HydraUI:CreateMover(bar)
-		if bar == self.Bar1 then self.Bar1Mover = mover end
+		if bar == self.Bar1 then
+			self.Bar1Mover = mover
+		end
 	end
 
 	if self.StanceBar then
@@ -1250,7 +1268,11 @@ local function CreateBarEnableCallback(descriptor)
 	local field = descriptor.field
 	return function(value)
 		local bar = AB[field]
-		if value then AB:EnableBar(bar) else AB:DisableBar(bar) end
+		if value then
+			AB:EnableBar(bar)
+		else
+			AB:DisableBar(bar)
+		end
 	end
 end
 
@@ -1303,16 +1325,22 @@ function AB:SetButtonRegionAlpha(regionName, alpha, includeAuxiliaryBars)
 	for _, bar in ipairs(self.Bars or {}) do
 		for i = 1, #bar do
 			local region = bar[i][regionName]
-			if region then region:SetAlpha(alpha) end
+			if region then
+				region:SetAlpha(alpha)
+			end
 		end
 	end
 
 	if includeAuxiliaryBars then
 		local function updateAuxiliaryBar(bar)
-			if not bar then return end
+			if not bar then
+				return
+			end
 			for i = 1, #bar do
 				local region = bar[i][regionName]
-				if region then region:SetAlpha(alpha) end
+				if region then
+					region:SetAlpha(alpha)
+				end
 			end
 		end
 
@@ -1324,9 +1352,15 @@ function AB:SetButtonRegionAlpha(regionName, alpha, includeAuxiliaryBars)
 	end
 end
 
-local UpdateShowHotKey = function(value) AB:SetButtonRegionAlpha("HotKey", value and 1 or 0, true) end
-local UpdateShowMacroName = function(value) AB:SetButtonRegionAlpha("Name", value and 1 or 0, false) end
-local UpdateShowCount = function(value) AB:SetButtonRegionAlpha("Count", value and 1 or 0, false) end
+local UpdateShowHotKey = function(value)
+	AB:SetButtonRegionAlpha("HotKey", value and 1 or 0, true)
+end
+local UpdateShowMacroName = function(value)
+	AB:SetButtonRegionAlpha("Name", value and 1 or 0, false)
+end
+local UpdateShowCount = function(value)
+	AB:SetButtonRegionAlpha("Count", value and 1 or 0, false)
+end
 
 function AB:UpdateButtonFont(button)
 	if button.HotKey then
@@ -1369,7 +1403,9 @@ local UpdateActionBarFont = function()
 end
 
 local function SetBarHover(bar, enabled)
-	if not bar then return end
+	if not bar then
+		return
+	end
 
 	bar.ShouldFade = enabled
 	bar:SetScript("OnEnter", enabled and BarOnEnter or nil)
@@ -1382,7 +1418,9 @@ local function SetBarHover(bar, enabled)
 end
 
 local function SetBarAlpha(bar, percent)
-	if not bar then return end
+	if not bar then
+		return
+	end
 
 	bar.MaxAlpha = percent
 	bar:SetAlpha(bar.ShouldFade and 0 or (percent / 100))
@@ -1408,10 +1446,18 @@ for _, descriptor in ipairs(ActionBarDescriptors) do
 	UpdateAlphaBar[descriptor.index] = CreateBarAlphaCallback(descriptor)
 end
 
-local UpdatePetHover = function(value) SetBarHover(AB.PetBar, value) end
-local UpdateStanceHover = function(value) SetBarHover(AB.StanceBar, value) end
-local UpdatePetBarAlpha = function(value) SetBarAlpha(AB.PetBar, value) end
-local UpdateStanceBarAlpha = function(value) SetBarAlpha(AB.StanceBar, value) end
+local UpdatePetHover = function(value)
+	SetBarHover(AB.PetBar, value)
+end
+local UpdateStanceHover = function(value)
+	SetBarHover(AB.StanceBar, value)
+end
+local UpdatePetBarAlpha = function(value)
+	SetBarAlpha(AB.PetBar, value)
+end
+local UpdateStanceBarAlpha = function(value)
+	SetBarAlpha(AB.StanceBar, value)
+end
 
 GUI:AddWidgets(Language["General"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
@@ -1430,7 +1476,9 @@ GUI:AddWidgets(Language["General"], Language["Action Bars"], function(left, righ
 end)
 
 local function AddActionBarWidgets(descriptor)
-	if not descriptor.available() then return end
+	if not descriptor.available() then
+		return
+	end
 
 	local index = descriptor.index
 	local key = "ab-bar" .. index

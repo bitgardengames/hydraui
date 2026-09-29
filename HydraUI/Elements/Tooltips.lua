@@ -366,7 +366,7 @@ local OnTooltipSetUnit = function(self)
 				Line:SetText(Guild)
 			end
 		end
-		
+
 		-- Test guild implementation
 		if Guild then
 			self:AddLine("<" .. Guild .. ">", 1, 1, 1)

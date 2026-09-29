@@ -8,7 +8,9 @@ local GROUP_WIDTH = ((PARENT_WIDTH / 2) - (SPACING * 4) - 8) + 1
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = 0.25, 0.1
 local MAX_WIDGETS_SHOWN = math.floor(GUI_HEIGHT / (WIDGET_HEIGHT + SPACING))
 local min, max = math.min, math.max
-local GetMaxOffset = function(total) return GUI.GetMaxRowOffset(total, MAX_WIDGETS_SHOWN) end
+local GetMaxOffset = function(total)
+	return GUI.GetMaxRowOffset(total, MAX_WIDGETS_SHOWN)
+end
 local NoScroll = function() end
 
 local ScrollWidgetColumn = function(parent, widgets, oldOffset, offset, point)
@@ -80,7 +82,9 @@ local UpdateScrollArrowColors = function(Owner, Offset, MaxOffset)
 end
 
 local AfterRenderWidgetRows = function(Owner, Offset)
-	if not Owner.ScrollBar then return end
+	if not Owner.ScrollBar then
+		return
+	end
 	UpdateScrollArrowColors(Owner, Offset, Owner.MaxScroll)
 end
 

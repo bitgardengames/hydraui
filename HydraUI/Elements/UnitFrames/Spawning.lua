@@ -201,10 +201,18 @@ function UF:SpawnBossFrames()
 end
 
 function UF:GetGrowthOffsets(point, spacing)
-	if point == "LEFT" then return spacing, 0 end
-	if point == "RIGHT" then return -spacing, 0 end
-	if point == "TOP" then return 0, -spacing end
-	if point == "BOTTOM" then return 0, spacing end
+	if point == "LEFT" then
+		return spacing, 0
+	end
+	if point == "RIGHT" then
+		return -spacing, 0
+	end
+	if point == "TOP" then
+		return 0, -spacing
+	end
+	if point == "BOTTOM" then
+		return 0, spacing
+	end
 	return 0, 0
 end
 

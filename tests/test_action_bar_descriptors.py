@@ -23,7 +23,10 @@ class ActionBarDescriptorCoverage(unittest.TestCase):
         for parent in ("MultiBar5", "MultiBar6", "MultiBar7"):
             self.assertIn(f"return {parent} ~= nil", SOURCE)
         self.assertIn("if bar and descriptor.securePaging then", SOURCE)
-        self.assertIn("if not descriptor.available() then return end", SOURCE)
+        self.assertRegex(
+            SOURCE,
+            r"if not descriptor\.available\(\) then\s+return\s+end",
+        )
 
     def test_callbacks_and_widgets_are_generated(self):
         self.assertGreaterEqual(SOURCE.count("for _, descriptor in ipairs(ActionBarDescriptors) do"), 4)
@@ -56,7 +59,10 @@ class ActionBarDescriptorCoverage(unittest.TestCase):
             ('UpdateShowCount', '"Count", value and 1 or 0, false'),
         )
         for callback, invocation in expected:
-            self.assertRegex(SOURCE, rf"local {callback} = function\(value\).*{re.escape(invocation)}")
+            self.assertRegex(
+                SOURCE,
+                rf"(?s)local {callback} = function\(value\).*?{re.escape(invocation)}.*?end",
+            )
         self.assertIn("local region = bar[i][regionName]", SOURCE)
         self.assertIn("region:SetAlpha(alpha)", SOURCE)
 

@@ -76,7 +76,9 @@ function GUI:StyleVerticalSlider(slider, options)
 	slider.Progress:SetPoint("BOTTOMRIGHT", slider.NewThumb, "TOPRIGHT", -1, 0)
 	slider.Progress:SetTexture(Assets:GetTexture(options.ProgressTexture or "Blank"))
 	slider.Progress:SetVertexColor(HydraUI:HexToRGB(Settings[options.ProgressColor or "ui-widget-bright-color"]))
-	if options.ProgressAlpha then slider.Progress:SetAlpha(options.ProgressAlpha) end
+	if options.ProgressAlpha then
+		slider.Progress:SetAlpha(options.ProgressAlpha)
+	end
 end
 
 local RowViewport = {}
@@ -108,9 +110,13 @@ end
 
 function RowViewport:SetScrollBar(scrollBar)
 	self.ScrollBar = scrollBar
-	if self.ExposeScrollBar ~= false then self.Owner.ScrollBar = scrollBar end
+	if self.ExposeScrollBar ~= false then
+		self.Owner.ScrollBar = scrollBar
+	end
 	scrollBar:SetScript("OnValueChanged", function(_, value)
-		if not self.Synchronizing then self:SetOffset(value) end
+		if not self.Synchronizing then
+			self:SetOffset(value)
+		end
 	end)
 	self:AttachMouseWheel(scrollBar)
 	self:SyncScrollBar()
@@ -122,7 +128,9 @@ function RowViewport:AttachMouseWheel(frame)
 end
 
 function RowViewport:SetScrollRange(totalRows)
-	if not self.ScrollBar then return end
+	if not self.ScrollBar then
+		return
+	end
 	self.Synchronizing = true
 	self.Owner.UpdatingScrollBar = true
 	self.ScrollBar:SetMinMaxValues(1, GUI.GetMaxRowOffset(totalRows, self.MaxVisibleRows))
@@ -142,7 +150,9 @@ function RowViewport:Render(rowsChanged)
 	self:SetScrollRange(Count)
 	self:SyncScrollBar()
 
-	if (not rowsChanged) and (OldRows == Rows) and (OldFirst == First) then return end
+	if (not rowsChanged) and (OldRows == Rows) and (OldFirst == First) then
+		return
+	end
 
 	if self.RenderRows then
 		self.RenderRows(self.Owner, self, Rows, First, Last, rowsChanged)
@@ -155,7 +165,9 @@ function RowViewport:Render(rowsChanged)
 	else
 		if OldRows and OldFirst then
 			for i = OldFirst, OldLast do
-				if rowsChanged or (i < First) or (i > Last) then OldRows[i]:Hide() end
+				if rowsChanged or (i < First) or (i > Last) then
+					OldRows[i]:Hide()
+				end
 			end
 		end
 
@@ -163,20 +175,30 @@ function RowViewport:Render(rowsChanged)
 		-- replaced, hide every row outside the viewport even if a previous (often
 		-- empty) collection has already been rendered.
 		if rowsChanged or (not OldRows) then
-			for i = 1, First - 1 do Rows[i]:Hide() end
-			for i = Last + 1, Count do Rows[i]:Hide() end
+			for i = 1, First - 1 do
+				Rows[i]:Hide()
+			end
+			for i = Last + 1, Count do
+				Rows[i]:Hide()
+			end
 		end
 
 		for i = First, Last do
-			if rowsChanged or (not OldFirst) or (i < OldFirst) or (i > OldLast) then Rows[i]:Show() end
+			if rowsChanged or (not OldFirst) or (i < OldFirst) or (i > OldLast) then
+				Rows[i]:Show()
+			end
 		end
 	end
 
-	if self.AnchorRows then self.AnchorRows(self.Owner, Rows, First, Last) end
+	if self.AnchorRows then
+		self.AnchorRows(self.Owner, Rows, First, Last)
+	end
 	self.LastRenderedRows = Rows
 	self.LastRenderedOffset = First
 	self.Owner.LastRenderedOffset = First
-	if self.AfterRender then self.AfterRender(self.Owner, First, Last) end
+	if self.AfterRender then
+		self.AfterRender(self.Owner, First, Last)
+	end
 end
 
 function RowViewport:SetOffset(offset, rowsChanged)

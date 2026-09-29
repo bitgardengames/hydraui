@@ -18,7 +18,7 @@ if C_Container then
 	GetContainerNumSlots = C_Container.GetContainerNumSlots
 	GetContainerItemLink = C_Container.GetContainerItemLink
 	GetContainerItemID = C_Container.GetContainerItemID
-	GetContainerItemInfo = C_Container.GetContainerItemInfo	
+	GetContainerItemInfo = C_Container.GetContainerItemInfo
 end
 
 local Delete = HydraUI:NewModule("Delete")

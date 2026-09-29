@@ -363,15 +363,9 @@ end
 
 local UpdateRaidWidth = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				Unit:SetWidth(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			Unit:SetWidth(value)
+		end, value)
 
 		UpdateRaidAnchorSize()
 	end
@@ -379,16 +373,10 @@ end
 
 local UpdateRaidHealthHeight = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				Unit:SetHeight(value + Settings["raid-power-height"] + 3)
-				Unit.Health:SetHeight(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			Unit:SetHeight(value + Settings["raid-power-height"] + 3)
+			Unit.Health:SetHeight(value)
+		end, value)
 
 		UpdateRaidAnchorSize()
 	end
@@ -396,100 +384,70 @@ end
 
 local UpdateRaidHealthColor = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			UF:SetHealthAttributes(Unit.Health, value)
 
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				UF:SetHealthAttributes(Unit.Health, value)
-
-				Unit.Health:ForceUpdate()
-			end
-		end
+			Unit.Health:ForceUpdate()
+		end, value)
 	end
 end
 
 local UpdateRaidHealthOrientation = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				Unit.Health:SetOrientation(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			Unit.Health:SetOrientation(value)
+		end, value)
 	end
 end
 
 local UpdateRaidHealthReverseFill = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			Unit.Health:SetReverseFill(value)
+			Unit.HealBar:SetReverseFill(value)
+			Unit.HealBar:ClearAllPoints()
 
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
+			if value then
+				Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
 
-			if Unit then
-				Unit.Health:SetReverseFill(value)
-				Unit.HealBar:SetReverseFill(value)
-				Unit.HealBar:ClearAllPoints()
+				if Unit.AbsorbsBar then
+					Unit.AbsorbsBar:SetReverseFill(value)
+					Unit.AbsorbsBar:ClearAllPoints()
+					Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
+				end
+			else
+				Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
 
-				if value then
-					Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-
-					if Unit.AbsorbsBar then
-						Unit.AbsorbsBar:SetReverseFill(value)
-						Unit.AbsorbsBar:ClearAllPoints()
-						Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-					end
-				else
-					Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-
-					if Unit.AbsorbsBar then
-						Unit.AbsorbsBar:SetReverseFill(value)
-						Unit.AbsorbsBar:ClearAllPoints()
-						Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-					end
+				if Unit.AbsorbsBar then
+					Unit.AbsorbsBar:SetReverseFill(value)
+					Unit.AbsorbsBar:ClearAllPoints()
+					Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
 				end
 			end
-		end
+		end, value)
 	end
 end
 
 local UpdateEnableRaidPower = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit:EnableElement("Power")
-					Unit:SetHeight(Settings["raid-health-height"] + Settings["raid-power-height"] + 3)
-				else
-					Unit:DisableElement("Power")
-					Unit:SetHeight(Settings["raid-health-height"] + 2)
-				end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			if value then
+				Unit:EnableElement("Power")
+				Unit:SetHeight(Settings["raid-health-height"] + Settings["raid-power-height"] + 3)
+			else
+				Unit:DisableElement("Power")
+				Unit:SetHeight(Settings["raid-health-height"] + 2)
 			end
-		end
+		end, value)
 	end
 end
 
 local UpdateRaidPowerHeight = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				Unit:SetHeight(value + Settings["raid-health-height"] + 3)
-				Unit.Power:SetHeight(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			Unit:SetHeight(value + Settings["raid-health-height"] + 3)
+			Unit.Power:SetHeight(value)
+		end, value)
 
 		UpdateRaidAnchorSize()
 	end
@@ -497,61 +455,35 @@ end
 
 local UpdateRaidPowerReverseFill = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				Unit.Power:SetReverseFill(value)
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			Unit.Power:SetReverseFill(value)
+		end, value)
 	end
 end
 
 local UpdateRaidPowerColor = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
+			UF:SetPowerAttributes(Unit.Power, value)
 
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
+			Unit.Power:ForceUpdate()
+		end, value)
+	end
+end
 
-			if Unit then
-				UF:SetPowerAttributes(Unit.Power, value)
-
-				Unit.Power:ForceUpdate()
-			end
-		end
+local SetHighlightShown = function(Unit, value)
+	if value then
+		Unit.Highlight:Show()
+	else
+		Unit.Highlight:Hide()
 	end
 end
 
 local UpdateRaidShowHighlight = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetHighlightShown, value)
 
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit.Highlight:Show()
-				else
-					Unit.Highlight:Hide()
-				end
-			end
-		end
-
-		for i = 1, HydraUI.UnitFrames["raid-pets"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid-pets"]:GetChildren())
-
-			if Unit then
-				if value then
-					Unit.Highlight:Show()
-				else
-					Unit.Highlight:Hide()
-				end
-			end
-		end
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid-pets"], SetHighlightShown, value)
 	end
 end
 
@@ -635,12 +567,10 @@ local TestRaid = function()
 				Header:SetAttribute("startingIndex", -24)
 			end
 
-			for i = 1, select("#", Header:GetChildren()) do
-				local Frame = select(i, Header:GetChildren())
-
+			UF:ForEachHeaderChild(Header, function(Frame)
 				UnregisterUnitWatch(Frame)
 				Frame:Hide()
-			end
+			end)
 		end
 
 		if Pets then
@@ -650,12 +580,10 @@ local TestRaid = function()
 				Pets:SetAttribute("startingIndex", -24)
 			end
 
-			for i = 1, select("#", Pets:GetChildren()) do
-				local Frame = select(i, Pets:GetChildren())
-
+			UF:ForEachHeaderChild(Pets, function(Frame)
 				UnregisterUnitWatch(Frame)
 				Frame:Hide()
-			end
+			end)
 		end
 
 		Testing = false
@@ -667,14 +595,12 @@ local TestRaid = function()
 				Header:SetAttribute("startingIndex", -24)
 			end
 
-			for i = 1, select("#", Header:GetChildren()) do
-				local Frame = select(i, Header:GetChildren())
-
+			UF:ForEachHeaderChild(Header, function(Frame)
 				Frame.unit = "player"
 				UnregisterUnitWatch(Frame)
 				RegisterUnitWatch(Frame, true)
 				Frame:Show()
-			end
+			end)
 		end
 
 		if Pets then
@@ -684,14 +610,12 @@ local TestRaid = function()
 				Pets:SetAttribute("startingIndex", -24)
 			end
 
-			for i = 1, select("#", Pets:GetChildren()) do
-				local Frame = select(i, Pets:GetChildren())
-
+			UF:ForEachHeaderChild(Pets, function(Frame)
 				Frame.unit = UnitExists("pet") and "pet" or "player"
 				UnregisterUnitWatch(Frame)
 				RegisterUnitWatch(Frame, true)
 				Frame:Show()
-			end
+			end)
 		end
 
 		Testing = true
@@ -704,11 +628,7 @@ end
 
 local UpdateHealthTexture = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
 			Unit.Health:SetStatusBarTexture(Assets:GetTexture(value))
 			Unit.Health.bg:SetTexture(Assets:GetTexture(value))
 			Unit.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
@@ -716,20 +636,16 @@ local UpdateHealthTexture = function(value)
 			if Unit.AbsorbsBar then
 				Unit.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
 			end
-		end
+		end, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		local Unit
-
-		for i = 1, HydraUI.UnitFrames["raid"]:GetNumChildren() do
-			Unit = select(i, HydraUI.UnitFrames["raid"]:GetChildren())
-
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
 			Unit.Power:SetStatusBarTexture(Assets:GetTexture(value))
 			Unit.Power.bg:SetTexture(Assets:GetTexture(value))
-		end
+		end, value)
 	end
 end
 

@@ -108,33 +108,69 @@ end
 -- Shared update callbacks operate on existing frames and values so settings
 -- changes do not need to allocate per-frame closures or temporary tables.
 function UF:SetFrameWidth(unit, value)
-	unit:SetWidth(value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
+	frame:SetWidth(value)
 end
 
 function UF:SetHealthHeight(unit, value, powerHeight)
-	unit.Health:SetHeight(value)
-	unit:SetHeight(value + powerHeight + 3)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
+	frame.Health:SetHeight(value)
+	frame:SetHeight(value + powerHeight + 3)
 end
 
 function UF:SetPowerHeight(unit, value, healthHeight)
-	unit.Power:SetHeight(value)
-	unit:SetHeight(healthHeight + value + 3)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
+	frame.Power:SetHeight(value)
+	frame:SetHeight(healthHeight + value + 3)
 end
 
 function UF:ApplyHealthAttributes(unit, value)
-	self:SetHealthAttributes(unit.Health, value)
-	unit.Health:ForceUpdate()
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
+	self:SetHealthAttributes(frame.Health, value)
+	frame.Health:ForceUpdate()
 end
 
 function UF:ApplyPowerAttributes(unit, value)
-	self:SetPowerAttributes(unit.Power, value)
-	unit.Power:ForceUpdate()
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
+	self:SetPowerAttributes(frame.Power, value)
+	frame.Power:ForceUpdate()
 end
 
 function UF:SetHealthReverseFill(unit, value)
-	local health = unit.Health
-	local healBar = unit.HealBar
-	local absorbsBar = unit.AbsorbsBar
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
+	local health = frame.Health
+	local healBar = frame.HealBar
+	local absorbsBar = frame.AbsorbsBar
 	local point = value and "RIGHT" or "LEFT"
 	local relativePoint = value and "LEFT" or "RIGHT"
 
@@ -154,41 +190,102 @@ function UF:SetHealthReverseFill(unit, value)
 end
 
 function UF:SetPowerReverseFill(unit, value)
-	unit.Power:SetReverseFill(value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
+	frame.Power:SetReverseFill(value)
 end
 
 function UF:SetElementEnabled(unit, value, element)
-	if not unit[element] then
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame or not frame[element] then
 		return
 	end
 
 	if value then
-		unit:EnableElement(element)
+		frame:EnableElement(element)
 	else
-		unit:DisableElement(element)
+		frame:DisableElement(element)
 	end
 end
 
 function UF:SetHealthTexture(unit, value)
-	local texture = Assets:GetTexture(value)
+	local frame = HydraUI.UnitFrames[unit]
 
-	unit.Health:SetStatusBarTexture(texture)
-	unit.Health.bg:SetTexture(texture)
-
-	if unit.HealBar then
-		unit.HealBar:SetStatusBarTexture(texture)
+	if not frame then
+		return
 	end
 
-	if unit.AbsorbsBar then
-		unit.AbsorbsBar:SetStatusBarTexture(texture)
+	local texture = Assets:GetTexture(value)
+
+	frame.Health:SetStatusBarTexture(texture)
+	frame.Health.bg:SetTexture(texture)
+
+	if frame.HealBar then
+		frame.HealBar:SetStatusBarTexture(texture)
+	end
+
+	if frame.AbsorbsBar then
+		frame.AbsorbsBar:SetStatusBarTexture(texture)
 	end
 end
 
 function UF:SetPowerTexture(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame then
+		return
+	end
+
 	local texture = Assets:GetTexture(value)
 
-	unit.Power:SetStatusBarTexture(texture)
-	unit.Power.bg:SetTexture(texture)
+	frame.Power:SetStatusBarTexture(texture)
+	frame.Power.bg:SetTexture(texture)
+end
+
+function UF:SetAuraSize(unit, value, element, width)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame or not frame[element] then
+		return
+	end
+
+	local auras = frame[element]
+
+	auras.size = value
+	auras:SetSize(width, value)
+	auras:ForceUpdate()
+end
+
+function UF:SetAuraPosition(unit, value, element, growthX, companion, companionPosition)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame or not frame[element] then
+		return
+	end
+
+	local auras = frame[element]
+	local relativeTo = frame
+
+	if companion and companionPosition == value and frame[companion] then
+		relativeTo = frame[companion]
+	end
+
+	auras:ClearAllPoints()
+
+	if value == "TOP" then
+		auras:SetPoint("BOTTOM", relativeTo, "TOP", 0, 2)
+		auras["growth-y"] = "UP"
+	else
+		auras:SetPoint("TOP", relativeTo, "BOTTOM", 0, -2)
+		auras["growth-y"] = "DOWN"
+	end
+
+	auras["growth-x"] = growthX
 end
 
 local UnregisterAuraTimer = function(button)

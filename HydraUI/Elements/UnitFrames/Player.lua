@@ -884,7 +884,7 @@ local UpdatePlayerWidth = function(value)
 	if HydraUI.UnitFrames["player"] then
 		local Frame = HydraUI.UnitFrames["player"]
 
-		UF:SetFrameWidth(Frame, value)
+		UF:SetFrameWidth("player", value)
 
 		-- Auras
 		Frame.Buffs:SetWidth(value)
@@ -957,19 +957,11 @@ local UpdatePlayerWidth = function(value)
 end
 
 local UpdatePlayerHealthHeight = function(value)
-	local Frame = HydraUI.UnitFrames["player"]
-
-	if Frame then
-		UF:SetHealthHeight(Frame, value, Settings["unitframes-player-power-height"])
-	end
+	UF:SetHealthHeight("player", value, Settings["unitframes-player-power-height"])
 end
 
 local UpdatePlayerHealthFill = function(value)
-	local Frame = HydraUI.UnitFrames["player"]
-
-	if Frame then
-		UF:SetHealthReverseFill(Frame, value)
-	end
+	UF:SetHealthReverseFill("player", value)
 end
 
 local UpdatePlayerPowerHeight = function(value)
@@ -979,17 +971,13 @@ local UpdatePlayerPowerHeight = function(value)
 		if Settings["player-move-power"] then
 			Frame.Power:SetHeight(value)
 		else
-			UF:SetPowerHeight(Frame, value, Settings["unitframes-player-health-height"])
+			UF:SetPowerHeight("player", value, Settings["unitframes-player-health-height"])
 		end
 	end
 end
 
 local UpdatePlayerPowerFill = function(value)
-	local Frame = HydraUI.UnitFrames["player"]
-
-	if Frame then
-		UF:SetPowerReverseFill(Frame, value)
-	end
+	UF:SetPowerReverseFill("player", value)
 end
 
 local UpdatePlayerCastBarSize = function()
@@ -1007,26 +995,18 @@ local UpdateCastClassColor = function(value)
 end
 
 local UpdatePlayerHealthColor = function(value)
-	local Frame = HydraUI.UnitFrames["player"]
-
-	if Frame then
-		UF:ApplyHealthAttributes(Frame, value)
-	end
+	UF:ApplyHealthAttributes("player", value)
 end
 
 local UpdatePlayerPowerColor = function(value)
-	local Frame = HydraUI.UnitFrames["player"]
-
-	if Frame then
-		UF:ApplyPowerAttributes(Frame, value)
-	end
+	UF:ApplyPowerAttributes("player", value)
 end
 
 local UpdatePlayerEnablePortrait = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
 
 	if Frame and Frame.Portrait then
-		UF:SetElementEnabled(Frame, value, "Portrait")
+		UF:SetElementEnabled("player", value, "Portrait")
 
 		if Frame.Portrait.BG then
 			if value then
@@ -1158,11 +1138,7 @@ local UpdateResourceTexture = function(value)
 end
 
 local UpdateBuffSize = function(value)
-	if HydraUI.UnitFrames["player"] then
-		HydraUI.UnitFrames["player"].Buffs.size = value
-		HydraUI.UnitFrames["player"].Buffs:SetSize(Settings["unitframes-player-width"], value)
-		HydraUI.UnitFrames["player"].Buffs:ForceUpdate()
-	end
+	UF:SetAuraSize("player", value, "Buffs", Settings["unitframes-player-width"])
 end
 
 local UpdateBuffSpacing = function(value)
@@ -1173,11 +1149,7 @@ local UpdateBuffSpacing = function(value)
 end
 
 local UpdateDebuffSize = function(value)
-	if HydraUI.UnitFrames["player"] then
-		HydraUI.UnitFrames["player"].Debuffs.size = value
-		HydraUI.UnitFrames["player"].Debuffs:SetSize(Settings["unitframes-player-width"], value)
-		HydraUI.UnitFrames["player"].Debuffs:ForceUpdate()
-	end
+	UF:SetAuraSize("player", value, "Debuffs", Settings["unitframes-player-width"])
 end
 
 local UpdateDebuffSpacing = function(value)
@@ -1342,18 +1314,14 @@ local UpdatePowerBarPosition = function(value)
 end
 
 local UpdateHealthTexture = function(value)
-	local Frame = HydraUI.UnitFrames["player"]
-
-	if Frame then
-		UF:SetHealthTexture(Frame, value)
-	end
+	UF:SetHealthTexture("player", value)
 end
 
 local UpdatePowerTexture = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
 
 	if Frame then
-		UF:SetPowerTexture(Frame, value)
+		UF:SetPowerTexture("player", value)
 
 		local Texture = Assets:GetTexture(value)
 

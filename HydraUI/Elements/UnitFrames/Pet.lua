@@ -215,154 +215,59 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 end
 
 local UpdatePetWidth = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetFrameWidth(Frame, value)
-	end
+	UF:SetFrameWidth("pet", value)
 end
 
 local UpdatePetHealthHeight = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetHealthHeight(Frame, value, Settings["unitframes-pet-power-height"])
-	end
+	UF:SetHealthHeight("pet", value, Settings["unitframes-pet-power-height"])
 end
 
 local UpdatePetPowerHeight = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetPowerHeight(Frame, value, Settings["unitframes-pet-health-height"])
-	end
+	UF:SetPowerHeight("pet", value, Settings["unitframes-pet-health-height"])
 end
 
 local UpdatePetHealthColor = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:ApplyHealthAttributes(Frame, value)
-	end
+	UF:ApplyHealthAttributes("pet", value)
 end
 
 local UpdatePetHealthFill = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetHealthReverseFill(Frame, value)
-	end
+	UF:SetHealthReverseFill("pet", value)
 end
 
 local UpdatePetPowerColor = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:ApplyPowerAttributes(Frame, value)
-	end
+	UF:ApplyPowerAttributes("pet", value)
 end
 
 local UpdatePetPowerFill = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetPowerReverseFill(Frame, value)
-	end
+	UF:SetPowerReverseFill("pet", value)
 end
 
 local UpdateEnableBuffs = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetElementEnabled(Frame, value, "Buffs")
-	end
+	UF:SetElementEnabled("pet", value, "Buffs")
 end
 
 local UpdateBuffSize = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		HydraUI.UnitFrames["pet"].Buffs.size = value
-		HydraUI.UnitFrames["pet"].Buffs:SetSize(Settings["unitframes-pet-width"], value)
-		HydraUI.UnitFrames["pet"].Buffs:ForceUpdate()
-	end
+	UF:SetAuraSize("pet", value, "Buffs", Settings["unitframes-pet-width"])
 end
 
 local UpdateBuffPosition = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Unit = HydraUI.UnitFrames["pet"]
-
-		Unit.Buffs:ClearAllPoints()
-
-		if (value == "TOP") then
-			Unit.Buffs:SetPoint("BOTTOM", Unit, "TOP", 0, 2)
-			Unit.Buffs["growth-x"] = "LEFT"
-			Unit.Buffs["growth-y"] = "UP"
-		else
-			Unit.Buffs:SetPoint("TOP", Unit, "BOTTOM", 0, -2)
-			Unit.Buffs["growth-x"] = "LEFT"
-			Unit.Buffs["growth-y"] = "DOWN"
-		end
-	end
+	UF:SetAuraPosition("pet", value, "Buffs", "LEFT")
 end
 
 local UpdateDebuffSize = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		HydraUI.UnitFrames["pet"].Debuffs.size = value
-		HydraUI.UnitFrames["pet"].Debuffs:SetSize(Settings["unitframes-pet-width"], value)
-		HydraUI.UnitFrames["pet"].Debuffs:ForceUpdate()
-	end
+	UF:SetAuraSize("pet", value, "Debuffs", Settings["unitframes-pet-width"])
 end
 
 local UpdateDebuffPosition = function(value)
-	if HydraUI.UnitFrames["pet"] then
-		local Unit = HydraUI.UnitFrames["pet"]
-
-		Unit.Debuffs:ClearAllPoints()
-
-		if (value == "TOP") then
-			if Unit.Buffs then
-				if (Settings["unitframes-pet-buff-pos"] == "TOP") then
-					Unit.Debuffs:SetPoint("BOTTOM", Unit.Buffs or Unit, "TOP", 0, 2)
-				else
-					Unit.Debuffs:SetPoint("BOTTOM", Unit, "TOP", 0, 2)
-				end
-			else
-				Unit.Debuffs:SetPoint("BOTTOM", Unit, "TOP", 0, 2)
-			end
-
-			Unit.Debuffs["growth-x"] = "LEFT"
-			Unit.Debuffs["growth-y"] = "UP"
-		else
-			if Unit.Buffs then
-				if (Settings["unitframes-pet-buff-pos"] == "BOTTOM") then
-					Unit.Debuffs:SetPoint("TOP", Unit.Buffs or Unit, "BOTTOM", 0, -2)
-				else
-					Unit.Debuffs:SetPoint("TOP", Unit, "BOTTOM", 0, -2)
-				end
-			else
-				Unit.Debuffs:SetPoint("TOP", Unit, "BOTTOM", 0, -2)
-			end
-
-			Unit.Debuffs:SetPoint("TOP", Unit.Buffs or Unit, "BOTTOM", 0, -2)
-			Unit.Debuffs["growth-x"] = "LEFT"
-			Unit.Debuffs["growth-y"] = "DOWN"
-		end
-	end
+	UF:SetAuraPosition("pet", value, "Debuffs", "LEFT", "Buffs", Settings["unitframes-pet-buff-pos"])
 end
 
 local UpdateHealthTexture = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetHealthTexture(Frame, value)
-	end
+	UF:SetHealthTexture("pet", value)
 end
 
 local UpdatePowerTexture = function(value)
-	local Frame = HydraUI.UnitFrames["pet"]
-
-	if Frame then
-		UF:SetPowerTexture(Frame, value)
-	end
+	UF:SetPowerTexture("pet", value)
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Pet"], Language["Unit Frames"], function(left, right)

@@ -211,6 +211,116 @@ function UF:CreateFontString(parent, config)
 	return text
 end
 
+function UF:CreatePortrait(frame, config)
+	local portrait
+	if config.style == "2D" then
+		portrait = frame:CreateTexture(nil, "OVERLAY")
+		portrait:SetTexCoord(0.12, 0.88, 0.12, 0.88)
+	else
+		portrait = CreateFrame("PlayerModel", nil, frame)
+	end
+
+	portrait:SetSize(config.width, config.height)
+	portrait:SetPoint(config.point, config.relativeTo or frame, config.relativePoint, config.x or 0, config.y or 0)
+	if config.alpha then portrait:SetAlpha(config.alpha) end
+
+	if config.style ~= "OVERLAY" then
+		local background = frame:CreateTexture(nil, "BACKGROUND")
+		background:SetPoint("TOPLEFT", portrait, -1, 1)
+		background:SetPoint("BOTTOMRIGHT", portrait, 1, -1)
+		background:SetTexture(Assets:GetTexture(config.backgroundTexture))
+		background:SetVertexColor(unpack(config.backgroundColor or {0, 0, 0}))
+		if config.backgroundVisible == false then background:Hide() end
+		portrait.BG = background
+	end
+
+	frame.Portrait = portrait
+	return portrait
+end
+
+function UF:CreateCastbar(frame, config)
+	local castbar = CreateFrame("StatusBar", config.name, frame)
+	castbar:SetSize(config.width, config.height)
+	castbar:SetPoint(config.point, config.relativeTo or frame, config.relativePoint, config.x or 0, config.y or 0)
+	castbar:SetStatusBarTexture(Assets:GetTexture(config.texture))
+
+	local barBackground = castbar:CreateTexture(nil, "ARTWORK")
+	barBackground:SetAllPoints(castbar)
+	barBackground:SetTexture(Assets:GetTexture(config.texture))
+	barBackground:SetAlpha(config.barBackgroundAlpha or 0.2)
+
+	local background = castbar:CreateTexture(nil, "BACKGROUND")
+	background:SetPoint("TOPLEFT", castbar, unpack(config.backgroundTopLeft or {-1, 1}))
+	background:SetPoint("BOTTOMRIGHT", castbar, unpack(config.backgroundBottomRight or {1, -1}))
+	background:SetTexture(Assets:GetTexture(config.backgroundTexture))
+	background:SetVertexColor(unpack(config.backgroundColor or {0, 0, 0}))
+
+	local time = UF:CreateFontString(castbar, {
+		font = config.font, size = config.fontSize, flags = config.fontFlags,
+		point = "RIGHT", relativePoint = "RIGHT", x = config.timeX or -3, y = 0, justify = "RIGHT",
+	})
+	local text = UF:CreateFontString(castbar, {
+		font = config.font, size = config.fontSize, flags = config.fontFlags,
+		point = "LEFT", relativePoint = "LEFT", x = config.textX or 3, y = 0, justify = "LEFT",
+	})
+	text:SetSize(config.textWidth, config.fontSize)
+
+	local icon = castbar:CreateTexture(nil, "OVERLAY")
+	icon:SetSize(config.iconSize, config.iconSize)
+	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", config.iconX or -1, 0)
+	icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+	if config.iconBackground then
+		local iconBackground = castbar:CreateTexture(nil, "BACKGROUND")
+		iconBackground:SetPoint("TOPLEFT", icon, -1, 1)
+		iconBackground:SetPoint("BOTTOMRIGHT", icon, 1, -1)
+		iconBackground:SetTexture(Assets:GetTexture(config.backgroundTexture))
+		iconBackground:SetVertexColor(unpack(config.backgroundColor or {0, 0, 0}))
+		icon.BG = iconBackground
+	end
+
+	if config.createSafeZone then
+		local safeZone = castbar:CreateTexture(nil, "ARTWORK")
+		safeZone:SetTexture(Assets:GetTexture(config.texture))
+		safeZone:SetVertexColor(0.9, 0.15, 0.15, 0.75)
+		castbar.SafeZone = safeZone
+	end
+
+	castbar.bg = barBackground
+	castbar.Time = time
+	castbar.Text = text
+	castbar.Icon = icon
+	castbar.showTradeSkills = config.showTradeSkills
+	castbar.timeToHold = config.timeToHold
+	castbar.ClassColor = config.classColor
+	castbar.PostCastStart = config.postCastStart
+	castbar.PostCastStop = config.postCastStop
+	castbar.PostCastFail = config.postCastFail
+	castbar.PostCastInterruptible = config.postCastInterruptible
+	frame.Castbar = castbar
+	return castbar
+end
+
+function UF:CreateAuraContainer(frame, config)
+	local auras = CreateFrame("Frame", config.name, config.parent or frame)
+	auras:SetSize(config.width, config.height)
+	if config.point then
+		auras:SetPoint(config.point, config.relativeTo or frame, config.relativePoint, config.x or 0, config.y or 0)
+	end
+	auras.size = config.size
+	auras.spacing = config.spacing
+	auras.num = config.num
+	auras.initialAnchor = config.initialAnchor
+	auras.tooltipAnchor = config.tooltipAnchor
+	auras["growth-x"] = config.growthX
+	auras["growth-y"] = config.growthY
+	auras.PostCreateIcon = config.postCreateIcon
+	auras.PostUpdateIcon = config.postUpdateIcon
+	auras.CustomFilter = config.customFilter
+	auras.onlyShowPlayer = config.onlyShowPlayer
+	auras.showStealableBuffs = config.showStealableBuffs
+	return auras
+end
+
 function UF:CreateRaidTargetIndicator(health, config)
 	local indicator = health:CreateTexture(nil, config.layer or "OVERLAY")
 	indicator:SetSize(config.size or 16, config.size or 16)

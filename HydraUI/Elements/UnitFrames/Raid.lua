@@ -177,20 +177,13 @@ HydraUI.StyleFuncs["raid"] = function(self, unit)
 	end
 
 	-- Debuffs
-	local Debuffs = CreateFrame("Frame", self:GetName() .. "Debuffs", Health)
-	Debuffs:SetSize(24, 24)
-	--Debuffs:SetPoint("BOTTOM", self, 0, 2)
-	Debuffs:SetPoint("CENTER", Health, 0, 0)
-	Debuffs.size = 24
-	Debuffs.num = 1
-	Debuffs.spacing = 0
-	Debuffs.initialAnchor = "TOPLEFT"
-	Debuffs.tooltipAnchor = "ANCHOR_TOP"
-	Debuffs["growth-x"] = "RIGHT"
-	Debuffs["growth-y"] = "DOWN"
-	Debuffs.PostCreateIcon = UF.PostCreateIcon
-	Debuffs.PostUpdateIcon = UF.PostUpdateIcon
-	Debuffs.CustomFilter = RaidDebuffFilter
+	local Debuffs = UF:CreateAuraContainer(self, {
+		name = self:GetName() .. "Debuffs", parent = Health, width = 24, height = 24,
+		point = "CENTER", relativeTo = Health, relativePoint = "CENTER",
+		size = 24, num = 1, spacing = 0, initialAnchor = "TOPLEFT", tooltipAnchor = "ANCHOR_TOP",
+		growthX = "RIGHT", growthY = "DOWN", postCreateIcon = UF.PostCreateIcon,
+		postUpdateIcon = UF.PostUpdateIcon, customFilter = RaidDebuffFilter,
+	})
 	self.Debuffs = Debuffs
 
 	-- Leader

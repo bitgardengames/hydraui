@@ -15,8 +15,6 @@ STYLES = {
     "Focus": "unitframes-focus",
     "TargetTarget": "unitframes-targettarget",
     "Boss": "unitframes-boss",
-    "Party": "party",
-    "Raid": "raid",
     "PartyPets": "party-pets",
     "RaidPets": "raid-pets",
     "Pet": "unitframes-pet",
@@ -66,6 +64,30 @@ class SharedUnitFrameCoverage(unittest.TestCase):
                 self.assertIn(f'Settings["{prefix}-health-height"]', predictions)
                 self.assertIn(f'Settings["{prefix}-health-reverse"]', predictions)
 
+    def test_party_and_raid_use_the_shared_group_builder(self):
+        shared = (ROOT / "GroupFrames.lua").read_text()
+        self.assertIn("function UF:BuildGroupFrame", shared)
+        for module, family in (("Party", "party"), ("Raid", "raid")):
+            source = (ROOT / f"{module}.lua").read_text()
+            self.assertRegex(source, rf'prefix\s*=\s*"{family}"')
+            self.assertIn("UF:BuildGroupFrame(frame, unit,", source)
+
+    def test_group_descriptors_keep_family_specific_options(self):
+        party = (ROOT / "Party.lua").read_text()
+        raid = (ROOT / "Raid.lua").read_text()
+        self.assertIn('healthTextureKey = "PartyHealthTexture"', party)
+        self.assertIn('mouseoverKey = "PartyEnableMouseover"', party)
+        self.assertIn("PartyDebuffFilter", party)
+        self.assertIn('healthTextureKey="RaidHealthTexture"', raid)
+        self.assertIn('mouseoverKey="RaidEnableMouseover"', raid)
+        self.assertIn("RaidDebuffFilter", raid)
+
+    def test_group_updates_reuse_operation_and_header_iterator(self):
+        shared = (ROOT / "GroupFrames.lua").read_text()
+        update = re.search(r"function UF:UpdateGroupFrames(.*?)\nend", shared, re.S).group(0)
+        self.assertIn("self:ForEachHeaderChild(header, Operations[operation], value, descriptor)", update)
+        self.assertNotIn("function(", update)
+
     def test_pet_styles_never_reach_into_parent_dimensions_or_fill(self):
         cases = (("PartyPets", "party-pets", "party"), ("RaidPets", "raid-pets", "raid"))
         for module, pet_prefix, parent_prefix in cases:
@@ -82,10 +104,11 @@ class SharedUnitFrameCoverage(unittest.TestCase):
     def test_live_health_texture_update_reaches_every_prediction_texture(self):
         shared = (ROOT / "UnitFrames.lua").read_text()
         update = re.search(
+            r"local function SetHeaderHealthTexture\(frame, resolvedTexture\)(.*?)"
             r"function UF:SetHeaderHealthTexture\(header, value\)(.*?)\nend",
             shared,
             re.S,
-        ).group(1)
+        ).group(0)
         for expression in (
             "frame.Health:SetStatusBarTexture(resolvedTexture)",
             "frame.Health.bg:SetTexture(resolvedTexture)",
@@ -93,6 +116,8 @@ class SharedUnitFrameCoverage(unittest.TestCase):
             "frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture)",
         ):
             self.assertIn(expression, update)
+        self.assertIn("self:ForEachHeaderChild(header, SetHeaderHealthTexture, texture)", update)
+        self.assertNotIn("function(frame, resolvedTexture)", update)
         for module, unit in (("PartyPets", "partypet"), ("RaidPets", "raidpet")):
             source = (ROOT / f"{module}.lua").read_text()
             self.assertIn(

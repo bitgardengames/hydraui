@@ -23,25 +23,25 @@ Defaults["unitframes-display-aura-timers"] = true
 
 local UF = HydraUI:NewModule("Unit Frames")
 
-local function ForEachChild(operation, value, index, child, ...)
+local function ForEachChild(operation, value, descriptor, child, ...)
 	if not child then
 		return
 	end
 
-	operation(child, value, index)
+	operation(child, value, descriptor)
 
-	return ForEachChild(operation, value, index + 1, ...)
+	return ForEachChild(operation, value, descriptor, ...)
 end
 
 -- Secure group headers return their children as multiple values. Pass those
 -- values through the iterator so each invocation uses the header's current
 -- children without allocating a temporary table.
-function UF:ForEachHeaderChild(header, operation, value)
+function UF:ForEachHeaderChild(header, operation, value, descriptor)
 	if not header then
 		return
 	end
 
-	ForEachChild(operation, value, 1, header:GetChildren())
+	ForEachChild(operation, value, descriptor, header:GetChildren())
 end
 
 HydraUI.UnitFrames = {}
@@ -459,15 +459,17 @@ function UF:SetHealthTexture(unit, value)
 	end
 end
 
+local function SetHeaderHealthTexture(frame, resolvedTexture)
+	frame.Health:SetStatusBarTexture(resolvedTexture)
+	frame.Health.bg:SetTexture(resolvedTexture)
+	frame.HealBar:SetStatusBarTexture(resolvedTexture)
+	if frame.AbsorbsBar then frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture) end
+end
+
 function UF:SetHeaderHealthTexture(header, value)
 	if not header then return end
 	local texture = Assets:GetTexture(value)
-	self:ForEachHeaderChild(header, function(frame, resolvedTexture)
-		frame.Health:SetStatusBarTexture(resolvedTexture)
-		frame.Health.bg:SetTexture(resolvedTexture)
-		frame.HealBar:SetStatusBarTexture(resolvedTexture)
-		if frame.AbsorbsBar then frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture) end
-	end, texture)
+	self:ForEachHeaderChild(header, SetHeaderHealthTexture, texture)
 end
 
 function UF:SetPowerTexture(unit, value)
@@ -1092,20 +1094,6 @@ UF.PostCreateAuraWatchIcon = function(auras, icon)
 	icon.overlay:SetTexture()
 end
 
-local UpdatePartyShowRole = function(value)
-	if HydraUI.UnitFrames["party"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["party"], function(Unit, value)
-			if value then
-				Unit:EnableElement("GroupRoleIndicator")
-			else
-				Unit:DisableElement("GroupRoleIndicator")
-			end
-
-			Unit:UpdateAllElements("ForceUpdate")
-		end, value)
-	end
-end
-
 local Style = function(self, unit)
 	if HydraUI.StyleFuncs[unit] then
 		HydraUI.StyleFuncs[unit](self, unit)
@@ -1156,22 +1144,6 @@ local UpdateRaidSortingMethod = function(value)
 		HydraUI.UnitFrames["raid"]:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
 		HydraUI.UnitFrames["raid"]:SetAttribute("sortMethod", "INDEX")
 		HydraUI.UnitFrames["raid"]:SetAttribute("groupBy", "GROUP")
-	end
-end
-
-local UpdateRaidShowPower = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			if value then
-				Unit:EnableElement("Power")
-				Unit:SetHeight(Settings["party-health-height"] + Settings["party-power-height"] + 3)
-			else
-				Unit:DisableElement("Power")
-				Unit:SetHeight(Settings["party-health-height"] + 2)
-			end
-
-			Unit:UpdateAllElements("ForceUpdate")
-		end, value)
 	end
 end
 

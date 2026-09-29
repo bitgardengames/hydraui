@@ -35,559 +35,61 @@ Defaults.RaidEnableMouseover = true
 local UF = HydraUI:GetModule("Unit Frames")
 
 local Ignore = {}
-
-if HydraUI.IsWrath then
-	Ignore[GetSpellInfo(69127)] = true -- Chill of the Throne
+if HydraUI.IsWrath then Ignore[GetSpellInfo(69127)] = true end
+local RaidDebuffFilter = function(self, unit, icon, name, texture, count, dtype, duration, timeLeft, caster, stealable, nameplateshow, id, canapply, boss, player)
+	if Ignore[name] then return false end
+	return boss or (count and count > 0) or (duration > 0 and timeLeft and not player and not canapply)
 end
-
-local RaidDebuffFilter = function(self, unit, icon, name, texture, count, dtype, duration, timeLeft, caster, stealable, nameplateshow, id, canapply, boss, player, showall)
-	if Ignore[name] then
-		return false
-	end
-
-	if (boss or (count and count > 0) or (duration > 0 and timeLeft and not player and not canapply)) then
-		return true
-	end
+local function CreateRaidDebuffs(frame, health, filter)
+	return UF:CreateAuraContainer(frame,frame:GetName().."Debuffs",health,24,24,"CENTER",health,"CENTER",nil,nil,24,0,1,"TOPLEFT","ANCHOR_TOP","RIGHT","DOWN",UF.PostCreateIcon,UF.PostUpdateIcon,filter)
 end
-
-HydraUI.StyleFuncs["raid"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
-
-	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
-	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["raid-health-height"],
-		Settings.RaidHealthTexture,
-		Settings["raid-health-reverse"],
-		Settings["raid-health-orientation"],
-		"BORDER"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["raid-width"],
-		Settings["raid-health-height"],
-		Settings.RaidHealthTexture,
-		Settings["raid-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local Highlight = UF:CreateMouseoverHighlight(self, Health, "Blank", Settings.RaidEnableMouseover)
-
-	local HealthDead = Health:CreateTexture(nil, "OVERLAY")
-	HealthDead:SetAllPoints(Health)
-	HealthDead:SetTexture(Assets:GetTexture("RenHorizonUp"))
-	HealthDead:SetVertexColor(0.8, 0.8, 0.8)
-	HealthDead:SetAlpha(0)
-	HealthDead:SetDrawLayer("OVERLAY", 7)
-
-	Health.DeadAnim = LibMotion:CreateAnimationGroup()
-
-	Health.DeadAnim.In = LibMotion:CreateAnimation(HealthDead, "Fade")
-	Health.DeadAnim.In:SetEasing("in")
-	Health.DeadAnim.In:SetDuration(0.15)
-	Health.DeadAnim.In:SetChange(0.6)
-	Health.DeadAnim.In:SetGroup(Health.DeadAnim)
-	Health.DeadAnim.In:SetOrder(1)
-
-	Health.DeadAnim.Out = LibMotion:CreateAnimation(HealthDead, "Fade")
-	Health.DeadAnim.Out:SetEasing("out")
-	Health.DeadAnim.Out:SetDuration(0.3)
-	Health.DeadAnim.Out:SetChange(0)
-	Health.DeadAnim.Out:SetGroup(Health.DeadAnim)
-	Health.DeadAnim.Out:SetOrder(2)
-
-	local HealthName = UF:CreateFontString(
-		Health,
-		Settings["raid-font"],
-		Settings["raid-font-size"],
-		Settings["raid-font-flags"],
-		"BOTTOM",
-		"CENTER",
-		0,
-		1,
-		"CENTER"
-	)
-
-	local HealthBottom = UF:CreateFontString(
-		Health,
-		Settings["raid-font"],
-		Settings["raid-font-size"],
-		Settings["raid-font-flags"],
-		"TOP",
-		"CENTER",
-		0,
-		-1,
-		"CENTER"
-	)
-
-	-- Attributes
-	Health.colorDisconnected = true
-	Health.Smooth = true
-
-	UF:SetHealthAttributes(Health, Settings["raid-health-color"])
-
-	local Power, PowerBG = UF:CreatePowerBar(self, Settings["raid-power-height"], Settings.RaidPowerTexture, Settings["raid-power-reverse"])
-
-	-- Attributes
-	Power.frequentUpdates = true
-
-	UF:SetPowerAttributes(Power, Settings["raid-power-color"])
-
-	if UF.BuffIDs[HydraUI.UserClass] then
-		local Auras = CreateFrame("Frame", nil, Health)
-		Auras:SetPoint("TOPLEFT", Health)
-		Auras:SetPoint("BOTTOMRIGHT", Health)
-		Auras:SetFrameLevel(10)
-		Auras:SetFrameStrata("HIGH")
-		Auras.presentAlpha = 1
-		Auras.missingAlpha = 0
-		Auras.strictMatching = true
-		Auras.icons = {}
-		Auras.PostCreateIcon = UF.PostCreateAuraWatchIcon
-
-		for key, spell in next, UF.BuffIDs[HydraUI.UserClass] do
-			local Icon = CreateFrame("Frame", nil, Auras)
-			Icon.spellID = spell[1]
-			Icon.anyUnit = spell[4]
-			Icon.strictMatching = true
-			Icon:SetSize(8, 8)
-			Icon:SetPoint(spell[2], 0, 0)
-
-			local Texture = Icon:CreateTexture(nil, "OVERLAY")
-			Texture:SetAllPoints(Icon)
-			Texture:SetTexture(Assets:GetTexture("Blank"))
-
-			local BG = Icon:CreateTexture(nil, "BORDER")
-			BG:SetPoint("TOPLEFT", Icon, -1, 1)
-			BG:SetPoint("BOTTOMRIGHT", Icon, 1, -1)
-			BG:SetTexture(Assets:GetTexture("Blank"))
-			BG:SetVertexColor(0, 0, 0)
-
-			if (spell[3]) then
-				Texture:SetVertexColor(unpack(spell[3]))
-			else
-				Texture:SetVertexColor(0.8, 0.8, 0.8)
-			end
-
-			local Count = Icon:CreateFontString(nil, "OVERLAY")
-			HydraUI:SetFontInfo(Count, Settings["raid-font"], 10)
-			Count:SetPoint("CENTER", unpack(UF.AuraOffsets[spell[2]]))
-			Icon.count = Count
-
-			Auras.icons[spell[1]] = Icon
-		end
-
-		self.AuraWatch = Auras
-	end
-
-	-- Debuffs
-	local Debuffs = UF:CreateAuraContainer(
-		self,
-		self:GetName() .. "Debuffs",
-		Health,
-		24,
-		24,
-		"CENTER",
-		Health,
-		"CENTER",
-		nil,
-		nil,
-		24,
-		0,
-		1,
-		"TOPLEFT",
-		"ANCHOR_TOP",
-		"RIGHT",
-		"DOWN",
-		UF.PostCreateIcon,
-		UF.PostUpdateIcon,
-		RaidDebuffFilter
-	)
-	self.Debuffs = Debuffs
-
-	-- Leader
-    local Leader = Health:CreateTexture(nil, "OVERLAY")
-    Leader:SetSize(16, 16)
-    Leader:SetPoint("LEFT", Health, "TOPLEFT", 3, 0)
-    Leader:SetTexture(Assets:GetTexture("Leader"))
-    Leader:SetVertexColor(HydraUI:HexToRGB("FFEB3B"))
-    Leader:Hide()
-
-	-- Assist
-    local Assist = Health:CreateTexture(nil, "OVERLAY")
-    Assist:SetSize(16, 16)
-    Assist:SetPoint("LEFT", Health, "TOPLEFT", 3, 0)
-    Assist:SetTexture(Assets:GetTexture("Assist"))
-    Assist:SetVertexColor(HydraUI:HexToRGB("FFEB3B"))
-    Assist:Hide()
-
-	-- Ready Check
-    local ReadyCheck = Health:CreateTexture(nil, "OVERLAY")
-	ReadyCheck:SetSize(16, 16)
-    ReadyCheck:SetPoint("LEFT", Health, 2, 0)
-
-    -- Phase
-    local PhaseIndicator = CreateFrame("Frame", nil, Health)
-    PhaseIndicator:SetSize(16, 16)
-    PhaseIndicator:SetPoint("LEFT", Health, 2, 0)
-
-	PhaseIndicator.Icon = PhaseIndicator:CreateTexture(nil, "OVERLAY")
-	PhaseIndicator.Icon:SetAllPoints()
-
-	-- Target Icon
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
-
-    -- Resurrect
-	local Resurrect = Health:CreateTexture(nil, "OVERLAY")
-	Resurrect:SetSize(16, 16)
-	Resurrect:SetPoint("LEFT", Health, 2, 0)
-
-	-- Role
-	local RoleIndicator = Health:CreateTexture(nil, "OVERLAY")
-	RoleIndicator:SetSize(16, 16)
-	RoleIndicator:SetPoint("LEFT", Health, 2, 0)
-
-	-- Dispels
-	local Dispel = CreateFrame("Frame", nil, Health, "BackdropTemplate")
-	Dispel:SetSize(22, 22)
-	Dispel:SetPoint("CENTER", Health, 0, 0)
-	Dispel:SetFrameLevel(Health:GetFrameLevel() + 20)
-	Dispel:SetBackdrop(HydraUI.BackdropAndBorder)
-	Dispel:SetBackdropColor(0, 0, 0)
-	Dispel:SetFrameStrata("HIGH")
-	Dispel:SetFrameLevel(10)
-
-	Dispel.icon = Dispel:CreateTexture(nil, "ARTWORK")
-	Dispel.icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-	Dispel.icon:SetPoint("TOPLEFT", Dispel, 1, -1)
-	Dispel.icon:SetPoint("BOTTOMRIGHT", Dispel, -1, 1)
-
-	Dispel.cd = CreateFrame("Cooldown", nil, Dispel, "CooldownFrameTemplate")
-	Dispel.cd:SetPoint("TOPLEFT", Dispel, 1, -1)
-	Dispel.cd:SetPoint("BOTTOMRIGHT", Dispel, -1, 1)
-	Dispel.cd:SetHideCountdownNumbers(true)
-	Dispel.cd:SetDrawEdge(false)
-
-	Dispel.count = Dispel.cd:CreateFontString(nil, "ARTWORK")
-	HydraUI:SetFontInfo(Dispel.count, Settings["raid-font"], Settings["raid-font-size"], Settings["raid-font-flags"])
-	Dispel.count:SetPoint("BOTTOMRIGHT", Dispel, "BOTTOMRIGHT", -3, 3)
-	Dispel.count:SetTextColor(1, 1, 1)
-	Dispel.count:SetJustifyH("RIGHT")
-	Dispel.count:SetDrawLayer("ARTWORK", 7)
-
-	Dispel.bg = Dispel:CreateTexture(nil, "BACKGROUND")
-	Dispel.bg:SetPoint("TOPLEFT", Dispel, -1, 1)
-	Dispel.bg:SetPoint("BOTTOMRIGHT", Dispel, 1, -1)
-	Dispel.bg:SetTexture(Assets:GetTexture("Blank"))
-	Dispel.bg:SetVertexColor(0, 0, 0)
-
-    -- Position and size
-
-	self:Tag(HealthName, Settings["raid-health-top"])
-	self:Tag(HealthBottom, Settings["raid-health-bottom"])
-
-	self.Range = {
-		insideAlpha = Settings["raid-in-range"] / 100,
-		outsideAlpha = Settings["raid-out-of-range"] / 100,
-	}
-
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.Power = Power
-	self.Power.bg = PowerBG
-	self.HealthName = HealthName
-	self.HealthBottom = HealthBottom
-	self.Dispel = Dispel
-	self.LeaderIndicator = Leader
-	self.AssistantIndicator = Assist
-	self.ReadyCheckIndicator = ReadyCheck
-	self.ResurrectIndicator = Resurrect
-	self.RaidTargetIndicator = RaidTarget
-	self.GroupRoleIndicator = RoleIndicator
-	self.PhaseIndicator = PhaseIndicator
+local function UpdateRaidAnchorSize()
+	if not UF.RaidAnchor then return end
+	UF.RaidAnchor:SetWidth(floor(40/Settings["raid-max-columns"])*Settings["raid-width"]+(floor(40/Settings["raid-max-columns"])*Settings["raid-x-offset"]-2))
+	UF.RaidAnchor:SetHeight((Settings["raid-health-height"]+Settings["raid-power-height"])*(Settings["raid-max-columns"]+Settings["raid-y-offset"])-1)
 end
-
-local UpdateRaidAnchorSize = function()
-	UF.RaidAnchor:SetWidth((floor(40 / Settings["raid-max-columns"]) * Settings["raid-width"] + (floor(40 / Settings["raid-max-columns"]) * Settings["raid-x-offset"] - 2)))
-	UF.RaidAnchor:SetHeight((Settings["raid-health-height"] + Settings["raid-power-height"]) * (Settings["raid-max-columns"] + (Settings["raid-y-offset"])) - 1)
-end
-
-local SetRaidWidth = function(Unit, value)
-	UF:SetFrameWidth(Unit, value)
-end
-
-local SetRaidHealthHeight = function(Unit, value)
-	UF:SetHealthHeight(Unit, value, Settings["raid-power-height"])
-end
-
-local SetRaidHealthColor = function(Unit, value)
-	UF:ApplyHealthAttributes(Unit, value)
-end
-
-local SetRaidPowerEnabled = function(Unit, value)
-	UF:SetElementEnabled(Unit, value, "Power")
-	Unit:SetHeight(Settings["raid-health-height"] + (value and Settings["raid-power-height"] + 3 or 2))
-end
-
-local SetRaidPowerHeight = function(Unit, value)
-	UF:SetPowerHeight(Unit, value, Settings["raid-health-height"])
-end
-
-local SetRaidHealthOrientation = function(Unit, value)
-	Unit.Health:SetOrientation(value)
-end
-
-local SetRaidHealthReverseFill = function(Unit, value)
-	UF:SetHealthReverseFill(Unit, value)
-end
-
-local SetRaidPowerReverseFill = function(Unit, value)
-	UF:SetPowerReverseFill(Unit, value)
-end
-
-local SetRaidPowerColor = function(Unit, value)
-	UF:ApplyPowerAttributes(Unit, value)
-end
-
-local SetRaidHealthTexture = function(Unit, value)
-	UF:SetHealthTexture(Unit, value)
-end
-
-local SetRaidPowerTexture = function(Unit, value)
-	UF:SetPowerTexture(Unit, value)
-end
-
-local UpdateRaidWidth = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidWidth, value)
-		UpdateRaidAnchorSize()
-	end
-end
-
-local UpdateRaidHealthHeight = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthHeight, value)
-		UpdateRaidAnchorSize()
-	end
-end
-
-local UpdateRaidHealthColor = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthColor, value)
-	end
-end
-
-local UpdateRaidHealthOrientation = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthOrientation, value)
-	end
-end
-
-local UpdateRaidHealthReverseFill = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthReverseFill, value)
-	end
-end
-
-local UpdateEnableRaidPower = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerEnabled, value)
-	end
-end
-
-local UpdateRaidPowerHeight = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerHeight, value)
-		UpdateRaidAnchorSize()
-	end
-end
-
-local UpdateRaidPowerReverseFill = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerReverseFill, value)
-	end
-end
-
-local UpdateRaidPowerColor = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerColor, value)
-	end
-end
-
-local SetHighlightShown = function(Unit, value)
-	if value then
-		Unit.Highlight:Show()
+local RaidGroup = {
+	prefix="raid", header="raid", petHeader="raid-pets", healthTextureKey="RaidHealthTexture", powerTextureKey="RaidPowerTexture", mouseoverKey="RaidEnableMouseover",
+	debuffFilter=RaidDebuffFilter, createDebuffs=CreateRaidDebuffs, dispelSize=22,
+	indicators={ auraWatch=true, role=true, leaderX=3, phasePoint="LEFT" }, testStart=-24,
+	afterUpdate=function(operation) if operation=="width" or operation=="healthHeight" or operation=="powerHeight" then UpdateRaidAnchorSize() end end,
+}
+HydraUI.StyleFuncs["raid"] = function(frame, unit) UF:BuildGroupFrame(frame, unit, RaidGroup) end
+local function Update(operation,value) UF:UpdateGroupFrames(RaidGroup,operation,value) end
+local function UpdateRaidWidth(v) Update("width",v) end
+local function UpdateRaidHealthHeight(v) Update("healthHeight",v) end
+local function UpdateRaidHealthColor(v) Update("healthColor",v) end
+local function UpdateRaidHealthOrientation(v) Update("healthOrientation",v) end
+local function UpdateRaidHealthReverseFill(v) Update("healthReverse",v) end
+local function UpdateEnableRaidPower(v) Update("powerEnabled",v) end
+local function UpdateRaidPowerHeight(v) Update("powerHeight",v) end
+local function UpdateRaidPowerReverseFill(v) Update("powerReverse",v) end
+local function UpdateRaidPowerColor(v) Update("powerColor",v) end
+local function UpdateRaidShowHighlight(v) Update("highlight",v) end
+local function UpdateHealthTexture(v) Update("healthTexture",v) end
+local function UpdatePowerTexture(v) Update("powerTexture",v) end
+local function TestRaid() UF:ToggleGroupTest(RaidGroup) end
+local function UpdateShowSolo(v) _G["HydraUI Raid"]:SetAttribute("showSolo",v) end
+local function SetRaidAttribute(attribute,value) HydraUI.UnitFrames["raid"]:SetAttribute(attribute,value); UpdateRaidAnchorSize() end
+local function UpdateRaidXOffset(v) SetRaidAttribute("xoffset",v) end
+local function UpdateRaidYOffset(v) SetRaidAttribute("yoffset",v) end
+local function UpdateRaidUnitsPerColumn(v) SetRaidAttribute("unitsPerColumn",v) end
+local function UpdateRaidMaxColumns(v) SetRaidAttribute("maxColumns",v) end
+local function UpdateRaidColumnSpacing(v) SetRaidAttribute("columnSpacing",v) end
+local function UpdateRaidColumnAnchor(v) SetRaidAttribute("columnAnchorPoint",v) end
+local function UpdateRaidPoint(v) SetRaidAttribute("point",v) end
+local function UpdateRaidSortingMethod(value)
+	local header = HydraUI.UnitFrames["raid"]
+	if value == "CLASS" then
+		header:SetAttribute("groupingOrder", "DEATHKNIGHT,DEMONHUNTER,DRUID,HUNTER,MAGE,MONK,PALADIN,PRIEST,SHAMAN,WARLOCK,WARRIOR"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", "CLASS")
+	elseif value == "ROLE" then
+		header:SetAttribute("groupingOrder", "TANK,HEALER,DAMAGER,NONE"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", "ASSIGNEDROLE")
+	elseif value == "NAME" then
+		header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", nil)
+	elseif value == "MTMA" then
+		header:SetAttribute("groupingOrder", "MAINTANK,MAINASSIST,NONE"); header:SetAttribute("sortMethod", "NAME"); header:SetAttribute("groupBy", "ROLE")
 	else
-		Unit.Highlight:Hide()
-	end
-end
-
-local UpdateRaidShowHighlight = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetHighlightShown, value)
-
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid-pets"], SetHighlightShown, value)
-	end
-end
-
-local UpdateRaidXOffset = function(value)
-	HydraUI.UnitFrames["raid"]:SetAttribute("xoffset", value)
-
-	UpdateRaidAnchorSize()
-end
-
-local UpdateRaidYOffset = function(value)
-	HydraUI.UnitFrames["raid"]:SetAttribute("yoffset", value)
-
-	UpdateRaidAnchorSize()
-end
-
-local UpdateRaidUnitsPerColumn = function(value)
-	HydraUI.UnitFrames["raid"]:SetAttribute("unitsPerColumn", value)
-
-	UpdateRaidAnchorSize()
-end
-
-local UpdateRaidMaxColumns = function(value)
-	HydraUI.UnitFrames["raid"]:SetAttribute("maxColumns", value)
-
-	UpdateRaidAnchorSize()
-end
-
-local UpdateRaidColumnSpacing = function(value)
-	HydraUI.UnitFrames["raid"]:SetAttribute("columnSpacing", value)
-
-	UpdateRaidAnchorSize()
-end
-
-local UpdateRaidColumnAnchor = function(value)
-	HydraUI.UnitFrames["raid"]:SetAttribute("columnAnchorPoint", value)
-
-	UpdateRaidAnchorSize()
-end
-
-local UpdateRaidPoint = function(value)
-	HydraUI.UnitFrames["raid"]:SetAttribute("point", value)
-
-	UpdateRaidAnchorSize()
-end
-
-local UpdateRaidSortingMethod = function(value)
-	if (value == "CLASS") then
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupingOrder", "DEATHKNIGHT,DEMONHUNTER,DRUID,HUNTER,MAGE,MONK,PALADIN,PRIEST,SHAMAN,WARLOCK,WARRIOR")
-		HydraUI.UnitFrames["raid"]:SetAttribute("sortMethod", "NAME")
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupBy", "CLASS")
-	elseif (value == "ROLE") then
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupingOrder", "TANK,HEALER,DAMAGER,NONE")
-		HydraUI.UnitFrames["raid"]:SetAttribute("sortMethod", "NAME")
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupBy", "ASSIGNEDROLE")
-	elseif (value == "NAME") then
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
-		HydraUI.UnitFrames["raid"]:SetAttribute("sortMethod", "NAME")
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupBy", nil)
-	elseif (value == "MTMA") then
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupingOrder", "MAINTANK,MAINASSIST,NONE")
-		HydraUI.UnitFrames["raid"]:SetAttribute("sortMethod", "NAME")
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupBy", "ROLE")
-	else -- GROUP
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
-		HydraUI.UnitFrames["raid"]:SetAttribute("sortMethod", "INDEX")
-		HydraUI.UnitFrames["raid"]:SetAttribute("groupBy", "GROUP")
-	end
-end
-
-local HideTestFrame = function(Frame)
-	UnregisterUnitWatch(Frame)
-	Frame:Hide()
-end
-
-local ShowTestFrame = function(Frame)
-	Frame.unit = "player"
-	UnregisterUnitWatch(Frame)
-	RegisterUnitWatch(Frame, true)
-	Frame:Show()
-end
-
-local ShowTestPetFrame = function(Frame)
-	Frame.unit = UnitExists("pet") and "pet" or "player"
-	UnregisterUnitWatch(Frame)
-	RegisterUnitWatch(Frame, true)
-	Frame:Show()
-end
-
-local Testing = false
-
-local TestRaid = function()
-	local Header = _G["HydraUI Raid"]
-	local Pets = _G["HydraUI Raid Pets"]
-
-	if Testing then
-		if Header then
-			Header:SetAttribute("isTesting", false)
-
-			if (Header:GetAttribute("startingIndex") ~= -24) then
-				Header:SetAttribute("startingIndex", -24)
-			end
-
-			UF:ForEachHeaderChild(Header, HideTestFrame)
-		end
-
-		if Pets then
-			Pets:SetAttribute("isTesting", false)
-
-			if (Pets:GetAttribute("startingIndex") ~= -24) then
-				Pets:SetAttribute("startingIndex", -24)
-			end
-
-			UF:ForEachHeaderChild(Pets, HideTestFrame)
-		end
-
-		Testing = false
-	else
-		if Header then
-			Header:SetAttribute("isTesting", true)
-
-			if (Header:GetAttribute("startingIndex") ~= -24) then
-				Header:SetAttribute("startingIndex", -24)
-			end
-
-			UF:ForEachHeaderChild(Header, ShowTestFrame)
-		end
-
-		if Pets then
-			Pets:SetAttribute("isTesting", true)
-
-			if (Pets:GetAttribute("startingIndex") ~= -24) then
-				Pets:SetAttribute("startingIndex", -24)
-			end
-
-			UF:ForEachHeaderChild(Pets, ShowTestPetFrame)
-		end
-
-		Testing = true
-	end
-end
-
-local UpdateShowSolo = function(value)
-	_G["HydraUI Raid"]:SetAttribute("showSolo", value)
-end
-
-local UpdateHealthTexture = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthTexture, value)
-	end
-end
-
-local UpdatePowerTexture = function(value)
-	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerTexture, value)
+		header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8"); header:SetAttribute("sortMethod", "INDEX"); header:SetAttribute("groupBy", "GROUP")
 	end
 end
 

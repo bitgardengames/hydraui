@@ -96,8 +96,14 @@ class ComponentConstructorCoverage(unittest.TestCase):
         target_calls = "\n".join(calls(target, "CreateAuraContainer"))
         self.assertIn('"LEFT",\n\t\t"UP"', target_calls)
         self.assertIn("true", target_calls)
-        for module in ("Player", "Target", "Focus", "Boss", "Party", "Raid"):
+        for module in ("Player", "Target", "Focus", "Boss"):
             self.assertTrue(calls((ROOT / f"{module}.lua").read_text(), "CreateAuraContainer"))
+        group = (ROOT / "GroupFrames.lua").read_text()
+        self.assertIn("descriptor.createDebuffs(frame, health, descriptor.debuffFilter)", group)
+        for module in ("Party", "Raid"):
+            source = (ROOT / f"{module}.lua").read_text()
+            self.assertTrue(calls(source, "CreateAuraContainer"))
+            self.assertIn("createDebuffs", source)
 
     def test_constructor_calls_never_pass_table_literals(self):
         for module in STYLE_MODULES:

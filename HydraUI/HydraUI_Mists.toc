@@ -63,6 +63,7 @@ Elements\UnitFrames\TargetTarget.lua
 Elements\UnitFrames\Pet.lua
 Elements\UnitFrames\Focus.lua
 Elements\UnitFrames\Boss.lua
+Elements\UnitFrames\GroupFrames.lua
 Elements\UnitFrames\Party.lua
 Elements\UnitFrames\PartyPets.lua
 Elements\UnitFrames\Raid.lua

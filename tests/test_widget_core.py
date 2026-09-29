@@ -112,6 +112,17 @@ def test_lua_viewport_owns_rendering_scrollbar_and_mousewheel_contracts():
     assert "WindowScrollBarOnValueChanged" not in FRAME
 
 
+def test_lua_viewport_hides_rows_outside_a_replaced_collection_on_first_render():
+    render_start = GUI.index("function RowViewport:Render")
+    default_renderer = GUI[
+        GUI.index("\telse\n\t\tif OldRows and OldFirst then", render_start) : GUI.index(
+            "\n\t\tfor i = First, Last do", render_start
+        )
+    ]
+    assert "if rowsChanged or (not OldRows) then" in default_renderer
+    assert "for i = Last + 1, Count do Rows[i]:Hide() end" in default_renderer
+
+
 def test_vertical_scroll_consumers_use_shared_controls_with_distinct_options():
     assert "local CreateVerticalScrollControls = function(Owner, Options)" in FRAME
     assert FRAME.count("CreateVerticalScrollControls(self, {") == 2

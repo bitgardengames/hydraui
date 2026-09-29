@@ -157,7 +157,12 @@ function RowViewport:Render(rowsChanged)
 			for i = OldFirst, OldLast do
 				if rowsChanged or (i < First) or (i > Last) then OldRows[i]:Hide() end
 			end
-		else
+		end
+
+		-- Newly-created frames are shown by default. When the row collection is
+		-- replaced, hide every row outside the viewport even if a previous (often
+		-- empty) collection has already been rendered.
+		if rowsChanged or (not OldRows) then
 			for i = 1, First - 1 do Rows[i]:Hide() end
 			for i = Last + 1, Count do Rows[i]:Hide() end
 		end

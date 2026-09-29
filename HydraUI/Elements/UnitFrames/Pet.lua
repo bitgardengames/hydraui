@@ -30,26 +30,19 @@ local UF = HydraUI:GetModule("Unit Frames")
 
 local function BuildPetComponents(factory, frame, unit)
 	local width = Settings["unitframes-pet-width"]
-	local callbacks = {postCreateIcon = UF.PostCreateIcon, postUpdateIcon = UF.PostUpdateIcon}
 	local buffPosition = Settings["unitframes-pet-buff-pos"]
 	if Settings["unitframes-pet-buffs"] then
-		frame.Buffs = factory:CreateAuraContainer(frame, {
-			name = frame:GetName() .. "Buffs", size = {width = width, height = Settings["unitframes-pet-buff-size"]},
-			anchor = {point = buffPosition == "TOP" and "BOTTOM" or "TOP", relativePoint = buffPosition == "TOP" and "TOP" or "BOTTOM", y = buffPosition == "TOP" and 2 or -2},
-			iconSize = Settings["unitframes-pet-buff-size"], spacing = 2, num = 5, tooltipAnchor = "ANCHOR_TOP",
-			initialAnchor = "TOPLEFT", growthX = "RIGHT", growthY = buffPosition == "TOP" and "UP" or "DOWN", callbacks = callbacks,
-		})
+		frame.Buffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Buffs", nil, width, Settings["unitframes-pet-buff-size"],
+		buffPosition == "TOP" and "BOTTOM" or "TOP", frame, buffPosition == "TOP" and "TOP" or "BOTTOM", 0, buffPosition == "TOP" and 2 or -2, Settings["unitframes-pet-buff-size"], 2, 5,
+		"TOPLEFT", "ANCHOR_TOP", "RIGHT", buffPosition == "TOP" and "UP" or "DOWN", factory.PostCreateIcon, factory.PostUpdateIcon, nil, nil, nil)
 	end
 
 	if Settings["unitframes-pet-debuffs"] then
 		local debuffPosition = Settings["unitframes-pet-debuff-pos"]
 		local besideBuffs = frame.Buffs and buffPosition == debuffPosition
-		frame.Debuffs = factory:CreateAuraContainer(frame, {
-			name = frame:GetName() .. "Debuffs", size = {width = width, height = Settings["unitframes-pet-debuff-size"]},
-			anchor = {point = debuffPosition == "TOP" and "BOTTOM" or "TOP", relativeTo = besideBuffs and frame.Buffs or frame, relativePoint = debuffPosition == "TOP" and "TOP" or "BOTTOM", y = debuffPosition == "TOP" and 2 or -2},
-			iconSize = Settings["unitframes-pet-debuff-size"], spacing = 2, num = 5, tooltipAnchor = "ANCHOR_TOP",
-			initialAnchor = "TOPRIGHT", growthX = "LEFT", growthY = debuffPosition == "TOP" and "UP" or "DOWN", callbacks = callbacks,
-		})
+		frame.Debuffs = factory:CreateAuraContainer(frame, frame:GetName() .. "Debuffs", nil, width, Settings["unitframes-pet-debuff-size"],
+		debuffPosition == "TOP" and "BOTTOM" or "TOP", besideBuffs and frame.Buffs or frame, debuffPosition == "TOP" and "TOP" or "BOTTOM", 0, debuffPosition == "TOP" and 2 or -2, Settings["unitframes-pet-debuff-size"], 2, 5,
+		"TOPRIGHT", "ANCHOR_TOP", "LEFT", debuffPosition == "TOP" and "UP" or "DOWN", factory.PostCreateIcon, factory.PostUpdateIcon, nil, nil, nil)
 	end
 end
 

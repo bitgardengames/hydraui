@@ -156,12 +156,6 @@ function UF:CreateFontString(parent, font, size, flags, point, relativePoint, x,
 	return text
 end
 
-local ComponentDefaults = {
-	Portrait = {anchor = {x = 0, y = 0}, background = {visible = true, r = 0, g = 0, b = 0}},
-	Castbar = {anchor = {x = 0, y = 0}, bar = {backgroundAlpha = 0.2}, background = {topLeftX = -1, topLeftY = 1, bottomRightX = 1, bottomRightY = -1, r = 0, g = 0, b = 0}, text = {timeX = -3, textX = 3}, icon = {x = -1}},
-	AuraContainer = {anchor = {x = 0, y = 0}, callbacks = {}},
-}
-
 -- These descriptions are shared by every singleton style.  They are deliberately
 -- kept outside BuildSingleUnitFrame: spawning several boss frames must not create
 -- a new set of anchor/font descriptions for every frame.
@@ -255,40 +249,7 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 	return frame
 end
 
--- Copy defaults into a fresh specification so callers can safely reuse their tables.
--- All component validation lives here, keeping constructor failures close to the
--- malformed declaration instead of manifesting as shifted positional arguments.
-function UF:NormalizeComponentOptions(kind, options)
-	assert(type(options) == "table", kind .. " options must be a table")
-	local defaults = assert(ComponentDefaults[kind], "unknown component type: " .. tostring(kind))
-	local normalized = {}
-	for key, value in pairs(defaults) do
-		if type(value) == "table" then
-			normalized[key] = {}
-			for nestedKey, nestedValue in pairs(value) do normalized[key][nestedKey] = nestedValue end
-		else normalized[key] = value end
-	end
-	for key, value in pairs(options) do
-		if type(value) == "table" and type(normalized[key]) == "table" then
-			for nestedKey, nestedValue in pairs(value) do normalized[key][nestedKey] = nestedValue end
-		else normalized[key] = value end
-	end
-	assert(type(normalized.size) == "table" and normalized.size.width and normalized.size.height, kind .. " requires size.width and size.height")
-	assert(type(normalized.anchor) == "table", kind .. " requires an anchor table")
-	if kind ~= "AuraContainer" then assert(normalized.anchor.point, kind .. " requires anchor.point") end
-	if kind == "Portrait" then assert(normalized.style, "Portrait requires style") end
-	if kind == "Castbar" then
-		assert(normalized.bar and normalized.bar.texture, "Castbar requires bar.texture")
-		assert(normalized.background and normalized.background.texture, "Castbar requires background.texture")
-		assert(normalized.text and normalized.text.font and normalized.text.fontSize, "Castbar requires text.font and text.fontSize")
-		assert(normalized.icon and normalized.icon.size, "Castbar requires icon.size")
-	end
-	return normalized
-end
-
-function UF:CreatePortrait(frame, options)
-	local spec = self:NormalizeComponentOptions("Portrait", options)
-	local style, size, anchor, background = spec.style, spec.size, spec.anchor, spec.background
+function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relativePoint, x, y, alpha, backgroundTexture, backgroundVisible)
 	local portrait
 	if style == "2D" then
 		portrait = frame:CreateTexture(nil, "OVERLAY")
@@ -297,17 +258,17 @@ function UF:CreatePortrait(frame, options)
 		portrait = CreateFrame("PlayerModel", nil, frame)
 	end
 
-	portrait:SetSize(size.width, size.height)
-	portrait:SetPoint(anchor.point, anchor.relativeTo or frame, anchor.relativePoint, anchor.x, anchor.y)
-	if spec.alpha then portrait:SetAlpha(spec.alpha) end
+	portrait:SetSize(width, height)
+	portrait:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
+	if alpha then portrait:SetAlpha(alpha) end
 
 	if style ~= "OVERLAY" then
 		local background = frame:CreateTexture(nil, "BACKGROUND")
 		background:SetPoint("TOPLEFT", portrait, -1, 1)
 		background:SetPoint("BOTTOMRIGHT", portrait, 1, -1)
-		background:SetTexture(Assets:GetTexture(spec.background.texture))
-		background:SetVertexColor(spec.background.r, spec.background.g, spec.background.b)
-		if spec.background.visible == false then background:Hide() end
+		background:SetTexture(Assets:GetTexture(backgroundTexture))
+		background:SetVertexColor(0, 0, 0)
+		if backgroundVisible == false then background:Hide() end
 		portrait.BG = background
 	end
 
@@ -315,45 +276,43 @@ function UF:CreatePortrait(frame, options)
 	return portrait
 end
 
-function UF:CreateCastbar(frame, options)
-	local spec = self:NormalizeComponentOptions("Castbar", options)
-	local size, anchor, bar, backgroundSpec, textSpec, iconSpec, callbacks = spec.size, spec.anchor, spec.bar, spec.background, spec.text, spec.icon, spec.callbacks or {}
-	local castbar = CreateFrame("StatusBar", spec.name, frame)
-	castbar:SetSize(size.width, size.height)
-	castbar:SetPoint(anchor.point, anchor.relativeTo or frame, anchor.relativePoint, anchor.x, anchor.y)
-	castbar:SetStatusBarTexture(Assets:GetTexture(bar.texture))
+function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativePoint, x, y, texture, backgroundTexture, backgroundTopLeftX, backgroundTopLeftY, backgroundBottomRightX, backgroundBottomRightY, font, fontSize, fontFlags, timeX, textX, textWidth, iconSize, iconX, iconBackground, safeZoneEnabled, showTradeSkills, timeToHold, classColor, postCastStart, postCastStop, postCastFail, postCastInterruptible)
+	local castbar = CreateFrame("StatusBar", name, frame)
+	castbar:SetSize(width, height)
+	castbar:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0)
+	castbar:SetStatusBarTexture(Assets:GetTexture(texture))
 
 	local barBackground = castbar:CreateTexture(nil, "ARTWORK")
 	barBackground:SetAllPoints(castbar)
-	barBackground:SetTexture(Assets:GetTexture(bar.texture))
-	barBackground:SetAlpha(bar.backgroundAlpha)
+	barBackground:SetTexture(Assets:GetTexture(texture))
+	barBackground:SetAlpha(0.2)
 
 	local background = castbar:CreateTexture(nil, "BACKGROUND")
-	background:SetPoint("TOPLEFT", castbar, backgroundSpec.topLeftX, backgroundSpec.topLeftY)
-	background:SetPoint("BOTTOMRIGHT", castbar, backgroundSpec.bottomRightX, backgroundSpec.bottomRightY)
-	background:SetTexture(Assets:GetTexture(backgroundSpec.texture))
-	background:SetVertexColor(backgroundSpec.r, backgroundSpec.g, backgroundSpec.b)
+	background:SetPoint("TOPLEFT", castbar, backgroundTopLeftX or -1, backgroundTopLeftY or 1)
+	background:SetPoint("BOTTOMRIGHT", castbar, backgroundBottomRightX or 1, backgroundBottomRightY or -1)
+	background:SetTexture(Assets:GetTexture(backgroundTexture))
+	background:SetVertexColor(0, 0, 0)
 
-	local time = UF:CreateFontString(castbar, textSpec.font, textSpec.fontSize, textSpec.fontFlags, "RIGHT", "RIGHT", textSpec.timeX, 0, "RIGHT")
-	local text = UF:CreateFontString(castbar, textSpec.font, textSpec.fontSize, textSpec.fontFlags, "LEFT", "LEFT", textSpec.textX, 0, "LEFT")
-	text:SetSize(textSpec.width, textSpec.fontSize)
+	local time = self:CreateFontString(castbar, font, fontSize, fontFlags, "RIGHT", "RIGHT", timeX or -3, 0, "RIGHT")
+	local text = self:CreateFontString(castbar, font, fontSize, fontFlags, "LEFT", "LEFT", textX or 3, 0, "LEFT")
+	text:SetSize(textWidth, fontSize)
 
 	local icon = castbar:CreateTexture(nil, "OVERLAY")
-	icon:SetSize(iconSpec.size, iconSpec.size)
-	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", iconSpec.x, 0)
+	icon:SetSize(iconSize, iconSize)
+	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", iconX or -1, 0)
 	icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-	if iconSpec.background then
+	if iconBackground then
 		local iconBG = castbar:CreateTexture(nil, "BACKGROUND")
 		iconBG:SetPoint("TOPLEFT", icon, -1, 1)
 		iconBG:SetPoint("BOTTOMRIGHT", icon, 1, -1)
-		iconBG:SetTexture(Assets:GetTexture(backgroundSpec.texture))
-		iconBG:SetVertexColor(backgroundSpec.r, backgroundSpec.g, backgroundSpec.b)
+		iconBG:SetTexture(Assets:GetTexture(backgroundTexture))
+		iconBG:SetVertexColor(0, 0, 0)
 		icon.BG = iconBG
 	end
 
-	if spec.safeZone then
+	if safeZoneEnabled then
 		local safeZone = castbar:CreateTexture(nil, "ARTWORK")
-		safeZone:SetTexture(Assets:GetTexture(bar.texture))
+		safeZone:SetTexture(Assets:GetTexture(texture))
 		safeZone:SetVertexColor(0.9, 0.15, 0.15, 0.75)
 		castbar.SafeZone = safeZone
 	end
@@ -362,37 +321,33 @@ function UF:CreateCastbar(frame, options)
 	castbar.Time = time
 	castbar.Text = text
 	castbar.Icon = icon
-	castbar.showTradeSkills = spec.showTradeSkills
-	castbar.timeToHold = spec.timeToHold
-	castbar.ClassColor = spec.classColor
-	castbar.PostCastStart = callbacks.postCastStart
-	castbar.PostCastStop = callbacks.postCastStop
-	castbar.PostCastFail = callbacks.postCastFail
-	castbar.PostCastInterruptible = callbacks.postCastInterruptible
+	castbar.showTradeSkills = showTradeSkills
+	castbar.timeToHold = timeToHold
+	castbar.ClassColor = classColor
+	castbar.PostCastStart = postCastStart
+	castbar.PostCastStop = postCastStop
+	castbar.PostCastFail = postCastFail
+	castbar.PostCastInterruptible = postCastInterruptible
 	frame.Castbar = castbar
 	return castbar
 end
 
-function UF:CreateAuraContainer(frame, options)
-	local spec = self:NormalizeComponentOptions("AuraContainer", options)
-	local anchor, callbacks = spec.anchor, spec.callbacks
-	local auras = CreateFrame("Frame", spec.name, spec.parent or frame)
-	auras:SetSize(spec.size.width, spec.size.height)
-	if anchor.point then
-		auras:SetPoint(anchor.point, anchor.relativeTo or frame, anchor.relativePoint, anchor.x, anchor.y)
-	end
-	auras.size = spec.iconSize
-	auras.spacing = spec.spacing
-	auras.num = spec.num
-	auras.initialAnchor = spec.initialAnchor
-	auras.tooltipAnchor = spec.tooltipAnchor
-	auras["growth-x"] = spec.growthX
-	auras["growth-y"] = spec.growthY
-	auras.PostCreateIcon = callbacks.postCreateIcon
-	auras.PostUpdateIcon = callbacks.postUpdateIcon
-	auras.CustomFilter = callbacks.customFilter
-	auras.onlyShowPlayer = spec.onlyShowPlayer
-	auras.showStealableBuffs = spec.showStealableBuffs
+function UF:CreateAuraContainer(frame, name, parent, width, height, point, relativeTo, relativePoint, x, y, iconSize, spacing, num, initialAnchor, tooltipAnchor, growthX, growthY, postCreateIcon, postUpdateIcon, customFilter, onlyShowPlayer, showStealableBuffs)
+	local auras = CreateFrame("Frame", name, parent or frame)
+	auras:SetSize(width, height)
+	if point then auras:SetPoint(point, relativeTo or frame, relativePoint, x or 0, y or 0) end
+	auras.size = iconSize
+	auras.spacing = spacing
+	auras.num = num
+	auras.initialAnchor = initialAnchor
+	auras.tooltipAnchor = tooltipAnchor
+	auras["growth-x"] = growthX
+	auras["growth-y"] = growthY
+	auras.PostCreateIcon = postCreateIcon
+	auras.PostUpdateIcon = postUpdateIcon
+	auras.CustomFilter = customFilter
+	auras.onlyShowPlayer = onlyShowPlayer
+	auras.showStealableBuffs = showStealableBuffs
 	return auras
 end
 

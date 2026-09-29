@@ -68,7 +68,7 @@ class SharedUnitFrameCoverage(unittest.TestCase):
 
     def test_single_unit_builder_resolves_family_settings_and_optional_hooks(self):
         source = (ROOT / "ComponentFactory.lua").read_text()
-        build = source[source.index("function UF:BuildSingleUnitFrame"):source.index("function UF:NormalizeComponentOptions")]
+        build = source[source.index("function UF:BuildSingleUnitFrame"):source.index("function UF:CreatePortrait")]
         self.assertIn('config.settingsPrefix .. suffix', source)
         for hook in ("portrait", "cast", "auras", "postBuild"):
             self.assertIn(f"config.{hook}", build)
@@ -204,8 +204,7 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
     def test_public_apis_remain_installed_on_uf(self):
         expected = {
             "ComponentFactory.lua": ("CreateHealthBar", "CreatePowerBar", "CreatePortrait",
-                                     "CreateCastbar", "CreateAuraContainer",
-                                     "NormalizeComponentOptions", "SetHealthTexture",
+                                     "CreateCastbar", "CreateAuraContainer", "SetHealthTexture",
                                      "SetHealthHeight", "SetHealthReverseFill"),
             "AuraSupport.lua": ("PostCreateIcon", "PostUpdateIcon",
                                 "PostCreateAuraWatchIcon"),

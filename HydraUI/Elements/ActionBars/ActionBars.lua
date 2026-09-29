@@ -615,431 +615,120 @@ local BarOnLeave = function(self)
 	self.Fader:Play()
 end
 
--- Bar 1
-function AB:CreateBar1()
-	self.Bar1 = CreateFrame("Frame", "HydraUI Action Bar 1", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar1:SetPoint("BOTTOM", HydraUI.UIParent, "BOTTOM", 0, 13)
-	self.Bar1:SetAlpha(Settings["ab-bar1-alpha"] / 100)
-	self.Bar1.ShouldFade = Settings["ab-bar1-hover"]
-	self.Bar1.MaxAlpha = Settings["ab-bar1-alpha"]
-	self.Bar1.GetSpellFlyoutDirection = function() return "UP" end -- Temp
+-- The descriptor table is allocated once; settings callbacks close over these
+-- entries instead of rebuilding bar metadata every time a setting changes.
+local ActionBarDescriptors = {
+	{ index = 1, field = "Bar1", parent = nil, prefix = "ActionButton", anchor = { "BOTTOM", "UIParent", "BOTTOM", 0, 13 }, available = function() return ActionButton1 ~= nil end, securePaging = true },
+	{ index = 2, field = "Bar2", parent = "MultiBarBottomLeft", prefix = "MultiBarBottomLeftButton", anchor = { "BOTTOM", "Bar1", "TOP", 0, "gap" }, available = function() return MultiBarBottomLeft ~= nil end },
+	{ index = 3, field = "Bar3", parent = "MultiBarBottomRight", prefix = "MultiBarBottomRightButton", anchor = { "BOTTOM", "Bar2", "TOP", 0, "gap" }, available = function() return MultiBarBottomRight ~= nil end },
+	{ index = 4, field = "Bar4", parent = "MultiBarRight", prefix = "MultiBarRightButton", anchor = { "RIGHT", "UIParent", "RIGHT", -12, 0 }, available = function() return MultiBarRight ~= nil end },
+	{ index = 5, field = "Bar5", parent = "MultiBarLeft", prefix = "MultiBarLeftButton", anchor = { "RIGHT", "Bar4", "LEFT", "negativeGap", 0 }, available = function() return MultiBarLeft ~= nil end },
+	{ index = 6, field = "Bar6", parent = "MultiBar5", prefix = "MultiBar5Button", anchor = { "RIGHT", "Bar5", "LEFT", "negativeGap", 0 }, available = function() return MultiBar5 ~= nil end },
+	{ index = 7, field = "Bar7", parent = "MultiBar6", prefix = "MultiBar6Button", anchor = { "RIGHT", "Bar6", "LEFT", "negativeGap", 0 }, available = function() return MultiBar6 ~= nil end },
+	{ index = 8, field = "Bar8", parent = "MultiBar7", prefix = "MultiBar7Button", anchor = { "RIGHT", "Bar7", "LEFT", "negativeGap", 0 }, available = function() return MultiBar7 ~= nil end },
+}
 
-	self.Bar1.Fader = LibMotion:CreateAnimation(self.Bar1, "Fade")
-	self.Bar1.Fader:SetDuration(0.15)
-	self.Bar1.Fader:SetEasing("inout")
+AB.ActionBarDescriptors = ActionBarDescriptors
 
-	for i = 1, 12 do
-		local Button = _G["ActionButton" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button:SetParent(self.Bar1)
-		Button.ParentBar = self.Bar1
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar1:SetFrameRef("Button" .. i, Button)
-
-		self.Bar1[i] = Button
+local function ResolveAnchorValue(owner, value, gap)
+	if value == "UIParent" then
+		return HydraUI.UIParent
+	elseif value == "gap" then
+		return gap
+	elseif value == "negativeGap" then
+		return -gap
+	elseif type(value) == "string" then
+		return owner[value]
 	end
 
-	if Settings["ab-bar1-hover"] then
-		self.Bar1:SetAlpha(0)
-		self.Bar1:SetScript("OnEnter", BarOnEnter)
-		self.Bar1:SetScript("OnLeave", BarOnLeave)
+	return value
+end
 
-		for i = 1, #self.Bar1 do
-			self.Bar1[i].cooldown:SetDrawBling(false)
+function AB:CreateActionBar(descriptor)
+	if not descriptor.available() then
+		return
+	end
+
+	local index = descriptor.index
+	local key = "ab-bar" .. index
+	local anchor = descriptor.anchor
+	local gap = Settings[key .. "-button-gap"]
+	local bar = CreateFrame("Frame", "HydraUI Action Bar " .. index, HydraUI.UIParent, "SecureHandlerStateTemplate")
+	self[descriptor.field] = bar
+	self.Bars[#self.Bars + 1] = bar
+	bar.Descriptor = descriptor
+	bar:SetPoint(anchor[1], ResolveAnchorValue(self, anchor[2], gap), anchor[3], ResolveAnchorValue(self, anchor[4], gap), ResolveAnchorValue(self, anchor[5], gap))
+	bar:SetAlpha(Settings[key .. "-alpha"] / 100)
+	bar.ShouldFade = Settings[key .. "-hover"]
+	bar.MaxAlpha = Settings[key .. "-alpha"]
+
+	local blizzardParent = descriptor.parent and _G[descriptor.parent]
+	bar.ButtonParent = blizzardParent
+	if blizzardParent then
+		blizzardParent:SetParent(bar)
+	end
+
+	bar.Fader = LibMotion:CreateAnimation(bar, "Fade")
+	bar.Fader:SetDuration(0.15)
+	bar.Fader:SetEasing("inout")
+
+	for i = 1, 12 do
+		local button = _G[descriptor.prefix .. i]
+		self:StyleActionButton(button)
+		if descriptor.securePaging then
+			button:SetParent(bar)
+			bar:SetFrameRef("Button" .. i, button)
+		end
+		button.ParentBar = bar
+		button:HookScript("OnEnter", BarButtonOnEnter)
+		button:HookScript("OnLeave", BarButtonOnLeave)
+		bar[i] = button
+	end
+
+	if Settings[key .. "-hover"] then
+		bar:SetAlpha(0)
+		bar:SetScript("OnEnter", BarOnEnter)
+		bar:SetScript("OnLeave", BarOnLeave)
+		for i = 1, #bar do
+			bar[i].cooldown:SetDrawBling(false)
 		end
 	end
 
-	self.Bar1:Execute([[
-		Buttons = table.new()
+	self:PositionButtons(bar, Settings[key .. "-button-max"], Settings[key .. "-per-row"], Settings[key .. "-button-size"], gap)
+	if Settings[key .. "-enable"] then self:EnableBar(bar) else self:DisableBar(bar) end
+	return bar
+end
 
+function AB:ConfigureBar1Paging(bar)
+	bar.GetSpellFlyoutDirection = function() return "UP" end -- Temp
+	bar:Execute([[
+		Buttons = table.new()
 		for i = 1, 12 do
 			table.insert(Buttons, self:GetFrameRef("Button" .. i))
 		end
 	]])
 
 	if HydraUI.IsVanilla then
-		self.Bar1:SetAttribute("_onstate-page", [[
-			if GetOverrideBarIndex and HasOverrideActionBar() then
-				newstate = GetOverrideBarIndex() or newstate
-			elseif HasTempShapeshiftActionBar() then
-				newstate = GetTempShapeshiftBarIndex() or newstate
-			elseif HasBonusActionBar() and GetActionBarPage() == 1 then
-				newstate = GetBonusBarIndex() or newstate
-			else
-				newstate = GetActionBarPage() or newstate
-			end
-
-			for i = 1, 12 do
-				Buttons[i]:SetAttribute("actionpage", newstate)
-			end
+		bar:SetAttribute("_onstate-page", [[
+			if GetOverrideBarIndex and HasOverrideActionBar() then newstate = GetOverrideBarIndex() or newstate
+			elseif HasTempShapeshiftActionBar() then newstate = GetTempShapeshiftBarIndex() or newstate
+			elseif HasBonusActionBar() and GetActionBarPage() == 1 then newstate = GetBonusBarIndex() or newstate
+			else newstate = GetActionBarPage() or newstate end
+			for i = 1, 12 do Buttons[i]:SetAttribute("actionpage", newstate) end
 		]])
-
-		RegisterAttributeDriver(self.Bar1, "state-page", "[overridebar] 14; [shapeshift] 13; [possessbar] 16; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6; [bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; [form] 1; 1")
+		RegisterAttributeDriver(bar, "state-page", "[overridebar] 14; [shapeshift] 13; [possessbar] 16; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6; [bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; [form] 1; 1")
 	else
-		self.Bar1:SetAttribute("_onstate-page", [[
-			if GetVehicleBarIndex and HasVehicleActionBar() then
-				newstate = GetVehicleBarIndex()
-			elseif HasOverrideActionBar and HasOverrideActionBar() then
-				newstate = GetOverrideBarIndex()
-			elseif HasTempShapeshiftActionBar() then
-				newstate = GetTempShapeshiftBarIndex()
-			elseif HasBonusActionBar() then
-				newstate = GetBonusBarIndex()
-			end
-
-			for i = 1, 12 do
-				Buttons[i]:SetAttribute("actionpage", newstate)
-			end
+		bar:SetAttribute("_onstate-page", [[
+			if GetVehicleBarIndex and HasVehicleActionBar() then newstate = GetVehicleBarIndex()
+			elseif HasOverrideActionBar and HasOverrideActionBar() then newstate = GetOverrideBarIndex()
+			elseif HasTempShapeshiftActionBar() then newstate = GetTempShapeshiftBarIndex()
+			elseif HasBonusActionBar() then newstate = GetBonusBarIndex() end
+			for i = 1, 12 do Buttons[i]:SetAttribute("actionpage", newstate) end
 		]])
-
-		RegisterAttributeDriver(self.Bar1, "state-page", "[overridebar] 14; [shapeshift] 13; [possessbar] 16; [vehicleui] 12; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6; [bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; [form] 1; 1")
+		RegisterAttributeDriver(bar, "state-page", "[overridebar] 14; [shapeshift] 13; [possessbar] 16; [vehicleui] 12; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6; [bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; [form] 1; 1")
 	end
 
-	self:PositionButtons(self.Bar1, Settings["ab-bar1-button-max"], Settings["ab-bar1-per-row"], Settings["ab-bar1-button-size"], Settings["ab-bar1-button-gap"])
-
-	if OverrideActionBar then
-		self:Disable(OverrideActionBar)
-	end
-
-	if Settings["ab-bar1-enable"] then
-		self:EnableBar(self.Bar1)
-	else
-		self:DisableBar(self.Bar1)
-	end
-end
-
--- Bar 2
-function AB:CreateBar2()
-	self.Bar2 = CreateFrame("Frame", "HydraUI Action Bar 2", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar2:SetPoint("BOTTOM", self.Bar1, "TOP", 0, Settings["ab-bar2-button-gap"])
-	self.Bar2:SetAlpha(Settings["ab-bar2-alpha"] / 100)
-	self.Bar2.ButtonParent = MultiBarBottomLeft
-	self.Bar2.ShouldFade = Settings["ab-bar2-hover"]
-	self.Bar2.MaxAlpha = Settings["ab-bar2-alpha"]
-
-	self.Bar2.Fader = LibMotion:CreateAnimation(self.Bar2, "Fade")
-	self.Bar2.Fader:SetDuration(0.15)
-	self.Bar2.Fader:SetEasing("inout")
-
-	MultiBarBottomLeft:SetParent(self.Bar2)
-
-	for i = 1, 12 do
-		local Button = _G["MultiBarBottomLeftButton" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button.ParentBar = self.Bar2
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar2[i] = Button
-	end
-
-	if Settings["ab-bar2-hover"] then
-		self.Bar2:SetAlpha(0)
-		self.Bar2:SetScript("OnEnter", BarOnEnter)
-		self.Bar2:SetScript("OnLeave", BarOnLeave)
-
-		for i = 1, #self.Bar2 do
-			self.Bar2[i].cooldown:SetDrawBling(false)
-		end
-	end
-
-	self:PositionButtons(self.Bar2, Settings["ab-bar2-button-max"], Settings["ab-bar2-per-row"], Settings["ab-bar2-button-size"], Settings["ab-bar2-button-gap"])
-
-	if Settings["ab-bar2-enable"] then
-		self:EnableBar(self.Bar2)
-	else
-		self:DisableBar(self.Bar2)
-	end
-end
-
--- Bar 3
-function AB:CreateBar3()
-	self.Bar3 = CreateFrame("Frame", "HydraUI Action Bar 3", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar3:SetPoint("BOTTOM", self.Bar2, "TOP", 0, Settings["ab-bar3-button-gap"])
-	self.Bar3:SetAlpha(Settings["ab-bar3-alpha"] / 100)
-	self.Bar3.ButtonParent = MultiBarBottomRight
-	self.Bar3.ShouldFade = Settings["ab-bar3-hover"]
-	self.Bar3.MaxAlpha = Settings["ab-bar3-alpha"]
-
-	self.Bar3.Fader = LibMotion:CreateAnimation(self.Bar3, "Fade")
-	self.Bar3.Fader:SetDuration(0.15)
-	self.Bar3.Fader:SetEasing("inout")
-
-	MultiBarBottomRight:SetParent(self.Bar3)
-
-	for i = 1, 12 do
-		local Button = _G["MultiBarBottomRightButton" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button.ParentBar = self.Bar3
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar3[i] = Button
-	end
-
-	if Settings["ab-bar3-hover"] then
-		self.Bar3:SetAlpha(0)
-		self.Bar3:SetScript("OnEnter", BarOnEnter)
-		self.Bar3:SetScript("OnLeave", BarOnLeave)
-
-		for i = 1, #self.Bar3 do
-			self.Bar3[i].cooldown:SetDrawBling(false)
-		end
-	end
-
-	self:PositionButtons(self.Bar3, Settings["ab-bar3-button-max"], Settings["ab-bar3-per-row"], Settings["ab-bar3-button-size"], Settings["ab-bar3-button-gap"])
-
-	if Settings["ab-bar3-enable"] then
-		self:EnableBar(self.Bar3)
-	else
-		self:DisableBar(self.Bar3)
-	end
-end
-
--- Bar 4
-function AB:CreateBar4()
-	self.Bar4 = CreateFrame("Frame", "HydraUI Action Bar 4", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar4:SetPoint("RIGHT", HydraUI.UIParent, -12, 0)
-	self.Bar4:SetAlpha(Settings["ab-bar4-alpha"] / 100)
-	self.Bar4.ButtonParent = MultiBarRight
-	self.Bar4.ShouldFade = Settings["ab-bar4-hover"]
-	self.Bar4.MaxAlpha = Settings["ab-bar4-alpha"]
-
-	self.Bar4.Fader = LibMotion:CreateAnimation(self.Bar4, "Fade")
-	self.Bar4.Fader:SetDuration(0.15)
-	self.Bar4.Fader:SetEasing("inout")
-
-	MultiBarRight:SetParent(self.Bar4)
-
-	for i = 1, 12 do
-		local Button = _G["MultiBarRightButton" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button.ParentBar = self.Bar4
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar4[i] = Button
-	end
-
-	if Settings["ab-bar4-hover"] then
-		self.Bar4:SetAlpha(0)
-		self.Bar4:SetScript("OnEnter", BarOnEnter)
-		self.Bar4:SetScript("OnLeave", BarOnLeave)
-
-		for i = 1, #self.Bar4 do
-			self.Bar4[i].cooldown:SetDrawBling(false)
-		end
-	end
-
-	self:PositionButtons(self.Bar4, Settings["ab-bar4-button-max"], Settings["ab-bar4-per-row"], Settings["ab-bar4-button-size"], Settings["ab-bar4-button-gap"])
-
-	if Settings["ab-bar4-enable"] then
-		self:EnableBar(self.Bar4)
-	else
-		self:DisableBar(self.Bar4)
-	end
-end
-
--- Bar 5
-function AB:CreateBar5()
-	self.Bar5 = CreateFrame("Frame", "HydraUI Action Bar 5", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar5:SetPoint("RIGHT", self.Bar4, "LEFT", -Settings["ab-bar5-button-gap"], 0)
-	self.Bar5:SetAlpha(Settings["ab-bar5-alpha"] / 100)
-	self.Bar5.ButtonParent = MultiBarLeft
-	self.Bar5.ShouldFade = Settings["ab-bar5-hover"]
-	self.Bar5.MaxAlpha = Settings["ab-bar5-alpha"]
-
-	self.Bar5.Fader = LibMotion:CreateAnimation(self.Bar5, "Fade")
-	self.Bar5.Fader:SetDuration(0.15)
-	self.Bar5.Fader:SetEasing("inout")
-
-	MultiBarLeft:SetParent(self.Bar5)
-
-	for i = 1, 12 do
-		local Button = _G["MultiBarLeftButton" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button.ParentBar = self.Bar5
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar5[i] = Button
-	end
-
-	if Settings["ab-bar5-hover"] then
-		self.Bar5:SetAlpha(0)
-		self.Bar5:SetScript("OnEnter", BarOnEnter)
-		self.Bar5:SetScript("OnLeave", BarOnLeave)
-
-		for i = 1, #self.Bar5 do
-			self.Bar5[i].cooldown:SetDrawBling(false)
-		end
-	end
-
-	self:PositionButtons(self.Bar5, Settings["ab-bar5-button-max"], Settings["ab-bar5-per-row"], Settings["ab-bar5-button-size"], Settings["ab-bar5-button-gap"])
-
-	if Settings["ab-bar5-enable"] then
-		self:EnableBar(self.Bar5)
-	else
-		self:DisableBar(self.Bar5)
-	end
-end
-
--- Bar 6
-function AB:CreateBar6()
-	self.Bar6 = CreateFrame("Frame", "HydraUI Action Bar 6", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar6:SetPoint("RIGHT", self.Bar5, "LEFT", -Settings["ab-bar6-button-gap"], 0)
-	self.Bar6:SetAlpha(Settings["ab-bar6-alpha"] / 100)
-	self.Bar6.ButtonParent = MultiBar5
-	self.Bar6.ShouldFade = Settings["ab-bar6-hover"]
-	self.Bar6.MaxAlpha = Settings["ab-bar6-alpha"]
-
-	self.Bar6.Fader = LibMotion:CreateAnimation(self.Bar6, "Fade")
-	self.Bar6.Fader:SetDuration(0.15)
-	self.Bar6.Fader:SetEasing("inout")
-
-	MultiBar5:SetParent(self.Bar6)
-
-	for i = 1, 12 do
-		local Button = _G["MultiBar5Button" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button.ParentBar = self.Bar6
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar6[i] = Button
-	end
-
-	if Settings["ab-bar6-hover"] then
-		self.Bar6:SetAlpha(0)
-		self.Bar6:SetScript("OnEnter", BarOnEnter)
-		self.Bar6:SetScript("OnLeave", BarOnLeave)
-
-		for i = 1, #self.Bar6 do
-			self.Bar6[i].cooldown:SetDrawBling(false)
-		end
-	end
-
-	self:PositionButtons(self.Bar6, Settings["ab-bar6-button-max"], Settings["ab-bar6-per-row"], Settings["ab-bar6-button-size"], Settings["ab-bar6-button-gap"])
-
-	if Settings["ab-bar6-enable"] then
-		self:EnableBar(self.Bar6)
-	else
-		self:DisableBar(self.Bar6)
-	end
-end
-
--- Bar 7
-function AB:CreateBar7()
-	self.Bar7 = CreateFrame("Frame", "HydraUI Action Bar 7", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar7:SetPoint("RIGHT", self.Bar6, "LEFT", -Settings["ab-bar7-button-gap"], 0)
-	self.Bar7:SetAlpha(Settings["ab-bar7-alpha"] / 100)
-	self.Bar7.ButtonParent = MultiBar6
-	self.Bar7.ShouldFade = Settings["ab-bar7-hover"]
-	self.Bar7.MaxAlpha = Settings["ab-bar7-alpha"]
-
-	self.Bar7.Fader = LibMotion:CreateAnimation(self.Bar7, "Fade")
-	self.Bar7.Fader:SetDuration(0.15)
-	self.Bar7.Fader:SetEasing("inout")
-
-	MultiBar6:SetParent(self.Bar7)
-
-	for i = 1, 12 do
-		local Button = _G["MultiBar6Button" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button.ParentBar = self.Bar7
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar7[i] = Button
-	end
-
-	if Settings["ab-bar7-hover"] then
-		self.Bar7:SetAlpha(0)
-		self.Bar7:SetScript("OnEnter", BarOnEnter)
-		self.Bar7:SetScript("OnLeave", BarOnLeave)
-
-		for i = 1, #self.Bar7 do
-			self.Bar7[i].cooldown:SetDrawBling(false)
-		end
-	end
-
-	self:PositionButtons(self.Bar7, Settings["ab-bar7-button-max"], Settings["ab-bar7-per-row"], Settings["ab-bar7-button-size"], Settings["ab-bar7-button-gap"])
-
-	if Settings["ab-bar7-enable"] then
-		self:EnableBar(self.Bar7)
-	else
-		self:DisableBar(self.Bar7)
-	end
-end
-
--- Bar 8
-function AB:CreateBar8()
-	self.Bar8 = CreateFrame("Frame", "HydraUI Action Bar 8", HydraUI.UIParent, "SecureHandlerStateTemplate")
-	self.Bar8:SetPoint("RIGHT", self.Bar7, "LEFT", -Settings["ab-bar8-button-gap"], 0)
-	self.Bar8:SetAlpha(Settings["ab-bar8-alpha"] / 100)
-	self.Bar8.ButtonParent = MultiBar7
-	self.Bar8.ShouldFade = Settings["ab-bar8-hover"]
-	self.Bar8.MaxAlpha = Settings["ab-bar8-alpha"]
-
-	self.Bar8.Fader = LibMotion:CreateAnimation(self.Bar8, "Fade")
-	self.Bar8.Fader:SetDuration(0.15)
-	self.Bar8.Fader:SetEasing("inout")
-
-	MultiBar7:SetParent(self.Bar8)
-
-	for i = 1, 12 do
-		local Button = _G["MultiBar7Button" .. i]
-
-		self:StyleActionButton(Button)
-
-		Button.ParentBar = self.Bar8
-
-		Button:HookScript("OnEnter", BarButtonOnEnter)
-		Button:HookScript("OnLeave", BarButtonOnLeave)
-
-		self.Bar8[i] = Button
-	end
-
-	if Settings["ab-bar8-hover"] then
-		self.Bar8:SetAlpha(0)
-		self.Bar8:SetScript("OnEnter", BarOnEnter)
-		self.Bar8:SetScript("OnLeave", BarOnLeave)
-
-		for i = 1, #self.Bar8 do
-			self.Bar8[i].cooldown:SetDrawBling(false)
-		end
-	end
-
-	self:PositionButtons(self.Bar8, Settings["ab-bar8-button-max"], Settings["ab-bar8-per-row"], Settings["ab-bar8-button-size"], Settings["ab-bar8-button-gap"])
-
-	if Settings["ab-bar8-enable"] then
-		self:EnableBar(self.Bar8)
-	else
-		self:DisableBar(self.Bar8)
-	end
+	if OverrideActionBar then self:Disable(OverrideActionBar) end
 end
 
 local PetBarUpdateGridLayout = function()
@@ -1307,36 +996,19 @@ function AB:PLAYER_REGEN_ENABLED()
 end
 
 function AB:CreateBars()
-	self:CreateBar1()
-	self:CreateBar2()
-	self:CreateBar3()
-	self:CreateBar4()
-	self:CreateBar5()
-
-	if MultiBar5 then
-		self:CreateBar6()
-		self:CreateBar7()
-		self:CreateBar8()
+	self.Bars = {}
+	for _, descriptor in ipairs(ActionBarDescriptors) do
+		local bar = self:CreateActionBar(descriptor)
+		if bar and descriptor.securePaging then
+			self:ConfigureBar1Paging(bar)
+		end
 	end
 
-	if (PetActionBar or PetActionBarFrame) then
-		self:CreatePetBar()
-	end
-
-	if (StanceBar or StanceBarFrame) then
-		self:CreateStanceBar()
-	end
-
-	--if HydraUI.IsMainline then
-	if ExtraActionButton1 then
-		self:CreateExtraBar()
-	end
-
+	if (PetActionBar or PetActionBarFrame) then self:CreatePetBar() end
+	if (StanceBar or StanceBarFrame) then self:CreateStanceBar() end
+	if ExtraActionButton1 then self:CreateExtraBar() end
 	if (MultiCastActionBarFrame and MultiCastActionBarFrame.numActiveSlots and MultiCastActionBarFrame.numActiveSlots > 0) then
 		self:StyleTotemBar()
-		--MultiCastActionBarFrame:SetParent(UIParent)
-		--MultiCastActionBarFrame:ClearAllPoints()
-		--MultiCastActionBarFrame:SetPoint("BOTTOMLEFT", UIParent, 300, 20)
 	end
 end
 
@@ -1362,16 +1034,9 @@ local Bar1PostMove = function(self)
 end
 
 function AB:CreateMovers()
-	self.Bar1Mover = HydraUI:CreateMover(self.Bar1)
-	HydraUI:CreateMover(self.Bar2)
-	HydraUI:CreateMover(self.Bar3)
-	HydraUI:CreateMover(self.Bar4)
-	HydraUI:CreateMover(self.Bar5)
-
-	if self.Bar6 then
-		HydraUI:CreateMover(self.Bar6)
-		HydraUI:CreateMover(self.Bar7)
-		HydraUI:CreateMover(self.Bar8)
+	for _, bar in ipairs(self.Bars) do
+		local mover = HydraUI:CreateMover(bar)
+		if bar == self.Bar1 then self.Bar1Mover = mover end
 	end
 
 	if self.StanceBar then
@@ -1617,36 +1282,31 @@ function AB:Load()
 	end
 end
 
-local UpdateBar1 = function()
-	AB:PositionButtons(AB.Bar1, Settings["ab-bar1-button-max"], Settings["ab-bar1-per-row"], Settings["ab-bar1-button-size"], Settings["ab-bar1-button-gap"])
+local UpdateBar = {}
+local UpdateEnableBar = {}
+
+local function CreateBarLayoutCallback(descriptor)
+	local index, field = descriptor.index, descriptor.field
+	local key = "ab-bar" .. index
+	return function()
+		local bar = AB[field]
+		if bar then
+			AB:PositionButtons(bar, Settings[key .. "-button-max"], Settings[key .. "-per-row"], Settings[key .. "-button-size"], Settings[key .. "-button-gap"])
+		end
+	end
 end
 
-local UpdateBar2 = function()
-	AB:PositionButtons(AB.Bar2, Settings["ab-bar2-button-max"], Settings["ab-bar2-per-row"], Settings["ab-bar2-button-size"], Settings["ab-bar2-button-gap"])
+local function CreateBarEnableCallback(descriptor)
+	local field = descriptor.field
+	return function(value)
+		local bar = AB[field]
+		if value then AB:EnableBar(bar) else AB:DisableBar(bar) end
+	end
 end
 
-local UpdateBar3 = function()
-	AB:PositionButtons(AB.Bar3, Settings["ab-bar3-button-max"], Settings["ab-bar3-per-row"], Settings["ab-bar3-button-size"], Settings["ab-bar3-button-gap"])
-end
-
-local UpdateBar4 = function()
-	AB:PositionButtons(AB.Bar4, Settings["ab-bar4-button-max"], Settings["ab-bar4-per-row"], Settings["ab-bar4-button-size"], Settings["ab-bar4-button-gap"])
-end
-
-local UpdateBar5 = function()
-	AB:PositionButtons(AB.Bar5, Settings["ab-bar5-button-max"], Settings["ab-bar5-per-row"], Settings["ab-bar5-button-size"], Settings["ab-bar5-button-gap"])
-end
-
-local UpdateBar6 = function()
-	AB:PositionButtons(AB.Bar6, Settings["ab-bar6-button-max"], Settings["ab-bar6-per-row"], Settings["ab-bar6-button-size"], Settings["ab-bar6-button-gap"])
-end
-
-local UpdateBar7 = function()
-	AB:PositionButtons(AB.Bar7, Settings["ab-bar7-button-max"], Settings["ab-bar7-per-row"], Settings["ab-bar7-button-size"], Settings["ab-bar7-button-gap"])
-end
-
-local UpdateBar8 = function()
-	AB:PositionButtons(AB.Bar8, Settings["ab-bar8-button-max"], Settings["ab-bar8-per-row"], Settings["ab-bar8-button-size"], Settings["ab-bar8-button-gap"])
+for _, descriptor in ipairs(ActionBarDescriptors) do
+	UpdateBar[descriptor.index] = CreateBarLayoutCallback(descriptor)
+	UpdateEnableBar[descriptor.index] = CreateBarEnableCallback(descriptor)
 end
 
 local UpdatePetBar = function()
@@ -1663,70 +1323,6 @@ end
 
 local UpdateStanceBar = function()
 	AB:PositionButtons(AB.StanceBar, #AB.StanceBar, Settings["ab-stance-per-row"], Settings["ab-stance-button-size"], Settings["ab-stance-button-gap"])
-end
-
-local UpdateEnableBar1 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar1)
-	else
-		AB:DisableBar(AB.Bar1)
-	end
-end
-
-local UpdateEnableBar2 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar2)
-	else
-		AB:DisableBar(AB.Bar2)
-	end
-end
-
-local UpdateEnableBar3 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar3)
-	else
-		AB:DisableBar(AB.Bar3)
-	end
-end
-
-local UpdateEnableBar4 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar4)
-	else
-		AB:DisableBar(AB.Bar4)
-	end
-end
-
-local UpdateEnableBar5 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar5)
-	else
-		AB:DisableBar(AB.Bar5)
-	end
-end
-
-local UpdateEnableBar6 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar6)
-	else
-		AB:DisableBar(AB.Bar6)
-	end
-end
-
-local UpdateEnableBar7 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar7)
-	else
-		AB:DisableBar(AB.Bar7)
-	end
-end
-
-local UpdateEnableBar8 = function(value)
-	if value then
-		AB:EnableBar(AB.Bar8)
-	else
-		AB:DisableBar(AB.Bar8)
-	end
 end
 
 local UpdateEnablePetBar = function(value)
@@ -1753,127 +1349,34 @@ local UpdateEnableTotemBar = function(value)
 	end
 end
 
-local UpdateShowHotKey = function(value)
-	if not AB.Bar1 then return end
+function AB:SetButtonRegionAlpha(regionName, alpha, includeAuxiliaryBars)
+	for _, bar in ipairs(self.Bars or {}) do
+		for i = 1, #bar do
+			local region = bar[i][regionName]
+			if region then region:SetAlpha(alpha) end
+		end
+	end
 
-	if value then
-		for i = 1, 12 do
-			AB.Bar1[i].HotKey:SetAlpha(1)
-			AB.Bar2[i].HotKey:SetAlpha(1)
-			AB.Bar3[i].HotKey:SetAlpha(1)
-			AB.Bar4[i].HotKey:SetAlpha(1)
-			AB.Bar5[i].HotKey:SetAlpha(1)
-
-			if AB.Bar6 then
-				AB.Bar6[i].HotKey:SetAlpha(1)
-				AB.Bar7[i].HotKey:SetAlpha(1)
-				AB.Bar8[i].HotKey:SetAlpha(1)
-			end
-
-			if AB.PetBar and AB.PetBar[i] then
-				AB.PetBar[i].HotKey:SetAlpha(1)
-			end
-
-			if AB.StanceBar and AB.StanceBar[i] then
-				AB.StanceBar[i].HotKey:SetAlpha(1)
+	if includeAuxiliaryBars then
+		local function updateAuxiliaryBar(bar)
+			if not bar then return end
+			for i = 1, #bar do
+				local region = bar[i][regionName]
+				if region then region:SetAlpha(alpha) end
 			end
 		end
 
-		if ExtraActionButton1 then
-			ExtraActionButton1.HotKey:SetAlpha(1)
-		end
-	else
-		for i = 1, 12 do
-			AB.Bar1[i].HotKey:SetAlpha(0)
-			AB.Bar2[i].HotKey:SetAlpha(0)
-			AB.Bar3[i].HotKey:SetAlpha(0)
-			AB.Bar4[i].HotKey:SetAlpha(0)
-			AB.Bar5[i].HotKey:SetAlpha(0)
-
-			if AB.Bar6 then
-				AB.Bar6[i].HotKey:SetAlpha(1)
-				AB.Bar7[i].HotKey:SetAlpha(1)
-				AB.Bar8[i].HotKey:SetAlpha(1)
-			end
-
-			if AB.PetBar[i] then
-				AB.PetBar[i].HotKey:SetAlpha(0)
-			end
-
-			if AB.StanceBar[i] then
-				AB.StanceBar[i].HotKey:SetAlpha(0)
-			end
-		end
-
-		if ExtraActionButton1 then
-			ExtraActionButton1.HotKey:SetAlpha(0)
+		updateAuxiliaryBar(self.PetBar)
+		updateAuxiliaryBar(self.StanceBar)
+		if ExtraActionButton1 and ExtraActionButton1[regionName] then
+			ExtraActionButton1[regionName]:SetAlpha(alpha)
 		end
 	end
 end
 
-local UpdateShowMacroName = function(value)
-	if value then
-		for i = 1, 12 do
-			AB.Bar1[i].Name:SetAlpha(1)
-			AB.Bar2[i].Name:SetAlpha(1)
-			AB.Bar3[i].Name:SetAlpha(1)
-			AB.Bar4[i].Name:SetAlpha(1)
-			AB.Bar5[i].Name:SetAlpha(1)
-
-			if AB.Bar6 then
-				AB.Bar6[i].HotKey:SetAlpha(1)
-				AB.Bar7[i].HotKey:SetAlpha(1)
-				AB.Bar8[i].HotKey:SetAlpha(1)
-			end
-		end
-	else
-		for i = 1, 12 do
-			AB.Bar1[i].Name:SetAlpha(0)
-			AB.Bar2[i].Name:SetAlpha(0)
-			AB.Bar3[i].Name:SetAlpha(0)
-			AB.Bar4[i].Name:SetAlpha(0)
-			AB.Bar5[i].Name:SetAlpha(0)
-
-			if AB.Bar6 then
-				AB.Bar6[i].HotKey:SetAlpha(1)
-				AB.Bar7[i].HotKey:SetAlpha(1)
-				AB.Bar8[i].HotKey:SetAlpha(1)
-			end
-		end
-	end
-end
-
-local UpdateShowCount = function(value)
-	if value then
-		for i = 1, 12 do
-			AB.Bar1[i].Count:SetAlpha(1)
-			AB.Bar2[i].Count:SetAlpha(1)
-			AB.Bar3[i].Count:SetAlpha(1)
-			AB.Bar4[i].Count:SetAlpha(1)
-			AB.Bar5[i].Count:SetAlpha(1)
-
-			if AB.Bar6 then
-				AB.Bar6[i].HotKey:SetAlpha(1)
-				AB.Bar7[i].HotKey:SetAlpha(1)
-				AB.Bar8[i].HotKey:SetAlpha(1)
-			end
-		end
-	else
-		for i = 1, 12 do
-			AB.Bar1[i].Count:SetAlpha(0)
-			AB.Bar2[i].Count:SetAlpha(0)
-			AB.Bar3[i].Count:SetAlpha(0)
-			AB.Bar4[i].Count:SetAlpha(0)
-			AB.Bar5[i].Count:SetAlpha(0)
-
-			if AB.Bar6 then
-				AB.Bar6[i].HotKey:SetAlpha(1)
-				AB.Bar7[i].HotKey:SetAlpha(1)
-				AB.Bar8[i].HotKey:SetAlpha(1)
-			end
-		end
-	end
-end
+local UpdateShowHotKey = function(value) AB:SetButtonRegionAlpha("HotKey", value and 1 or 0, true) end
+local UpdateShowMacroName = function(value) AB:SetButtonRegionAlpha("Name", value and 1 or 0, false) end
+local UpdateShowCount = function(value) AB:SetButtonRegionAlpha("Count", value and 1 or 0, false) end
 
 function AB:UpdateButtonFont(button)
 	if button.HotKey then
@@ -2208,123 +1711,123 @@ end)
 
 GUI:AddWidgets(Language["General"], Language["Bar 1"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar1-enable", Settings["ab-bar1-enable"], Language["Enable Bar"], Language["Enable action bar 1"], UpdateEnableBar1)
+	left:CreateSwitch("ab-bar1-enable", Settings["ab-bar1-enable"], Language["Enable Bar"], Language["Enable action bar 1"], UpdateEnableBar[1])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar1-hover", Settings["ab-bar1-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar1Hover)
 	left:CreateSlider("ab-bar1-alpha", Settings["ab-bar1-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar1Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar1-per-row", Settings["ab-bar1-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar1)
-	right:CreateSlider("ab-bar1-button-max", Settings["ab-bar1-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar1)
-	right:CreateSlider("ab-bar1-button-size", Settings["ab-bar1-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar1)
-	right:CreateSlider("ab-bar1-button-gap", Settings["ab-bar1-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar1)
+	right:CreateSlider("ab-bar1-per-row", Settings["ab-bar1-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[1])
+	right:CreateSlider("ab-bar1-button-max", Settings["ab-bar1-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[1])
+	right:CreateSlider("ab-bar1-button-size", Settings["ab-bar1-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[1])
+	right:CreateSlider("ab-bar1-button-gap", Settings["ab-bar1-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[1])
 end)
 
 GUI:AddWidgets(Language["General"], Language["Bar 2"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar2-enable", Settings["ab-bar2-enable"], Language["Enable Bar"], Language["Enable action bar 2"], UpdateEnableBar2)
+	left:CreateSwitch("ab-bar2-enable", Settings["ab-bar2-enable"], Language["Enable Bar"], Language["Enable action bar 2"], UpdateEnableBar[2])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar2-hover", Settings["ab-bar2-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar2Hover)
 	left:CreateSlider("ab-bar2-alpha", Settings["ab-bar2-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar2Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar2-per-row", Settings["ab-bar2-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar2)
-	right:CreateSlider("ab-bar2-button-max", Settings["ab-bar2-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar2)
-	right:CreateSlider("ab-bar2-button-size", Settings["ab-bar2-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar2)
-	right:CreateSlider("ab-bar2-button-gap", Settings["ab-bar2-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar2)
+	right:CreateSlider("ab-bar2-per-row", Settings["ab-bar2-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[2])
+	right:CreateSlider("ab-bar2-button-max", Settings["ab-bar2-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[2])
+	right:CreateSlider("ab-bar2-button-size", Settings["ab-bar2-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[2])
+	right:CreateSlider("ab-bar2-button-gap", Settings["ab-bar2-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[2])
 end)
 
 GUI:AddWidgets(Language["General"], Language["Bar 3"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar3-enable", Settings["ab-bar3-enable"], Language["Enable Bar"], Language["Enable action bar 3"], UpdateEnableBar3)
+	left:CreateSwitch("ab-bar3-enable", Settings["ab-bar3-enable"], Language["Enable Bar"], Language["Enable action bar 3"], UpdateEnableBar[3])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar3-hover", Settings["ab-bar3-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar3Hover)
 	left:CreateSlider("ab-bar3-alpha", Settings["ab-bar3-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar3Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar3-per-row", Settings["ab-bar3-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar3)
-	right:CreateSlider("ab-bar3-button-max", Settings["ab-bar3-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar3)
-	right:CreateSlider("ab-bar3-button-size", Settings["ab-bar3-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar3)
-	right:CreateSlider("ab-bar3-button-gap", Settings["ab-bar3-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar3)
+	right:CreateSlider("ab-bar3-per-row", Settings["ab-bar3-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[3])
+	right:CreateSlider("ab-bar3-button-max", Settings["ab-bar3-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[3])
+	right:CreateSlider("ab-bar3-button-size", Settings["ab-bar3-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[3])
+	right:CreateSlider("ab-bar3-button-gap", Settings["ab-bar3-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[3])
 end)
 
 GUI:AddWidgets(Language["General"], Language["Bar 4"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar4-enable", Settings["ab-bar4-enable"], Language["Enable Bar"], Language["Enable action bar 4"], UpdateEnableBar4)
+	left:CreateSwitch("ab-bar4-enable", Settings["ab-bar4-enable"], Language["Enable Bar"], Language["Enable action bar 4"], UpdateEnableBar[4])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar4-hover", Settings["ab-bar4-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar4Hover)
 	left:CreateSlider("ab-bar4-alpha", Settings["ab-bar4-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar4Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar4-per-row", Settings["ab-bar4-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar4)
-	right:CreateSlider("ab-bar4-button-max", Settings["ab-bar4-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar4)
-	right:CreateSlider("ab-bar4-button-size", Settings["ab-bar4-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar4)
-	right:CreateSlider("ab-bar4-button-gap", Settings["ab-bar4-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar4)
+	right:CreateSlider("ab-bar4-per-row", Settings["ab-bar4-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[4])
+	right:CreateSlider("ab-bar4-button-max", Settings["ab-bar4-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[4])
+	right:CreateSlider("ab-bar4-button-size", Settings["ab-bar4-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[4])
+	right:CreateSlider("ab-bar4-button-gap", Settings["ab-bar4-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[4])
 end)
 
 GUI:AddWidgets(Language["General"], Language["Bar 5"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar5-enable", Settings["ab-bar5-enable"], Language["Enable Bar"], Language["Enable action bar 5"], UpdateEnableBar5)
+	left:CreateSwitch("ab-bar5-enable", Settings["ab-bar5-enable"], Language["Enable Bar"], Language["Enable action bar 5"], UpdateEnableBar[5])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar5-hover", Settings["ab-bar5-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar5Hover)
 	left:CreateSlider("ab-bar5-alpha", Settings["ab-bar5-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar5Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar5-per-row", Settings["ab-bar5-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar5)
-	right:CreateSlider("ab-bar5-button-max", Settings["ab-bar5-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar5)
-	right:CreateSlider("ab-bar5-button-size", Settings["ab-bar5-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar5)
-	right:CreateSlider("ab-bar5-button-gap", Settings["ab-bar5-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar5)
+	right:CreateSlider("ab-bar5-per-row", Settings["ab-bar5-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[5])
+	right:CreateSlider("ab-bar5-button-max", Settings["ab-bar5-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[5])
+	right:CreateSlider("ab-bar5-button-size", Settings["ab-bar5-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[5])
+	right:CreateSlider("ab-bar5-button-gap", Settings["ab-bar5-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[5])
 end)
 
 
 GUI:AddWidgets(Language["General"], Language["Bar 6"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar6-enable", Settings["ab-bar6-enable"], Language["Enable Bar"], Language["Enable action bar 6"], UpdateEnableBar6)
+	left:CreateSwitch("ab-bar6-enable", Settings["ab-bar6-enable"], Language["Enable Bar"], Language["Enable action bar 6"], UpdateEnableBar[6])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar6-hover", Settings["ab-bar6-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar6Hover)
 	left:CreateSlider("ab-bar6-alpha", Settings["ab-bar6-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar6Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar6-per-row", Settings["ab-bar6-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar6)
-	right:CreateSlider("ab-bar6-button-max", Settings["ab-bar6-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar6)
-	right:CreateSlider("ab-bar6-button-size", Settings["ab-bar6-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar6)
-	right:CreateSlider("ab-bar6-button-gap", Settings["ab-bar6-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar6)
+	right:CreateSlider("ab-bar6-per-row", Settings["ab-bar6-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[6])
+	right:CreateSlider("ab-bar6-button-max", Settings["ab-bar6-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[6])
+	right:CreateSlider("ab-bar6-button-size", Settings["ab-bar6-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[6])
+	right:CreateSlider("ab-bar6-button-gap", Settings["ab-bar6-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[6])
 end)
 
 GUI:AddWidgets(Language["General"], Language["Bar 7"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar7-enable", Settings["ab-bar7-enable"], Language["Enable Bar"], Language["Enable action bar 7"], UpdateEnableBar7)
+	left:CreateSwitch("ab-bar7-enable", Settings["ab-bar7-enable"], Language["Enable Bar"], Language["Enable action bar 7"], UpdateEnableBar[7])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar7-hover", Settings["ab-bar7-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar7Hover)
 	left:CreateSlider("ab-bar7-alpha", Settings["ab-bar7-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar7Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar7-per-row", Settings["ab-bar7-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar7)
-	right:CreateSlider("ab-bar7-button-max", Settings["ab-bar7-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar7)
-	right:CreateSlider("ab-bar7-button-size", Settings["ab-bar7-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar7)
-	right:CreateSlider("ab-bar7-button-gap", Settings["ab-bar7-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar7)
+	right:CreateSlider("ab-bar7-per-row", Settings["ab-bar7-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[7])
+	right:CreateSlider("ab-bar7-button-max", Settings["ab-bar7-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[7])
+	right:CreateSlider("ab-bar7-button-size", Settings["ab-bar7-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[7])
+	right:CreateSlider("ab-bar7-button-gap", Settings["ab-bar7-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[7])
 end)
 
 GUI:AddWidgets(Language["General"], Language["Bar 8"], Language["Action Bars"], function(left, right)
 	left:CreateHeader(Language["Enable"])
-	left:CreateSwitch("ab-bar8-enable", Settings["ab-bar8-enable"], Language["Enable Bar"], Language["Enable action bar 8"], UpdateEnableBar8)
+	left:CreateSwitch("ab-bar8-enable", Settings["ab-bar8-enable"], Language["Enable Bar"], Language["Enable action bar 8"], UpdateEnableBar[8])
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("ab-bar8-hover", Settings["ab-bar8-hover"], Language["Set Mouseover"], Language["Only display the bar while hovering over it"], UpdateBar8Hover)
 	left:CreateSlider("ab-bar8-alpha", Settings["ab-bar8-alpha"], 0, 100, 5, Language["Bar Opacity"], Language["Set the opacity of the action bar"], UpdateBar8Alpha)
 
 	right:CreateHeader(Language["Buttons"])
-	right:CreateSlider("ab-bar8-per-row", Settings["ab-bar8-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar8)
-	right:CreateSlider("ab-bar8-button-max", Settings["ab-bar8-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar8)
-	right:CreateSlider("ab-bar8-button-size", Settings["ab-bar8-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar8)
-	right:CreateSlider("ab-bar8-button-gap", Settings["ab-bar8-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar8)
+	right:CreateSlider("ab-bar8-per-row", Settings["ab-bar8-per-row"], 1, 12, 1, Language["Buttons Per Row"], Language["Set the number of buttons per row"], UpdateBar[8])
+	right:CreateSlider("ab-bar8-button-max", Settings["ab-bar8-button-max"], 1, 12, 1, Language["Max Buttons"], Language["Set the number of buttons displayed on the action bar"], UpdateBar[8])
+	right:CreateSlider("ab-bar8-button-size", Settings["ab-bar8-button-size"], 20, 50, 1, Language["Button Size"], Language["Set the action button size"], UpdateBar[8])
+	right:CreateSlider("ab-bar8-button-gap", Settings["ab-bar8-button-gap"], -1, 8, 1, Language["Button Spacing"], Language["Set the spacing between action buttons"], UpdateBar[8])
 end)
 
 GUI:AddWidgets(Language["General"], Language["Pet Bar"], Language["Action Bars"], function(left, right)

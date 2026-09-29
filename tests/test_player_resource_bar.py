@@ -27,12 +27,14 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         # Version-gated combinations: warlock mainline/cata/mists, mage
         # mainline, paladin mainline/cata/mists, and shaman non-mainline.
         for expression in (
-            'class == "WARLOCK" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
-            'class == "MAGE" and HydraUI.IsMainline',
-            'class == "PALADIN" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
-            'class == "SHAMAN" and not HydraUI.IsMainline',
+            'WARLOCK = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
+            'MAGE = HydraUI.IsMainline',
+            'PALADIN = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
+            'SHAMAN = not HydraUI.IsMainline',
         ):
             self.assertIn(expression, SOURCE)
+        self.assertLess(SOURCE.index("local PlayerResourceDescriptors"),
+                        SOURCE.index("local function BuildPlayerComponents"))
 
     def test_descriptors_capture_ouf_and_exceptional_behavior(self):
         for token in ('field = "ComboPoints"', 'field = "Runes"', 'field = "Totems"',

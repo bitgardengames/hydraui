@@ -41,61 +41,24 @@ Defaults.PlayerResourceTexture = "HydraUI 4"
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-HydraUI.StyleFuncs["player"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
+-- Resource descriptions are module constants; spawning a frame only selects one.
+local PlayerResourceDescriptors = {
+	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
+	DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
+	DEATHKNIGHT = { field = "Runes", count = 6, colorSetting = "color-runes", runes = true},
+	MONK = { field = "ClassPower", alias = "Chi", count = 6, colorSetting = "color-chi", stagger = true},
+	EVOKER = { field = "ClassPower", alias = "Essence", count = 6, colorSetting = "color-essence"},
+	WARLOCK = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "SoulShards", count = HydraUI.IsMainline and 5 or (HydraUI.IsMists and 4 or 3), colorSetting = "color-soul-shards"} or nil,
+	MAGE = HydraUI.IsMainline and {field = "ClassPower", alias = "ArcaneCharges", count = 4, colorSetting = "color-arcane-charges"} or nil,
+	PALADIN = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "HolyPower", count = 5, colorSetting = "color-holy-power"} or nil,
+	SHAMAN = not HydraUI.IsMainline and {field = "Totems", count = 4, color = function(i) return unpack(HydraUI.TotemColors[i]) end, postUpdate = UF.PostUpdateTotems, totems = true} or nil,
+}
 
+local function BuildPlayerComponents(factory, self, unit)
+	local Health = self.Health
 	self.AuraParent = self
-
-	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["unitframes-player-health-height"],
-		Settings.PlayerHealthTexture,
-		Settings["unitframes-player-health-reverse"],
-		nil,
-		"BORDER"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["unitframes-player-width"],
-		Settings["unitframes-player-health-height"],
-		Settings.PlayerHealthTexture,
-		Settings["unitframes-player-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local HealthLeft = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"LEFT",
-		"LEFT",
-		3,
-		0,
-		"LEFT"
-	)
-
-	local HealthRight = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"RIGHT",
-		"RIGHT",
-		-3,
-		0,
-		"RIGHT"
-	)
-
     -- Portrait
-	UF:CreatePortrait(self, {
+	factory:CreatePortrait(self, {
 		style = Settings["player-portrait-style"],
 		alpha = Settings["player-portrait-style"] == "OVERLAY" and Settings["player-overlay-alpha"] / 100 or nil,
 		size = {
@@ -140,22 +103,13 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 		PvPIndicator:SetPoint("CENTER", Health, 5, -6)
 	end
 
-	local RaidTarget = UF:CreateRaidTargetIndicator(Health, 16)
-
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
-
-	-- Attributes
-	Health.Smooth = true
-	self.colors.health = {R, G, B}
-	UF:SetHealthAttributes(Health, Settings["unitframes-player-health-color"])
-
-	if Settings["unitframes-player-enable-power"] then
-		local Power = CreateFrame("StatusBar", nil, self)
+	local Power = self.Power
+	if Power then
 		local PowerAnchor = CreateFrame("Frame", "HydraUI Player Power", HydraUI.UIParent)
 		PowerAnchor:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-power-height"])
 		PowerAnchor:SetPoint("CENTER", HydraUI.UIParent, 0, -133)
 		HydraUI:CreateMover(PowerAnchor)
-
+		Power:ClearAllPoints()
 		if Settings["player-move-power"] then
 			Power:SetPoint("BOTTOMLEFT", PowerAnchor, 1, 1)
 			Power:SetPoint("BOTTOMRIGHT", PowerAnchor, -1, 1)
@@ -163,39 +117,7 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 			Power:SetPoint("BOTTOMLEFT", self, 1, 1)
 			Power:SetPoint("BOTTOMRIGHT", self, -1, 1)
 		end
-
-		Power:SetHeight(Settings["unitframes-player-power-height"])
-		Power:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerPowerTexture))
-		Power:SetReverseFill(Settings["unitframes-player-power-reverse"])
-
-		local PowerBG = Power:CreateTexture(nil, "BORDER")
-		PowerBG:SetPoint("TOPLEFT", Power, 0, 0)
-		PowerBG:SetPoint("BOTTOMRIGHT", Power, 0, 0)
-		PowerBG:SetTexture(Assets:GetTexture(Settings.PlayerPowerTexture))
-		PowerBG:SetAlpha(0.2)
-
-		local Backdrop = Power:CreateTexture(nil, "BACKGROUND")
-		Backdrop:SetPoint("TOPLEFT", -1, 1)
-		Backdrop:SetPoint("BOTTOMRIGHT", 1, -1)
-		Backdrop:SetTexture(Assets:GetTexture("Blank"))
-		Backdrop:SetVertexColor(0, 0, 0)
-
-		local PowerRight = Power:CreateFontString(nil, "OVERLAY")
-		HydraUI:SetFontInfo(PowerRight, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-		PowerRight:SetPoint("RIGHT", Power, -3, 0)
-		PowerRight:SetJustifyH("RIGHT")
-
-		local PowerLeft = Power:CreateFontString(nil, "OVERLAY")
-		HydraUI:SetFontInfo(PowerLeft, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-		PowerLeft:SetPoint("LEFT", Power, 3, 0)
-		PowerLeft:SetJustifyH("LEFT")
-
-		--[[ AdditionalPower
-		local AdditionalPower = CreateFrame("StatusBar", nil, self)
-		AdditionalPower:SetAllPoints(Power)
-		AdditionalPower:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-		AdditionalPower:SetReverseFill(Settings["unitframes-player-power-reverse"])]]
-
+		factory:CreateBackdrop(Power, "Blank", "BACKGROUND")
 		-- Mana regen
 		if (Settings["unitframes-show-mana-timer"] and not HydraUI.IsMainline) then
 			local ManaTimer = CreateFrame("StatusBar", nil, Power)
@@ -257,28 +179,13 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 			}
 		end
 
-		-- Attributes
-		Power.frequentUpdates = true
-		Power.Smooth = true
-
-		UF:SetPowerAttributes(Power, Settings["unitframes-player-power-color"])
-
-		self:Tag(PowerLeft, Settings["unitframes-player-power-left"])
-		self:Tag(PowerRight, Settings["unitframes-player-power-right"])
-
-		self.Power = Power
-		self.Power.bg = PowerBG
-		self.PowerLeft = PowerLeft
-		self.PowerRight = PowerRight
 		self.PowerAnchor = PowerAnchor
-		--self.AdditionalPower = AdditionalPower
 	end
-
     -- Castbar
 	if Settings["unitframes-player-enable-castbar"] then
 		local Anchor = CreateFrame("Frame", "HydraUI Casting Bar", self)
 		Anchor:SetSize(Settings["unitframes-player-cast-width"], Settings["unitframes-player-cast-height"])
-		UF:CreateCastbar(self, {
+		factory:CreateCastbar(self, {
 		safeZone = true,
 		showTradeSkills = true,
 		timeToHold = 0.7,
@@ -329,28 +236,7 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 		ResourceAnchor:SetPoint("CENTER", HydraUI.UIParent, 0, -120)
 		HydraUI:CreateMover(ResourceAnchor)
 
-		-- Descriptors are the only class/client-specific part of the resource bar.
-		local function SelectResourceDescriptor(class)
-			local descriptors = {
-				ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline },
-				DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline },
-				DEATHKNIGHT = { field = "Runes", count = 6, colorSetting = "color-runes", runes = true },
-				MONK = { field = "ClassPower", alias = "Chi", count = 6, colorSetting = "color-chi", stagger = true },
-				EVOKER = { field = "ClassPower", alias = "Essence", count = 6, colorSetting = "color-essence" },
-			}
-
-			if class == "WARLOCK" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) then
-				return { field = "ClassPower", alias = "SoulShards", count = HydraUI.IsMainline and 5 or (HydraUI.IsMists and 4 or 3), colorSetting = "color-soul-shards" }
-			elseif class == "MAGE" and HydraUI.IsMainline then
-				return { field = "ClassPower", alias = "ArcaneCharges", count = 4, colorSetting = "color-arcane-charges" }
-			elseif class == "PALADIN" and (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) then
-				return { field = "ClassPower", alias = "HolyPower", count = 5, colorSetting = "color-holy-power" }
-			elseif class == "SHAMAN" and not HydraUI.IsMainline then
-				return { field = "Totems", count = 4, color = function(i) return unpack(HydraUI.TotemColors[i]) end, postUpdate = UF.PostUpdateTotems, totems = true }
-			end
-
-			return descriptors[class]
-		end
+		local function SelectResourceDescriptor(class) return PlayerResourceDescriptors[class] end
 
 		local function CreateResourceBar(frame, descriptor)
 			if not descriptor then return end
@@ -462,7 +348,7 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 	self.ThreatIndicator = Threat
 
 	-- Auras
-	local Buffs = UF:CreateAuraContainer(self, {
+	local Buffs = factory:CreateAuraContainer(self, {
 		name = self:GetName() .. "Buffs",
 		iconSize = Settings.PlayerBuffSize,
 		spacing = Settings.PlayerBuffSpacing,
@@ -480,7 +366,7 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 			postUpdateIcon = UF.PostUpdateIcon,
 		},
 	})
-	local Debuffs = UF:CreateAuraContainer(self, {
+	local Debuffs = factory:CreateAuraContainer(self, {
 		name = self:GetName() .. "Debuffs",
 		iconSize = Settings.PlayerDebuffSize,
 		spacing = Settings.PlayerDebuffSpacing,
@@ -522,21 +408,27 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 	Resurrect:SetPoint("CENTER", Health, 0, 0)
 	Resurrect:Hide()
 
-	-- Tags
-	self:Tag(HealthLeft, Settings["unitframes-player-health-left"])
-	self:Tag(HealthRight, Settings["unitframes-player-health-right"])
-
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.HealthLeft = HealthLeft
-	self.HealthRight = HealthRight
 	self.CombatIndicator = Combat
 	self.Buffs = Buffs
 	self.Debuffs = Debuffs
-	--self.RaidTargetIndicator = RaidTarget
 	self.ResurrectIndicator = Resurrect
 	self.LeaderIndicator = Leader
 	self.PvPIndicator = PvPIndicator
+end
+
+local PlayerFrameConfig = {
+	settingsPrefix = "unitframes-player",
+	threat = false,
+	healthTextureKey = "PlayerHealthTexture",
+	powerTextureKey = "PlayerPowerTexture",
+	powerEnabledKey = "unitframes-player-enable-power",
+	powerTags = true,
+	raidTarget = true,
+	portrait = BuildPlayerComponents,
+}
+
+HydraUI.StyleFuncs["player"] = function(self, unit)
+	UF:BuildSingleUnitFrame(self, unit, PlayerFrameConfig)
 end
 
 local UpdateOnlyPlayerDebuffs = function(value)

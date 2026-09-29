@@ -53,6 +53,14 @@ class ComponentConstructorCoverage(unittest.TestCase):
         self.assertNotIn("safeZone = true", target)
         self.assertIn("showTradeSkills = true", target)
 
+    def test_all_non_group_styles_have_one_factory_entry_point(self):
+        for module in ("Player", "Target", "Focus", "Boss", "Pet",
+                       "TargetTarget", "PartyPets", "RaidPets"):
+            source = (ROOT / f"{module}.lua").read_text()
+            style = source[source.index("HydraUI.StyleFuncs["):]
+            style = style[:style.index("\nend")]
+            self.assertIn("UF:BuildSingleUnitFrame(self, unit,", style)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,12 @@ def body(name):
 
 
 class ComponentConstructorCoverage(unittest.TestCase):
+    def test_updater_resolves_each_singleton_once(self):
+        source = SHARED[SHARED.index("function UF:CreateUnitUpdater"):]
+        self.assertIn("local frame = HydraUI.UnitFrames[unit]", source)
+        self.assertIn("update(self, frame, value, options)", source)
+        self.assertNotIn("pairs(HydraUI.UnitFrames)", source)
+
     def test_component_constructors_take_direct_inputs(self):
         expected = {
             "CreatePortrait": "frame, style, width, height, point, relativeTo",

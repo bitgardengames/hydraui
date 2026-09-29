@@ -54,14 +54,22 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
     def test_settings_updates_only_use_canonical_component(self):
         for name, call in (
             ("UpdatePlayerWidth", "Frame.ClassResource:SetWidth(value)"),
-            ("UpdateResourceBarHeight", "Frame.ClassResource:SetHeight(value)"),
+            ("UpdateResourceBarHeight", "UpdatePlayerResourceLayout(Frame, value)"),
             ("UpdateResourceTexture", "Frame.ClassResource:SetTexture(value)"),
-            ("UpdateResourcePosition", "Frame.ClassResource:SetDetached(value)"),
+            ("UpdateResourcePosition", "UpdatePlayerResourceLayout(frame, nil, value)"),
         ):
             body = function_body(name)
             self.assertIn(call, body)
             for legacy in ("ComboPoints", "SoulShards", "ArcaneCharges", "Chi", "Runes", "HolyPower", "Totems", "Essence"):
                 self.assertNotIn(f"Frame.{legacy}", body)
+
+    def test_resource_and_power_layouts_are_single_sources_of_anchors(self):
+        self.assertIn("local function UpdatePlayerAuraAnchors(frame, resourceDetached)", SOURCE)
+        self.assertIn("local function UpdatePlayerPowerLayout(frame, powerHeight, detached, healthHeight)", SOURCE)
+        self.assertIn("local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)", SOURCE)
+        self.assertGreaterEqual(SOURCE.count("UpdatePlayerAuraAnchors("), 4)
+        self.assertGreaterEqual(SOURCE.count("UpdatePlayerPowerLayout("), 3)
+        self.assertGreaterEqual(SOURCE.count("UpdatePlayerResourceLayout("), 4)
 
 
 if __name__ == "__main__":

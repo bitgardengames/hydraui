@@ -630,8 +630,10 @@ function Chat:StyleChatFrame(frame)
 		return
 	end
 
-	frame.OldAddMessage = frame.AddMessage
-	frame.AddMessage = Chat.OverrideAddMessage
+	if (frame ~= ChatFrame2) then
+		frame.OldAddMessage = frame.AddMessage
+		frame.AddMessage = Chat.OverrideAddMessage
+	end
 
 	local FrameName = frame:GetName()
 	local Tab = _G[FrameName.."Tab"]

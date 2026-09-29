@@ -72,7 +72,8 @@ def test_persistence_has_id_and_widget_opt_outs():
     assert '["ui-profile"] = true' in CORE
     assert '["profile-copy"] = true' in CORE
     assert "widget and widget.IsSavingDisabled" in CORE
-    assert "if not Core.ShouldPersist(id, widget) then return false end" in CORE
+    assert "if not Core.ShouldPersist(id, widget) then" in CORE
+    assert "\t\treturn false\n\tend" in CORE
 
 
 def test_shared_viewport_supports_widget_and_navigation_sources():

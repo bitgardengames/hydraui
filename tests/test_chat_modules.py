@@ -10,11 +10,15 @@ def source(name):
 
 def test_formatter_pipeline_order_and_existing_link_protection():
     links = source("Links.lua")
-    stages = [links.index('chat-enable-discord-links'), links.index('chat-enable-url-links'),
-              links.index('chat-enable-email-links'), links.index('chat-enable-friend-links')]
+    stages = [
+        links.index("chat-enable-discord-links"),
+        links.index("chat-enable-url-links"),
+        links.index("chat-enable-email-links"),
+        links.index("chat-enable-friend-links"),
+    ]
     assert stages == sorted(stages)
-    assert 'protected = {}' in links
-    assert 'return protected[tonumber(index)]' in links
+    assert "protectedLinks = {}" in links
+    assert "return protectedLinks[tonumber(index)]" in links
 
 
 def test_history_is_a_bounded_circular_buffer():

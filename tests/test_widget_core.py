@@ -3,6 +3,7 @@ from pathlib import Path
 import re
 
 CORE = Path("HydraUI/Elements/GUI/WidgetCore.lua").read_text()
+SLIDERS = Path("HydraUI/Elements/GUI/Sliders.lua").read_text()
 
 
 def dropdown_offset(offset, count, shown):
@@ -33,6 +34,11 @@ def test_slider_values_are_clamped_and_step_normalized():
     assert slider_value(-1, 0, 10, 0.5) == 0
     assert slider_value(3.24, 0, 10, 0.5) == 3.2
     assert slider_value(12, 0, 10, 0.5) == 10
+
+
+def test_slider_anchor_uses_shared_widget_height():
+    assert "Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)" in SLIDERS
+    assert "DROPDOWN_HEIGHT" not in SLIDERS
 
 
 def test_color_normalization_accepts_rgb_and_argb():

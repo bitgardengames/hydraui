@@ -34,7 +34,7 @@ class ComponentConstructorCoverage(unittest.TestCase):
         for module in ("Player", "Target", "Focus", "Boss"):
             source = (ROOT / f"{module}.lua").read_text()
             if "CreateCastbar" in source:
-                self.assertRegex(source, r"CreateCastbar\(self, \{")
+                self.assertRegex(source, r"CreateCastbar\((?:self|frame), \{")
                 for group in ("size = {", "anchor = {", "bar = {", "background = {",
                               "text = {", "icon = {", "callbacks = {"):
                     self.assertIn(group, source)

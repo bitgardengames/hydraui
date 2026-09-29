@@ -21,83 +21,9 @@ Defaults.ToTPowerTexture = "HydraUI 4"
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-HydraUI.StyleFuncs["targettarget"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
-
-	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
-	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["unitframes-targettarget-health-height"],
-		Settings.ToTHealthTexture,
-		Settings["unitframes-targettarget-health-reverse"],
-		nil,
-		"BORDER"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["unitframes-targettarget-width"],
-		Settings["unitframes-targettarget-health-height"],
-		Settings.ToTHealthTexture,
-		Settings["unitframes-targettarget-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local HealthLeft = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"LEFT",
-		"LEFT",
-		3,
-		0,
-		"LEFT"
-	)
-
-	local HealthRight = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"RIGHT",
-		"RIGHT",
-		-3,
-		0,
-		"RIGHT"
-	)
-
-	-- Target Icon
-	local RaidTargetIndicator = UF:CreateRaidTargetIndicator(Health, 16)
-
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
-
-	-- Attributes
-	Health.colorTapping = true
-	Health.colorDisconnected = true
-	Health.Smooth = true
-	self.colors.health = {R, G, B}
-
-	UF:SetHealthAttributes(Health, Settings["unitframes-targettarget-health-color"])
-
-	-- Power Bar
-	local Power, PowerBG = UF:CreatePowerBar(self, Settings["unitframes-targettarget-power-height"], Settings.ToTPowerTexture, Settings["unitframes-targettarget-power-reverse"])
-
-	-- Attributes
-	Power.frequentUpdates = true
-	Power.colorReaction = true
-	Power.Smooth = true
-
-	UF:SetPowerAttributes(Power, Settings["unitframes-targettarget-power-color"])
-
+local function BuildTargetTargetComponents(factory, frame, unit)
 	if Settings["unitframes-targettarget-debuffs"] then
-		local Debuffs = CreateFrame("Frame", self:GetName() .. "Debuffs", self)
+		local Debuffs = CreateFrame("Frame", frame:GetName() .. "Debuffs", frame)
 		Debuffs:SetSize(Settings["unitframes-targettarget-width"], Settings["unitframes-targettarget-debuff-size"])
 		Debuffs.size = Settings["unitframes-targettarget-debuff-size"]
 		Debuffs.spacing = 2
@@ -107,35 +33,38 @@ HydraUI.StyleFuncs["targettarget"] = function(self, unit)
 		Debuffs.PostUpdateIcon = UF.PostUpdateIcon
 
 		if (Settings["unitframes-targettarget-debuff-pos"] == "TOP") then
-			Debuffs:SetPoint("BOTTOM", self, "TOP", 0, 2)
+			Debuffs:SetPoint("BOTTOM", frame, "TOP", 0, 2)
 			Debuffs.initialAnchor = "TOPRIGHT"
 			Debuffs["growth-x"] = "LEFT"
 			Debuffs["growth-y"] = "DOWN"
 		else
-			Debuffs:SetPoint("TOP", self, "BOTTOM", 0, -2)
+			Debuffs:SetPoint("TOP", frame, "BOTTOM", 0, -2)
 			Debuffs.initialAnchor = "TOPRIGHT"
 			Debuffs["growth-x"] = "LEFT"
 			Debuffs["growth-y"] = "DOWN"
 		end
 
-		self.Debuffs = Debuffs
+		frame.Debuffs = Debuffs
 	end
 
-	self:Tag(HealthLeft, Settings["unitframes-targettarget-health-left"])
-	self:Tag(HealthRight, Settings["unitframes-targettarget-health-right"])
+end
 
-	self.Range = {
-		insideAlpha = 1,
-		outsideAlpha = 0.5,
-	}
+local SingleUnitRange = {insideAlpha = 1, outsideAlpha = 0.5}
+local TargetTargetFrameConfig = {
+	settingsPrefix = "unitframes-targettarget",
+	healthTextureKey = "ToTHealthTexture",
+	powerTextureKey = "ToTPowerTexture",
+	powerTags = false,
+	colorTapping = true,
+	colorDisconnected = true,
+	powerReaction = true,
+	raidTarget = true,
+	auras = BuildTargetTargetComponents,
+	range = SingleUnitRange,
+}
 
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.Power = Power
-	self.Power.bg = PowerBG
-	self.HealthLeft = HealthLeft
-	self.HealthRight = HealthRight
-	self.RaidTargetIndicator = RaidTargetIndicator
+HydraUI.StyleFuncs["targettarget"] = function(self, unit)
+	UF:BuildSingleUnitFrame(self, unit, TargetTargetFrameConfig)
 end
 
 local UpdateTargetTargetWidth = function(value)

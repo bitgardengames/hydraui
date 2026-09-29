@@ -19,76 +19,9 @@ Defaults.FocusPowerTexture = "HydraUI 4"
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-HydraUI.StyleFuncs["focus"] = function(self, unit)
-	-- General
-	self:RegisterForClicks("AnyUp")
-	self:SetScript("OnEnter", UnitFrame_OnEnter)
-	self:SetScript("OnLeave", UnitFrame_OnLeave)
-
-	UF:CreateBackdrop(self, "Blank", "BACKGROUND")
-	UF:CreateThreatIndicator(self, HydraUI.Outline, UF.ThreatPostUpdate)
-
-	-- Health and prediction bars use only this frame family's resolved settings.
-	local Health, HealthBG = UF:CreateHealthBar(
-		self,
-		Settings["unitframes-focus-health-height"],
-		Settings.FocusHealthTexture,
-		Settings["unitframes-focus-health-reverse"],
-		nil,
-		"BORDER"
-	)
-	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(
-		self,
-		Health,
-		Settings["unitframes-focus-width"],
-		Settings["unitframes-focus-health-height"],
-		Settings.FocusHealthTexture,
-		Settings["unitframes-focus-health-reverse"],
-		HydraUI.IsMainline
-	)
-
-	local HealthLeft = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"LEFT",
-		"LEFT",
-		3,
-		0,
-		"LEFT"
-	)
-
-	local HealthRight = UF:CreateFontString(
-		Health,
-		Settings["unitframes-font"],
-		Settings["unitframes-font-size"],
-		Settings["unitframes-font-flags"],
-		"RIGHT",
-		"RIGHT",
-		-3,
-		0,
-		"RIGHT"
-	)
-
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
-
-	-- Attributes
-	Health.Smooth = true
-	self.colors.health = {R, G, B}
-
-	UF:SetHealthAttributes(Health, Settings["unitframes-focus-health-color"])
-
-	local Power, PowerBG = UF:CreatePowerBar(self, Settings["unitframes-focus-power-height"], Settings.FocusPowerTexture, Settings["unitframes-focus-power-reverse"])
-
-	-- Attributes
-	Power.frequentUpdates = true
-	Power.Smooth = true
-
-	UF:SetPowerAttributes(Power, Settings["unitframes-focus-power-color"])
-
+local function BuildFocusComponents(factory, frame, unit)
 	if Settings["focus-enable-castbar"] then
-		UF:CreateCastbar(self, {
+		factory:CreateCastbar(frame, {
 		showTradeSkills = true,
 		timeToHold = 0.7,
 		size = {
@@ -97,7 +30,7 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 		},
 		anchor = {
 			point = "TOPRIGHT",
-			relativeTo = self,
+			relativeTo = frame,
 			relativePoint = "BOTTOMRIGHT",
 			x = -1,
 			y = -3,
@@ -120,18 +53,18 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 			background = true,
 		},
 		callbacks = {
-			postCastStart = UF.PostCastStart,
-			postCastStop = UF.PostCastStop,
-			postCastFail = UF.PostCastFail,
-			postCastInterruptible = UF.PostCastInterruptible,
+			postCastStart = factory.PostCastStart,
+			postCastStop = factory.PostCastStop,
+			postCastFail = factory.PostCastFail,
+			postCastInterruptible = factory.PostCastInterruptible,
 		},
 	})
 	end
 
 	-- Auras
 	local AuraSize = Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3
-	local Buffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Buffs",
+	local Buffs = factory:CreateAuraContainer(frame, {
+		name = frame:GetName() .. "Buffs",
 		iconSize = AuraSize,
 		spacing = 2,
 		num = 3,
@@ -144,17 +77,17 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 		},
 		anchor = {
 			point = "LEFT",
-			relativeTo = self,
+			relativeTo = frame,
 			relativePoint = "RIGHT",
 			x = 2,
 		},
 		callbacks = {
-			postCreateIcon = UF.PostCreateIcon,
-			postUpdateIcon = UF.PostUpdateIcon,
+			postCreateIcon = factory.PostCreateIcon,
+			postUpdateIcon = factory.PostUpdateIcon,
 		},
 	})
-	local Debuffs = UF:CreateAuraContainer(self, {
-		name = self:GetName() .. "Debuffs",
+	local Debuffs = factory:CreateAuraContainer(frame, {
+		name = frame:GetName() .. "Debuffs",
 		iconSize = AuraSize,
 		spacing = 2,
 		num = 3,
@@ -173,23 +106,30 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 			x = 2,
 		},
 		callbacks = {
-			postCreateIcon = UF.PostCreateIcon,
-			postUpdateIcon = UF.PostUpdateIcon,
+			postCreateIcon = factory.PostCreateIcon,
+			postUpdateIcon = factory.PostUpdateIcon,
 		},
 	})
 
-	-- Tags
-	self:Tag(HealthLeft, Settings["unitframes-focus-health-left"])
-	self:Tag(HealthRight, Settings["unitframes-focus-health-right"])
+	frame.Buffs = Buffs
+	frame.Debuffs = Debuffs
+end
 
-	self.Health = Health
-	self.Health.bg = HealthBG
-	self.Power = Power
-	self.Power.bg = PowerBG
-	self.HealthLeft = HealthLeft
-	self.HealthRight = HealthRight
-	self.Buffs = Buffs
-	self.Debuffs = Debuffs
+local SingleUnitRange = {insideAlpha = 1, outsideAlpha = 0.5}
+local FocusFrameConfig = {
+	settingsPrefix = "unitframes-focus",
+	healthTextureKey = "FocusHealthTexture",
+	powerTextureKey = "FocusPowerTexture",
+	powerTags = false,
+	colorTapping = false,
+	colorDisconnected = false,
+	powerReaction = false,
+	raidTarget = false,
+	auras = BuildFocusComponents,
+}
+
+HydraUI.StyleFuncs["focus"] = function(self, unit)
+	UF:BuildSingleUnitFrame(self, unit, FocusFrameConfig)
 end
 
 local UpdateFocusWidth = function(value)

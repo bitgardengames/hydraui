@@ -51,80 +51,28 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	local Backdrop = self:CreateTexture(nil, "BACKGROUND")
-	Backdrop:SetAllPoints()
-	Backdrop:SetTexture(Assets:GetTexture("Blank"))
-	Backdrop:SetVertexColor(0, 0, 0)
+	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
+	UF:CreateThreatIndicator(self, { backdrop = HydraUI.Outline, postUpdate = UF.ThreatPostUpdate })
 
-	-- Threat
-	local Threat = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	Threat:SetPoint("TOPLEFT", -1, 1)
-	Threat:SetPoint("BOTTOMRIGHT", 1, -1)
-	Threat:SetBackdrop(HydraUI.Outline)
-	Threat.PostUpdate = UF.ThreatPostUpdate
+	-- Health and prediction bars use only this frame family's resolved settings.
+	local Health, HealthBG = UF:CreateHealthBar(self, {
+		height = Settings["party-health-height"],
+		texture = Settings.PartyHealthTexture,
+		reverseFill = Settings["party-health-reverse"],
+		orientation = Settings["party-health-orientation"],
+		backgroundLayer = "BORDER",
+	})
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
+		width = Settings["party-width"],
+		height = Settings["party-health-height"],
+		texture = Settings.PartyHealthTexture,
+		reverseFill = Settings["party-health-reverse"],
+		createAbsorb = HydraUI.IsMainline,
+	})
 
-	self.ThreatIndicator = Threat
-
-	-- Health Bar
-	local Health = CreateFrame("StatusBar", nil, self)
-	Health:SetPoint("TOPLEFT", self, 1, -1)
-	Health:SetPoint("TOPRIGHT", self, -1, -1)
-	Health:SetHeight(Settings["party-health-height"])
-	Health:SetStatusBarTexture(Assets:GetTexture(Settings.PartyHealthTexture))
-	Health:SetReverseFill(Settings["party-health-reverse"])
-	Health:SetOrientation(Settings["party-health-orientation"])
-
-	local HealBar = CreateFrame("StatusBar", nil, Health)
-	HealBar:SetWidth(Settings["party-width"])
-	HealBar:SetHeight(Settings["party-health-height"])
-	HealBar:SetStatusBarTexture(Assets:GetTexture(Settings.PartyHealthTexture))
-	HealBar:SetStatusBarColor(0, 0.48, 0)
-	HealBar:SetFrameLevel(Health:GetFrameLevel() - 1)
-
-	if Settings["party-health-reverse"] then
-		HealBar:SetPoint("RIGHT", Health:GetStatusBarTexture(), "LEFT", 0, 0)
-	else
-		HealBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-	end
-
-	self.HealBar = HealBar
-
-	if HydraUI.IsMainline then
-		local AbsorbsBar = CreateFrame("StatusBar", nil, Health)
-		AbsorbsBar:SetWidth(Settings["party-width"])
-		AbsorbsBar:SetHeight(Settings["party-health-height"])
-		AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(Settings.PartyHealthTexture))
-		AbsorbsBar:SetStatusBarColor(0, 0.66, 1)
-		AbsorbsBar:SetFrameLevel(Health:GetFrameLevel() - 2)
-
-		if Settings["party-health-reverse"] then
-			AbsorbsBar:SetPoint("RIGHT", Health:GetStatusBarTexture(), "LEFT", 0, 0)
-		else
-			AbsorbsBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-		end
-
-		self.AbsorbsBar = AbsorbsBar
-	end
-
-	local HealthBG = self:CreateTexture(nil, "BORDER")
-	HealthBG:SetAllPoints(Health)
-	HealthBG:SetTexture(Assets:GetTexture(Settings.PartyHealthTexture))
-	HealthBG.multiplier = 0.2
-
-	local Highlight = Health:CreateTexture(nil, "OVERLAY")
-	Highlight:SetAllPoints(Health)
-	Highlight:SetTexture(Assets:GetTexture("Blank"))
-	Highlight:SetVertexColor(0.8, 0.8, 0.8)
-	Highlight:SetAlpha(0)
-	Highlight:SetDrawLayer("OVERLAY", 7)
-	self:HookScript("OnEnter", function(self) self.Highlight:SetAlpha(0.15) end)
-	self:HookScript("OnLeave", function(self) self.Highlight:SetAlpha(0) end)
-
-	self.Highlight = Highlight
-
-	if (not Settings.PartyEnableMouseover) then
-		Highlight:Hide()
-	end
+	local Highlight = UF:CreateMouseoverHighlight(self, Health, {
+		texture = "Blank", enabled = Settings.PartyEnableMouseover,
+	})
 
 	local HealthDead = Health:CreateTexture(nil, "OVERLAY")
 	HealthDead:SetAllPoints(Health)
@@ -149,15 +97,15 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 	Health.DeadAnim.Out:SetGroup(Health.DeadAnim)
 	Health.DeadAnim.Out:SetOrder(2)
 
-	local HealthName = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthName, Settings["party-font"], Settings["party-font-size"], Settings["party-font-flags"])
-	HealthName:SetPoint("BOTTOM", Health, "CENTER", 0, 1)
-	HealthName:SetJustifyH("CENTER")
+	local HealthName = UF:CreateFontString(Health, {
+		font = Settings["party-font"], size = Settings["party-font-size"], flags = Settings["party-font-flags"],
+		point = "BOTTOM", relativePoint = "CENTER", x = 0, y = 1, justify = "CENTER",
+	})
 
-	local HealthBottom = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthBottom, Settings["party-font"], Settings["party-font-size"], Settings["party-font-flags"])
-	HealthBottom:SetPoint("TOP", Health, "CENTER", 0, -1)
-	HealthBottom:SetJustifyH("CENTER")
+	local HealthBottom = UF:CreateFontString(Health, {
+		font = Settings["party-font"], size = Settings["party-font-size"], flags = Settings["party-font-flags"],
+		point = "TOP", relativePoint = "CENTER", x = 0, y = -1, justify = "CENTER",
+	})
 
 	-- Attributes
 	Health.colorDisconnected = true
@@ -165,18 +113,11 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["party-health-color"])
 
-	local Power = CreateFrame("StatusBar", nil, self)
-	Power:SetPoint("BOTTOMLEFT", self, 1, 1)
-	Power:SetPoint("BOTTOMRIGHT", self, -1, 1)
-	Power:SetHeight(Settings["party-power-height"])
-	Power:SetStatusBarTexture(Assets:GetTexture(Settings.PartyPowerTexture))
-	Power:SetReverseFill(Settings["party-power-reverse"])
-
-	local PowerBG = Power:CreateTexture(nil, "BORDER")
-	PowerBG:SetPoint("TOPLEFT", Power, 0, 0)
-	PowerBG:SetPoint("BOTTOMRIGHT", Power, 0, 0)
-	PowerBG:SetTexture(Assets:GetTexture(Settings.PartyPowerTexture))
-	PowerBG:SetAlpha(0.2)
+	local Power, PowerBG = UF:CreatePowerBar(self, {
+		height = Settings["party-power-height"],
+		texture = Settings.PartyPowerTexture,
+		reverseFill = Settings["party-power-reverse"],
+	})
 
 	-- Attributes
 	Power.frequentUpdates = true
@@ -287,9 +228,7 @@ HydraUI.StyleFuncs["party"] = function(self, unit)
 	PhaseIndicator.Icon:SetAllPoints()
 
 	-- Target Icon
-	local RaidTarget = Health:CreateTexture(nil, "OVERLAY")
-	RaidTarget:SetSize(16, 16)
-	RaidTarget:SetPoint("CENTER", Health, "TOP")
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
 
     -- Resurrect
 	local Resurrect = Health:CreateTexture(nil, "OVERLAY")

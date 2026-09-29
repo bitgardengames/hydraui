@@ -49,67 +49,32 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 
 	self.AuraParent = self
 
-	local Backdrop = self:CreateTexture(nil, "BACKGROUND")
-	Backdrop:SetAllPoints()
-	Backdrop:SetTexture(Assets:GetTexture("Blank"))
-	Backdrop:SetVertexColor(0, 0, 0)
+	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
 
-	-- Health Bar
-	local Health = CreateFrame("StatusBar", nil, self)
-	Health:SetPoint("TOPLEFT", self, 1, -1)
-	Health:SetPoint("TOPRIGHT", self, -1, -1)
-	Health:SetHeight(Settings["unitframes-player-health-height"])
-	Health:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerHealthTexture))
-	Health:SetReverseFill(Settings["unitframes-player-health-reverse"])
+	-- Health and prediction bars use only this frame family's resolved settings.
+	local Health, HealthBG = UF:CreateHealthBar(self, {
+		height = Settings["unitframes-player-health-height"],
+		texture = Settings.PlayerHealthTexture,
+		reverseFill = Settings["unitframes-player-health-reverse"],
+		backgroundLayer = "BORDER",
+	})
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
+		width = Settings["unitframes-player-width"],
+		height = Settings["unitframes-player-health-height"],
+		texture = Settings.PlayerHealthTexture,
+		reverseFill = Settings["unitframes-player-health-reverse"],
+		createAbsorb = HydraUI.IsMainline,
+	})
 
-	local HealBar = CreateFrame("StatusBar", nil, Health)
-	HealBar:SetWidth(Settings["unitframes-player-width"])
-	HealBar:SetHeight(Settings["unitframes-player-health-height"])
-	HealBar:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerHealthTexture))
-	HealBar:SetStatusBarColor(0, 0.48, 0)
-	HealBar:SetFrameLevel(Health:GetFrameLevel() - 1)
-	HealBar:SetReverseFill(Settings["unitframes-player-health-reverse"])
+	local HealthLeft = UF:CreateFontString(Health, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
+	})
 
-	if Settings["unitframes-player-health-reverse"] then
-		HealBar:SetPoint("RIGHT", Health:GetStatusBarTexture(), "LEFT", 0, 0)
-	else
-		HealBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-	end
-
-	self.HealBar = HealBar
-
-	if HydraUI.IsMainline then
-		local AbsorbsBar = CreateFrame("StatusBar", nil, Health)
-		AbsorbsBar:SetWidth(Settings["unitframes-player-width"])
-		AbsorbsBar:SetHeight(Settings["unitframes-player-health-height"])
-		AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerHealthTexture))
-		AbsorbsBar:SetStatusBarColor(0, 0.66, 1)
-		AbsorbsBar:SetReverseFill(Settings["unitframes-player-health-reverse"])
-		AbsorbsBar:SetFrameLevel(Health:GetFrameLevel() - 2)
-
-		if Settings["unitframes-player-health-reverse"] then
-			AbsorbsBar:SetPoint("RIGHT", Health:GetStatusBarTexture(), "LEFT", 0, 0)
-		else
-			AbsorbsBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-		end
-
-		self.AbsorbsBar = AbsorbsBar
-	end
-
-	local HealthBG = self:CreateTexture(nil, "BORDER")
-	HealthBG:SetAllPoints(Health)
-	HealthBG:SetTexture(Assets:GetTexture(Settings.PlayerHealthTexture))
-	HealthBG.multiplier = 0.2
-
-	local HealthLeft = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthLeft, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	HealthLeft:SetPoint("LEFT", Health, 3, 0)
-	HealthLeft:SetJustifyH("LEFT")
-
-	local HealthRight = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthRight, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	HealthRight:SetPoint("RIGHT", Health, -3, 0)
-	HealthRight:SetJustifyH("RIGHT")
+	local HealthRight = UF:CreateFontString(Health, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
+	})
 
     -- Portrait
 	local Portrait
@@ -174,9 +139,7 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 		PvPIndicator:SetPoint("CENTER", Health, 5, -6)
 	end
 
-	local RaidTarget = Health:CreateTexture(nil, "OVERLAY")
-	RaidTarget:SetSize(16, 16)
-	RaidTarget:SetPoint("CENTER", Health, "TOP")
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
 
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 

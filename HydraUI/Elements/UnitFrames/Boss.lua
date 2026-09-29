@@ -29,61 +29,35 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	local Backdrop = self:CreateTexture(nil, "BACKGROUND")
-	Backdrop:SetAllPoints()
-	Backdrop:SetTexture(Assets:GetTexture("Blank"))
-	Backdrop:SetVertexColor(0, 0, 0)
+	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
 
-	-- Health Bar
-	local Health = CreateFrame("StatusBar", nil, self)
-	Health:SetPoint("TOPLEFT", self, 1, -1)
-	Health:SetPoint("TOPRIGHT", self, -1, -1)
-	Health:SetHeight(Settings["unitframes-boss-health-height"])
-	Health:SetMinMaxValues(0, 1)
-	Health:SetValue(1)
-	Health:SetStatusBarTexture(Assets:GetTexture(Settings.BossHealthTexture))
+	-- Health and prediction bars use only this frame family's resolved settings.
+	local Health, HealthBG = UF:CreateHealthBar(self, {
+		height = Settings["unitframes-boss-health-height"],
+		texture = Settings.BossHealthTexture,
+		reverseFill = Settings["unitframes-boss-health-reverse"],
+		backgroundLayer = "BORDER",
+	})
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
+		width = Settings["unitframes-boss-width"],
+		height = Settings["unitframes-boss-health-height"],
+		texture = Settings.BossHealthTexture,
+		reverseFill = Settings["unitframes-boss-health-reverse"],
+		createAbsorb = HydraUI.IsMainline,
+	})
 
-	local HealBar = CreateFrame("StatusBar", nil, Health)
-	HealBar:SetWidth(Settings["unitframes-boss-width"])
-	HealBar:SetHeight(Settings["unitframes-boss-health-height"])
-	HealBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-	HealBar:SetStatusBarTexture(Assets:GetTexture(Settings.BossHealthTexture))
-	HealBar:SetStatusBarColor(0, 0.48, 0)
-	HealBar:SetFrameLevel(Health:GetFrameLevel() - 1)
+	local HealthLeft = UF:CreateFontString(Health, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
+	})
 
-	self.HealBar = HealBar
-
-	if HydraUI.IsMainline then
-		local AbsorbsBar = CreateFrame("StatusBar", nil, Health)
-		AbsorbsBar:SetWidth(Settings["unitframes-boss-width"])
-		AbsorbsBar:SetHeight(Settings["unitframes-boss-health-height"])
-		AbsorbsBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-		AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(Settings.BossHealthTexture))
-		AbsorbsBar:SetStatusBarColor(0, 0.66, 1)
-		AbsorbsBar:SetFrameLevel(Health:GetFrameLevel() - 2)
-
-		self.AbsorbsBar = AbsorbsBar
-	end
-
-	local HealthBG = self:CreateTexture(nil, "BORDER")
-	HealthBG:SetAllPoints(Health)
-	HealthBG:SetTexture(Assets:GetTexture(Settings.BossHealthTexture))
-	HealthBG.multiplier = 0.2
-
-	local HealthLeft = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthLeft, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	HealthLeft:SetPoint("LEFT", Health, 3, 0)
-	HealthLeft:SetJustifyH("LEFT")
-
-	local HealthRight = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthRight, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	HealthRight:SetPoint("RIGHT", Health, -3, 0)
-	HealthRight:SetJustifyH("RIGHT")
+	local HealthRight = UF:CreateFontString(Health, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
+	})
 
 	-- Target Icon
-	local RaidTarget = Health:CreateTexture(nil, 'OVERLAY')
-	RaidTarget:SetSize(16, 16)
-	RaidTarget:SetPoint("CENTER", Health, "TOP")
+	local RaidTarget = UF:CreateRaidTargetIndicator(Health, { size = 16 })
 
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 
@@ -95,27 +69,21 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
 
 	UF:SetHealthAttributes(Health, Settings["unitframes-boss-health-color"])
 
-	local Power = CreateFrame("StatusBar", nil, self)
-	Power:SetPoint("BOTTOMLEFT", self, 1, 1)
-	Power:SetPoint("BOTTOMRIGHT", self, -1, 1)
-	Power:SetHeight(Settings["unitframes-boss-power-height"])
-	Power:SetStatusBarTexture(Assets:GetTexture(Settings.BossPowerTexture))
+	local Power, PowerBG = UF:CreatePowerBar(self, {
+		height = Settings["unitframes-boss-power-height"],
+		texture = Settings.BossPowerTexture,
+		reverseFill = false,
+	})
 
-	local PowerBG = Power:CreateTexture(nil, "BORDER")
-	PowerBG:SetPoint("TOPLEFT", Power, 0, 0)
-	PowerBG:SetPoint("BOTTOMRIGHT", Power, 0, 0)
-	PowerBG:SetTexture(Assets:GetTexture(Settings.BossPowerTexture))
-	PowerBG:SetAlpha(0.2)
+	local PowerLeft = UF:CreateFontString(Power, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
+	})
 
-	local PowerLeft = Power:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(PowerLeft, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	PowerLeft:SetPoint("LEFT", Power, 3, 0)
-	PowerLeft:SetJustifyH("LEFT")
-
-	local PowerRight = Power:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(PowerRight, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	PowerRight:SetPoint("RIGHT", Power, -3, 0)
-	PowerRight:SetJustifyH("RIGHT")
+	local PowerRight = UF:CreateFontString(Power, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
+	})
 
 	-- Attributes
 	Power.frequentUpdates = true
@@ -170,10 +138,10 @@ HydraUI.StyleFuncs["boss"] = function(self, unit)
     Background:SetTexture(Assets:GetTexture("Blank"))
     Background:SetVertexColor(0, 0, 0)
 
-    local Time = Castbar:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(Time, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	Time:SetPoint("RIGHT", Castbar, -3, 0)
-	Time:SetJustifyH("RIGHT")
+    local Time = UF:CreateFontString(Castbar, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
+	})
 
     local Text = Castbar:CreateFontString(nil, "OVERLAY")
 	HydraUI:SetFontInfo(Text, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])

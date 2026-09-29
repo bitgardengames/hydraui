@@ -34,74 +34,33 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 	self:SetScript("OnEnter", UnitFrame_OnEnter)
 	self:SetScript("OnLeave", UnitFrame_OnLeave)
 
-	local Backdrop = self:CreateTexture(nil, "BACKGROUND")
-	Backdrop:SetAllPoints()
-	Backdrop:SetTexture(Assets:GetTexture("Blank"))
-	Backdrop:SetVertexColor(0, 0, 0)
+	UF:CreateBackdrop(self, { texture = "Blank", layer = "BACKGROUND" })
+	UF:CreateThreatIndicator(self, { backdrop = HydraUI.Outline, postUpdate = UF.ThreatPostUpdate })
 
-	-- Threat
-	local Threat = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	Threat:SetPoint("TOPLEFT", -1, 1)
-	Threat:SetPoint("BOTTOMRIGHT", 1, -1)
-	Threat:SetBackdrop(HydraUI.Outline)
-	Threat.PostUpdate = UF.ThreatPostUpdate
+	-- Health and prediction bars use only this frame family's resolved settings.
+	local Health, HealthBG = UF:CreateHealthBar(self, {
+		height = Settings["unitframes-pet-health-height"],
+		texture = Settings.PetHealthTexture,
+		reverseFill = Settings["unitframes-pet-health-reverse"],
+		backgroundLayer = "BORDER",
+	})
+	local HealBar, AbsorbsBar = UF:CreateHealAndAbsorbBars(self, Health, {
+		width = Settings["unitframes-pet-width"],
+		height = Settings["unitframes-pet-health-height"],
+		texture = Settings.PetHealthTexture,
+		reverseFill = Settings["unitframes-pet-health-reverse"],
+		createAbsorb = HydraUI.IsMainline,
+	})
 
-	self.ThreatIndicator = Threat
+	local HealthLeft = UF:CreateFontString(Health, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "LEFT", relativePoint = "LEFT", x = 3, y = 0, justify = "LEFT",
+	})
 
-	-- Health Bar
-	local Health = CreateFrame("StatusBar", nil, self)
-	Health:SetPoint("TOPLEFT", self, 1, -1)
-	Health:SetPoint("TOPRIGHT", self, -1, -1)
-	Health:SetHeight(Settings["unitframes-pet-health-height"])
-	Health:SetStatusBarTexture(Assets:GetTexture(Settings.PetHealthTexture))
-	Health:SetReverseFill(Settings["unitframes-pet-health-reverse"])
-
-	local HealBar = CreateFrame("StatusBar", nil, Health)
-	HealBar:SetWidth(Settings["unitframes-pet-width"])
-	HealBar:SetHeight(Settings["unitframes-pet-health-height"])
-	HealBar:SetStatusBarTexture(Assets:GetTexture(Settings.PetHealthTexture))
-	HealBar:SetStatusBarColor(0, 0.48, 0)
-	HealBar:SetFrameLevel(Health:GetFrameLevel() - 1)
-
-	if Settings["unitframes-pet-health-reverse"] then
-		HealBar:SetPoint("RIGHT", Health:GetStatusBarTexture(), "LEFT", 0, 0)
-	else
-		HealBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-	end
-
-	self.HealBar = HealBar
-
-	if HydraUI.IsMainline then
-		local AbsorbsBar = CreateFrame("StatusBar", nil, Health)
-		AbsorbsBar:SetWidth(Settings["unitframes-pet-width"])
-		AbsorbsBar:SetHeight(Settings["unitframes-pet-health-height"])
-		AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(Settings.PetHealthTexture))
-		AbsorbsBar:SetStatusBarColor(0, 0.66, 1)
-		AbsorbsBar:SetFrameLevel(Health:GetFrameLevel() - 2)
-
-		if Settings["unitframes-pet-health-reverse"] then
-			AbsorbsBar:SetPoint("RIGHT", Health:GetStatusBarTexture(), "LEFT", 0, 0)
-		else
-			AbsorbsBar:SetPoint("LEFT", Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-		end
-
-		self.AbsorbsBar = AbsorbsBar
-	end
-
-	local HealthBG = self:CreateTexture(nil, "BORDER")
-	HealthBG:SetAllPoints(Health)
-	HealthBG:SetTexture(Assets:GetTexture(Settings.PetHealthTexture))
-	HealthBG.multiplier = 0.2
-
-	local HealthLeft = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthLeft, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	HealthLeft:SetPoint("LEFT", Health, 3, 0)
-	HealthLeft:SetJustifyH("LEFT")
-
-	local HealthRight = Health:CreateFontString(nil, "OVERLAY")
-	HydraUI:SetFontInfo(HealthRight, Settings["unitframes-font"], Settings["unitframes-font-size"], Settings["unitframes-font-flags"])
-	HealthRight:SetPoint("RIGHT", Health, -3, 0)
-	HealthRight:SetJustifyH("RIGHT")
+	local HealthRight = UF:CreateFontString(Health, {
+		font = Settings["unitframes-font"], size = Settings["unitframes-font-size"], flags = Settings["unitframes-font-flags"],
+		point = "RIGHT", relativePoint = "RIGHT", x = -3, y = 0, justify = "RIGHT",
+	})
 
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-header-texture-color"])
 
@@ -114,18 +73,11 @@ HydraUI.StyleFuncs["pet"] = function(self, unit)
 	UF:SetHealthAttributes(Health, Settings["unitframes-pet-health-color"])
 
 	-- Power Bar
-	local Power = CreateFrame("StatusBar", nil, self)
-	Power:SetPoint("BOTTOMLEFT", self, 1, 1)
-	Power:SetPoint("BOTTOMRIGHT", self, -1, 1)
-	Power:SetHeight(Settings["unitframes-pet-power-height"])
-	Power:SetStatusBarTexture(Assets:GetTexture(Settings.PetPowerTexture))
-	Power:SetReverseFill(Settings["unitframes-pet-power-reverse"])
-
-	local PowerBG = Power:CreateTexture(nil, "BORDER")
-	PowerBG:SetPoint("TOPLEFT", Power, 0, 0)
-	PowerBG:SetPoint("BOTTOMRIGHT", Power, 0, 0)
-	PowerBG:SetTexture(Assets:GetTexture(Settings.PetPowerTexture))
-	PowerBG:SetAlpha(0.2)
+	local Power, PowerBG = UF:CreatePowerBar(self, {
+		height = Settings["unitframes-pet-power-height"],
+		texture = Settings.PetPowerTexture,
+		reverseFill = Settings["unitframes-pet-power-reverse"],
+	})
 
 	-- Attributes
 	Power.frequentUpdates = true

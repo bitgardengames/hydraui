@@ -22,33 +22,41 @@ if C_PartyInfo and C_PartyInfo.GetLootMethod then
 	GetLootMethod = C_PartyInfo.GetLootMethod
 end
 
-function Loot:LOOT_READY()
-	if (GetCVar("autoLootDefault") == "1" and not IsModifiedClick("AUTOLOOTTOGGLE")) or (GetCVar("autoLootDefault") ~= "1" and IsModifiedClick("AUTOLOOTTOGGLE")) then
-		if (GetLootMethod() == "master") then
-			return
-		end
+function Loot:ResetQueue()
+	self:SetScript("OnUpdate", nil)
+	wipe(self.LootSlots)
+	self.Grouped = false
+end
 
+function Loot:LOOT_READY()
+	self:ResetQueue()
+
+	if (GetCVar("autoLootDefault") == "1" and not IsModifiedClick("AUTOLOOTTOGGLE")) or (GetCVar("autoLootDefault") ~= "1" and IsModifiedClick("AUTOLOOTTOGGLE")) then
 		if (IsInGroup() and GetLootMethod() == "master") then
 			self.Grouped = true
 		end
 
+		Threshold = GetLootThreshold()
+
 		for i = GetNumLootItems(), 1, -1 do
 			_, _, _, _, Quality, Locked = GetLootSlotInfo(i)
-			Threshold = GetLootThreshold()
 
 			if (Locked ~= nil and not Locked) then
-				if (self.Grouped and Quality < Threshold) then
+				if (not self.Grouped or Quality < Threshold) then
 					self.LootSlots[#self.LootSlots + 1] = i
 				end
 			end
 		end
 
-		self:SetScript("OnUpdate", self.OnUpdate)
+		if (#self.LootSlots > 0) then
+			self:SetScript("OnUpdate", self.OnUpdate)
+		end
 	end
 end
 
 function Loot:OnUpdate()
 	if (#self.LootSlots == 0) then
+		self:ResetQueue()
 		return
 	end
 
@@ -57,14 +65,7 @@ function Loot:OnUpdate()
 	end
 
 	if (GetNumLootItems() == 0) then
-		self:SetScript("OnUpdate", nil)
-
-		for i = #self.LootSlots, 1, -1 do
-			table.remove(self.LootSlots, i)
-		end
-
-		self.Grouped = false
-
+		self:ResetQueue()
 		CloseLoot()
 	end
 end
@@ -89,6 +90,7 @@ local UpdateFastLoot = function(value)
 	else
 		Loot:UnregisterEvent("LOOT_READY")
 		Loot:SetScript("OnEvent", nil)
+		Loot:ResetQueue()
 	end
 end
 

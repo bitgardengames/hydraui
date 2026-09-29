@@ -30,7 +30,14 @@ Elements\Languages\zhTW.lua
 Elements\Styles.lua
 Elements\Defaults.lua
 Elements\GUI\GUI.lua
-Elements\GUI\Widgets.lua
+Elements\GUI\WidgetCore.lua
+Elements\GUI\Dialog.lua
+Elements\GUI\Buttons.lua
+Elements\GUI\Toggles.lua
+Elements\GUI\Inputs.lua
+Elements\GUI\Dropdowns.lua
+Elements\GUI\Sliders.lua
+Elements\GUI\ColorPicker.lua
 Elements\Profiles.lua
 Elements\Colors.lua
 Elements\Throttle.lua

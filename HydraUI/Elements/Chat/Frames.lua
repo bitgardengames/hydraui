@@ -3,7 +3,7 @@ local Chat = HydraUI:GetModule("Chat")
 local select, match, gsub = select, string.match, string.gsub
 local NoCall = function() end
 local CHAT_LABEL = CHAT_LABEL
-local DT = HydraUI:GetModule("DataText")
+local DT
 
 Chat.StyledFrames = Chat.StyledFrames or {}
 Chat.TemporaryWindowHooks = Chat.TemporaryWindowHooks or {}
@@ -490,6 +490,10 @@ function Chat:MoveChatFrames()
 end
 
 function Chat:StyleChatFrames()
+	-- DataText is registered after this file is loaded. Resolve it once during
+	-- module initialization, before the edit-box focus hooks can run.
+	DT = HydraUI:GetModule("DataText")
+
 	for i = 1, NUM_CHAT_WINDOWS do
 		self:StyleChatFrame(_G["ChatFrame"..i])
 	end

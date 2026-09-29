@@ -33,6 +33,14 @@ Defaults["chat-bubbles-font"] = "PT Sans"
 Defaults["chat-bubbles-font-size"] = 14
 Defaults["chat-bubbles-font-flags"] = ""
 
+function Bubbles:PrepareSettings()
+	self.Font = Settings["chat-bubbles-font"]
+	self.FontSize = Settings["chat-bubbles-font-size"]
+	self.FontFlags = Settings["chat-bubbles-font-flags"]
+	self.Opacity = Settings["chat-bubbles-opacity"] / 100
+	self.WindowColorR, self.WindowColorG, self.WindowColorB = HydraUI:HexToRGB(Settings["ui-window-main-color"])
+end
+
 function Bubbles:RefreshBubble(bubble)
 	local Child = bubble:GetChildren()
 
@@ -40,10 +48,8 @@ function Bubbles:RefreshBubble(bubble)
 		return
 	end
 
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
-
-	HydraUI:SetFontInfo(Child.String, Settings["chat-bubbles-font"], Settings["chat-bubbles-font-size"], Settings["chat-bubbles-font-flags"])
-	bubble.Backdrop:SetBackdropColor(R, G, B, Settings["chat-bubbles-opacity"] / 100)
+	HydraUI:SetFontInfo(Child.String, self.Font, self.FontSize, self.FontFlags)
+	bubble.Backdrop:SetBackdropColor(self.WindowColorR, self.WindowColorG, self.WindowColorB, self.Opacity)
 end
 
 function Bubbles:SkinBubble(bubble)
@@ -60,15 +66,13 @@ function Bubbles:SkinBubble(bubble)
 		Child:SetBackdrop(nil)
 	end
 
-	HydraUI:SetFontInfo(Child.String, Settings["chat-bubbles-font"], Settings["chat-bubbles-font-size"], Settings["chat-bubbles-font-flags"])
-
-	local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
+	HydraUI:SetFontInfo(Child.String, self.Font, self.FontSize, self.FontFlags)
 
 	bubble.Backdrop = CreateFrame("Frame", nil, Child, "BackdropTemplate")
 	bubble.Backdrop:SetPoint("TOPLEFT", Child, 4, -4)
 	bubble.Backdrop:SetPoint("BOTTOMRIGHT", Child, -4, 4)
 	bubble.Backdrop:SetBackdrop(HydraUI.BackdropAndBorder)
-	bubble.Backdrop:SetBackdropColor(R, G, B, Settings["chat-bubbles-opacity"] / 100)
+	bubble.Backdrop:SetBackdropColor(self.WindowColorR, self.WindowColorG, self.WindowColorB, self.Opacity)
 	bubble.Backdrop:SetBackdropBorderColor(0, 0, 0)
 	bubble.Backdrop:SetFrameStrata("LOW")
 
@@ -139,6 +143,8 @@ function Bubbles:OnEvent(event)
 end
 
 function Bubbles:Load()
+	self:PrepareSettings()
+
 	if (not Settings["chat-bubbles-enable"]) then
 		return
 	end
@@ -154,6 +160,7 @@ function Bubbles:Load()
 end
 
 local SetToRefresh = function()
+	Bubbles:PrepareSettings()
 	Bubbles.NeedsRefresh = true
 	Bubbles:StartScan()
 end

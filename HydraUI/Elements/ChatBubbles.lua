@@ -5,6 +5,28 @@ local Bubbles = HydraUI:NewModule("Chat Bubbles")
 local next = next
 local GetAllChatBubbles = C_ChatBubbles.GetAllChatBubbles
 
+local ScanInterval = 0.05
+local ScanTimeout = 1
+local ScanQuietTimeout = 0.35
+
+local BubbleEvents = {
+	"CHAT_MSG_SAY",
+	"CHAT_MSG_YELL",
+	"CHAT_MSG_EMOTE",
+	"CHAT_MSG_TEXT_EMOTE",
+	"CHAT_MSG_PARTY",
+	"CHAT_MSG_PARTY_LEADER",
+	"CHAT_MSG_RAID",
+	"CHAT_MSG_RAID_LEADER",
+	"CHAT_MSG_INSTANCE_CHAT",
+	"CHAT_MSG_INSTANCE_CHAT_LEADER",
+	"CHAT_MSG_MONSTER_SAY",
+	"CHAT_MSG_MONSTER_YELL",
+	"CHAT_MSG_MONSTER_EMOTE",
+	"CHAT_MSG_MONSTER_WHISPER",
+	"CHAT_MSG_MONSTER_PARTY",
+}
+
 Defaults["chat-bubbles-enable"] = true
 Defaults["chat-bubbles-opacity"] = 70
 Defaults["chat-bubbles-font"] = "PT Sans"
@@ -12,12 +34,16 @@ Defaults["chat-bubbles-font-size"] = 14
 Defaults["chat-bubbles-font-flags"] = ""
 
 function Bubbles:RefreshBubble(bubble)
+	local Child = bubble:GetChildren()
+
+	if (not Child or Child:IsForbidden() or not bubble.Backdrop) then
+		return
+	end
+
 	local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
 
-	HydraUI:SetFontInfo(bubble:GetChildren().Text, Settings["chat-bubbles-font"], Settings["chat-bubbles-font-size"], Settings["chat-bubbles-font-flags"])
-	bubble:SetBackdropColor(R, G, B, Settings["chat-bubbles-opacity"] / 100)
-
-	self.NeedsRefresh = false
+	HydraUI:SetFontInfo(Child.String, Settings["chat-bubbles-font"], Settings["chat-bubbles-font-size"], Settings["chat-bubbles-font-flags"])
+	bubble.Backdrop:SetBackdropColor(R, G, B, Settings["chat-bubbles-opacity"] / 100)
 end
 
 function Bubbles:SkinBubble(bubble)
@@ -53,26 +79,61 @@ end
 
 function Bubbles:OnUpdate(elapsed)
 	self.Elapsed = self.Elapsed + elapsed
+	self.ScanElapsed = self.ScanElapsed + elapsed
+	self.QuietElapsed = self.QuietElapsed + elapsed
 
-	if (self.Elapsed > 0.15) then
+	if (self.Elapsed >= ScanInterval) then
+		local FoundUnskinned = false
+
 		for Index, Bubble in next, GetAllChatBubbles() do
-			if self.NeedsRefresh then
-				self:RefreshBubble(Bubble)
-			elseif (not Bubble.Skinned) then
+			if (not Bubble.Skinned) then
 				self:SkinBubble(Bubble)
+				FoundUnskinned = FoundUnskinned or Bubble.Skinned
+			elseif self.NeedsRefresh then
+				self:RefreshBubble(Bubble)
 			end
+		end
+
+		-- Clear this only after the snapshot returned by GetAllChatBubbles has
+		-- been traversed in full.
+		self.NeedsRefresh = false
+
+		if FoundUnskinned then
+			self.QuietElapsed = 0
 		end
 
 		self.Elapsed = 0
 	end
+
+	if (self.ScanElapsed >= ScanTimeout or self.QuietElapsed >= ScanQuietTimeout) then
+		self:SetScript("OnUpdate", nil)
+	end
 end
 
-function Bubbles:OnEvent()
+function Bubbles:StartScan()
+	if (not self.CanScan) then
+		return
+	end
+
+	self.Elapsed = ScanInterval
+	self.ScanElapsed = 0
+	self.QuietElapsed = 0
+	self:SetScript("OnUpdate", self.OnUpdate)
+end
+
+function Bubbles:OnEvent(event)
+	if (event ~= "PLAYER_ENTERING_WORLD") then
+		self:StartScan()
+		return
+	end
+
 	local Name, Type = GetInstanceInfo()
 
 	if (Type == "none") then
-		self:SetScript("OnUpdate", self.OnUpdate)
+		self.CanScan = true
+		self:StartScan()
 	else
+		self.CanScan = false
 		self:SetScript("OnUpdate", nil)
 	end
 end
@@ -82,14 +143,19 @@ function Bubbles:Load()
 		return
 	end
 
-	self.Elapsed = 0
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+	for Index = 1, #BubbleEvents do
+		self:RegisterEvent(BubbleEvents[Index])
+	end
+
 	self:SetScript("OnEvent", self.OnEvent)
-	self:OnEvent()
+	self:OnEvent("PLAYER_ENTERING_WORLD")
 end
 
 local SetToRefresh = function()
 	Bubbles.NeedsRefresh = true
+	Bubbles:StartScan()
 end
 
 local UpdateShowBubbles = function(value)

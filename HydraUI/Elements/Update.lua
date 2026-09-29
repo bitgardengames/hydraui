@@ -13,8 +13,6 @@ local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
 local AddOnVersion = HydraUI.UIVersion
 local AddOnNum = tonumber(HydraUI.UIVersion)
 local User = HydraUI.UserName .. "-" .. HydraUI.UserRealm
-local tinsert = table.insert
-local tremove = table.remove
 local CT = ChatThrottleLib
 
 local Prefix = "HydraUI-Version"
@@ -26,6 +24,8 @@ Update.Timer = 5
 
 local Tables = {}
 local Queue = {}
+local QueueHead = 1
+local QueueTail = 0
 
 local Throttle = HydraUI:GetModule("Throttle")
 
@@ -34,17 +34,28 @@ function Update:QueueChannel(channel, target)
 		return
 	end
 
-	local Data
+	for i = QueueHead, QueueTail do
+		local Data = Queue[i]
 
-	if (#Tables == 0) then
+		if (Data[1] == channel and Data[2] == target) then
+			return
+		end
+	end
+
+	local Data
+	local Last = #Tables
+
+	if (Last == 0) then
 		Data = {channel, target}
 	else
-		Data = tremove(Tables, 1)
+		Data = Tables[Last]
+		Tables[Last] = nil
 		Data[1] = channel
 		Data[2] = target
 	end
 
-	tinsert(Queue, Data)
+	QueueTail = QueueTail + 1
+	Queue[QueueTail] = Data
 
 	if (not self:GetScript("OnUpdate")) then
 		self:SetScript("OnUpdate", self.OnUpdate)
@@ -55,22 +66,34 @@ function Update:OnUpdate(elapsed)
 	self.Timer = self.Timer - elapsed
 
 	if (self.Timer <= 0) then
-		local Data = tremove(Queue, 1)
+		local Data = Queue[QueueHead]
 
 		if (not Data) then
+			QueueHead = 1
+			QueueTail = 0
 			self:SetScript("OnUpdate", nil)
 			self.Timer = 5
 
 			return
 		end
 
+		Queue[QueueHead] = nil
+		QueueHead = QueueHead + 1
+
+		if (QueueHead > QueueTail) then
+			QueueHead = 1
+			QueueTail = 0
+		end
+
 		CT:SendAddonMessage("NORMAL", Prefix, AddOnVersion, Data[1], Data[2])
 
-		tinsert(Tables, Data)
+		Data[1] = nil
+		Data[2] = nil
+		Tables[#Tables + 1] = Data
 
 		self.Timer = 5
 
-		if (#Queue == 0) then
+		if (QueueTail == 0) then
 			self:SetScript("OnUpdate", nil)
 		end
 	end

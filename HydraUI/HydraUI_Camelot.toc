@@ -75,7 +75,6 @@ Elements\DataTexts\CritRating.lua
 Elements\DataTexts\Durability.lua
 Elements\DataTexts\Empty.lua
 Elements\DataTexts\Experience.lua
-Elements\DataTexts\FriendsCommon.lua
 Elements\DataTexts\Friends.lua
 Elements\DataTexts\Gold.lua
 Elements\DataTexts\Guild.lua

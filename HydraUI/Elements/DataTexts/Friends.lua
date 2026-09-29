@@ -1,23 +1,371 @@
-local HydraUI, Language = select(2, ...):get()
+local HydraUI, Language, Assets, Settings = select(2, ...):get()
 
-local Adapter = {
-	Mainline = true,
-	NativeAFK = DEFAULT_AFK_MESSAGE,
-	NativeDND = DEFAULT_DND_MESSAGE,
-	NativeProject = EXPANSION_NAME10,
-	ClientNames = {App=Language["B.Net"], BSAp=Language["B.Net"], DST2=Language["Destiny 2"], D3=Language["Diablo 3"], Hero=Language["Heroes of the Storm"], OSI="Diablo II: Resurrected", Pro=Language["Overwatch 2"], S1=Language["StarCraft: Remastered"], S2=Language["StarCraft 2"], VIPR=Language["Call of Duty: Black Ops 4"], ODIN=Language["Call of Duty: Modern Warfare"], WoW=CINEMATIC_NAME_1, WTCG=Language["Hearthstone"], ANBS="Diablo Immortal", AUKS=Language["Call of Duty: MWII"], Fen=Language["Diablo IV"], GRY=Language["Warcraft Rumble"], W3=Language["Warcraft III"]},
-	ProjectNames = {[1]=EXPANSION_NAME10, [2]=EXPANSION_NAME0, [5]=EXPANSION_NAME1, [11]=EXPANSION_NAME2, [14]=EXPANSION_NAME3, [19]=EXPANSION_NAME4},
-	ClientInfo = {App={DisplayName="accountName"}, ANBS={DisplayName="accountName",Right="richPresence"}, BSAp={DisplayName="accountName",Right="richPresence"}, DST2={DisplayName="accountName",Right="richPresence"}, D3={DisplayName="accountName",Right="richPresence"}, Hero={DisplayName="accountName",Right="richPresence"}, Pro={DisplayName="accountName",Right="richPresence"}, S1={DisplayName="accountName",Right="richPresence"}, S2={DisplayName="accountName",Right="richPresence"}, VIPR={DisplayName="accountName",Right="richPresence"}, AUKS={DisplayName="accountName",Right="richPresence"}, ODIN={DisplayName="accountName",Right="richPresence"}, OSI={DisplayName="accountName",Right="richPresence"}, WTCG={DisplayName="richPresence"}, Fen={DisplayName="richPresence"}, GRY={DisplayName="richPresence"}, W3={DisplayName="accountName",Right="richPresence"}, WoW={}},
-}
-function Adapter:GetStatusTokens(Client) if Client == "W3" then return CHAT_FLAG_AFK, CHAT_FLAG_DND end return DEFAULT_AFK_MESSAGE, DEFAULT_DND_MESSAGE end
-function Adapter.FormatWoWStatus(Name, AFK) return format("|cFF00FFF6(%s)|r |cFFFFFF33<%s>|r", Name, AFK and DEFAULT_AFK_MESSAGE or DEFAULT_DND_MESSAGE) end
-function Adapter:NormalizeBattleNetFriend(Index, Record)
-	local Info = C_BattleNet.GetFriendAccountInfo(Index)
-	if not Info or not Info.gameAccountInfo then return false end
-	local Game = Info.gameAccountInfo
-	Record.client, Record.accountName, Record.character = Game.clientProgram, Info.accountName, Game.characterName
-	Record.level, Record.class, Record.area, Record.project = Game.characterLevel, Game.className, Game.areaName, Game.wowProjectID
-	Record.afk, Record.dnd, Record.richPresence = Game.isGameAFK, Game.isGameBusy, Game.richPresence
-	return true
+local GetNumFriends = C_FriendList.GetNumFriends
+local GetNumOnlineFriends = C_FriendList.GetNumOnlineFriends
+local BNGetNumFriends = BNGetNumFriends
+local GetFriendInfoByIndex = C_FriendList.GetFriendInfoByIndex
+local GetFriendAccountInfo = C_BattleNet.GetFriendAccountInfo
+local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+local GetQuestDifficultyColor = GetQuestDifficultyColor
+local next = next
+local Label = TUTORIAL_TITLE22
+local PresenceID, AccountName, BattleTag, IsBattleTagPresence, CharacterName, BNetIDGameAccount, Client, IsOnline, LastOnline, IsAFK, IsDND
+local ClientInfo = {}
+local FriendList = {}
+local GroupPool = {}
+local RowPool = {}
+
+local AcquireGroup = function()
+	local Index = #GroupPool
+	local Group = GroupPool[Index]
+
+	if Group then
+		GroupPool[Index] = nil
+		return Group
+	end
+
+	return {}
 end
-HydraUI:CreateFriendsDataText(Adapter)
+
+local AcquireRow = function()
+	local Index = #RowPool
+	local Row = RowPool[Index]
+
+	if Row then
+		RowPool[Index] = nil
+		return Row
+	end
+
+	return {}
+end
+
+local ReleaseRow = function(Row)
+	Row[1] = nil
+	Row[2] = nil
+	RowPool[#RowPool + 1] = Row
+end
+
+local ResetFriendList = function()
+	for Client, Group in next, FriendList do
+		for i = #Group, 1, -1 do
+			ReleaseRow(Group[i])
+			Group[i] = nil
+		end
+
+		GroupPool[#GroupPool + 1] = Group
+	end
+
+	wipe(FriendList)
+end
+
+local ClientToName = {
+	App = Language["B.Net"],
+	BSAp = Language["B.Net"],
+	DST2 = Language["Destiny 2"],
+	D3 = Language["Diablo 3"],
+	Hero = Language["Heroes of the Storm"],
+	OSI = "Diablo II: Resurrected",
+	Pro = Language["Overwatch 2"],
+	S1 = Language["StarCraft: Remastered"],
+	S2 = Language["StarCraft 2"],
+	VIPR = Language["Call of Duty: Black Ops 4"],
+	ODIN = Language["Call of Duty: Modern Warfare"],
+	WoW = CINEMATIC_NAME_1,
+	WTCG = Language["Hearthstone"],
+	ANBS = "Diablo Immortal",
+	AUKS = Language["Call of Duty: MWII"],
+	Fen = Language["Diablo IV"],
+	GRY = Language["Warcraft Rumble"],
+	W3 = Language["Warcraft III"],
+}
+
+local ProjectIDToName = {
+	[1] = EXPANSION_NAME10,
+	[2] = EXPANSION_NAME0,
+	[5] = EXPANSION_NAME1,
+	[11] = EXPANSION_NAME2,
+	[14] = EXPANSION_NAME3,
+	[19] = EXPANSION_NAME4,
+}
+
+local GetClass = function(class)
+	for Token, Localized in next, LOCALIZED_CLASS_NAMES_MALE do
+		if (Localized == class) then
+			return Token
+		end
+	end
+end
+
+local FormatAccountName = function(name, isAFK, isDND, afkToken, dndToken)
+	if isAFK then
+		return format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, afkToken)
+	elseif isDND then
+		return format("|cFF00FFF6%s|r |cFFFFFF33%s|r", name, dndToken)
+	end
+
+	return format("|cFF00FFF6%s|r", name)
+end
+
+-- DisplayName selects the value shown in the left column. Right selects the
+-- optional value shown in the area/rich-presence column.
+ClientInfo = {
+	App = {DisplayName = "accountName"},
+	ANBS = {DisplayName = "accountName", Right = "richPresence"},
+	BSAp = {DisplayName = "accountName", Right = "richPresence"},
+	DST2 = {DisplayName = "accountName", Right = "richPresence"},
+	D3 = {DisplayName = "accountName", Right = "richPresence"},
+	Hero = {DisplayName = "accountName", Right = "richPresence"},
+	Pro = {DisplayName = "accountName", Right = "richPresence"},
+	S1 = {DisplayName = "accountName", Right = "richPresence"},
+	S2 = {DisplayName = "accountName", Right = "richPresence"},
+	VIPR = {DisplayName = "accountName", Right = "richPresence"},
+	AUKS = {DisplayName = "accountName", Right = "richPresence"},
+	ODIN = {DisplayName = "accountName", Right = "richPresence"},
+	OSI = {DisplayName = "accountName", Right = "richPresence"},
+	WTCG = {DisplayName = "richPresence"},
+	Fen = {DisplayName = "richPresence"},
+	GRY = {DisplayName = "richPresence"},
+	W3 = {DisplayName = "accountName", Right = "richPresence", AFKToken = CHAT_FLAG_AFK, DNDToken = CHAT_FLAG_DND},
+}
+
+ClientInfo["WoW"] = function(name, info)
+	local Class = GetClass(info.gameAccountInfo.className)
+
+	local ClassColor = HydraUI.ClassColors[Class]
+	local ProjectName = ProjectIDToName[info.gameAccountInfo.wowProjectID] or CINEMATIC_NAME_1
+
+	if (not ClassColor) then
+		return ProjectName, name
+	end
+
+	ClassColor = HydraUI:RGBToHex(ClassColor[1], ClassColor[2], ClassColor[3])
+
+	local LevelColor = GetQuestDifficultyColor(info.gameAccountInfo.characterLevel)
+	LevelColor = HydraUI:RGBToHex(LevelColor.r, LevelColor.g, LevelColor.b)
+
+	if info.gameAccountInfo.isGameAFK then
+		name = format("|cFF00FFF6(%s)|r |cFFFFFF33<%s>|r", name, DEFAULT_AFK_MESSAGE)
+	elseif info.gameAccountInfo.isGameBusy then
+		name = format("|cFF00FFF6(%s)|r |cFFFFFF33<%s>|r", name, DEFAULT_DND_MESSAGE)
+	else
+		name = format("|cFF00FFF6(%s)|r", name)
+	end
+
+	local NameInfo = format("|cFF%s%s|r |cFF%s%s|r|cFFFFFFFF|r %s", LevelColor, info.gameAccountInfo.characterLevel, ClassColor, info.gameAccountInfo.characterName, name)
+	local Area = info.gameAccountInfo.areaName
+
+	if (Area == GetRealZoneText()) then
+		Area = format("|cFF33FF33%s|r", Area)
+	end
+
+	return ProjectName, NameInfo, Area
+end
+
+local GetClientInformation = function(client, name, info)
+	local Descriptor = ClientInfo[client]
+
+	if (not Descriptor) then
+		return
+	end
+
+	if (type(Descriptor) == "function") then
+		return Descriptor(name, info)
+	end
+
+	local GameAccountInfo = info.gameAccountInfo
+	local DisplayName
+
+	if (Descriptor.DisplayName == "richPresence") then
+		DisplayName = GameAccountInfo.richPresence
+	else
+		DisplayName = FormatAccountName(name, GameAccountInfo.isGameAFK, GameAccountInfo.isGameBusy, Descriptor.AFKToken or DEFAULT_AFK_MESSAGE, Descriptor.DNDToken or DEFAULT_DND_MESSAGE)
+	end
+
+	local Right = Descriptor.Right == "richPresence" and GameAccountInfo.richPresence or nil
+
+	return ClientToName[GameAccountInfo.clientProgram], DisplayName, Right
+end
+
+local OnEnter = function(self)
+	if not self:SetTooltip() then
+		return
+	end
+
+	C_FriendList.ShowFriends()
+
+	local NumFriends = GetNumFriends()
+	local NumFriendsOnline = GetNumOnlineFriends()
+	local NumBNFriends, NumBNOnline = BNGetNumFriends()
+	local Name
+	local NumClients = 0
+	local ClientCount = 0
+	local MapID = C_Map.GetBestMapForUnit("player")
+	local CurrentZone
+
+	if MapID then
+		CurrentZone = C_Map.GetMapInfo(MapID).name or GetRealZoneText()
+	else
+		CurrentZone = GetRealZoneText()
+	end
+
+	GameTooltip:AddDoubleLine(Label, format("%s/%s", NumBNOnline + NumFriendsOnline, NumFriends + NumBNFriends))
+	GameTooltip:AddLine(" ")
+
+	-- B.Net friends
+	for i = 1, NumBNFriends do
+		local Info = GetFriendAccountInfo(i)
+
+		if Info then
+			local RealClient, Left, Right = GetClientInformation(Info.gameAccountInfo.clientProgram, Info.accountName, Info)
+
+			if RealClient then
+				if (not FriendList[RealClient]) then
+					FriendList[RealClient] = AcquireGroup()
+					NumClients = NumClients + 1
+				end
+
+				local Row = AcquireRow()
+				Row[1] = Left
+				Row[2] = Right
+				FriendList[RealClient][#FriendList[RealClient] + 1] = Row
+			end
+		end
+	end
+
+	-- Regular friends
+	for i = 1, NumFriends do
+		local FriendInfo = GetFriendInfoByIndex(i)
+
+		if FriendInfo.connected then
+			local Class = GetClass(FriendInfo.className)
+
+			if (Class == "Unknown") then
+				Class = "PRIEST"
+			end
+
+			local ClassColor = HydraUI.ClassColors[Class]
+
+			ClassColor = HydraUI:RGBToHex(ClassColor[1], ClassColor[2], ClassColor[3])
+
+			local LevelColor = GetQuestDifficultyColor(FriendInfo.level)
+			LevelColor = HydraUI:RGBToHex(LevelColor.r, LevelColor.g, LevelColor.b)
+
+			if FriendInfo.afk then
+				Name = format("%s |cFFFFFF33%s|r", FriendInfo.name, DEFAULT_AFK_MESSAGE)
+			elseif FriendInfo.dnd then
+				Name = format("%s |cFFFFFF33%s|r", FriendInfo.name, DEFAULT_DND_MESSAGE)
+			else
+				Name = FriendInfo.name
+			end
+
+			local NameInfo = format("|cFFFFFFFF|cFF%s%s|r |cFF%s%s|r|cFFFFFFFF|r", LevelColor, FriendInfo.level, ClassColor, Name)
+
+			if (not FriendList[ProjectIDToName[1]]) then
+				FriendList[ProjectIDToName[1]] = AcquireGroup()
+				NumClients = NumClients + 1
+			end
+
+			local Row = AcquireRow()
+			Row[1] = NameInfo
+			Row[2] = FriendInfo.area
+			FriendList[ProjectIDToName[1]][#FriendList[ProjectIDToName[1]] + 1] = Row
+		end
+	end
+
+	for client, info in next, FriendList do
+		GameTooltip:AddLine(client)
+		ClientCount = ClientCount + 1
+
+		for i = 1, #info do
+			if info[i][2] then
+				if (info[i][2] == CurrentZone) then
+					GameTooltip:AddDoubleLine(info[i][1], info[i][2], nil, nil, nil, 0.2, 1, 0.2)
+				else
+					GameTooltip:AddDoubleLine(info[i][1], info[i][2], nil, nil, nil, 1, 1, 1)
+				end
+			else
+				GameTooltip:AddLine(info[i][1])
+			end
+		end
+
+		if (ClientCount ~= NumClients) then
+			GameTooltip:AddLine(" ")
+		end
+	end
+
+	GameTooltip:Show()
+
+	ResetFriendList()
+
+	self.TooltipShown = true
+end
+
+local OnLeave = function(self)
+	GameTooltip:Hide()
+	self.TooltipShown = false
+end
+
+local OnMouseUp = function()
+	if (not InCombatLockdown()) then
+		ToggleFriendsFrame(1)
+	end
+end
+
+local Update = function(self)
+	local NumOnline = GetNumOnlineFriends()
+	local NumBNFriends, NumBNOnline = BNGetNumFriends()
+	local Online = NumOnline + NumBNOnline
+
+	self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor, Online)
+
+	if self.TooltipShown then
+		OnLeave(self)
+		OnEnter(self)
+	end
+end
+
+local OnEnable = function(self)
+	self:RegisterEvent("FRIENDLIST_UPDATE")
+	self:RegisterEvent("BN_FRIEND_ACCOUNT_ONLINE")
+	self:RegisterEvent("BN_FRIEND_ACCOUNT_OFFLINE")
+	self:RegisterEvent("BN_FRIEND_LIST_SIZE_CHANGED")
+	self:RegisterEvent("BN_INFO_CHANGED")
+	self:RegisterEvent("BN_FRIEND_INFO_CHANGED")
+	self:RegisterEvent("BN_CONNECTED")
+	self:RegisterEvent("BN_DISCONNECTED")
+	self:RegisterEvent("WHO_LIST_UPDATE")
+	self:RegisterEvent("GUILD_ROSTER_UPDATE")
+	self:RegisterEvent("PLAYER_GUILD_UPDATE")
+	self:RegisterEvent("PLAYER_FLAGS_CHANGED")
+	self:SetScript("OnEvent", Update)
+	self:SetScript("OnEnter", OnEnter)
+	self:SetScript("OnLeave", OnLeave)
+	self:SetScript("OnMouseUp", OnMouseUp)
+
+	C_FriendList.ShowFriends()
+
+	self:Update()
+end
+
+local OnDisable = function(self)
+	self:UnregisterEvent("FRIENDLIST_UPDATE")
+	self:UnregisterEvent("BN_FRIEND_ACCOUNT_ONLINE")
+	self:UnregisterEvent("BN_FRIEND_ACCOUNT_OFFLINE")
+	self:UnregisterEvent("BN_FRIEND_LIST_SIZE_CHANGED")
+	self:UnregisterEvent("BN_INFO_CHANGED")
+	self:UnregisterEvent("BN_FRIEND_INFO_CHANGED")
+	self:UnregisterEvent("BN_CONNECTED")
+	self:UnregisterEvent("BN_DISCONNECTED")
+	self:UnregisterEvent("WHO_LIST_UPDATE")
+	self:UnregisterEvent("GUILD_ROSTER_UPDATE")
+	self:UnregisterEvent("PLAYER_GUILD_UPDATE")
+	self:UnregisterEvent("PLAYER_FLAGS_CHANGED")
+	self:SetScript("OnEvent", nil)
+	self:SetScript("OnEnter", nil)
+	self:SetScript("OnLeave", nil)
+	self:SetScript("OnMouseUp", nil)
+
+	self.Text:SetText("")
+end
+
+HydraUI:AddDataText("Friends", OnEnable, OnDisable, Update)

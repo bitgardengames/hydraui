@@ -219,105 +219,83 @@ HydraUI.StyleFuncs["focus"] = function(self, unit)
 end
 
 local UpdateFocusWidth = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		HydraUI.UnitFrames["focus"]:SetWidth(value)
+	local Frame = HydraUI.UnitFrames["focus"]
+
+	if Frame then
+		UF:SetFrameWidth(Frame, value)
 	end
 end
 
 local UpdateFocusHealthHeight = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		HydraUI.UnitFrames["focus"].Health:SetHeight(value)
-		HydraUI.UnitFrames["focus"]:SetHeight(value + Settings["unitframes-focus-power-height"] + 3)
+	local Frame = HydraUI.UnitFrames["focus"]
+
+	if Frame then
+		UF:SetHealthHeight(Frame, value, Settings["unitframes-focus-power-height"])
 	end
 end
 
 local UpdateFocusPowerHeight = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		local Frame = HydraUI.UnitFrames["focus"]
+	local Frame = HydraUI.UnitFrames["focus"]
 
-		Frame.Power:SetHeight(value)
-		Frame:SetHeight(Settings["unitframes-focus-health-height"] + value + 3)
+	if Frame then
+		UF:SetPowerHeight(Frame, value, Settings["unitframes-focus-health-height"])
 	end
 end
 
 local UpdateFocusHealthColor = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		local Health = HydraUI.UnitFrames["focus"].Health
+	local Frame = HydraUI.UnitFrames["focus"]
 
-		UF:SetHealthAttributes(Health, value)
-
-		Health:ForceUpdate()
+	if Frame then
+		UF:ApplyHealthAttributes(Frame, value)
 	end
 end
 
 local UpdateFocusHealthFill = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		local Unit = HydraUI.UnitFrames["focus"]
+	local Frame = HydraUI.UnitFrames["focus"]
 
-		Unit.Health:SetReverseFill(value)
-		Unit.AbsorbsBar:SetReverseFill(value)
-		Unit.HealBar:SetReverseFill(value)
-
-		Unit.AbsorbsBar:ClearAllPoints()
-		Unit.HealBar:ClearAllPoints()
-
-		if value then
-			Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-			Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-		else
-			Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-			Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-		end
+	if Frame then
+		UF:SetHealthReverseFill(Frame, value)
 	end
 end
 
 local UpdateFocusPowerColor = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		local Power = HydraUI.UnitFrames["focus"].Power
+	local Frame = HydraUI.UnitFrames["focus"]
 
-		UF:SetPowerAttributes(Power, value)
-
-		Power:ForceUpdate()
+	if Frame then
+		UF:ApplyPowerAttributes(Frame, value)
 	end
 end
 
 local UpdateShowFocusBuffs = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		if value then
-			HydraUI.UnitFrames["focus"]:EnableElement("Auras")
-			HydraUI.UnitFrames["focus"]:UpdateAllElements("ForceUpdate")
-		else
-			HydraUI.UnitFrames["focus"]:DisableElement("Auras")
-		end
+	local Frame = HydraUI.UnitFrames["focus"]
+
+	if Frame then
+		UF:SetElementEnabled(Frame, value, "Auras")
+		Frame:UpdateAllElements("ForceUpdate")
 	end
 end
 
 local UpdateFocusPowerFill = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		HydraUI.UnitFrames["focus"].Power:SetReverseFill(value)
+	local Frame = HydraUI.UnitFrames["focus"]
+
+	if Frame then
+		UF:SetPowerReverseFill(Frame, value)
 	end
 end
 
 local UpdateHealthTexture = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		local Frame = HydraUI.UnitFrames["focus"]
+	local Frame = HydraUI.UnitFrames["focus"]
 
-		Frame.Health:SetStatusBarTexture(Assets:GetTexture(value))
-		Frame.Health.bg:SetTexture(Assets:GetTexture(value))
-		Frame.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
-
-		if Frame.AbsorbsBar then
-			Frame.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
-		end
+	if Frame then
+		UF:SetHealthTexture(Frame, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
-	if HydraUI.UnitFrames["focus"] then
-		local Frame = HydraUI.UnitFrames["focus"]
+	local Frame = HydraUI.UnitFrames["focus"]
 
-		Frame.Power:SetStatusBarTexture(Assets:GetTexture(value))
-		Frame.Power.bg:SetTexture(Assets:GetTexture(value))
+	if Frame then
+		UF:SetPowerTexture(Frame, value)
 	end
 end
 

@@ -361,113 +361,105 @@ local UpdateRaidAnchorSize = function()
 	UF.RaidAnchor:SetHeight((Settings["raid-health-height"] + Settings["raid-power-height"]) * (Settings["raid-max-columns"] + (Settings["raid-y-offset"])) - 1)
 end
 
+local SetRaidWidth = function(Unit, value)
+	UF:SetFrameWidth(Unit, value)
+end
+
+local SetRaidHealthHeight = function(Unit, value)
+	UF:SetHealthHeight(Unit, value, Settings["raid-power-height"])
+end
+
+local SetRaidHealthColor = function(Unit, value)
+	UF:ApplyHealthAttributes(Unit, value)
+end
+
+local SetRaidPowerEnabled = function(Unit, value)
+	UF:SetElementEnabled(Unit, value, "Power")
+	Unit:SetHeight(Settings["raid-health-height"] + (value and Settings["raid-power-height"] + 3 or 2))
+end
+
+local SetRaidPowerHeight = function(Unit, value)
+	UF:SetPowerHeight(Unit, value, Settings["raid-health-height"])
+end
+
+local SetRaidHealthOrientation = function(Unit, value)
+	Unit.Health:SetOrientation(value)
+end
+
+local SetRaidHealthReverseFill = function(Unit, value)
+	UF:SetHealthReverseFill(Unit, value)
+end
+
+local SetRaidPowerReverseFill = function(Unit, value)
+	UF:SetPowerReverseFill(Unit, value)
+end
+
+local SetRaidPowerColor = function(Unit, value)
+	UF:ApplyPowerAttributes(Unit, value)
+end
+
+local SetRaidHealthTexture = function(Unit, value)
+	UF:SetHealthTexture(Unit, value)
+end
+
+local SetRaidPowerTexture = function(Unit, value)
+	UF:SetPowerTexture(Unit, value)
+end
+
 local UpdateRaidWidth = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit:SetWidth(value)
-		end, value)
-
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidWidth, value)
 		UpdateRaidAnchorSize()
 	end
 end
 
 local UpdateRaidHealthHeight = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit:SetHeight(value + Settings["raid-power-height"] + 3)
-			Unit.Health:SetHeight(value)
-		end, value)
-
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthHeight, value)
 		UpdateRaidAnchorSize()
 	end
 end
 
 local UpdateRaidHealthColor = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			UF:SetHealthAttributes(Unit.Health, value)
-
-			Unit.Health:ForceUpdate()
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthColor, value)
 	end
 end
 
 local UpdateRaidHealthOrientation = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit.Health:SetOrientation(value)
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthOrientation, value)
 	end
 end
 
 local UpdateRaidHealthReverseFill = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit.Health:SetReverseFill(value)
-			Unit.HealBar:SetReverseFill(value)
-			Unit.HealBar:ClearAllPoints()
-
-			if value then
-				Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-
-				if Unit.AbsorbsBar then
-					Unit.AbsorbsBar:SetReverseFill(value)
-					Unit.AbsorbsBar:ClearAllPoints()
-					Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-				end
-			else
-				Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-
-				if Unit.AbsorbsBar then
-					Unit.AbsorbsBar:SetReverseFill(value)
-					Unit.AbsorbsBar:ClearAllPoints()
-					Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-				end
-			end
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthReverseFill, value)
 	end
 end
 
 local UpdateEnableRaidPower = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			if value then
-				Unit:EnableElement("Power")
-				Unit:SetHeight(Settings["raid-health-height"] + Settings["raid-power-height"] + 3)
-			else
-				Unit:DisableElement("Power")
-				Unit:SetHeight(Settings["raid-health-height"] + 2)
-			end
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerEnabled, value)
 	end
 end
 
 local UpdateRaidPowerHeight = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit:SetHeight(value + Settings["raid-health-height"] + 3)
-			Unit.Power:SetHeight(value)
-		end, value)
-
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerHeight, value)
 		UpdateRaidAnchorSize()
 	end
 end
 
 local UpdateRaidPowerReverseFill = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit.Power:SetReverseFill(value)
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerReverseFill, value)
 	end
 end
 
 local UpdateRaidPowerColor = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			UF:SetPowerAttributes(Unit.Power, value)
-
-			Unit.Power:ForceUpdate()
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerColor, value)
 	end
 end
 
@@ -553,6 +545,25 @@ local UpdateRaidSortingMethod = function(value)
 	end
 end
 
+local HideTestFrame = function(Frame)
+	UnregisterUnitWatch(Frame)
+	Frame:Hide()
+end
+
+local ShowTestFrame = function(Frame)
+	Frame.unit = "player"
+	UnregisterUnitWatch(Frame)
+	RegisterUnitWatch(Frame, true)
+	Frame:Show()
+end
+
+local ShowTestPetFrame = function(Frame)
+	Frame.unit = UnitExists("pet") and "pet" or "player"
+	UnregisterUnitWatch(Frame)
+	RegisterUnitWatch(Frame, true)
+	Frame:Show()
+end
+
 local Testing = false
 
 local TestRaid = function()
@@ -567,10 +578,7 @@ local TestRaid = function()
 				Header:SetAttribute("startingIndex", -24)
 			end
 
-			UF:ForEachHeaderChild(Header, function(Frame)
-				UnregisterUnitWatch(Frame)
-				Frame:Hide()
-			end)
+			UF:ForEachHeaderChild(Header, HideTestFrame)
 		end
 
 		if Pets then
@@ -580,10 +588,7 @@ local TestRaid = function()
 				Pets:SetAttribute("startingIndex", -24)
 			end
 
-			UF:ForEachHeaderChild(Pets, function(Frame)
-				UnregisterUnitWatch(Frame)
-				Frame:Hide()
-			end)
+			UF:ForEachHeaderChild(Pets, HideTestFrame)
 		end
 
 		Testing = false
@@ -595,12 +600,7 @@ local TestRaid = function()
 				Header:SetAttribute("startingIndex", -24)
 			end
 
-			UF:ForEachHeaderChild(Header, function(Frame)
-				Frame.unit = "player"
-				UnregisterUnitWatch(Frame)
-				RegisterUnitWatch(Frame, true)
-				Frame:Show()
-			end)
+			UF:ForEachHeaderChild(Header, ShowTestFrame)
 		end
 
 		if Pets then
@@ -610,12 +610,7 @@ local TestRaid = function()
 				Pets:SetAttribute("startingIndex", -24)
 			end
 
-			UF:ForEachHeaderChild(Pets, function(Frame)
-				Frame.unit = UnitExists("pet") and "pet" or "player"
-				UnregisterUnitWatch(Frame)
-				RegisterUnitWatch(Frame, true)
-				Frame:Show()
-			end)
+			UF:ForEachHeaderChild(Pets, ShowTestPetFrame)
 		end
 
 		Testing = true
@@ -628,24 +623,13 @@ end
 
 local UpdateHealthTexture = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit.Health:SetStatusBarTexture(Assets:GetTexture(value))
-			Unit.Health.bg:SetTexture(Assets:GetTexture(value))
-			Unit.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
-
-			if Unit.AbsorbsBar then
-				Unit.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
-			end
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidHealthTexture, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
 	if HydraUI.UnitFrames["raid"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], function(Unit, value)
-			Unit.Power:SetStatusBarTexture(Assets:GetTexture(value))
-			Unit.Power.bg:SetTexture(Assets:GetTexture(value))
-		end, value)
+		UF:ForEachHeaderChild(HydraUI.UnitFrames["raid"], SetRaidPowerTexture, value)
 	end
 end
 

@@ -884,7 +884,7 @@ local UpdatePlayerWidth = function(value)
 	if HydraUI.UnitFrames["player"] then
 		local Frame = HydraUI.UnitFrames["player"]
 
-		Frame:SetWidth(value)
+		UF:SetFrameWidth(Frame, value)
 
 		-- Auras
 		Frame.Buffs:SetWidth(value)
@@ -957,57 +957,38 @@ local UpdatePlayerWidth = function(value)
 end
 
 local UpdatePlayerHealthHeight = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
+	local Frame = HydraUI.UnitFrames["player"]
 
-		Frame.Health:SetHeight(value)
-		Frame:SetHeight(value + Settings["unitframes-player-power-height"] + 3)
+	if Frame then
+		UF:SetHealthHeight(Frame, value, Settings["unitframes-player-power-height"])
 	end
 end
 
 local UpdatePlayerHealthFill = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Unit = HydraUI.UnitFrames["player"]
+	local Frame = HydraUI.UnitFrames["player"]
 
-		Unit.Health:SetReverseFill(value)
-		Unit.HealBar:SetReverseFill(value)
-		Unit.HealBar:ClearAllPoints()
-
-		if value then
-			Unit.HealBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-
-			if Unit.AbsorbsBar then
-				Unit.AbsorbsBar:SetReverseFill(value)
-				Unit.AbsorbsBar:ClearAllPoints()
-				Unit.AbsorbsBar:SetPoint("RIGHT", Unit.Health:GetStatusBarTexture(), "LEFT", 0, 0)
-			end
-		else
-			Unit.HealBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-
-			if Unit.AbsorbsBar then
-				Unit.AbsorbsBar:SetReverseFill(value)
-				Unit.AbsorbsBar:ClearAllPoints()
-				Unit.AbsorbsBar:SetPoint("LEFT", Unit.Health:GetStatusBarTexture(), "RIGHT", 0, 0)
-			end
-		end
+	if Frame then
+		UF:SetHealthReverseFill(Frame, value)
 	end
 end
 
 local UpdatePlayerPowerHeight = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
+	local Frame = HydraUI.UnitFrames["player"]
 
-		Frame.Power:SetHeight(value)
-
-		if (not Settings["player-move-power"]) then
-			Frame:SetHeight(Settings["unitframes-player-health-height"] + value + 3)
+	if Frame then
+		if Settings["player-move-power"] then
+			Frame.Power:SetHeight(value)
+		else
+			UF:SetPowerHeight(Frame, value, Settings["unitframes-player-health-height"])
 		end
 	end
 end
 
 local UpdatePlayerPowerFill = function(value)
-	if HydraUI.UnitFrames["player"] then
-		HydraUI.UnitFrames["player"].Power:SetReverseFill(value)
+	local Frame = HydraUI.UnitFrames["player"]
+
+	if Frame then
+		UF:SetPowerReverseFill(Frame, value)
 	end
 end
 
@@ -1026,42 +1007,36 @@ local UpdateCastClassColor = function(value)
 end
 
 local UpdatePlayerHealthColor = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Health = HydraUI.UnitFrames["player"].Health
+	local Frame = HydraUI.UnitFrames["player"]
 
-		UF:SetHealthAttributes(Health, value)
-
-		Health:ForceUpdate()
+	if Frame then
+		UF:ApplyHealthAttributes(Frame, value)
 	end
 end
 
 local UpdatePlayerPowerColor = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Power = HydraUI.UnitFrames["player"].Power
+	local Frame = HydraUI.UnitFrames["player"]
 
-		UF:SetPowerAttributes(Power, value)
-
-		Power:ForceUpdate()
+	if Frame then
+		UF:ApplyPowerAttributes(Frame, value)
 	end
 end
 
 local UpdatePlayerEnablePortrait = function(value)
-	if HydraUI.UnitFrames["player"] then
-		if value then
-			HydraUI.UnitFrames["player"]:EnableElement("Portrait")
+	local Frame = HydraUI.UnitFrames["player"]
 
-			if HydraUI.UnitFrames["player"].Portrait.BG then
-				HydraUI.UnitFrames["player"].Portrait.BG:Show()
-			end
-		else
-			HydraUI.UnitFrames["player"]:DisableElement("Portrait")
+	if Frame and Frame.Portrait then
+		UF:SetElementEnabled(Frame, value, "Portrait")
 
-			if HydraUI.UnitFrames["player"].Portrait.BG then
-				HydraUI.UnitFrames["player"].Portrait.BG:Hide()
+		if Frame.Portrait.BG then
+			if value then
+				Frame.Portrait.BG:Show()
+			else
+				Frame.Portrait.BG:Hide()
 			end
 		end
 
-		HydraUI.UnitFrames["player"].Portrait:ForceUpdate()
+		Frame.Portrait:ForceUpdate()
 	end
 end
 
@@ -1367,36 +1342,31 @@ local UpdatePowerBarPosition = function(value)
 end
 
 local UpdateHealthTexture = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
+	local Frame = HydraUI.UnitFrames["player"]
 
-		Frame.Health:SetStatusBarTexture(Assets:GetTexture(value))
-		Frame.Health.bg:SetTexture(Assets:GetTexture(value))
-		Frame.HealBar:SetStatusBarTexture(Assets:GetTexture(value))
-
-		if Frame.AbsorbsBar then
-			Frame.AbsorbsBar:SetStatusBarTexture(Assets:GetTexture(value))
-		end
+	if Frame then
+		UF:SetHealthTexture(Frame, value)
 	end
 end
 
 local UpdatePowerTexture = function(value)
-	if HydraUI.UnitFrames["player"] then
-		local Frame = HydraUI.UnitFrames["player"]
+	local Frame = HydraUI.UnitFrames["player"]
 
-		Frame.Power:SetStatusBarTexture(Assets:GetTexture(value))
-		Frame.Power.bg:SetTexture(Assets:GetTexture(value))
+	if Frame then
+		UF:SetPowerTexture(Frame, value)
+
+		local Texture = Assets:GetTexture(value)
 
 		if Frame.ManaTimer then
-			Frame.ManaTimer:SetStatusBarTexture(Assets:GetTexture(value))
+			Frame.ManaTimer:SetStatusBarTexture(Texture)
 		end
 
 		if Frame.EnergyTick then
-			Frame.EnergyTick:SetStatusBarTexture(Assets:GetTexture(value))
+			Frame.EnergyTick:SetStatusBarTexture(Texture)
 		end
 
 		if Frame.PowerPrediction then
-			Frame.PowerPrediction.mainBar:SetStatusBarTexture(Assets:GetTexture(value))
+			Frame.PowerPrediction.mainBar:SetStatusBarTexture(Texture)
 		end
 	end
 end

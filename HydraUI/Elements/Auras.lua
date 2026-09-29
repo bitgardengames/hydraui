@@ -41,99 +41,49 @@ Defaults["auras-duration-align"] = "CENTER"
 
 Auras.Headers = {}
 
-local ActiveButtons = {}
-local ActiveButtonCount = 0
-local EnchantButtons = {}
-local EnchantButtonCount = 0
-local UpdateElapsed = 0
-local Updater = CreateFrame("Frame")
-
 local UnregisterButton = function(button)
-	if ActiveButtons[button] then
-		ActiveButtons[button] = nil
-		ActiveButtonCount = ActiveButtonCount - 1
-	end
+	HydraUI.DurationText:Unregister(button)
 
-	if EnchantButtons[button] then
-		EnchantButtons[button] = nil
-		EnchantButtonCount = EnchantButtonCount - 1
-	end
-
+	-- Unregister is also called for buttons which were never scheduled.
 	button.ExpirationTime = nil
 	button.TimeLeft = nil
 	button.Dur = nil
 	button.Enchant = nil
 	button.LastDuration = nil
 	button.Duration:SetText("")
+end
 
-	if (ActiveButtonCount == 0) then
-		UpdateElapsed = 0
-		Updater:Hide()
+local function GetButtonRemaining(button, now)
+	local TimeLeft
+
+	if button.Enchant then
+		local _, MainHandExpiration, _, _, _, OffHandExpiration = GetWeaponEnchantInfo()
+		local Expiration = button.Enchant == 2 and MainHandExpiration or OffHandExpiration
+		TimeLeft = Expiration and Expiration / 1e3 or 0
+	else
+		TimeLeft = button.ExpirationTime - now
 	end
+
+	button.TimeLeft = TimeLeft
+	return TimeLeft
+end
+
+local function ClearButtonDuration(button)
+	button.ExpirationTime = nil
+	button.TimeLeft = nil
+	button.Dur = nil
+	button.Enchant = nil
+	button.LastDuration = nil
+	button.Duration:SetText("")
+end
+
+local function FormatButtonDuration(remaining)
+	return HydraUI:FormatTime(remaining)
 end
 
 local RegisterButton = function(button)
-	if (not ActiveButtons[button]) then
-		ActiveButtons[button] = true
-		ActiveButtonCount = ActiveButtonCount + 1
-	end
-
-	if button.Enchant then
-		if (not EnchantButtons[button]) then
-			EnchantButtons[button] = true
-			EnchantButtonCount = EnchantButtonCount + 1
-		end
-	elseif EnchantButtons[button] then
-		EnchantButtons[button] = nil
-		EnchantButtonCount = EnchantButtonCount - 1
-	end
-
-	Updater:Show()
+	HydraUI.DurationText:Register(button, button.Duration, FormatButtonDuration, GetButtonRemaining, ClearButtonDuration)
 end
-
-Updater:SetScript("OnUpdate", function(self, elapsed)
-	UpdateElapsed = UpdateElapsed + elapsed
-
-	if (UpdateElapsed < 0.1) then
-		return
-	end
-
-	UpdateElapsed = 0
-
-	local Now = GetTime()
-	local _, MainHandExpiration, OffHandExpiration
-
-	if (EnchantButtonCount > 0) then
-		_, MainHandExpiration, _, _, _, OffHandExpiration = GetWeaponEnchantInfo()
-	end
-
-	for Button in pairs(ActiveButtons) do
-		local TimeLeft
-
-		if (Button.Enchant == 2) then
-			TimeLeft = MainHandExpiration and MainHandExpiration / 1e3 or 0
-		elseif (Button.Enchant == 6) then
-			TimeLeft = OffHandExpiration and OffHandExpiration / 1e3 or 0
-		else
-			TimeLeft = Button.ExpirationTime - Now
-		end
-
-		Button.TimeLeft = TimeLeft
-
-		if (TimeLeft <= 0) then
-			UnregisterButton(Button)
-		else
-			local FormattedDuration = HydraUI:FormatTime(TimeLeft)
-
-			if (FormattedDuration ~= Button.LastDuration) then
-				Button.LastDuration = FormattedDuration
-				Button.Duration:SetText(FormattedDuration)
-			end
-		end
-	end
-end)
-
-Updater:Hide()
 
 local UpdateTempEnchant = function(button, slot)
 	local Enchant = (slot == 16 and 2) or 6

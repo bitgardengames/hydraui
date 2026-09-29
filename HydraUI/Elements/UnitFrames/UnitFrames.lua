@@ -105,67 +105,33 @@ function UF:SetPowerAttributes(power, value)
 	end
 end
 
-local ActiveAuraTimers = setmetatable({}, {__mode = "k"})
-local ActiveAuraTimerCount = 0
-local AuraTimerFrame = CreateFrame("Frame")
-local AuraTimerElapsed = 0
-
 local UnregisterAuraTimer = function(button)
-	if ActiveAuraTimers[button] then
-		ActiveAuraTimers[button] = nil
-		ActiveAuraTimerCount = ActiveAuraTimerCount - 1
-	end
-
+	HydraUI.DurationText:Unregister(button)
 	button.LastAuraTime = nil
 
 	if button.Time then
 		button.Time:Hide()
 	end
 
-	if (ActiveAuraTimerCount == 0) then
-		AuraTimerElapsed = 0
-		AuraTimerFrame:SetScript("OnUpdate", nil)
-	end
 end
 
-local UpdateAuraTimers = function(_, elapsed)
-	AuraTimerElapsed = AuraTimerElapsed + elapsed
+local function GetAuraRemaining(button, now)
+	return button.Expiration and (button.Expiration - now)
+end
 
-	if (AuraTimerElapsed > 0.1) then
-		local Now = GetTime()
+local function FormatAuraRemaining(remaining)
+	return HydraUI:AuraFormatTime(remaining)
+end
 
-		for Button in pairs(ActiveAuraTimers) do
-			local Remaining = Button.Expiration and (Button.Expiration - Now)
-
-			if (Remaining and Remaining > 0 and Button:IsShown()) then
-				local FormattedTime = HydraUI:AuraFormatTime(Remaining)
-
-				if (FormattedTime ~= Button.LastAuraTime) then
-					Button.LastAuraTime = FormattedTime
-					Button.Time:SetText(FormattedTime)
-				end
-			else
-				UnregisterAuraTimer(Button)
-			end
-		end
-
-		AuraTimerElapsed = 0
-	end
+local function ClearAuraTimer(button)
+	button.LastAuraTime = nil
+	button.Time:Hide()
 end
 
 local RegisterAuraTimer = function(button, expiration)
 	button.Expiration = expiration
-
-	if (not ActiveAuraTimers[button]) then
-		ActiveAuraTimers[button] = true
-		ActiveAuraTimerCount = ActiveAuraTimerCount + 1
-
-		if (ActiveAuraTimerCount == 1) then
-			AuraTimerFrame:SetScript("OnUpdate", UpdateAuraTimers)
-		end
-	end
-
 	button.Time:Show()
+	HydraUI.DurationText:Register(button, button.Time, FormatAuraRemaining, GetAuraRemaining, ClearAuraTimer)
 end
 
 UF.ThreatPostUpdate = function(self, unit, status, r, g, b)

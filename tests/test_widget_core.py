@@ -110,3 +110,32 @@ def test_lua_viewport_owns_rendering_scrollbar_and_mousewheel_contracts():
     assert "RenderRow = options.RenderRow" in GUI
     assert "SetSelectionOffset" not in NAVIGATION
     assert "WindowScrollBarOnValueChanged" not in FRAME
+
+
+def test_vertical_scroll_consumers_use_shared_controls_with_distinct_options():
+    assert "local CreateVerticalScrollControls = function(Owner, Options)" in FRAME
+    assert FRAME.count("CreateVerticalScrollControls(self, {") == 2
+
+    window = FRAME[FRAME.index("local AddWindowScrollBar"):FRAME.index("local DisableScrolling")]
+    assert 'TopAnchor = {"TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1)}' in window
+    assert 'BottomAnchor = {"BOTTOMRIGHT", GUI, -SPACING, SPACING}' in window
+    assert "HighlightAlpha = SELECTED_HIGHLIGHT_ALPHA" in window
+    assert "ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA" in window
+    assert "ScrollUp = function() self.RowViewport:ScrollBy(1) end" in window
+    assert "ScrollDown = function() self.RowViewport:ScrollBy(-1) end" in window
+    assert "WheelTarget = self" in window
+
+    navigation = FRAME[FRAME.index("local CreateNavigationRegion"):FRAME.index("local CreateCloseControl")]
+    assert 'TopAnchor = {"TOPLEFT", self.MenuParent, "TOPRIGHT", 2, 0}' in navigation
+    assert 'BottomAnchor = {"BOTTOMLEFT", self.MenuParent, "BOTTOMRIGHT", 2, 0}' in navigation
+    assert "HighlightAlpha = MOUSEOVER_HIGHLIGHT_ALPHA" in navigation
+    assert "ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA" in navigation
+    assert "ScrollUp = function() self.SelectionViewport:ScrollBy(1) end" in navigation
+    assert "ScrollDown = function() self.SelectionViewport:ScrollBy(-1) end" in navigation
+    assert "WheelTarget = self.MenuParent" in navigation
+
+
+def test_scroll_arrow_colors_are_updated_by_shared_function():
+    assert "local UpdateScrollArrowColors = function(Owner, Offset, MaxOffset)" in FRAME
+    assert "UpdateScrollArrowColors(Owner, Offset, Owner.MaxScroll)" in FRAME
+    assert "UpdateScrollArrowColors(Owner, Offset, MaxOffset)" in FRAME

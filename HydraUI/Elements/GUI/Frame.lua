@@ -65,103 +65,96 @@ local UpdateWidgetRows = function(Owner, Rows, OldRows, OldFirst, OldLast, First
 	Owner.LastRenderedRightOffset = RightOffset
 end
 
-local AfterRenderWidgetRows = function(Owner, Offset)
-	if not Owner.ScrollBar then return end
+local UpdateScrollArrowColors = function(Owner, Offset, MaxOffset)
 	if Offset == 1 then
 		Owner.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
 	else
 		Owner.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 	end
-	if Offset == Owner.MaxScroll then
+
+	if Offset == MaxOffset then
 		Owner.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
 	else
 		Owner.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 	end
 end
 
+local AfterRenderWidgetRows = function(Owner, Offset)
+	if not Owner.ScrollBar then return end
+	UpdateScrollArrowColors(Owner, Offset, Owner.MaxScroll)
+end
+
+local CreateVerticalScrollControls = function(Owner, Options)
+	local function CreateArrowControl(Direction, Anchor, Scroll)
+		local Button = CreateFrame("Frame", nil, Owner, "BackdropTemplate")
+		Button:SetSize(16, WIDGET_HEIGHT)
+		Button:SetPoint(unpack(Anchor))
+		Button:SetBackdrop(HydraUI.BackdropAndBorder)
+		Button:SetBackdropColor(0, 0, 0, 0)
+		Button:SetBackdropBorderColor(0, 0, 0)
+		Button:SetScript("OnMouseUp", function(button)
+			button.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+			Scroll()
+		end)
+		Button:SetScript("OnMouseDown", function(button)
+			local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
+			button.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
+		end)
+
+		Button.Texture = Button:CreateTexture(nil, "ARTWORK")
+		Button.Texture:SetPoint("TOPLEFT", Button, 1, -1)
+		Button.Texture:SetPoint("BOTTOMRIGHT", Button, -1, 1)
+		Button.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
+		Button.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
+
+		Button.Highlight = Button:CreateTexture(nil, "HIGHLIGHT")
+		Button.Highlight:SetPoint("TOPLEFT", Button, 1, -1)
+		Button.Highlight:SetPoint("BOTTOMRIGHT", Button, -1, 1)
+		Button.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
+		Button.Highlight:SetVertexColor(1, 1, 1)
+		Button.Highlight:SetAlpha(Options.HighlightAlpha)
+
+		Button.Arrow = Button:CreateTexture(nil, "OVERLAY")
+		Button.Arrow:SetPoint("CENTER", Button, 0, 0)
+		Button.Arrow:SetSize(16, 16)
+		Button.Arrow:SetTexture(Assets:GetTexture("Arrow " .. Direction))
+
+		return Button
+	end
+
+	Owner.ScrollUp = CreateArrowControl("Up", Options.TopAnchor, Options.ScrollUp)
+	Owner.ScrollDown = CreateArrowControl("Down", Options.BottomAnchor, Options.ScrollDown)
+	Owner.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
+	Owner.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
+
+	local ScrollBar = CreateFrame("Slider", nil, Options.ScrollBarParent or Owner, "BackdropTemplate")
+	ScrollBar:SetPoint("TOPLEFT", Owner.ScrollUp, "BOTTOMLEFT", 0, -2)
+	ScrollBar:SetPoint("BOTTOMRIGHT", Owner.ScrollDown, "TOPRIGHT", 0, 2)
+	GUI:StyleVerticalSlider(ScrollBar, {Highlight = Options.SliderHighlight, ProgressAlpha = Options.ProgressAlpha})
+
+	Owner.ScrollBar = ScrollBar
+	Options.Viewport:SetScrollBar(ScrollBar)
+	Options.Viewport:AttachMouseWheel(Options.WheelTarget or Owner)
+
+	return ScrollBar
+end
+
 local AddWindowScrollBar = function(self)
-	-- Scroll up
-	self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
-	self.ScrollUp:SetPoint("TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1))
-	self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
-	self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
-	self.ScrollUp:SetScript("OnMouseUp", function(button) button.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"])); self.RowViewport:ScrollBy(1) end)
-	self.ScrollUp:SetScript("OnMouseDown", function(button) local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"]); button.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85) end)
-
-	self.ScrollUp.Texture = self.ScrollUp:CreateTexture(nil, "ARTWORK")
-	self.ScrollUp.Texture:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
-	self.ScrollUp.Texture:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
-	self.ScrollUp.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollUp.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	self.ScrollUp.Highlight = self.ScrollUp:CreateTexture(nil, "HIGHLIGHT")
-	self.ScrollUp.Highlight:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
-	self.ScrollUp.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
-	self.ScrollUp.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	self.ScrollUp.Highlight:SetVertexColor(1, 1, 1)
-	self.ScrollUp.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-
-	self.ScrollUp.Arrow = self.ScrollUp:CreateTexture(nil, "OVERLAY")
-	self.ScrollUp.Arrow:SetPoint("CENTER", self.ScrollUp, 0, 0)
-	self.ScrollUp.Arrow:SetSize(16, 16)
-	self.ScrollUp.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-	self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-
-	-- Scroll down
-	self.ScrollDown = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.ScrollDown:SetSize(16, WIDGET_HEIGHT)
-	self.ScrollDown:SetPoint("BOTTOMRIGHT", GUI, -SPACING, SPACING)
-	self.ScrollDown:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.ScrollDown:SetBackdropColor(0, 0, 0, 0)
-	self.ScrollDown:SetBackdropBorderColor(0, 0, 0)
-	self.ScrollDown:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-		self:GetParent().RowViewport:ScrollBy(-1)
-	end)
-
-	self.ScrollDown:SetScript("OnMouseDown", function(self)
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
-
-		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
-	end)
-
-	self.ScrollDown.Texture = self.ScrollDown:CreateTexture(nil, "ARTWORK")
-	self.ScrollDown.Texture:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
-	self.ScrollDown.Texture:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
-	self.ScrollDown.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollDown.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	self.ScrollDown.Highlight = self.ScrollDown:CreateTexture(nil, "HIGHLIGHT")
-	self.ScrollDown.Highlight:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
-	self.ScrollDown.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
-	self.ScrollDown.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	self.ScrollDown.Highlight:SetVertexColor(1, 1, 1)
-	self.ScrollDown.Highlight:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
-
-	self.ScrollDown.Arrow = self.ScrollDown:CreateTexture(nil, "OVERLAY")
-	self.ScrollDown.Arrow:SetPoint("CENTER", self.ScrollDown, 0, 0)
-	self.ScrollDown.Arrow:SetSize(16, 16)
-	self.ScrollDown.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-	self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-
-	local ScrollBar = CreateFrame("Slider", nil, self, "BackdropTemplate")
-	ScrollBar:SetPoint("TOPLEFT", self.ScrollUp, "BOTTOMLEFT", 0, -2)
-	ScrollBar:SetPoint("BOTTOMRIGHT", self.ScrollDown, "TOPRIGHT", 0, 2)
-	GUI:StyleVerticalSlider(ScrollBar, {Highlight = true, ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA})
+	local ScrollBar = CreateVerticalScrollControls(self, {
+		TopAnchor = {"TOPRIGHT", GUI, -SPACING, -((SPACING * 2) + HEADER_HEIGHT - 1)},
+		BottomAnchor = {"BOTTOMRIGHT", GUI, -SPACING, SPACING},
+		HighlightAlpha = SELECTED_HIGHLIGHT_ALPHA,
+		ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA,
+		SliderHighlight = true,
+		Viewport = self.RowViewport,
+		ScrollUp = function() self.RowViewport:ScrollBy(1) end,
+		ScrollDown = function() self.RowViewport:ScrollBy(-1) end,
+		WheelTarget = self,
+	})
 	self.RowViewport.ScrollBar = ScrollBar
 	self.RowViewport:SetScrollRange(self.WidgetCount)
 	ScrollBar:SetValue(1)
-
 	ScrollBar.Window = self
-
-	self.RowViewport:AttachMouseWheel(self)
-
-	self.ScrollBar = ScrollBar
-	self.RowViewport:SetScrollBar(ScrollBar)
-
 	ScrollBar:Show()
 end
 
@@ -363,90 +356,6 @@ local CreateNavigationRegion = function(self)
 	self.MenuParent:SetBackdropBorderColor(0, 0, 0)
 	self.SelectionViewportTarget = self.MenuParent
 
-	-- Scroll up
-	self.ScrollUp = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.ScrollUp:SetSize(16, WIDGET_HEIGHT)
-	self.ScrollUp:SetPoint("TOPLEFT", self.MenuParent, "TOPRIGHT", 2, 0)
-	self.ScrollUp:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.ScrollUp:SetBackdropColor(0, 0, 0, 0)
-	self.ScrollUp:SetBackdropBorderColor(0, 0, 0)
-	self.ScrollUp:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-		GUI.SelectionViewport:ScrollBy(1)
-	end)
-
-	self.ScrollUp:SetScript("OnMouseDown", function(self)
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
-
-		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
-	end)
-
-	self.ScrollUp.Texture = self.ScrollUp:CreateTexture(nil, "ARTWORK")
-	self.ScrollUp.Texture:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
-	self.ScrollUp.Texture:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
-	self.ScrollUp.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollUp.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	self.ScrollUp.Highlight = self.ScrollUp:CreateTexture(nil, "HIGHLIGHT")
-	self.ScrollUp.Highlight:SetPoint("TOPLEFT", self.ScrollUp, 1, -1)
-	self.ScrollUp.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollUp, -1, 1)
-	self.ScrollUp.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	self.ScrollUp.Highlight:SetVertexColor(1, 1, 1)
-	self.ScrollUp.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
-
-	self.ScrollUp.Arrow = self.ScrollUp:CreateTexture(nil, "OVERLAY")
-	self.ScrollUp.Arrow:SetPoint("CENTER", self.ScrollUp, 0, 0)
-	self.ScrollUp.Arrow:SetSize(16, 16)
-	self.ScrollUp.Arrow:SetTexture(Assets:GetTexture("Arrow Up"))
-	self.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-
-	-- Scroll down
-	self.ScrollDown = CreateFrame("Frame", nil, self, "BackdropTemplate")
-	self.ScrollDown:SetSize(16, WIDGET_HEIGHT)
-	self.ScrollDown:SetPoint("BOTTOMLEFT", self.MenuParent, "BOTTOMRIGHT", 2, 0)
-	self.ScrollDown:SetBackdrop(HydraUI.BackdropAndBorder)
-	self.ScrollDown:SetBackdropColor(0, 0, 0, 0)
-	self.ScrollDown:SetBackdropBorderColor(0, 0, 0)
-	self.ScrollDown:SetScript("OnMouseUp", function(self)
-		self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-		GUI.SelectionViewport:ScrollBy(-1)
-	end)
-
-	self.ScrollDown:SetScript("OnMouseDown", function(self)
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-widget-bright-color"])
-
-		self.Texture:SetVertexColor(R * 0.85, G * 0.85, B * 0.85)
-	end)
-
-	self.ScrollDown.Texture = self.ScrollDown:CreateTexture(nil, "ARTWORK")
-	self.ScrollDown.Texture:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
-	self.ScrollDown.Texture:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
-	self.ScrollDown.Texture:SetTexture(Assets:GetTexture(Settings["ui-header-texture"]))
-	self.ScrollDown.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
-
-	self.ScrollDown.Highlight = self.ScrollDown:CreateTexture(nil, "HIGHLIGHT")
-	self.ScrollDown.Highlight:SetPoint("TOPLEFT", self.ScrollDown, 1, -1)
-	self.ScrollDown.Highlight:SetPoint("BOTTOMRIGHT", self.ScrollDown, -1, 1)
-	self.ScrollDown.Highlight:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
-	self.ScrollDown.Highlight:SetVertexColor(1, 1, 1)
-	self.ScrollDown.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
-
-	self.ScrollDown.Arrow = self.ScrollDown:CreateTexture(nil, "OVERLAY")
-	self.ScrollDown.Arrow:SetPoint("CENTER", self.ScrollDown, 0, 0)
-	self.ScrollDown.Arrow:SetSize(16, 16)
-	self.ScrollDown.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
-	self.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-
-	-- Selection scrollbar
-	local ScrollBar = CreateFrame("Slider", nil, self.MenuParent, "BackdropTemplate")
-	ScrollBar:SetPoint("TOPLEFT", self.ScrollUp, "BOTTOMLEFT", 0, -2)
-	ScrollBar:SetPoint("BOTTOMRIGHT", self.ScrollDown, "TOPRIGHT", 0, 2)
-	GUI:StyleVerticalSlider(ScrollBar, {ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA})
-	ScrollBar:EnableMouseWheel(true)
-	
-	self.ScrollBar = ScrollBar
 	self.SelectionViewport = GUI:CreateRowViewport(self, {
 		Rows = self.ScrollButtons,
 		MaxVisibleRows = MAX_WIDGETS_SHOWN,
@@ -463,16 +372,23 @@ local CreateNavigationRegion = function(self)
 			end
 		end,
 		AfterRender = function(Owner, Offset)
-			if Offset == 1 then Owner.ScrollUp.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-			else Owner.ScrollUp.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"])) end
-			local _, Max = Owner.ScrollBar:GetMinMaxValues()
-			if Offset == Max then Owner.ScrollDown.Arrow:SetVertexColor(0.65, 0.65, 0.65)
-			else Owner.ScrollDown.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"])) end
+			local _, MaxOffset = Owner.ScrollBar:GetMinMaxValues()
+			UpdateScrollArrowColors(Owner, Offset, MaxOffset)
 		end,
 	})
-	self.SelectionViewport:SetScrollBar(ScrollBar)
-	self.SelectionViewport:AttachMouseWheel(self.MenuParent)
 
+	local ScrollBar = CreateVerticalScrollControls(self, {
+		TopAnchor = {"TOPLEFT", self.MenuParent, "TOPRIGHT", 2, 0},
+		BottomAnchor = {"BOTTOMLEFT", self.MenuParent, "BOTTOMRIGHT", 2, 0},
+		HighlightAlpha = MOUSEOVER_HIGHLIGHT_ALPHA,
+		ProgressAlpha = SELECTED_HIGHLIGHT_ALPHA,
+		Viewport = self.SelectionViewport,
+		ScrollBarParent = self.MenuParent,
+		ScrollUp = function() self.SelectionViewport:ScrollBy(1) end,
+		ScrollDown = function() self.SelectionViewport:ScrollBy(-1) end,
+		WheelTarget = self.MenuParent,
+	})
+	ScrollBar:EnableMouseWheel(true)
 end
 
 local CreateCloseControl = function(self)

@@ -23,19 +23,25 @@ Defaults["unitframes-display-aura-timers"] = true
 
 local UF = HydraUI:NewModule("Unit Frames")
 
--- Secure group headers return their children as multiple values. Capture those
--- values once so settings updates do not repeatedly query the header while it
--- is being iterated.
+local function ForEachChild(operation, value, index, child, ...)
+	if not child then
+		return
+	end
+
+	operation(child, value, index)
+
+	return ForEachChild(operation, value, index + 1, ...)
+end
+
+-- Secure group headers return their children as multiple values. Pass those
+-- values through the iterator so each invocation uses the header's current
+-- children without allocating a temporary table.
 function UF:ForEachHeaderChild(header, operation, value)
 	if not header then
 		return
 	end
 
-	local Children = {header:GetChildren()}
-
-	for Index = 1, #Children do
-		operation(Children[Index], value, Index)
-	end
+	ForEachChild(operation, value, 1, header:GetChildren())
 end
 
 HydraUI.UnitFrames = {}

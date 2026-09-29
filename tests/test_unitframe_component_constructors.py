@@ -23,21 +23,30 @@ class ComponentConstructorCoverage(unittest.TestCase):
         self.assertIn("Portrait requires style", source)
 
     def test_constructors_accept_options_and_normalize_them(self):
-        for constructor, kind in (("CreateHealthBar", "HealthBar"),
-                                  ("CreateHealAndAbsorbBars", "PredictionBars"),
-                                  ("CreatePowerBar", "PowerBar"),
-                                  ("CreatePortrait", "Portrait"),
+        for constructor, kind in (("CreatePortrait", "Portrait"),
                                   ("CreateCastbar", "Castbar"),
                                   ("CreateAuraContainer", "AuraContainer")):
             source = body(constructor)
             self.assertIn(f'function UF:{constructor}(frame, options)', source)
             self.assertIn(f'self:NormalizeComponentOptions("{kind}", options)', source)
 
-    def test_health_and_power_callers_use_named_groups(self):
+    def test_frequently_created_bars_use_direct_inputs(self):
+        expected_signatures = {
+            "CreateHealthBar": "frame, height, texture, reverseFill, orientation",
+            "CreateHealAndAbsorbBars": "frame, health, width, height, texture, reverseFill, createAbsorb",
+            "CreatePowerBar": "frame, height, texture, reverseFill",
+        }
+        for constructor, signature in expected_signatures.items():
+            source = body(constructor)
+            self.assertIn(f"function UF:{constructor}({signature}", source)
+            self.assertNotIn("NormalizeComponentOptions", source)
+
         for module in ("ComponentFactory", "GroupFrames"):
             source = (ROOT / f"{module}.lua").read_text()
-            for constructor in ("CreateHealthBar", "CreateHealAndAbsorbBars", "CreatePowerBar"):
-                self.assertRegex(source, rf"{constructor}\(frame, \{{")
+            for constructor in expected_signatures:
+                self.assertNotRegex(source, rf"{constructor}\(frame, \{{")
+
+    def test_small_unit_auras_still_use_the_shared_constructor(self):
         for module in ("Pet", "TargetTarget"):
             source = (ROOT / f"{module}.lua").read_text()
             self.assertIn("CreateAuraContainer(frame, {", source)

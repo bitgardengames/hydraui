@@ -165,5 +165,3 @@ function Chat:RestoreHistory()
 
 	self.RestoringHistory = nil
 end
-
-local FormatDiscordHyperlink = function(id)

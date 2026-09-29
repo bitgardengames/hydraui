@@ -170,6 +170,16 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
 
 
 class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
+    def test_client_manifests_load_the_unit_frame_bundle(self):
+        addon_root = ROOT.parents[1]
+        manifests = tuple(addon_root.glob("HydraUI_*.toc"))
+        self.assertTrue(manifests)
+        for manifest in manifests:
+            with self.subTest(manifest=manifest.name):
+                source = manifest.read_text()
+                self.assertIn(r"Elements\UnitFrames\UnitFrames.xml", source)
+                self.assertNotIn(r"Elements\UnitFrames\UnitFrames.lua", source)
+
     def test_manifest_loads_support_modules_before_coordinator(self):
         manifest = (ROOT / "UnitFrames.xml").read_text()
         coordinator = manifest.index('file="UnitFrames.lua"')

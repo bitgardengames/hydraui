@@ -28,13 +28,13 @@ local PartyPetsFrameConfig = {
 	power = false,
 	colorDisconnected = true,
 	raidTarget = true,
-	range = {
-		insideAlpha = Settings["party-in-range"] / 100,
-		outsideAlpha = Settings["party-out-of-range"] / 100,
-	},
+	range = {},
 }
 
 HydraUI.StyleFuncs["partypet"] = function(self, unit)
+	PartyPetsFrameConfig.range.insideAlpha = Settings["party-in-range"] / 100
+	PartyPetsFrameConfig.range.outsideAlpha = Settings["party-out-of-range"] / 100
+
 	UF:BuildSingleUnitFrame(self, unit, PartyPetsFrameConfig)
 end
 

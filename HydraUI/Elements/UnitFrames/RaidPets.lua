@@ -28,13 +28,13 @@ local RaidPetsFrameConfig = {
 	power = false,
 	colorDisconnected = true,
 	raidTarget = true,
-	range = {
-		insideAlpha = Settings["raid-in-range"] / 100,
-		outsideAlpha = Settings["raid-out-of-range"] / 100,
-	},
+	range = {},
 }
 
 HydraUI.StyleFuncs["raidpet"] = function(self, unit)
+	RaidPetsFrameConfig.range.insideAlpha = Settings["raid-in-range"] / 100
+	RaidPetsFrameConfig.range.outsideAlpha = Settings["raid-out-of-range"] / 100
+
 	UF:BuildSingleUnitFrame(self, unit, RaidPetsFrameConfig)
 end
 

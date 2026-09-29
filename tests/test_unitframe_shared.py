@@ -198,6 +198,22 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
 
 
 class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
+    def test_pet_range_settings_are_read_when_frames_are_built(self):
+        for filename, style_name, prefix in (
+            ("PartyPets.lua", "partypet", "party"),
+            ("RaidPets.lua", "raidpet", "raid"),
+        ):
+            source = (ROOT / filename).read_text()
+            style_start = source.index(f'HydraUI.StyleFuncs["{style_name}"]')
+            build_start = source.index("UF:BuildSingleUnitFrame", style_start)
+            before_style = source[:style_start]
+            style_setup = source[style_start:build_start]
+
+            self.assertNotIn(f'Settings["{prefix}-in-range"]', before_style)
+            self.assertNotIn(f'Settings["{prefix}-out-of-range"]', before_style)
+            self.assertIn(f'Settings["{prefix}-in-range"] / 100', style_setup)
+            self.assertIn(f'Settings["{prefix}-out-of-range"] / 100', style_setup)
+
     def test_style_dispatch_only_calls_registered_handlers(self):
         source = (ROOT / "UnitFrames.lua").read_text()
         style = source[source.index("local Style = function"):source.index("oUF:RegisterStyle")]

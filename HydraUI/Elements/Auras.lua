@@ -43,6 +43,8 @@ Auras.Headers = {}
 
 local ActiveButtons = {}
 local ActiveButtonCount = 0
+local EnchantButtons = {}
+local EnchantButtonCount = 0
 local UpdateElapsed = 0
 local Updater = CreateFrame("Frame")
 
@@ -50,6 +52,11 @@ local UnregisterButton = function(button)
 	if ActiveButtons[button] then
 		ActiveButtons[button] = nil
 		ActiveButtonCount = ActiveButtonCount - 1
+	end
+
+	if EnchantButtons[button] then
+		EnchantButtons[button] = nil
+		EnchantButtonCount = EnchantButtonCount - 1
 	end
 
 	button.ExpirationTime = nil
@@ -71,6 +78,16 @@ local RegisterButton = function(button)
 		ActiveButtonCount = ActiveButtonCount + 1
 	end
 
+	if button.Enchant then
+		if (not EnchantButtons[button]) then
+			EnchantButtons[button] = true
+			EnchantButtonCount = EnchantButtonCount + 1
+		end
+	elseif EnchantButtons[button] then
+		EnchantButtons[button] = nil
+		EnchantButtonCount = EnchantButtonCount - 1
+	end
+
 	Updater:Show()
 end
 
@@ -84,7 +101,11 @@ Updater:SetScript("OnUpdate", function(self, elapsed)
 	UpdateElapsed = 0
 
 	local Now = GetTime()
-	local _, MainHandExpiration, _, _, _, OffHandExpiration = GetWeaponEnchantInfo()
+	local _, MainHandExpiration, OffHandExpiration
+
+	if (EnchantButtonCount > 0) then
+		_, MainHandExpiration, _, _, _, OffHandExpiration = GetWeaponEnchantInfo()
+	end
 
 	for Button in pairs(ActiveButtons) do
 		local TimeLeft

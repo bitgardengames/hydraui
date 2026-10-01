@@ -164,7 +164,7 @@ local function BuildPlayerComponents(factory, self, unit)
 		UpdatePlayerPowerLayout(self)
 		factory:CreateBackdrop(Power, "Blank", "BACKGROUND")
 		-- Mana regen
-		if (Settings["unitframes-show-mana-timer"] and not HydraUI.IsMainline) then
+		if Settings["unitframes-show-mana-timer"] and not HydraUI.IsMainline then
 			local ManaTimer = CreateFrame("StatusBar", nil, Power)
 			ManaTimer:SetAllPoints(Power)
 			ManaTimer:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerPowerTexture))
@@ -187,7 +187,7 @@ local function BuildPlayerComponents(factory, self, unit)
 		end
 
 		-- Energy ticks
-		if (Settings["unitframes-show-energy-timer"] and (HydraUI.IsVanilla or HydraUI.IsTBC)) then
+		if Settings["unitframes-show-energy-timer"] and (HydraUI.IsVanilla or HydraUI.IsTBC) then
 			local EnergyTick = CreateFrame("StatusBar", nil, Power)
 			EnergyTick:SetAllPoints(Power)
 			EnergyTick:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerPowerTexture))
@@ -638,7 +638,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Player"], Lan
 	left:CreateSlider("unitframes-player-width", Settings["unitframes-player-width"], 120, 320, 1, Language["Width"], Language["Set the width of the player unit frame"], UpdatePlayerWidth)
 	left:CreateSwitch("player-enable-pvp", Settings["player-enable-pvp"], Language["Enable PVP Indicator"], Language["Display the PvP indicator"], UpdatePlayerEnablePVPIndicator)
 
-	if (HydraUI.IsVanilla or HydraUI.IsTBC) then
+	if HydraUI.IsVanilla or HydraUI.IsTBC then
 		left:CreateSwitch("unitframes-show-mana-timer", Settings["unitframes-show-mana-timer"], Language["Enable Mana Regen Timer"], Language["Display the time until your full mana regeneration is active"], ReloadUI):RequiresReload(true)
 		left:CreateSwitch("unitframes-show-energy-timer", Settings["unitframes-show-energy-timer"], Language["Enable Energy Timer"], Language["Display the time until your next energy tick on the power bar"], ReloadUI):RequiresReload(true)
 	end

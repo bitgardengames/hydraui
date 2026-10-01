@@ -30,12 +30,12 @@ function GUI:SetInputObject(input)
 end
 
 function GUI:ToggleInputWindow(input)
-	if (not self.InputWindow) then
+	if not self.InputWindow then
 		self:CreateInputWindow()
 	end
 
 	if self.InputWindow:IsShown() then
-		if (input ~= self.InputWindow.ActiveInput) then
+		if input ~= self.InputWindow.ActiveInput then
 			self:SetInputObject(input)
 		else
 			self.InputWindow.FadeOut:Play()
@@ -253,7 +253,7 @@ local CreateInputControl = function(parent, width, id, value, tooltip, hook, isC
 end
 
 GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
-	if (Settings[id] ~= nil) then
+	if Settings[id] ~= nil then
 		value = Settings[id]
 	end
 
@@ -291,7 +291,7 @@ end
 local INPUT_BUTTON_WIDTH = (GROUP_WIDTH / 2) - (SPACING / 2)
 
 GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, tooltip, hook)
-	if (Settings[id] ~= nil) then
+	if Settings[id] ~= nil then
 		value = Settings[id]
 	end
 
@@ -362,7 +362,7 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 end
 
 GUI.ToggleExportWindow = function(self)
-	if (not self.ExportWindow) then
+	if not self.ExportWindow then
 		self:CreateExportWindow()
 	end
 
@@ -374,11 +374,11 @@ GUI.ToggleExportWindow = function(self)
 end
 
 function GUI:SetExportWindowText(text)
-	if (type(text) ~= "string") then
+	if type(text) ~= "string" then
 		return
 	end
 
-	if (not match(text, "%S")) then
+	if not match(text, "%S") then
 		return
 	end
 
@@ -457,7 +457,7 @@ function GUI:CreateExportWindow()
 end
 
 function GUI:ToggleImportWindow()
-	if (not self.ImportWindow) then
+	if not self.ImportWindow then
 		self:CreateImportWindow()
 	end
 
@@ -472,7 +472,7 @@ end
 local ImportWindowOnEnterPressed = function(self)
 	local Text = self:GetText()
 
-	if (not match(Text, "%S+")) then
+	if not match(Text, "%S+") then
 		self:SetAutoFocus(false)
 		self:ClearFocus()
 
@@ -508,7 +508,7 @@ local ImportWindowOnTextChanged = function(self)
 	self:SetAutoFocus(false)
 	self:ClearFocus()
 
-	if (not match(Text, "%S+")) then
+	if not match(Text, "%S+") then
 		return
 	end
 

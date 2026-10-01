@@ -33,7 +33,7 @@ else
 end
 
 local BagsFrameButtonOnEnter = function(self)
-	if (Settings["bags-frame-visibility"] == "MOUSEOVER") then
+	if Settings["bags-frame-visibility"] == "MOUSEOVER" then
 		BagsFrame:SetAlpha(Settings["bags-frame-max"] / 100)
 	end
 end
@@ -43,7 +43,7 @@ local BagsFrameOnEnter = function(self)
 end
 
 local BagsFrameButtonOnLeave = function(self)
-	if (Settings["bags-frame-visibility"] == "MOUSEOVER") then
+	if Settings["bags-frame-visibility"] == "MOUSEOVER" then
 		BagsFrame:SetAlpha(Settings["bags-frame-opacity"] / 100)
 	end
 end
@@ -61,7 +61,7 @@ function BagsFrame:SetAlpha(alpha)
 end
 
 function BagsFrame:UpdateVisibility()
-	if (Settings["bags-frame-visibility"] == "HIDE") then
+	if Settings["bags-frame-visibility"] == "HIDE" then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self:SetAlpha(0)
@@ -71,7 +71,7 @@ function BagsFrame:UpdateVisibility()
 		end
 
 		self.Panel:Hide()
-	elseif (Settings["bags-frame-visibility"] == "MOUSEOVER") then
+	elseif Settings["bags-frame-visibility"] == "MOUSEOVER" then
 		self.Panel:SetScript("OnEnter", BagsFrameOnEnter)
 		self.Panel:SetScript("OnLeave", BagsFrameOnLeave)
 		self:SetAlpha(Settings["bags-frame-opacity"] / 100)
@@ -81,7 +81,7 @@ function BagsFrame:UpdateVisibility()
 		end
 
 		self.Panel:Show()
-	elseif (Settings["bags-frame-visibility"] == "SHOW") then
+	elseif Settings["bags-frame-visibility"] == "SHOW" then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self:SetAlpha(Settings["bags-frame-max"] / 100)
@@ -95,7 +95,7 @@ function BagsFrame:UpdateVisibility()
 end
 
 function BagsFrame:PositionButtons()
-	if (not self.Panel or self.IsPositioning) then
+	if not self.Panel or self.IsPositioning then
 		return
 	end
 
@@ -104,7 +104,7 @@ function BagsFrame:PositionButtons()
 	for i = 1, #self.Objects do
 		local Object = self.Objects[i]
 
-		if (Object ~= KeyRingButton) then
+		if Object ~= KeyRingButton then
 			Object:SetParent(self.Panel)
 		end
 
@@ -114,13 +114,13 @@ function BagsFrame:PositionButtons()
 	for i = #self.Objects, 1, -1 do
 		local Object = self.Objects[i]
 
-		if (i == #self.Objects) then
+		if i == #self.Objects then
 			Object:SetPoint("RIGHT", self.Panel, -4, 0)
 		else
 			Object:SetPoint("RIGHT", self.Objects[i+1], "LEFT", -4, 0)
 		end
 
-		if ((IsVanilla or IsTBC) and i == 1) then
+		if (IsVanilla or IsTBC) and i == 1 then
 			Object:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
 		else
 			Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
@@ -135,11 +135,11 @@ local RestoreBagButtonPositions = function()
 end
 
 function BagsFrame:Load()
-	if (not Settings["ab-enable"]) then
+	if not Settings["ab-enable"] then
 		return
 	end
 
-	if (HydraUI.ClientVersion >= 100000) then
+	if HydraUI.ClientVersion >= 100000 then
 		MainMenuBarBackpackButton:ClearAllPoints()
 		MainMenuBarBackpackButton:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 5)
 		MainMenuBarBackpackButton.SetPoint = function() end
@@ -167,7 +167,7 @@ function BagsFrame:Load()
 	for i = 1, #self.Objects do
 		Object = self.Objects[i]
 
-		if (Object ~= KeyRingButton) then
+		if Object ~= KeyRingButton then
 			Object:SetParent(self.Panel)
 		end
 		Object:HookScript("OnEnter", BagsFrameButtonOnEnter)
@@ -229,7 +229,7 @@ function BagsFrame:Load()
 
 		Object:SetHighlightTexture(Highlight)
 
-		if (i ~= 1) then
+		if i ~= 1 then
 			local Pushed = Object:CreateTexture(nil, "ARTWORK")
 			Pushed:SetPoint("TOPLEFT", Object, 0, 0)
 			Pushed:SetPoint("BOTTOMRIGHT", Object, 0, 0)
@@ -246,7 +246,7 @@ function BagsFrame:Load()
 		hooksecurefunc(self.Objects[i], "SetPoint", RestoreBagButtonPositions)
 	end
 
-	if (C_Container and C_Container.SetInsertItemsLeftToRight) then
+	if C_Container and C_Container.SetInsertItemsLeftToRight then
 		C_Container.SetInsertItemsLeftToRight(Settings["bags-loot-from-left"])
 	else
 		SetInsertItemsLeftToRight(Settings["bags-loot-from-left"])
@@ -260,7 +260,7 @@ local UpdateBagVisibility = function()
 end
 
 local UpdateBagFrameSize = function(value)
-	if (not BagsFrame.Panel) then
+	if not BagsFrame.Panel then
 		return
 	end
 

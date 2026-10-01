@@ -1,6 +1,6 @@
 local HydraUI, L = select(2, ...):get()
 
-if (HydraUI.UserLocale ~= "esES") then
+if HydraUI.UserLocale ~= "esES" then
 	return
 end
 

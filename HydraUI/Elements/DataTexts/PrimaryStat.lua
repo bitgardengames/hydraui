@@ -17,7 +17,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 
@@ -31,7 +31,7 @@ local Update = function(self, event, unit)
 
 			Effective = StatEffective + PositiveBuffs + NegativeBuffs
 
-			if (Effective > HighestStat) then
+			if Effective > HighestStat then
 				Highest = i
 				HighestStat = Stat
 			end

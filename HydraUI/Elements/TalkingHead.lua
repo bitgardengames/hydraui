@@ -59,7 +59,7 @@ function TH:ApplyStyle()
 	for i = 1, TalkingHeadFrame.PortraitFrame:GetNumRegions() do
 		local Region = select(i, TalkingHeadFrame.PortraitFrame:GetRegions())
 
-		if (Region:GetObjectType() == "Texture") then
+		if Region:GetObjectType() == "Texture" then
 			Region:Hide()
 			Region:SetTexture(nil)
 		end
@@ -68,7 +68,7 @@ function TH:ApplyStyle()
 	for i = 1, TalkingHeadFrame.MainFrame:GetNumRegions() do
 		local Region = select(i, TalkingHeadFrame.MainFrame:GetRegions())
 
-		if (Region:GetObjectType() == "Texture") then
+		if Region:GetObjectType() == "Texture" then
 			Region:Hide()
 			Region:SetTexture(nil)
 		end
@@ -77,7 +77,7 @@ function TH:ApplyStyle()
 	for i = 1, TalkingHeadFrame:GetNumRegions() do
 		local Region = select(i, TalkingHeadFrame:GetRegions())
 
-		if (Region:GetObjectType() == "Texture") then
+		if Region:GetObjectType() == "Texture" then
 			Region:Hide()
 			Region:SetTexture(nil)
 		end
@@ -127,7 +127,7 @@ end
 
 function TH:Load()
 	for i = 1, #AlertFrame.alertFrameSubSystems do
-		if (AlertFrame.alertFrameSubSystems[i] and AlertFrame.alertFrameSubSystems[i].anchorFrame == TalkingHeadFrame) then
+		if AlertFrame.alertFrameSubSystems[i] and AlertFrame.alertFrameSubSystems[i].anchorFrame == TalkingHeadFrame then
 			tremove(AlertFrame.alertFrameSubSystems, i)
 		end
 	end

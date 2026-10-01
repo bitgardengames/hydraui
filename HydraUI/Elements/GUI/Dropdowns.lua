@@ -30,7 +30,7 @@ local LANGUAGE_FONTS = {
 }
 
 local SetLanguageFont = function(fontString, locale)
-	if (locale == "AUTO") then
+	if locale == "AUTO" then
 		locale = HydraUI.ClientLocale
 	end
 
@@ -44,8 +44,8 @@ local SetLanguageFont = function(fontString, locale)
 end
 
 local CloseLastDropdown = function(compare)
-	if (Controller.Active and Controller.Active.Menu:IsShown() and (Controller.Active ~= compare)) then
-		if (not Controller.Active.Menu.FadeOut:IsPlaying()) then
+	if Controller.Active and Controller.Active.Menu:IsShown() and (Controller.Active ~= compare) then
+		if not Controller.Active.Menu.FadeOut:IsPlaying() then
 			Controller.Active.Menu.FadeOut:Play()
 			Controller.Active.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 		end
@@ -61,7 +61,7 @@ end
 local InitializeDropdown
 
 local GetDropdownSelectionValue = function(self, MenuItem)
-	if (self.SpecificType and self.SpecificType ~= "Language") then
+	if self.SpecificType and self.SpecificType ~= "Language" then
 		return MenuItem.Key
 	end
 
@@ -71,7 +71,7 @@ end
 local SynchronizeDropdownSelection = function(self)
 	local Menu = self.Menu
 
-	if (self.Value == Menu.SynchronizedValue) then
+	if self.Value == Menu.SynchronizedValue then
 		return
 	end
 
@@ -83,7 +83,7 @@ local SynchronizeDropdownSelection = function(self)
 	for i = 1, #Menu do
 		local MenuItem = Menu[i]
 
-		if (GetDropdownSelectionValue(self, MenuItem) == self.Value) then
+		if GetDropdownSelectionValue(self, MenuItem) == self.Value then
 			MenuItem.Selected:Show()
 			Menu.SelectedItem = MenuItem
 			break
@@ -129,7 +129,7 @@ local MenuItemOnMouseUp = function(self)
 	self.Parent.FadeOut:Play()
 	self.GrandParent.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 
-	if (self.Parent.SelectedItem and self.Parent.SelectedItem ~= self) then
+	if self.Parent.SelectedItem and self.Parent.SelectedItem ~= self then
 		self.Parent.SelectedItem.Selected:Hide()
 	end
 
@@ -140,8 +140,8 @@ local MenuItemOnMouseUp = function(self)
 	self.Highlight:SetAlpha(0)
 	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
-	if (self.GrandParent.SpecificType and self.GrandParent.SpecificType ~= "Language") then
-		if (not self.GrandParent.IsSavingDisabled) then
+	if self.GrandParent.SpecificType and self.GrandParent.SpecificType ~= "Language" then
+		if not self.GrandParent.IsSavingDisabled then
 			SetVariable(self.ID, self.Key)
 		end
 
@@ -153,7 +153,7 @@ local MenuItemOnMouseUp = function(self)
 			self.GrandParent.Hook(self.Key, self.ID)
 		end
 	else
-		if (not self.GrandParent.IsSavingDisabled) then
+		if not self.GrandParent.IsSavingDisabled then
 			SetVariable(self.ID, self.Value)
 		end
 
@@ -166,11 +166,11 @@ local MenuItemOnMouseUp = function(self)
 		end
 	end
 
-	if (self.GrandParent.SpecificType == "Texture") then
+	if self.GrandParent.SpecificType == "Texture" then
 		self.GrandParent.Texture:SetTexture(Assets:GetTexture(self.Key))
-	elseif (self.GrandParent.SpecificType == "Font") then
+	elseif self.GrandParent.SpecificType == "Font" then
 		HydraUI:SetFontInfo(self.GrandParent.Current, self.Key, Settings["ui-font-size"])
-	elseif (self.GrandParent.SpecificType == "Language") then
+	elseif self.GrandParent.SpecificType == "Language" then
 		SetLanguageFont(self.GrandParent.Current, self.Value)
 	end
 
@@ -401,7 +401,7 @@ DropdownUpdateList = function(self)
 		MenuItem:SetWidth(ItemWidth)
 		MenuItem:SetShown(false)
 
-		if (not SelectedItem and GetDropdownSelectionValue(self, MenuItem) == self.Value) then
+		if not SelectedItem and GetDropdownSelectionValue(self, MenuItem) == self.Value then
 			SelectedItem = MenuItem
 		end
 
@@ -483,17 +483,17 @@ local CreateDropdownSelection = function(self, key, value)
 end
 
 local ConfigureDropdownSelection = function(self, MenuItem)
-	if (self.SpecificType == "Texture") then
+	if self.SpecificType == "Texture" then
 		MenuItem.Texture:SetTexture(Assets:GetTexture(MenuItem.Key))
-	elseif (self.SpecificType == "Font") then
+	elseif self.SpecificType == "Font" then
 		HydraUI:SetFontInfo(MenuItem.Text, MenuItem.Key, 12)
-	elseif (self.SpecificType == "Language") then
+	elseif self.SpecificType == "Language" then
 		SetLanguageFont(MenuItem.Text, MenuItem.Value)
 	end
 
 	local IsSelected
 
-	if (self.SpecificType and self.SpecificType ~= "Language") then
+	if self.SpecificType and self.SpecificType ~= "Language" then
 		IsSelected = MenuItem.Key == self.Value
 	else
 		IsSelected = MenuItem.Value == self.Value
@@ -502,14 +502,14 @@ local ConfigureDropdownSelection = function(self, MenuItem)
 	MenuItem.Selected:SetShown(IsSelected)
 
 	if IsSelected then
-		if (self.Menu.SelectedItem and self.Menu.SelectedItem ~= MenuItem) then
+		if self.Menu.SelectedItem and self.Menu.SelectedItem ~= MenuItem then
 			self.Menu.SelectedItem.Selected:Hide()
 		end
 
 		self.Menu.SelectedItem = MenuItem
 		self.Current:SetText(MenuItem.Key)
 
-		if (self.SpecificType == "Language") then
+		if self.SpecificType == "Language" then
 			SetLanguageFont(self.Current, MenuItem.Value)
 		end
 	end
@@ -551,8 +551,8 @@ local DropdownRemoveSelection = function(self, key)
 	end
 
 	for i = 1, #self.Menu do
-		if (self.Menu[i].Key == key) then
-			if (self.Menu.SelectedItem == self.Menu[i]) then
+		if self.Menu[i].Key == key then
+			if self.Menu.SelectedItem == self.Menu[i] then
 				self.Menu.SelectedItem = nil
 				self.Menu.SynchronizedValue = nil
 			end
@@ -569,7 +569,7 @@ local DropdownRemoveSelection = function(self, key)
 end
 
 GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, hook, specific)
-	if (Settings[id] ~= nil) then
+	if Settings[id] ~= nil then
 		value = Settings[id]
 	end
 
@@ -619,7 +619,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 		if ((specific and specific ~= "Language") and Key == value) or ((not specific or specific == "Language") and Value == value) then
 			Dropdown.Current:SetText(Key)
 
-			if (specific == "Language") then
+			if specific == "Language" then
 				SetLanguageFont(Dropdown.Current, Value)
 			end
 
@@ -702,9 +702,9 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Menu.BG:EnableMouse(true)
 	Dropdown.Menu.BG:SetScript("OnMouseWheel", function() end)
 
-	if (specific == "Texture") then
+	if specific == "Texture" then
 		Dropdown.Texture:SetTexture(Assets:GetTexture(value))
-	elseif (specific == "Font") then
+	elseif specific == "Font" then
 		Dropdown.Texture:SetTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
 		HydraUI:SetFontInfo(Dropdown.Current, Settings[id], Settings["ui-font-size"])
 	else
@@ -715,7 +715,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 
 	if self.Widgets then
 		RegisterWidget(self, Anchor, id)
-	elseif (id ~= "") then
+	elseif id ~= "" then
 		GUI.WidgetID[id] = Anchor
 	end
 

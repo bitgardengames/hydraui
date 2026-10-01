@@ -15,7 +15,7 @@ local Update = function(self)
 		for Slot = 1, NumSlots do
 			local ID = GetContainerItemID(Bag, Slot)
 
-			if (ID and ID == 6265) then
+			if ID and ID == 6265 then
 				local Count = select(2, GetContainerItemInfo(Bag, Slot))
 
 				ShardCount = ShardCount + Count

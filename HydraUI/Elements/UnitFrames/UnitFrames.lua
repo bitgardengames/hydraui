@@ -52,11 +52,11 @@ ns.UnitFrameCastSupport(UF, Hider)
 ns.UnitFrameTotemSupport(UF, Hider)
 
 function UF:GetRoleTexCoords(role)
-	if (role == "TANK") then
+	if role == "TANK" then
 		return 0, 19/64, 22/64, 41/64
-	elseif (role == "HEALER") then
+	elseif role == "HEALER" then
 		return 20/64, 39/64, 1/64, 20/64
-	elseif (role == "DAMAGER") then
+	elseif role == "DAMAGER" then
 		return 20/64, 39/64, 22/64, 41/64
 	end
 end

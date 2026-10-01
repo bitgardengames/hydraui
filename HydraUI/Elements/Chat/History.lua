@@ -4,7 +4,7 @@ local MaxHistoryMessages = 50
 local MessageTuplePool, MessageListPool = {}, {}
 
 function Chat:GetHistory()
-	if (not HydraUIData) then
+	if not HydraUIData then
 		HydraUIData = {}
 	end
 
@@ -12,21 +12,21 @@ function Chat:GetHistory()
 	local ProfileKey = HydraUI.UserProfileKey
 	local History = HydraUIData.ChatHistory[ProfileKey]
 
-	if (not History) then
+	if not History then
 		History = {
 			Start = 1,
 			Count = 0,
 			Records = {},
 		}
 		HydraUIData.ChatHistory[ProfileKey] = History
-	elseif (not History.Records) then
+	elseif not History.Records then
 		-- Older versions stored history as an array. Keep the newest entries and
 		-- retain their record tables while converting it to a circular buffer.
 		local LegacyCount = #History
 		local First = 1
 		local Records = {}
 
-		if (LegacyCount > MaxHistoryMessages) then
+		if LegacyCount > MaxHistoryMessages then
 			First = LegacyCount - MaxHistoryMessages + 1
 		end
 
@@ -52,7 +52,7 @@ function Chat:IterateHistory(History)
 	return function()
 		Offset = Offset + 1
 
-		if (Offset <= History.Count) then
+		if Offset <= History.Count then
 			local Index = ((History.Start + Offset - 2) % MaxHistoryMessages) + 1
 
 			return Offset, History.Records[Index]
@@ -61,14 +61,14 @@ function Chat:IterateHistory(History)
 end
 
 function Chat:SaveMessage(frame, message, r, g, b)
-	if ((not Settings["chat-enable-history"]) or self.RestoringHistory or (type(message) ~= "string")) then
+	if (not Settings["chat-enable-history"]) or self.RestoringHistory or (type(message) ~= "string") then
 		return
 	end
 
 	local History = self:GetHistory()
 	local Index
 
-	if (History.Count < MaxHistoryMessages) then
+	if History.Count < MaxHistoryMessages then
 		Index = ((History.Start + History.Count - 1) % MaxHistoryMessages) + 1
 		History.Count = History.Count + 1
 	else
@@ -78,7 +78,7 @@ function Chat:SaveMessage(frame, message, r, g, b)
 
 	local Entry = History.Records[Index]
 
-	if (not Entry) then
+	if not Entry then
 		Entry = {}
 		History.Records[Index] = Entry
 	end
@@ -91,7 +91,7 @@ function Chat:SaveMessage(frame, message, r, g, b)
 end
 
 function Chat:RestoreHistory()
-	if (not Settings["chat-enable-history"]) then
+	if not Settings["chat-enable-history"] then
 		return
 	end
 
@@ -102,10 +102,10 @@ function Chat:RestoreHistory()
 	for _, Entry in self:IterateHistory(History) do
 		local Frame = Entry.Frame and _G[Entry.Frame]
 
-		if (Frame and not CurrentMessages[Frame] and Frame.GetNumMessages and Frame.GetMessageInfo and Frame.Clear) then
+		if Frame and not CurrentMessages[Frame] and Frame.GetNumMessages and Frame.GetMessageInfo and Frame.Clear then
 			local Messages = MessageListPool[#MessageListPool]
 
-			if (Messages) then
+			if Messages then
 				MessageListPool[#MessageListPool] = nil
 			else
 				Messages = {}
@@ -117,7 +117,7 @@ function Chat:RestoreHistory()
 				local Message, R, G, B, InfoID, AccessID, TypeID = Frame:GetMessageInfo(i)
 				local Values = MessageTuplePool[#MessageTuplePool]
 
-				if (Values) then
+				if Values then
 					MessageTuplePool[#MessageTuplePool] = nil
 				else
 					Values = {}
@@ -139,7 +139,7 @@ function Chat:RestoreHistory()
 	for _, Entry in self:IterateHistory(History) do
 		local Frame = Entry.Frame and _G[Entry.Frame]
 
-		if (Frame and Frame.AddMessage) then
+		if Frame and Frame.AddMessage then
 			Frame:AddMessage(Entry.Message, Entry.R, Entry.G, Entry.B)
 		end
 	end

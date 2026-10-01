@@ -44,7 +44,7 @@ HydraUI.IsCata = HydraUI.ClientVersion > 40000 and HydraUI.ClientVersion < 50000
 HydraUI.IsMists = HydraUI.ClientVersion > 50000 and HydraUI.ClientVersion < 60000
 HydraUI.IsMainline = IsMainlineProject
 
-if (HydraUI.UserLocale == "enGB") then
+if HydraUI.UserLocale == "enGB" then
 	HydraUI.UserLocale = "enUS"
 end
 
@@ -73,7 +73,7 @@ HydraUI.Languages = {
 
 local SavedLocale = (type(HydraUIData) == "table") and HydraUIData.Language
 
-if (SavedLocale and HydraUI.Languages[SavedLocale]) then
+if SavedLocale and HydraUI.Languages[SavedLocale] then
 	HydraUI.UserLocale = SavedLocale
 	HydraUI.SelectedLanguage = SavedLocale
 else
@@ -91,11 +91,11 @@ function HydraUI:GetLanguageList()
 end
 
 function HydraUI:SetLanguage(locale)
-	if ((locale ~= "AUTO") and (not self.Languages[locale])) then
+	if (locale ~= "AUTO") and (not self.Languages[locale]) then
 		return
 	end
 
-	if (type(HydraUIData) ~= "table") then
+	if type(HydraUIData) ~= "table" then
 		HydraUIData = {}
 	end
 
@@ -133,7 +133,7 @@ end
 
 function HydraUI:LoadModules()
 	for i = 1, #ModuleQueue do
-		if (ModuleQueue[i].Load and not ModuleQueue[i].Loaded) then
+		if ModuleQueue[i].Load and not ModuleQueue[i].Loaded then
 			ModuleQueue[i]:Load()
 			ModuleQueue[i].Loaded = true
 		end
@@ -171,7 +171,7 @@ function HydraUI:GetPlugin(name)
 end
 
 function HydraUI:LoadPlugins()
-	if (#PluginQueue == 0) then
+	if #PluginQueue == 0 then
 		return
 	end
 
@@ -185,7 +185,7 @@ function HydraUI:LoadPlugins()
 		local Anchor
 
 		for i = 1, #PluginQueue do
-			if ((i % 2) == 0) then
+			if (i % 2) == 0 then
 				Anchor = right
 			else
 				Anchor = left

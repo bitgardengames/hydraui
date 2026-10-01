@@ -12,7 +12,7 @@ local OnEnter = function(self)
 		return
 	end
 
-	if (not UnitHasMana("player")) then
+	if not UnitHasMana("player") then
 		return
 	end
 
@@ -37,7 +37,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 

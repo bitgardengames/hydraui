@@ -23,13 +23,13 @@ local OnEnter = function(self)
 		Current, Max = GetInventoryItemDurability(Slots[i])
 
 		if Current then
-			if (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) then
+			if C_TooltipInfo and C_TooltipInfo.GetInventoryItem then
 				HasItem, HasCooldown, RepairCost = C_TooltipInfo.GetInventoryItem("player", Slots[i], true)
 			else
 				HasItem, HasCooldown, RepairCost = ScanTooltip:SetInventoryItem("player", Slots[i], true)
 			end
 
-			if (HasItem and RepairCost) then
+			if HasItem and RepairCost then
 				TotalCost = TotalCost + RepairCost
 			end
 		end
@@ -48,7 +48,7 @@ local OnEnter = function(self)
 		end
 	end
 
-	if (TotalCost > 0) then
+	if TotalCost > 0 then
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine(format("%s %s", REPAIR_COST, GetCoinTextureString(TotalCost)), 1, 1, 1)
 	end
@@ -83,15 +83,15 @@ local Update = function(self)
 
 	local Percent = floor(Total / Count * 100)
 
-	if (Count > 0) then
+	if Count > 0 then
 		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s%%|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor, Percent)
 	else
 		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor, NOT_APPLICABLE)
 	end
 
-	if (25 > Percent and not self.Anim:IsPlaying()) then
+	if 25 > Percent and not self.Anim:IsPlaying() then
 		self.Anim:Play()
-	elseif (Percent > 25 and self.Anim:IsPlaying()) then
+	elseif Percent > 25 and self.Anim:IsPlaying() then
 		self.Anim:Stop()
 		self.Anim:SetChange(0.5)
 		self.Highlight:SetAlpha(0)
@@ -112,7 +112,7 @@ local OnEnable = function(self)
 	self:SetScript("OnLeave", OnLeave)
 	self:SetScript("OnMouseUp", OnMouseUp)
 
-	if (not self.Anim) then
+	if not self.Anim then
 		self.Anim = LibMotion:CreateAnimation(self.Highlight, "Fade")
 		self.Anim:SetEasing("inout")
 		self.Anim:SetDuration(1.2)

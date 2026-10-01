@@ -3,24 +3,24 @@ local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
 local function Install(UF, Hider)
 function UF:SetHealthAttributes(health, value)
-	if (value == "CLASS") then
+	if value == "CLASS" then
 		health.colorClass = true
 		health.colorReaction = true
 		health.colorHealth = false
-	elseif (value == "REACTION") then
+	elseif value == "REACTION" then
 		health.colorClass = false
 		health.colorReaction = true
 		health.colorHealth = false
-	elseif (value == "BLIZZARD") then
+	elseif value == "BLIZZARD" then
 		health.colorClass = false
 		health.colorReaction = false
 		health.colorSelection = true
-	elseif (value == "THREAT") then
+	elseif value == "THREAT" then
 		health.colorClass = true
 		health.colorReaction = true
 		health.colorSelection = false
 		health.colorThreat = true
-	elseif (value == "CUSTOM") then
+	elseif value == "CUSTOM" then
 		health.colorClass = false
 		health.colorReaction = false
 		health.colorHealth = true
@@ -28,15 +28,15 @@ function UF:SetHealthAttributes(health, value)
 end
 
 function UF:SetPowerAttributes(power, value)
-	if (value == "POWER") then
+	if value == "POWER" then
 		power.colorPower = true
 		power.colorClass = false
 		power.colorReaction = false
-	elseif (value == "REACTION") then
+	elseif value == "REACTION" then
 		power.colorPower = false
 		power.colorClass = false
 		power.colorReaction = true
-	elseif (value == "CLASS") then
+	elseif value == "CLASS" then
 		power.colorPower = false
 		power.colorClass = true
 		power.colorReaction = true

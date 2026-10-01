@@ -26,7 +26,7 @@ local GetSpecInfo = function()
 		Name, _, PointsSpent = GetTalentTabInfo(i)
 
 		if Name then
-			if (PointsSpent > HighestPoints) then
+			if PointsSpent > HighestPoints then
 				MainSpecID = i
 				HighestPoints = PointsSpent
 			end
@@ -45,7 +45,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 
@@ -55,7 +55,7 @@ local Update = function(self, event, unit)
 	local Spell = GetHighestSpellPower()
 	local Healing = GetSpellBonusHealing()
 
-	if (Spell > 0 or Healing > 0) then
+	if Spell > 0 or Healing > 0 then
 		if (Spell > Healing) or (HydraUI.UserClass == "SHAMAN" and GetSpecInfo() ~= 3) then
 			Rating = Spell
 			Label = SpellLabel

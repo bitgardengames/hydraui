@@ -46,6 +46,7 @@ English phrases also serve as localization keys. When changing one, update the m
 ## Code conventions
 
 - Use tabs for Lua indentation and spaces around operators and argument separators.
+- Write control-flow conditions directly; unlike function calls, they do not need parentheses.
 - Keep one statement per line. Expand conditionals and functions across multiple lines instead of compressing them.
 - Give local values descriptive names, especially when a callback receives several related objects.
 - Separate setup phases with blank lines so frame construction and update paths can be scanned quickly.

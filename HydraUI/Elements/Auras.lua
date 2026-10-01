@@ -1,6 +1,8 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
-if HydraUI.IsMainline then return end -- Needs a rewrite for TWW
+if HydraUI.IsMainline then
+	return -- Needs a rewrite for TWW
+end
 
 local Auras = HydraUI:NewModule("Auras")
 
@@ -113,9 +115,9 @@ local UpdateTempEnchant = function(button, slot)
 end
 
 local OnAttributeChanged = function(button, attribute, index)
-	if (attribute == "index") then
+	if attribute == "index" then
 		Auras:UpdateAura(button, index)
-	elseif (attribute == "target-slot") then
+	elseif attribute == "target-slot" then
 		UpdateTempEnchant(button, index)
 	end
 end
@@ -171,12 +173,12 @@ end
 function Auras:UpdateAura(button, index)
 	local Name, Texture, Count, DType, Duration, ExpirationTime, Caster, IsStealable, ShouldConsolidate, SpellID, CanApplyAura, IsBossDebuff = UnitAura(button:GetParent():GetAttribute("unit"), index, button.Filter) -- button:GetID()
 
-	if (not Name) then
+	if not Name then
 		UnregisterButton(button)
 		return
 	end
 
-	if (Duration > 0 and ExpirationTime) then
+	if Duration > 0 and ExpirationTime then
 		button.Enchant = nil
 		button.ExpirationTime = ExpirationTime
 		button.TimeLeft = ExpirationTime - GetTime()
@@ -186,13 +188,13 @@ function Auras:UpdateAura(button, index)
 		UnregisterButton(button)
 	end
 
-	if (Count > 1) then
+	if Count > 1 then
 		button.Count:SetText(Count)
 	else
 		button.Count:SetText("")
 	end
 
-	if (button.Filter == "HARMFUL" and DType) then
+	if button.Filter == "HARMFUL" and DType then
 		local Color = DebuffColors[DType] or DebuffColors.none
 
 		button.Backdrop:SetBackdropBorderColor(unpack(Color))
@@ -202,7 +204,7 @@ function Auras:UpdateAura(button, index)
 end
 
 function Auras:Load()
-	if (not Settings["auras-enable"]) then
+	if not Settings["auras-enable"] then
 		return
 	end
 

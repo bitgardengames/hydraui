@@ -18,7 +18,7 @@ local OnEnter = function(self)
 
 	local Average, Equipped = GetAverageItemLevel()
 
-	if (Equipped ~= Average) then
+	if Equipped ~= Average then
 		GameTooltip:AddLine(format("%s %s %s", Label, floor(Average), format(STAT_AVERAGE_ITEM_LEVEL_EQUIPPED, Equipped)), 1, 1, 1)
 	else
 		GameTooltip:AddLine(Label, 1, 1, 1)

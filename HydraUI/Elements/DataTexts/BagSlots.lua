@@ -36,7 +36,7 @@ local OnEnter = function(self)
 			local FreeSlots = GetNumFreeSlots(i)
 			local Name = "|cFFFFFFFF[" .. BACKPACK_TOOLTIP .. "]|r"
 
-			if (i > 0) then
+			if i > 0 then
 				Name = GetInventoryItemLink("player", ContainerToInventoryID(i))
 
 				if Name then
@@ -52,7 +52,7 @@ local OnEnter = function(self)
 
 	local Total, Profit = HydraUI:GetTrashValue()
 
-	if (Total > 0) then
+	if Total > 0 then
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddDoubleLine(Language["|cFF9D9D9D[Poor quality]|r item value:"], GetCoinTextureString(Profit), 1, 1, 1, 1, 1, 1)
 	end

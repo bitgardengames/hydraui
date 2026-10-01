@@ -51,7 +51,7 @@ function HydraUI:GetTrashValue()
 		for Slot = 1, GetContainerNumSlots(Bag) do
 			local Link, ID = GetContainerItemLink(Bag, Slot), GetContainerItemID(Bag, Slot)
 
-			if (Link and ID and not AutoVendor.Filter[ID]) then
+			if Link and ID and not AutoVendor.Filter[ID] then
 				local Quality = select(3, GetItemInfo(Link))
 				local VendorPrice = select(11, GetItemInfo(Link))
 				local TotalPrice = VendorPrice
@@ -63,11 +63,11 @@ function HydraUI:GetTrashValue()
 					Count = GetContainerItemInfo(Bag, Slot).stackCount or 1
 				end
 
-				if ((VendorPrice and (VendorPrice > 0)) and Count) then
+				if (VendorPrice and (VendorPrice > 0)) and Count then
 					TotalPrice = VendorPrice * Count
 				end
 
-				if ((Quality and Quality <= 0) and TotalPrice > 0) then
+				if (Quality and Quality <= 0) and TotalPrice > 0 then
 					Profit = Profit + TotalPrice
 					TotalCount = TotalCount + Count
 				end
@@ -87,7 +87,7 @@ function AutoVendor:OnEvent()
 			local Link = GetContainerItemLink(Bag, Slot)
 			local ID = GetContainerItemID(Bag, Slot)
 
-			if (Link and ID and not self.Filter[ID]) then
+			if Link and ID and not self.Filter[ID] then
 				local TotalPrice = 0
 				local Quality = select(3, GetItemInfo(Link))
 				local VendorPrice = select(11, GetItemInfo(Link))
@@ -99,11 +99,11 @@ function AutoVendor:OnEvent()
 					Count = GetContainerItemInfo(Bag, Slot).stackCount or 1
 				end
 
-				if ((VendorPrice and (VendorPrice > 0)) and Count) then
+				if (VendorPrice and (VendorPrice > 0)) and Count then
 					TotalPrice = VendorPrice * Count
 				end
 
-				if ((Quality and Quality <= 0) and TotalPrice > 0) then
+				if (Quality and Quality <= 0) and TotalPrice > 0 then
 					UseContainerItem(Bag, Slot)
 					PickupMerchantItem()
 					Profit = Profit + TotalPrice
@@ -113,7 +113,7 @@ function AutoVendor:OnEvent()
 		end
 	end
 
-	if (Profit > 0 and Settings["auto-vendor-report"]) then
+	if Profit > 0 and Settings["auto-vendor-report"] then
 		HydraUI:print(format(Language[TotalCount == 1 and "You sold %d item for a total of %s" or "You sold %d items for a total of %s"], TotalCount, GetCoinTextureString(Profit)))
 	end
 end
@@ -138,18 +138,18 @@ function AutoRepair:OnEvent()
 		local Cost = GetRepairAllCost()
 		local CostString = GetCoinTextureString(Cost)
 
-		if (Cost == 0) then
+		if Cost == 0 then
 			return
 		end
 
-		if (CanGuildBankRepair() and (GetGuildBankWithdrawMoney() >= Cost) and Settings["auto-repair-use-guild"]) then
+		if CanGuildBankRepair() and (GetGuildBankWithdrawMoney() >= Cost) and Settings["auto-repair-use-guild"] then
 			RepairAllItems(1)
 
 			if Settings["auto-repair-report"] then
 				HydraUI:print(format(Language["Your equipped items have been repaired for %s using guild funds"], CostString))
 			end
 		else
-			if (Money > Cost) then
+			if Money > Cost then
 				RepairAllItems()
 
 				if Settings["auto-repair-report"] then

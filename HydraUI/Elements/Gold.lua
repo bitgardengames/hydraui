@@ -75,7 +75,7 @@ end
 function Gold:Load()
 	HydraUI:BindSavedVariable("HydraUIGold", "GoldData")
 
-	if (not HydraUI.GoldData[HydraUI.UserRealm]) then
+	if not HydraUI.GoldData[HydraUI.UserRealm] then
 		HydraUI.GoldData[HydraUI.UserRealm] = {}
 	end
 

@@ -30,7 +30,7 @@ local OnEnter = function(self)
 	GameTooltip:AddLine(Language["Remaining honor"])
 	GameTooltip:AddDoubleLine(format("%s", HydraUI:Comma(Remaining)), format("%s%%", RemainingPercent), 1, 1, 1, 1, 1, 1)
 
-	if (Kills > 0) then
+	if Kills > 0 then
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine(HONORABLE_KILLS)
 		GameTooltip:AddLine(HydraUI:Comma(Kills), 1, 1, 1)
@@ -58,7 +58,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 

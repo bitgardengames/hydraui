@@ -79,7 +79,7 @@ GUI.Widgets.CreateMessage = function(self, id, text) -- Create as many lines as 
 
 		CheckString:SetText(NewLine)
 
-		if (CheckString:GetStringWidth() >= (GROUP_WIDTH - 6)) then
+		if CheckString:GetStringWidth() >= (GROUP_WIDTH - 6) then
 			if find(Line, "(%S+)$") then -- A word needs to be wrapped
 				self:CreateLine(format("%s-%s", id, LineID), Line)
 				Line = word -- Start a new line with the wrapped word
@@ -102,7 +102,7 @@ GUI.Widgets.CreateMessage = function(self, id, text) -- Create as many lines as 
 end
 
 local AnimatedLineOnShow = function(self)
-	if (not self.Fade:IsPlaying()) then
+	if not self.Fade:IsPlaying() then
 		self.Fade:Play()
 	end
 end

@@ -18,7 +18,7 @@ Defaults["minimap-bottom-fill"] = 100
 Defaults["minimap-show-calendar"] = true
 
 function Map:Disable(object)
-	if (not object) then
+	if not object then
 		return
 	end
 
@@ -26,7 +26,7 @@ function Map:Disable(object)
 		object:UnregisterAllEvents()
 	end
 
-	if (object.HasScript and object:HasScript("OnUpdate")) then
+	if object.HasScript and object:HasScript("OnUpdate") then
 		object:SetScript("OnUpdate", nil)
 	end
 
@@ -35,9 +35,9 @@ function Map:Disable(object)
 end
 
 local OnMouseWheel = function(self, delta)
-	if (delta > 0) then
+	if delta > 0 then
 		pcall(Minimap_ZoomIn)
-	elseif (delta < 0) then
+	elseif delta < 0 then
 		pcall(Minimap_ZoomOut)
 	end
 end
@@ -99,7 +99,7 @@ function Map:Style()
 			QueueStatusButton:ClearAllPoints()
 			QueueStatusButton:SetPoint("BOTTOMLEFT", HydraUI.UIParent, "BOTTOMRIGHT", -460, 13)
 
-			if (not QueueStatusButton:IsMovable()) then
+			if not QueueStatusButton:IsMovable() then
 				QueueStatusButton:SetMovable(true)
 				QueueStatusButton:SetClampedToScreen(true)
 				QueueStatusButton:RegisterForDrag("LeftButton")
@@ -161,9 +161,9 @@ function Map:Style()
 		MiniMapMailFrame:HookScript("OnLeave", MailOnLeave)
 		MiniMapMailFrame:SetFrameLevel(10)
 
-		if (MiniMapTracking and MiniMapTracking:IsShown()) then
+		if MiniMapTracking and MiniMapTracking:IsShown() then
 			MiniMapMailFrame:SetPoint("TOPLEFT", MiniMapTracking, "BOTTOMLEFT", -7, 16)
-		elseif (MiniMapTrackingFrame and MiniMapTrackingFrame:IsShown()) then
+		elseif MiniMapTrackingFrame and MiniMapTrackingFrame:IsShown() then
 			MiniMapMailFrame:SetPoint("TOPLEFT", MiniMapTrackingFrame, "BOTTOMLEFT", -7, 16)
 		else
 			MiniMapMailFrame:SetPoint("TOPLEFT", Minimap, 4, 12)
@@ -182,7 +182,7 @@ function Map:Style()
 		MiniMapTrackingBackground:SetTexture(nil)
 	end
 
-	if (MiniMapTracking and MiniMapTracking:IsShown()) then
+	if MiniMapTracking and MiniMapTracking:IsShown() then
 		self.Tracking = CreateFrame("Frame", nil, Minimap, "BackdropTemplate")
 		self.Tracking:SetSize(24, 24)
 		self.Tracking:SetPoint("TOPLEFT", Minimap, 2, -2)
@@ -234,13 +234,13 @@ function Map:Style()
 	self:Disable(MiniMapMailBorder)
 	self:Disable(TimeManagerClockButton)
 
-	if (HydraUI.ClientVersion > 30000) then
+	if HydraUI.ClientVersion > 30000 then
 		GameTimeFrame:ClearAllPoints()
 		GameTimeFrame:SetParent(Minimap)
 		GameTimeFrame:SetPoint("TOPRIGHT", Minimap, 1, -1)
 		GameTimeFrame:SetFrameLevel(10)
 
-		if (not Settings["minimap-show-calendar"]) then
+		if not Settings["minimap-show-calendar"] then
 			GameTimeFrame:Hide()
 		end
 	else
@@ -255,11 +255,11 @@ function Map:Style()
 		Minimap:SetPoint("CENTER", Map, 0, 0)
 	end
 
-	if (not Settings["minimap-show-top"]) then
+	if not Settings["minimap-show-top"] then
 		self.TopFrame:Hide()
 	end
 
-	if (not Settings["minimap-show-bottom"]) then
+	if not Settings["minimap-show-bottom"] then
 		self.BottomFrame:Hide()
 	end
 
@@ -356,7 +356,7 @@ local UpdateShowCalendar = function(value)
 end
 
 function Map:Load()
-	if (not Settings["minimap-enable"]) then
+	if not Settings["minimap-enable"] then
 		return
 	end
 
@@ -375,7 +375,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Minimap"], fu
 	left:CreateSwitch("minimap-show-top", Settings["minimap-show-top"], Language["Enable Top Bar"], Language["Enable the data text bar on top of the minimap"], UpdateShowTopBar)
 	left:CreateSwitch("minimap-show-bottom", Settings["minimap-show-bottom"], Language["Enable Bottom Bar"], Language["Enable the data text bar on the bottom of the minimap"], UpdateShowBottomBar)
 
-	if (HydraUI.ClientVersion > 30000) then
+	if HydraUI.ClientVersion > 30000 then
 		left:CreateSwitch("minimap-show-calendar", Settings["minimap-show-calendar"], Language["Enable Calendar"], Language["Enable the calendar button on the minimap"], UpdateShowCalendar)
 	end
 

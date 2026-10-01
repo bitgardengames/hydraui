@@ -71,7 +71,7 @@ Defaults["ab-totem-enable"] = true
 Defaults["ab-extra-button-size"] = 60
 
 function AB:Disable(object)
-	if (not object) then
+	if not object then
 		return
 	end
 
@@ -83,7 +83,7 @@ function AB:Disable(object)
 end
 
 function AB:EnableBar(bar)
-	if (not bar) then
+	if not bar then
 		return
 	end
 
@@ -92,7 +92,7 @@ function AB:EnableBar(bar)
 end
 
 function AB:DisableBar(bar)
-	if (not bar) then
+	if not bar then
 		return
 	end
 
@@ -118,13 +118,13 @@ function AB:UpdateHotKeyText()
 end
 
 function AB:PositionButtons(bar, numbuttons, perrow, size, spacing)
-	if (numbuttons < perrow) then
+	if numbuttons < perrow then
 		perrow = numbuttons
 	end
 
 	local Columns = ceil(numbuttons / perrow)
 
-	if (Columns < 1) then
+	if Columns < 1 then
 		Columns = 1
 	end
 
@@ -139,15 +139,15 @@ function AB:PositionButtons(bar, numbuttons, perrow, size, spacing)
 		Button:ClearAllPoints()
 		Button:SetSize(size, size)
 
-		if (i == 1) then
+		if i == 1 then
 			Button:SetPoint("TOPLEFT", bar, 0, 0)
-		elseif ((i - 1) % perrow == 0) then
+		elseif (i - 1) % perrow == 0 then
 			Button:SetPoint("TOP", bar[i - perrow], "BOTTOM", 0, -spacing)
 		else
 			Button:SetPoint("LEFT", bar[i - 1], "RIGHT", spacing, 0)
 		end
 
-		if (i > numbuttons) then
+		if i > numbuttons then
 			Button:SetParent(self.Hide)
 		else
 			Button:SetParent(bar.ButtonParent or bar)
@@ -237,7 +237,7 @@ function AB:StyleActionButton(button)
 			self:OST("|cFFFFFFFF" .. text .. "|r")
 		end
 
-		if (not Settings["ab-show-hotkey"]) then
+		if not Settings["ab-show-hotkey"] then
 			button.HotKey:SetAlpha(0)
 		end
 	end
@@ -251,7 +251,7 @@ function AB:StyleActionButton(button)
 		button.Name:SetTextColor(1, 1, 1)
 		button.Name.SetTextColor = function() end
 
-		if (not Settings["ab-show-macro"]) then
+		if not Settings["ab-show-macro"] then
 			button.Name:SetAlpha(0)
 		end
 	end
@@ -265,7 +265,7 @@ function AB:StyleActionButton(button)
 		button.Count:SetTextColor(1, 1, 1)
 		button.Count.SetTextColor = function() end
 
-		if (not Settings["ab-show-count"]) then
+		if not Settings["ab-show-count"] then
 			button.Count:SetAlpha(0)
 		end
 	end
@@ -414,7 +414,7 @@ function AB:StylePetActionButton(button)
 			self:OST("|cFFFFFFFF" .. text .. "|r")
 		end
 
-		if (not Settings["action-bars-show-hotkeys"]) then
+		if not Settings["action-bars-show-hotkeys"] then
 			button.HotKey:SetAlpha(0)
 		end
 	end
@@ -429,7 +429,7 @@ function AB:StylePetActionButton(button)
 		button.Name:SetTextColor(1, 1, 1)
 		button.Name.SetTextColor = function() end
 
-		if (not Settings["action-bars-show-macro-names"]) then
+		if not Settings["action-bars-show-macro-names"] then
 			button.Name:SetAlpha(0)
 		end
 	end
@@ -443,7 +443,7 @@ function AB:StylePetActionButton(button)
 		button.Count:SetTextColor(1, 1, 1)
 		button.Count.SetTextColor = function() end
 
-		if (not Settings["action-bars-show-count"]) then
+		if not Settings["action-bars-show-count"] then
 			button.Count:SetAlpha(0)
 		end
 	end
@@ -495,12 +495,12 @@ function AB:PetActionBar_Update()
 end
 
 function AB:StanceBar_UpdateState()
-	if (not Settings["ab-stance-enable"]) then
+	if not Settings["ab-stance-enable"] then
 		return
 	end
 
-	if (GetNumShapeshiftForms() > 0) then
-		if (not AB.StanceBar:IsShown()) then
+	if GetNumShapeshiftForms() > 0 then
+		if not AB.StanceBar:IsShown() then
 			AB:EnableBar(AB.StanceBar)
 		end
 	elseif AB.StanceBar:IsShown() then
@@ -509,14 +509,14 @@ function AB:StanceBar_UpdateState()
 end
 
 function AB:UpdateButtonStatus(check, inrange)
-	if (not check or not self.action) then
+	if not check or not self.action then
 		return
 	end
 
 	local IsUsable, NoMana = IsUsableAction(self.action)
 
 	if IsUsable then
-		if (inrange == false) then
+		if inrange == false then
 			self.icon:SetVertexColor(HydraUI:HexToRGB("FF4C19"))
 		else
 			self.icon:SetVertexColor(HydraUI:HexToRGB("FFFFFF"))
@@ -664,10 +664,15 @@ function AB:ConfigureBar1Paging(bar)
 
 	if HydraUI.IsVanilla then
 		bar:SetAttribute("_onstate-page", [[
-			if GetOverrideBarIndex and HasOverrideActionBar() then newstate = GetOverrideBarIndex() or newstate
-			elseif HasTempShapeshiftActionBar() then newstate = GetTempShapeshiftBarIndex() or newstate
-			elseif HasBonusActionBar() and GetActionBarPage() == 1 then newstate = GetBonusBarIndex() or newstate
-			else newstate = GetActionBarPage() or newstate end
+			if GetOverrideBarIndex and HasOverrideActionBar() then
+				newstate = GetOverrideBarIndex() or newstate
+			elseif HasTempShapeshiftActionBar() then
+				newstate = GetTempShapeshiftBarIndex() or newstate
+			elseif HasBonusActionBar() and GetActionBarPage() == 1 then
+				newstate = GetBonusBarIndex() or newstate
+			else
+				newstate = GetActionBarPage() or newstate
+			end
 			for i = 1, 12 do
 				Buttons[i]:SetAttribute("actionpage", newstate)
 			end
@@ -675,10 +680,15 @@ function AB:ConfigureBar1Paging(bar)
 		RegisterAttributeDriver(bar, "state-page", "[overridebar] 14; [shapeshift] 13; [possessbar] 16; [bar:2] 2; [bar:3] 3; [bar:4] 4; [bar:5] 5; [bar:6] 6; [bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; [bonusbar:5] 11; [form] 1; 1")
 	else
 		bar:SetAttribute("_onstate-page", [[
-			if GetVehicleBarIndex and HasVehicleActionBar() then newstate = GetVehicleBarIndex()
-			elseif HasOverrideActionBar and HasOverrideActionBar() then newstate = GetOverrideBarIndex()
-			elseif HasTempShapeshiftActionBar() then newstate = GetTempShapeshiftBarIndex()
-			elseif HasBonusActionBar() then newstate = GetBonusBarIndex() end
+			if GetVehicleBarIndex and HasVehicleActionBar() then
+				newstate = GetVehicleBarIndex()
+			elseif HasOverrideActionBar and HasOverrideActionBar() then
+				newstate = GetOverrideBarIndex()
+			elseif HasTempShapeshiftActionBar() then
+				newstate = GetTempShapeshiftBarIndex()
+			elseif HasBonusActionBar() then
+				newstate = GetBonusBarIndex()
+			end
 			for i = 1, 12 do
 				Buttons[i]:SetAttribute("actionpage", newstate)
 			end
@@ -692,7 +702,7 @@ function AB:ConfigureBar1Paging(bar)
 end
 
 local PetBarUpdateGridLayout = function()
-	if (not AB.PetBar:IsShown() or InCombatLockdown()) then
+	if not AB.PetBar:IsShown() or InCombatLockdown() then
 		return
 	end
 
@@ -824,7 +834,7 @@ function AB:CreateStanceBar()
 		end
 	end
 
-	if (StanceBarFrame and StanceBarFrame.StanceButtons) then
+	if StanceBarFrame and StanceBarFrame.StanceButtons then
 		StanceBarLeft:SetAlpha(0)
 		StanceBarRight:SetAlpha(0)
 
@@ -865,7 +875,7 @@ end
 
 local UpdateZoneAbilityPosition = function(self, anchor, parent)
 	--if (not InCombatLockdown()) and (parent and parent ~= AB.ExtraBar) then
-	if (parent and parent ~= AB.ExtraBar) then
+	if parent and parent ~= AB.ExtraBar then
 		self:ClearAllPoints()
 		self:SetPoint("CENTER", AB.ExtraBar)
 	end
@@ -873,7 +883,7 @@ end
 
 local SkinZoneAbilityButtons = function()
 	for Button in ZoneAbilityFrame.SpellButtonContainer:EnumerateActive() do
-		if (not Button.Styled) then
+		if not Button.Styled then
 			Button.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
 			Button.NormalTexture:SetAlpha(0)
 
@@ -899,7 +909,7 @@ local UpdateExtraActionParent = function(self, parent)
 		return
 	end
 
-	if (parent and parent ~= AB.ExtraBar) then
+	if parent and parent ~= AB.ExtraBar then
 		self:SetParent(AB.ExtraBar)
 	end
 end
@@ -964,16 +974,16 @@ function AB:CreateBars()
 		end
 	end
 
-	if (PetActionBar or PetActionBarFrame) then
+	if PetActionBar or PetActionBarFrame then
 		self:CreatePetBar()
 	end
-	if (StanceBar or StanceBarFrame) then
+	if StanceBar or StanceBarFrame then
 		self:CreateStanceBar()
 	end
 	if ExtraActionButton1 then
 		self:CreateExtraBar()
 	end
-	if (MultiCastActionBarFrame and MultiCastActionBarFrame.numActiveSlots and MultiCastActionBarFrame.numActiveSlots > 0) then
+	if MultiCastActionBarFrame and MultiCastActionBarFrame.numActiveSlots and MultiCastActionBarFrame.numActiveSlots > 0 then
 		self:StyleTotemBar()
 	end
 end
@@ -1029,11 +1039,11 @@ function AB:CreateMovers()
 end
 
 function AB:UpdateFlyout()
-	if (not self.FlyoutArrow) then
+	if not self.FlyoutArrow then
 		return
 	end
 
-	if (SpellFlyout and SpellFlyout:IsShown()) then
+	if SpellFlyout and SpellFlyout:IsShown() then
 		SpellFlyout.BgEnd:SetTexture()
 		SpellFlyout.HorizBg:SetTexture()
 		SpellFlyout.VertBg:SetTexture()
@@ -1074,7 +1084,7 @@ local MultiCastSummonSpellButton_Update = function()
 		--self:StyleActionButton(Button)
 		Button:ClearAllPoints()
 
-		if (i == 1 or i == 5 or i == 9) then
+		if i == 1 or i == 5 or i == 9 then
 			Button:SetPoint("LEFT", MultiCastSummonSpellButton, "RIGHT", 2, 0)
 		else
 			Button:SetPoint("LEFT", _G["MultiCastActionButton"..i-1], "RIGHT", 2, 0)
@@ -1092,7 +1102,7 @@ local MultiCastFlyoutFrame_LoadSlotSpells = function(parent, slotid)
 	for i = 1, 8 do
 		FlyoutButton = _G["MultiCastFlyoutButton" .. i]
 
-		if (not FlyoutButton) then
+		if not FlyoutButton then
 			return
 		end
 
@@ -1102,7 +1112,7 @@ local MultiCastFlyoutFrame_LoadSlotSpells = function(parent, slotid)
 			FlyoutButton.Border:SetTexture(nil)
 		end
 
-		if (FlyoutButton.icon and i ~= 1) then
+		if FlyoutButton.icon and i ~= 1 then
 			FlyoutButton.icon:ClearAllPoints()
 			FlyoutButton.icon:SetPoint("TOPLEFT", FlyoutButton, 0, 0)
 			FlyoutButton.icon:SetPoint("BOTTOMRIGHT", FlyoutButton, 0, 0)
@@ -1134,7 +1144,7 @@ local MultiCastFlyoutFrame_LoadSlotSpells = function(parent, slotid)
 
 		FlyoutButton:ClearAllPoints()
 
-		if (i == 1) then
+		if i == 1 then
 			FlyoutButton:SetPoint("BOTTOM", MultiCastFlyoutFrame, 0, 3)
 		else
 			FlyoutButton:SetPoint("BOTTOM", _G["MultiCastFlyoutButton" .. i-1], "TOP", 0, 4)
@@ -1174,7 +1184,7 @@ function AB:StyleTotemBar()
 
 		Slot:ClearAllPoints()
 
-		if (i == 1) then
+		if i == 1 then
 			Slot:SetPoint("LEFT", MultiCastSummonSpellButton, "RIGHT", 2, 0)
 		else
 			Slot:SetPoint("LEFT", _G["MultiCastSlotButton"..i-1], "RIGHT", 2, 0)
@@ -1194,7 +1204,7 @@ function AB:StyleTotemBar()
 
 		--Button:ClearAllPoints()
 
-		if (i == 1 or i == 5 or i == 9) then
+		if i == 1 or i == 5 or i == 9 then
 			Button:SetPoint("LEFT", MultiCastSummonSpellButton, "RIGHT", 2, 0)
 		else
 			Button:SetPoint("LEFT", _G["MultiCastActionButton"..i-1], "RIGHT", 2, 0)
@@ -1222,7 +1232,7 @@ function AB:StyleTotemBar()
 end
 
 function AB:Load()
-	if (not Settings["ab-enable"]) then
+	if not Settings["ab-enable"] then
 		return
 	end
 

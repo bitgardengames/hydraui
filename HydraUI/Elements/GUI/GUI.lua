@@ -249,7 +249,7 @@ function GUI:GetWidget(id)
 end
 
 function GUI:Toggle()
-	if (not self.Loaded) then
+	if not self.Loaded then
 		self:CreateGUI()
 	end
 
@@ -263,7 +263,7 @@ function GUI:Toggle()
 			self:UnregisterEvent("PLAYER_STOPPED_MOVING")
 		end
 	else
-		if (Settings["gui-hide-in-combat"] and InCombatLockdown()) then
+		if Settings["gui-hide-in-combat"] and InCombatLockdown() then
 			HydraUI:print(ERR_NOT_IN_COMBAT)
 
 			return
@@ -274,7 +274,7 @@ function GUI:Toggle()
 			self:RegisterEvent("PLAYER_STOPPED_MOVING")
 		end
 
-		if (not self.FirstToggle) then
+		if not self.FirstToggle then
 			C_Timer.After(0.2, function()
 				self:Show()
 				self.FadeIn:Play()
@@ -293,7 +293,7 @@ function GUI:Toggle()
 end
 
 function GUI:PLAYER_REGEN_DISABLED()
-	if (Settings["gui-hide-in-combat"] and self:IsVisible()) then
+	if Settings["gui-hide-in-combat"] and self:IsVisible() then
 		self:SetAlpha(0)
 		self:Hide()
 		--CloseLastDropdown()
@@ -309,7 +309,7 @@ local ReopenWindow = function()
 end
 
 function GUI:PLAYER_REGEN_ENABLED()
-	if (Settings["gui-hide-in-combat"] and self.WasCombatClosed) then
+	if Settings["gui-hide-in-combat"] and self.WasCombatClosed then
 		HydraUI:DisplayPopup(Language["Attention"], Language["The settings window was automatically closed due to combat. Would you like to open it again?"], ACCEPT, ReopenWindow, CANCEL)
 	end
 
@@ -321,31 +321,31 @@ function GUI:MODIFIER_STATE_CHANGED(key, state)
 	if GetMouseFocus then
 		local MouseFocus = GetMouseFocus()
 
-		if (not MouseFocus) then
+		if not MouseFocus then
 			return
 		end
 
-		if (MouseFocus.OnMouseWheel and state == 1) then
+		if MouseFocus.OnMouseWheel and state == 1 then
 			MouseFocus:SetScript("OnMouseWheel", MouseFocus.OnMouseWheel)
-		elseif (MouseFocus.HasScript and MouseFocus:HasScript("OnMouseWheel")) then
+		elseif MouseFocus.HasScript and MouseFocus:HasScript("OnMouseWheel") then
 			MouseFocus:SetScript("OnMouseWheel", nil)
 		end
 	elseif GetMouseFoci then
 		local MouseFocus = GetMouseFoci()
 
-		if (not MouseFocus) then
+		if not MouseFocus then
 			return
 		end
 
 		MouseFocus = MouseFocus[1]
 
-		if (not MouseFocus) then
+		if not MouseFocus then
 			return
 		end
 
-		if (MouseFocus.OnMouseWheel and state == 1) then
+		if MouseFocus.OnMouseWheel and state == 1 then
 			MouseFocus:SetScript("OnMouseWheel", MouseFocus.OnMouseWheel)
-		elseif (MouseFocus.HasScript and MouseFocus:HasScript("OnMouseWheel")) then
+		elseif MouseFocus.HasScript and MouseFocus:HasScript("OnMouseWheel") then
 			MouseFocus:SetScript("OnMouseWheel", nil)
 		end
 	end

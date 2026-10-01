@@ -15,7 +15,7 @@ local OnEnter = function(self)
 	local Color = HydraUI.ZoneColors[PVPType or "other"]
 	local Label
 
-	if (ZoneText ~= SubZoneText) then
+	if ZoneText ~= SubZoneText then
 		Label = format("%s - %s", ZoneText, SubZoneText)
 	else
 		Label = ZoneText
@@ -23,9 +23,9 @@ local OnEnter = function(self)
 
 	GameTooltip:AddLine(Label, Color[1], Color[2], Color[3])
 
-	if (PVPType == "friendly" or PVPType == "hostile") then
+	if PVPType == "friendly" or PVPType == "hostile" then
 		GameTooltip:AddLine(format(FACTION_CONTROLLED_TERRITORY, Faction), Color[1], Color[2], Color[3])
-	elseif (PVPType == "sanctuary") then
+	elseif PVPType == "sanctuary" then
 		GameTooltip:AddLine(SANCTUARY_TERRITORY, Color[1], Color[2], Color[3])
 	elseif IsFFA then
 		GameTooltip:AddLine(FREE_FOR_ALL_TERRITORY, Color[1], Color[2], Color[3])
@@ -61,7 +61,7 @@ end
 local Update = function(self, elapsed)
 	self.Elapsed = self.Elapsed + elapsed
 
-	if (self.Elapsed > 0.5) then
+	if self.Elapsed > 0.5 then
 		local MapID = GetBestMapForUnit("player")
 		local Position = MapID and GetPlayerMapPosition(MapID, "player")
 

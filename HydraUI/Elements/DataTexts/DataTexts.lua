@@ -27,7 +27,7 @@ DT.List = {}
 HydraUI.ValueColor = "ffffff"
 
 local SetTooltip = function(anchor)
-	if (not Settings["data-text-enable-tooltips"]) then
+	if not Settings["data-text-enable-tooltips"] then
 		anchor.TooltipShown = false
 		GameTooltip:Hide()
 
@@ -41,7 +41,7 @@ local SetTooltip = function(anchor)
 		GameTooltip:SetOwner(anchor, "ANCHOR_NONE")
 		GameTooltip:ClearAllPoints()
 
-		if (Position == "TOP") then
+		if Position == "TOP" then
 			GameTooltip:SetPoint("TOP", anchor, "BOTTOM", 0, -8)
 		else
 			GameTooltip:SetPoint("BOTTOM", anchor, "TOP", 0, 8)
@@ -68,7 +68,7 @@ function DT:NewAnchor(name, parent)
 		return
 	end
 
-	if (not parent) then
+	if not parent then
 		parent = HydraUI.UIParent
 	end
 
@@ -105,7 +105,7 @@ function DT:GetAnchor(name)
 end
 
 function DT:SetDataText(anchor, name)
-	if ((not self.Anchors[anchor]) or (not self.Types[name])) then
+	if (not self.Anchors[anchor]) or (not self.Types[name]) then
 		return
 	end
 
@@ -122,7 +122,7 @@ function DT:SetDataText(anchor, name)
 
 	Anchor:Enable()
 
-	if (not Anchor.MouseHooksSet) then
+	if not Anchor.MouseHooksSet then
 		Anchor:HookScript("OnMouseDown", self.OnMouseDown)
 		Anchor:HookScript("OnMouseUp", self.OnMouseUp)
 		Anchor.MouseHooksSet = true
@@ -131,18 +131,18 @@ end
 
 function DT:SetTooltipsEnabled(value)
 	for Name, Anchor in next, self.Anchors do
-		if (Anchor:HasScript("OnEnter") or Anchor:HasScript("OnMouseUp")) then
+		if Anchor:HasScript("OnEnter") or Anchor:HasScript("OnMouseUp") then
 			Anchor:EnableMouse(true)
 		end
 	end
 
-	if (not value) then
+	if not value then
 		local Owner = GameTooltip:GetOwner()
 
 		for Name, Anchor in next, self.Anchors do
 			Anchor.TooltipShown = false
 
-			if (Owner == Anchor) then
+			if Owner == Anchor then
 				GameTooltip:Hide()
 
 				break
@@ -273,7 +273,7 @@ end
 local DeleteGoldData = function(value)
 	if HydraUI.GoldData[HydraUI.UserRealm] then
 		for name, money in next, HydraUI.GoldData[HydraUI.UserRealm] do
-			if (string.match(name, "|cff%x%x%x%x%x%x(.*)|r") == value) then
+			if string.match(name, "|cff%x%x%x%x%x%x(.*)|r") == value then
 				HydraUI.GoldData[HydraUI.UserRealm][name] = nil
 
 				HydraUI:print(format(Language["Deleted stored gold data for %s."], name))

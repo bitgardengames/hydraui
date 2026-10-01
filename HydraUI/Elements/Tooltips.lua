@@ -65,7 +65,7 @@ if C_Item then
 	GetItemInfo = C_Item.GetItemInfo
 end
 
-if (not HydraUI.IsMainline) then
+if not HydraUI.IsMainline then
 	GetHappiness = GetPetHappiness
 end
 
@@ -98,7 +98,7 @@ function Tooltips:UpdateFonts(tooltip)
 	for i = 1, tooltip:GetNumRegions() do
 		local Region = select(i, tooltip:GetRegions())
 
-		if (Region:GetObjectType() == "FontString") then
+		if Region:GetObjectType() == "FontString" then
 			HydraUI:SetFontInfo(Region, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
 		end
 	end
@@ -106,7 +106,7 @@ function Tooltips:UpdateFonts(tooltip)
 	for i = 1, tooltip:GetNumChildren() do
 		local Child = select(i, tooltip:GetChildren())
 
-		if (Child and Child.GetName and Child:GetName() ~= nil and find(Child:GetName(), "MoneyFrame")) then
+		if Child and Child.GetName and Child:GetName() ~= nil and find(Child:GetName(), "MoneyFrame") then
 			local Prefix = _G[Child:GetName() .. "PrefixText"]
 			local Suffix = _G[Child:GetName() .. "SuffixText"]
 
@@ -130,7 +130,7 @@ function Tooltips:UpdateFonts(tooltip)
 				for j = 1, MoneyFrame:GetNumChildren() do
 					local Region = select(j, MoneyFrame:GetChildren())
 
-					if (Region and Region.GetName and Region:GetName()) then
+					if Region and Region.GetName and Region:GetName() then
 						local Text = _G[Region:GetName() .. "Text"]
 
 						if Text then
@@ -164,7 +164,7 @@ local SetTooltipStyle = function(self)
 		HydraUI:AddBackdrop(self.Backdrop)
 		self.Backdrop.Outside:SetBackdropColor(R, G, B, (Settings["tooltips-opacity"] / 100))
 
-		if (self == AutoCompleteBox) then
+		if self == AutoCompleteBox then
 			for i = 1, AUTOCOMPLETE_MAX_BUTTONS do
 				HydraUI:SetFontInfo(_G["AutoCompleteButton" .. i .. "Text"], Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
 			end
@@ -209,7 +209,7 @@ local FilterUnit = function(unit)
 
 	if UnitPlayerControlled(unit) then
 		if UnitCanAttack(unit, "player") then
-			if (not UnitCanAttack("player", unit)) then
+			if not UnitCanAttack("player", unit) then
 				State = 1
 			else
 				State = 2
@@ -225,7 +225,7 @@ local FilterUnit = function(unit)
 		local Reaction = UnitReaction(unit, "player")
 
 		if Reaction then
-			if (Reaction >= 4) then
+			if Reaction >= 4 then
 				State = 1
 			else
 				State = 2
@@ -235,9 +235,9 @@ local FilterUnit = function(unit)
 		end
 	end
 
-	if (Settings["tooltips-hide-on-unit"] == "FRIENDLY" and State == 1) then
+	if Settings["tooltips-hide-on-unit"] == "FRIENDLY" and State == 1 then
 		return true
-	elseif (Settings["tooltips-hide-on-unit"] == "HOSTILE" and State == 2) then
+	elseif Settings["tooltips-hide-on-unit"] == "HOSTILE" and State == 2 then
 		return true
 	end
 end
@@ -254,7 +254,7 @@ local OnTooltipSetUnit = function(self)
 	if UnitID then
 		local Class = UnitClass(UnitID)
 
-		if (not Class) then
+		if not Class then
 			return
 		end
 
@@ -274,7 +274,7 @@ local OnTooltipSetUnit = function(self)
 		local Flag = ""
 		local Line
 
-		if (Class == Name) then
+		if Class == Name then
 			Class = ""
 		end
 
@@ -284,14 +284,14 @@ local OnTooltipSetUnit = function(self)
 		if HydraUI.IsMainline then
 			local EffectiveLevel = UnitEffectiveLevel(UnitID)
 
-			if (EffectiveLevel > 0 and EffectiveLevel ~= Level) then
+			if EffectiveLevel > 0 and EffectiveLevel ~= Level then
 				local EffectiveColor = GetQuestDifficultyColor(EffectiveLevel)
 				local EffectiveHex = HydraUI:RGBToHex(EffectiveColor.r, EffectiveColor.g, EffectiveColor.b)
 
 				local LevelColor = GetQuestDifficultyColor(Level)
 				local ColorHex = HydraUI:RGBToHex(LevelColor.r, LevelColor.g, LevelColor.b)
 
-				if (Level == -1) then
+				if Level == -1 then
 					Level = "??"
 				end
 
@@ -301,7 +301,7 @@ local OnTooltipSetUnit = function(self)
 			local LevelColor = GetQuestDifficultyColor(Level)
 			local Hex = HydraUI:RGBToHex(LevelColor.r, LevelColor.g, LevelColor.b)
 
-			if (Level == -1) then
+			if Level == -1 then
 				Level = "??"
 			end
 
@@ -325,7 +325,7 @@ local OnTooltipSetUnit = function(self)
 			Flag = "|cFFF44336" .. CHAT_FLAG_DND .. "|r "
 		end
 
-		if (Realm and Realm ~= "" and Settings["tooltips-display-realm"]) then
+		if Realm and Realm ~= "" and Settings["tooltips-display-realm"] then
 			GameTooltipTextLeft1:SetText(format("%s|cFF%s%s - %s|r", Flag, Color, (Settings["tooltips-display-title"] and Title or Name), Realm))
 		else
 			GameTooltipTextLeft1:SetText(format("%s|cFF%s%s|r", Flag, Color, (Settings["tooltips-display-title"] and Title or Name)))
@@ -334,7 +334,7 @@ local OnTooltipSetUnit = function(self)
 		for i = 2, self:NumLines() do
 			Line = _G["GameTooltipTextLeft" .. i]
 
-			if (Line and Line.GetText and Line:GetText() and find(Line:GetText(), "^" .. LEVEL)) then
+			if Line and Line.GetText and Line:GetText() and find(Line:GetText(), "^" .. LEVEL) then
 				if Race then
 					Line:SetText(format("%s %s|r %s %s", LEVEL, Level, Race, Class))
 				elseif CreatureType then
@@ -346,10 +346,10 @@ local OnTooltipSetUnit = function(self)
 				else
 					Line:SetText(format("%s %s|r %s", LEVEL, Level, Class))
 				end
-			elseif (Line and Line.GetText and Line:GetText() and find(Line:GetText(), PVP)) then
+			elseif Line and Line.GetText and Line:GetText() and find(Line:GetText(), PVP) then
 				Line:SetText(format("|cFFEE4D4D%s|r", PVP))
 			elseif Line and Guild and find(Line:GetText(), Guild) then
-				if (Guild == MyGuild) then
+				if Guild == MyGuild then
 					if Settings["tooltips-display-rank"] then
 						Guild = format("|cFF5DADE2<%s>|r (%s)", Guild, Rank)
 					else
@@ -368,17 +368,17 @@ local OnTooltipSetUnit = function(self)
 		end
 
 		-- Vanilla does not add the guild name to unit tooltips natively
-		if (HydraUI.IsVanilla and Guild) then
+		if HydraUI.IsVanilla and Guild then
 			self:AddLine("<" .. Guild .. ">", 1, 1, 1)
 		end
 
-		if (Settings["tooltips-show-target"] and (UnitID ~= "player" and UnitExists(UnitID .. "target"))) then
+		if Settings["tooltips-show-target"] and (UnitID ~= "player" and UnitExists(UnitID .. "target")) then
 			local TargetColor = GetUnitColor(UnitID .. "target")
 
 			self:AddLine(Language["Targeting: |cFF"] .. TargetColor .. UnitName(UnitID .. "target") .. "|r", 1, 1, 1)
 		end
 
-		if ((not HydraUI.IsMainline) and HydraUI.UserClass == "HUNTER" and UnitID == "pet") then
+		if (not HydraUI.IsMainline) and HydraUI.UserClass == "HUNTER" and UnitID == "pet" then
 			local Level = GetHappiness()
 
 			if Level then
@@ -406,7 +406,7 @@ local OnTooltipSetItem = function(self)
 
 	local Name, Link = self:GetItem()
 
-	if (not Link) then
+	if not Link then
 		return
 	end
 
@@ -424,14 +424,14 @@ local OnTooltipSetItem = function(self)
 				MouseFocus = MouseFocus[1]
 			end
 
-			if (MouseFocus and MouseFocus.count) then
+			if MouseFocus and MouseFocus.count then
 				Count = MouseFocus.count
 			end
 
-			if (Count and type(Count) == "number") then
+			if Count and type(Count) == "number" then
 				local CopperValue = Price * Count
 
-				if (CopperValue > 0) then
+				if CopperValue > 0 then
 					local CoinString = GetCoinTextureString(CopperValue)
 
 					if CoinString then
@@ -451,19 +451,19 @@ local OnTooltipSetItem = function(self)
 end
 
 local OnItemRefTooltipSetItem = function(self)
-	if (not self.GetItem) then
+	if not self.GetItem then
 		return
 	end
 
 	local Link = select(2, self:GetItem())
 
-	if (not Link) then
+	if not Link then
 		return
 	end
 
 	local Price = select(11, GetItemInfo(Link))
 
-	if (Price and Price > 0) then
+	if Price and Price > 0 then
 		local CoinString = GetCoinTextureString(Price)
 
 		if CoinString then
@@ -486,7 +486,7 @@ local OnTooltipSetSpell = function(self)
 		return
 	end
 
-	if (not Settings["tooltips-show-id"]) then
+	if not Settings["tooltips-show-id"] then
 		return
 	end
 
@@ -521,7 +521,7 @@ local OnTooltipSetAura = function(self, unit, index, filter)
 
 	local _, _, _, _, _, _, Caster, _, _, id = UnitAura(unit, index, filter)
 
-	if (not id) then
+	if not id then
 		return
 	end
 
@@ -554,7 +554,7 @@ function Tooltips:AddHooks()
 		self.Handled[i]:HookScript("OnShow", SetTooltipStyle)
 	end
 
-	if (TooltipDataProcessor and not (HydraUI.IsCata or HydraUI.IsMists)) then
+	if TooltipDataProcessor and not (HydraUI.IsCata or HydraUI.IsMists) then
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, OnTooltipSetUnit)
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, OnTooltipSetSpell)
@@ -577,7 +577,7 @@ end
 local OnValueChanged = function(self)
 	local Unit = select(2, self:GetParent():GetUnit())
 
-	if (not Unit) then
+	if not Unit then
 		return
 	end
 
@@ -586,7 +586,7 @@ local OnValueChanged = function(self)
 	self:SetStatusBarColor(HydraUI:HexToRGB(Color))
 	self.BG:SetVertexColor(HydraUI:HexToRGB(Color))
 
-	if (not Settings["tooltips-show-health-text"]) then
+	if not Settings["tooltips-show-health-text"] then
 		return
 	end
 
@@ -602,7 +602,7 @@ local OnValueChanged = function(self)
 		return
 	end
 
-	if (Max == 0) then
+	if Max == 0 then
 		if UnitIsDead(Unit) then
 			self.HealthValue:SetText("|cFFD64545" .. Language["Dead"] .. "|r")
 		elseif UnitIsGhost(Unit) then
@@ -625,7 +625,7 @@ local OnValueChanged = function(self)
 end
 
 local OnShow = function(self)
-	if (not Settings["tooltips-show-health"]) then
+	if not Settings["tooltips-show-health"] then
 		GameTooltipStatusBar:Hide()
 
 		return
@@ -750,7 +750,7 @@ function Tooltips:OnEvent(event, guid)
 end
 
 function Tooltips:Load()
-	if (not Settings["tooltips-enable"]) then
+	if not Settings["tooltips-enable"] then
 		return
 	end
 
@@ -786,7 +786,7 @@ local UpdateHealthBarHeight = function(value)
 end
 
 local UpdateShowHealthText = function(value)
-	if (value ~= true) then
+	if value ~= true then
 		GameTooltipStatusBar.HealthValue:SetText(" ")
 		GameTooltipStatusBar.HealthPercent:SetText(" ")
 	end

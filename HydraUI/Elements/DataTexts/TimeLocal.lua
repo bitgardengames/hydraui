@@ -9,7 +9,7 @@ local OnMouseUp = function(self, button)
 		return print(ERR_NOT_IN_COMBAT)
 	end
 
-	if (ToggleCalendar and button == "LeftButton") then
+	if ToggleCalendar and button == "LeftButton" then
 		ToggleCalendar()
 	else
 		TimeManager_Toggle()
@@ -45,7 +45,7 @@ end
 local Update = function(self, elapsed)
 	self.Elapsed = self.Elapsed + elapsed
 
-	if (self.Elapsed > 10) then
+	if self.Elapsed > 10 then
 		local Time = GameTime_GetLocalTime(true)
 
 		Time = gsub(Time, "%a+", format("|cFF%s%s|r", HydraUI.ValueColor, "%1"))

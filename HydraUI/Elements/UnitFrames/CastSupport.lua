@@ -10,7 +10,7 @@ UF.PostCastStart = function(self, unit)
 	if self.notInterruptible then
 		self:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))
 		self.bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))
-	elseif (self.ClassColor and UnitIsPlayer(unit)) then
+	elseif self.ClassColor and UnitIsPlayer(unit) then
 		_, Class = UnitClass(unit)
 
 		if Class then
@@ -32,7 +32,7 @@ UF.PostCastInterruptible = function(self)
 	if self.notInterruptible then
 		self:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))
 		self.bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))
-	elseif (self.ClassColor and UnitIsPlayer(unit)) then
+	elseif self.ClassColor and UnitIsPlayer(unit) then
 		_, Class = UnitClass(unit)
 
 		if Class then

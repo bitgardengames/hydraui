@@ -27,7 +27,7 @@ Commands["texel"] = function()
 		return true
 	end
 
-	if (not IsAddOnLoaded("Blizzard_DebugTools")) then
+	if not IsAddOnLoaded("Blizzard_DebugTools") then
 		LoadAddOn("Blizzard_DebugTools")
 	end
 
@@ -76,7 +76,7 @@ SlashCmdList["RELOAD"] = C_UI.Reload
 SLASH_GLOBALSTRINGFIND1 = "/gfind"
 SlashCmdList["GLOBALSTRINGFIND"] = function(query)
 	for Key, Value in next, _G do
-		if (Value and type(Value) == "string") then
+		if Value and type(Value) == "string" then
 			if Value:lower():find(query:lower()) then
 				print(format("|cFFFFFF00%s|r |cFFFFFFFF= %s|r", Key, Value))
 			end

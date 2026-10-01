@@ -181,7 +181,7 @@ Popup.CreatePopupFrame = function(self)
 end
 
 Popup.Display = function(self, header, body, accept, acceptfunc, cancel, cancelfunc, arg1, arg2)
-	if (not self.Created) then
+	if not self.Created then
 		self:CreatePopupFrame()
 	end
 
@@ -201,7 +201,7 @@ Popup.Display = function(self, header, body, accept, acceptfunc, cancel, cancelf
 	self.Button2.Arg1 = arg1
 	self.Button2.Arg2 = arg2
 
-	if (not self:IsShown()) then
+	if not self:IsShown() then
 		self:SetAlpha(0)
 		self:Show()
 		self.FadeIn:Play()

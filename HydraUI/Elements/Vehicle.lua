@@ -92,7 +92,7 @@ function Vehicle:Load()
 	self.FadeOut:SetChange(0)
 	self.FadeOut:SetScript("OnFinished", FadeOnFinished)
 
-	if (not CanExitVehicle()) then
+	if not CanExitVehicle() then
 		self:SetAlpha(0)
 		self:Hide()
 	end

@@ -50,7 +50,7 @@ local Language = Language
 local AddChannelToFrame = ChatFrame_AddChannel or function(Frame, Channel)
 	local WindowID = Frame:GetID()
 
-	if (C_ChatInfo and C_ChatInfo.AddChannelToWindow) then
+	if C_ChatInfo and C_ChatInfo.AddChannelToWindow then
 		C_ChatInfo.AddChannelToWindow(WindowID, Channel)
 	elseif AddChatWindowChannel then
 		AddChatWindowChannel(WindowID, Channel)
@@ -155,11 +155,11 @@ function Chat:Install()
 	C_CVar.SetCVar("chatClassColorOverride", 0)
 	C_CVar.SetCVar("speechToText", "0")
 
-	if (C_CVar.GetCVar("colorChatNamesByClass") ~= "0") then
+	if C_CVar.GetCVar("colorChatNamesByClass") ~= "0" then
 		C_CVar.SetCVar("colorChatNamesByClass", 0)
 	end
 
-	if (C_CVar.GetCVar("chatClassColorOverride") ~= "0") then
+	if C_CVar.GetCVar("chatClassColorOverride") ~= "0" then
 		C_CVar.SetCVar("chatClassColorOverride", 0)
 	end
 
@@ -221,15 +221,15 @@ function Chat:SetChatTypeInfo()
 	ChatTypeInfo["CHANNEL19"].colorNameByClass = true
 	ChatTypeInfo["CHANNEL20"].colorNameByClass = true
 
-	if (not HydraUI.IsVanilla) then
+	if not HydraUI.IsVanilla then
 		ChatTypeInfo["GUILD_ACHIEVEMENT"].colorNameByClass = true
 	end
 
-	if (C_CVar.GetCVar("colorChatNamesByClass") ~= "0") then
+	if C_CVar.GetCVar("colorChatNamesByClass") ~= "0" then
 		C_CVar.SetCVar("colorChatNamesByClass", 0)
 	end
 
-	if (C_CVar.GetCVar("chatClassColorOverride") ~= "0") then
+	if C_CVar.GetCVar("chatClassColorOverride") ~= "0" then
 		C_CVar.SetCVar("chatClassColorOverride", 0)
 	end
 end

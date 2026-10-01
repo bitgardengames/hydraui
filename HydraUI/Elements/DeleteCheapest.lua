@@ -58,7 +58,7 @@ function Delete:EvaluateItem(link)
 	local ItemType, ItemSubType, _, _, _, _, ClassID, SubClassID = select(6, GetItemInfo(link))
 	local ID = match(link, ":(%w+)")
 
-	if (self.FilterIDs[ID] or self.FilterClassIDs[ClassID]) then
+	if self.FilterIDs[ID] or self.FilterClassIDs[ClassID] then
 		return
 	end
 
@@ -76,17 +76,17 @@ function Delete:GetCheapestItem()
 		for Slot = 1, GetContainerNumSlots(Bag) do
 			local Link, ID = GetContainerItemLink(Bag, Slot), GetContainerItemID(Bag, Slot)
 
-			if (Link and ID) then
+			if Link and ID then
 				local SellPrice = select(11, GetItemInfo(Link))
 
-				if (SellPrice and (SellPrice > 0) and self:EvaluateItem(Link)) then
+				if SellPrice and (SellPrice > 0) and self:EvaluateItem(Link) then
 					local Count = select(2, GetContainerItemInfo(Bag, Slot))
 
 					if Count then
 						SellPrice = SellPrice * Count
 					end
 
-					if ((not CheapestValue) or (SellPrice < CheapestValue)) then
+					if (not CheapestValue) or (SellPrice < CheapestValue) then
 						CheapestItem = Link
 						CheapestValue = SellPrice
 						CheapestCount = Count
@@ -104,8 +104,8 @@ end
 function Delete:PrintCheapestItem()
 	local Item, Value, Count = self:GetCheapestItem()
 
-	if (Item and Value) then
-		if (Count > 1) then
+	if Item and Value then
+		if Count > 1 then
 			HydraUI:print(format(Language["The cheapest sellable item in your inventory is currently %sx%s worth %s"], Item, Count, GetCoinTextureString(Value)))
 		else
 			HydraUI:print(format(Language["The cheapest sellable item in your inventory is currently %s worth %s"], Item, GetCoinTextureString(Value)))
@@ -118,11 +118,11 @@ end
 function Delete:DeleteCheapestItem()
 	local Item, Value, Count, Bag, Slot = self:GetCheapestItem()
 
-	if (Bag and Slot) then
+	if Bag and Slot then
 		PickupContainerItem(Bag, Slot)
 		DeleteCursorItem()
 
-		if (Count > 1) then
+		if Count > 1 then
 			HydraUI:print(format(Language["Deleted %sx%s worth %s"], Item, Count, GetCoinTextureString(Value)))
 		else
 			HydraUI:print(format(Language["Deleted %s worth %s"], Item, GetCoinTextureString(Value)))
@@ -181,8 +181,8 @@ end
 local DeleteCheapest = function()
 	local Item, Value, Count = Delete:GetCheapestItem()
 
-	if (Item and Count) then
-		if (Count > 1) then
+	if Item and Count then
+		if Count > 1 then
 			HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure that you want to delete %sx%s?"], Item, Count), "Accept", OnAccept, "Cancel", nil)
 		else
 			HydraUI:DisplayPopup(Language["Attention"], format(Language["Are you sure that you want to delete %s?"], Item), "Accept", OnAccept, "Cancel", nil)

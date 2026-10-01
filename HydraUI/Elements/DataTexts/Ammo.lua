@@ -39,17 +39,17 @@ end
 local Update = function(self)
 	local Count = 0
 
-	if (GetInventoryItemID("player", 0) > 0) then -- Ammo slot
+	if GetInventoryItemID("player", 0) > 0 then -- Ammo slot
 		Count = GetInventoryItemCount("player", 0)
-	elseif (GetInventoryItemCount("player", 18) and GetInventoryItemCount("player", 18) > 1) then -- Ranged slot
+	elseif GetInventoryItemCount("player", 18) and GetInventoryItemCount("player", 18) > 1 then -- Ranged slot
 		Count = GetInventoryItemCount("player", 18)
 	end
 
 	self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], Label, HydraUI.ValueColor, Count)
 
-	if (PreviousCount > 0 and Count < 50) then -- Make sure we had ammo
+	if PreviousCount > 0 and Count < 50 then -- Make sure we had ammo
 		self.Anim:Play()
-	elseif (PreviousCount < 50 and Count > 50) then -- We didn't have enough ammo, but now we do.
+	elseif PreviousCount < 50 and Count > 50 then -- We didn't have enough ammo, but now we do.
 		self.Anim:Stop()
 		self.Anim:SetChange(0.5)
 		self.Highlight:SetAlpha(0)
@@ -72,7 +72,7 @@ local OnEnable = function(self)
 	self:SetScript("OnLeave", OnLeave)
 	self:SetScript("OnMouseUp", OnMouseUp)
 
-	if (not self.Anim) then
+	if not self.Anim then
 		self.Anim = LibMotion:CreateAnimation(self.Highlight, "Fade")
 		self.Anim:SetEasing("inout")
 		self.Anim:SetDuration(1.2)

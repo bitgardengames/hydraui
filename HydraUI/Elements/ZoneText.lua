@@ -45,23 +45,23 @@ function ZT:OnEvent(event)
 
 			self.PVPText:SetText(PVPText[PVPType])
 
-			if (not self.ZoneFrame[3].Group:IsPlaying()) then
+			if not self.ZoneFrame[3].Group:IsPlaying() then
 				self.ZoneFrame[3].Group:Play()
 			end
-		elseif (PVPTextFormat[PVPType] and Faction and Faction ~= "") then
+		elseif PVPTextFormat[PVPType] and Faction and Faction ~= "" then
 			if self.ZoneFrame[3].Group:IsPlaying() then
 				self.ZoneFrame[3].Group:Stop()
 			end
 
 			self.PVPText:SetFormattedText(FACTION_CONTROLLED_TERRITORY, Faction)
 
-			if (not self.ZoneFrame[3].Group:IsPlaying()) then
+			if not self.ZoneFrame[3].Group:IsPlaying() then
 				self.ZoneFrame[3].Group:Play()
 			end
 		end
 	end
 
-	if (Zone and Zone ~= self.CurrentZone or SubZone == "") then
+	if Zone and Zone ~= self.CurrentZone or SubZone == "" then
 		if self.ZoneFrame[1].Group:IsPlaying() then
 			self.ZoneFrame[1].Group:Stop()
 		end
@@ -69,19 +69,19 @@ function ZT:OnEvent(event)
 		self.ZoneText:SetText(Zone)
 		self.CurrentZone = Zone
 
-		if (not self.ZoneFrame[1].Group:IsPlaying()) then
+		if not self.ZoneFrame[1].Group:IsPlaying() then
 			self.ZoneFrame[1].Group:Play()
 		end
 	end
 
-	if (SubZone ~= Zone) then
+	if SubZone ~= Zone then
 		if self.ZoneFrame[2].Group:IsPlaying() then
 			self.ZoneFrame[2].Group:Stop()
 		end
 
 		self.SubZoneText:SetText(SubZone)
 
-		if (not self.ZoneFrame[2].Group:IsPlaying()) then
+		if not self.ZoneFrame[2].Group:IsPlaying() then
 			self.ZoneFrame[2].Group:Play()
 		end
 	end

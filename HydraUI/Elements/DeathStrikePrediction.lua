@@ -55,7 +55,7 @@ local CanDeathStrike = function()
 	if select(3, GetRuneCooldown(1)) then
 		local Type = GetRuneType(1)
 
-		if (Type == DEATH) then
+		if Type == DEATH then
 			Death = Death + 1
 		end
 	end
@@ -63,7 +63,7 @@ local CanDeathStrike = function()
 	if select(3, GetRuneCooldown(2)) then
 		local Type = GetRuneType(2)
 
-		if (Type == DEATH) then
+		if Type == DEATH then
 			Death = Death + 1
 		end
 	end
@@ -71,9 +71,9 @@ local CanDeathStrike = function()
 	if select(3, GetRuneCooldown(3)) then
 		local Type = GetRuneType(3)
 
-		if (Type == UNHOLY) then
+		if Type == UNHOLY then
 			Unholy = Unholy + 1
-		elseif (Type == DEATH) then
+		elseif Type == DEATH then
 			Death = Death + 1
 		end
 	end
@@ -81,9 +81,9 @@ local CanDeathStrike = function()
 	if select(3, GetRuneCooldown(4)) then
 		local Type = GetRuneType(4)
 
-		if (Type == UNHOLY) then
+		if Type == UNHOLY then
 			Unholy = Unholy + 1
-		elseif (Type == DEATH) then
+		elseif Type == DEATH then
 			Death = Death + 1
 		end
 	end
@@ -91,9 +91,9 @@ local CanDeathStrike = function()
 	if select(3, GetRuneCooldown(5)) then
 		local Type = GetRuneType(5)
 
-		if (Type == FROST) then
+		if Type == FROST then
 			Frost = Frost + 1
-		elseif (Type == DEATH) then
+		elseif Type == DEATH then
 			Death = Death + 1
 		end
 	end
@@ -101,9 +101,9 @@ local CanDeathStrike = function()
 	if select(3, GetRuneCooldown(6)) then
 		local Type = GetRuneType(6)
 
-		if (Type == FROST) then
+		if Type == FROST then
 			Frost = Frost + 1
-		elseif (Type == DEATH) then
+		elseif Type == DEATH then
 			Death = Death + 1
 		end
 	end
@@ -124,7 +124,7 @@ local UpdateValue = function(self)
 	local Limit = GetTime() - 5
 
 	for i = #DmgTaken, 1, -1 do
-		if (Limit > DmgTaken[i][1]) then
+		if Limit > DmgTaken[i][1] then
 			tinsert(Tables, tremove(DmgTaken, i))
 		else
 			Healing = Healing + DmgTaken[i][2]
@@ -136,7 +136,7 @@ local UpdateValue = function(self)
 	Healing = Healing * 0.2 * VampBloodMult
 	SevenPercent = TotalHP * 0.07 -- Death Strike minimum value is 7% of your max health
 
-	if (SevenPercent > Healing) then
+	if SevenPercent > Healing then
 		Healing = SevenPercent
 	end
 
@@ -148,7 +148,7 @@ end
 local OnUpdate = function(self, elapsed)
 	self.Elapsed = self.Elapsed + elapsed
 
-	if (self.Elapsed >= 0.2) then
+	if self.Elapsed >= 0.2 then
 		UpdateValue(self)
 
 		self.Elapsed = 0
@@ -169,12 +169,12 @@ end
 function Frame:COMBAT_LOG_EVENT_UNFILTERED(...)
 	Timestamp, EventType, _, _, _, _, _, DestGUID = ...
 
-	if (not LogEvents[EventType] or DestGUID ~= MyGUID) then
+	if not LogEvents[EventType] or DestGUID ~= MyGUID then
 		return
 	end
 
-	if (EventType == "SPELL_ABSORBED") then
-		if (type(select(12, ...)) == "number") then
+	if EventType == "SPELL_ABSORBED" then
+		if type(select(12, ...)) == "number" then
 			AbsorbNum = 15
 		else
 			AbsorbNum = 12
@@ -182,7 +182,7 @@ function Frame:COMBAT_LOG_EVENT_UNFILTERED(...)
 
 		AbsorbGUID, _, _, _, _, _, _, AbsorbAmount = select(AbsorbNum, ...)
 
-		if (AbsorbGUID == MyGUID) then
+		if AbsorbGUID == MyGUID then
 			DmgTable = GetTable()
 			DmgTable[1] = GetTime()
 			DmgTable[2] = AbsorbAmount
@@ -201,7 +201,7 @@ function Frame:COMBAT_LOG_EVENT_UNFILTERED(...)
 end
 
 function Frame:RUNE_POWER_UPDATE(unit)
-	if (unit ~= "player") then
+	if unit ~= "player" then
 		return
 	end
 
@@ -215,13 +215,13 @@ function Frame:RUNE_POWER_UPDATE(unit)
 end
 
 function Frame:PLAYER_TALENT_UPDATE()
-	if (GetActiveTalentGroup() == 1) then -- Blood
+	if GetActiveTalentGroup() == 1 then -- Blood
 		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 		self:RegisterEvent("PLAYER_REGEN_ENABLED")
 		self:RegisterEvent("PLAYER_REGEN_DISABLED")
 		self:RegisterEvent("RUNE_POWER_UPDATE")
 
-		if (not self.DSBar) then
+		if not self.DSBar then
 			local DSBar = CreateFrame("StatusBar", nil, HydraUI.UnitFrames["player"])
 			DSBar:SetAllPoints(HydraUI.UnitFrames["player"].Health)
 			DSBar:SetStatusBarTexture(Assets:GetTexture(Settings["ui-widget-texture"]))
@@ -252,7 +252,7 @@ function Frame:PLAYER_ENTERING_WORLD()
 end
 
 function Frame:UNIT_AURA(unit)
-	if (unit ~= "player") then
+	if unit ~= "player" then
 		return
 	end
 

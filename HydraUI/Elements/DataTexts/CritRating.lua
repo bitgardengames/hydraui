@@ -14,10 +14,10 @@ local OnEnter = function(self)
 	local Spell = GetSpellCritChance()
 	local Melee = GetCritChance()
 
-	if (HydraUI.UserClass == "HUNTER") then
+	if HydraUI.UserClass == "HUNTER" then
 		GameTooltip:AddLine(format("%s %.2f%%", RANGED_CRIT_CHANCE, GetRangedCritChance()))
 		GameTooltip:AddLine(format(CR_CRIT_TOOLTIP, GetCombatRating(CR_CRIT_RANGED), GetCombatRatingBonus(CR_CRIT_RANGED)), 1, 1, 1)
-	elseif (Spell > Melee) then
+	elseif Spell > Melee then
 		GameTooltip:AddLine(format("%s %.2f%%", SPELL_CRIT_CHANCE, Spell))
 		GameTooltip:AddLine(format(CR_CRIT_TOOLTIP, GetCombatRating(CR_CRIT_SPELL), GetCombatRatingBonus(CR_CRIT_SPELL)), 1, 1, 1)
 	else
@@ -41,7 +41,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 
@@ -49,9 +49,9 @@ local Update = function(self, event, unit)
 	local Spell = GetSpellCritChance()
 	local Melee = GetCritChance()
 
-	if (HydraUI.UserClass == "HUNTER") then
+	if HydraUI.UserClass == "HUNTER" then
 		Crit = GetRangedCritChance()
-	elseif (Spell > Melee) then
+	elseif Spell > Melee then
 		Crit = Spell
 	else
 		Crit = Melee

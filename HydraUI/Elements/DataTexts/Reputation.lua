@@ -28,7 +28,7 @@ local OnEnter = function(self)
 		Name, StandingID, Min, Max, Value = GetWatchedFactionInfo()
 	end
 
-	if (not Name) then
+	if not Name then
 		return
 	end
 

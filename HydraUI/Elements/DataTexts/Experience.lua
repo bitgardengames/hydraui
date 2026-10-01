@@ -44,7 +44,7 @@ local OnLeave = function()
 end
 
 local Update = function(self)
-	if (UnitLevel("player") == MAX_PLAYER_LEVEL) then
+	if UnitLevel("player") == MAX_PLAYER_LEVEL then
 		self:Disable()
 		self.Text:SetText(GUILD_RECRUITMENT_MAXLEVEL)
 

@@ -44,7 +44,7 @@ end
 function Bubbles:RefreshBubble(bubble)
 	local Child = bubble:GetChildren()
 
-	if (not Child or Child:IsForbidden() or not bubble.Backdrop) then
+	if not Child or Child:IsForbidden() or not bubble.Backdrop then
 		return
 	end
 
@@ -55,7 +55,7 @@ end
 function Bubbles:SkinBubble(bubble)
 	local Child = bubble:GetChildren()
 
-	if (Child and Child:IsForbidden()) then
+	if Child and Child:IsForbidden() then
 		return
 	end
 
@@ -86,11 +86,11 @@ function Bubbles:OnUpdate(elapsed)
 	self.ScanElapsed = self.ScanElapsed + elapsed
 	self.QuietElapsed = self.QuietElapsed + elapsed
 
-	if (self.Elapsed >= ScanInterval) then
+	if self.Elapsed >= ScanInterval then
 		local FoundUnskinned = false
 
 		for Index, Bubble in next, GetAllChatBubbles() do
-			if (not Bubble.Skinned) then
+			if not Bubble.Skinned then
 				self:SkinBubble(Bubble)
 				FoundUnskinned = FoundUnskinned or Bubble.Skinned
 			elseif self.NeedsRefresh then
@@ -109,13 +109,13 @@ function Bubbles:OnUpdate(elapsed)
 		self.Elapsed = 0
 	end
 
-	if (self.ScanElapsed >= ScanTimeout or self.QuietElapsed >= ScanQuietTimeout) then
+	if self.ScanElapsed >= ScanTimeout or self.QuietElapsed >= ScanQuietTimeout then
 		self:SetScript("OnUpdate", nil)
 	end
 end
 
 function Bubbles:StartScan()
-	if (not self.CanScan) then
+	if not self.CanScan then
 		return
 	end
 
@@ -126,14 +126,14 @@ function Bubbles:StartScan()
 end
 
 function Bubbles:OnEvent(event)
-	if (event ~= "PLAYER_ENTERING_WORLD") then
+	if event ~= "PLAYER_ENTERING_WORLD" then
 		self:StartScan()
 		return
 	end
 
 	local Name, Type = GetInstanceInfo()
 
-	if (Type == "none") then
+	if Type == "none" then
 		self.CanScan = true
 		self:StartScan()
 	else
@@ -145,7 +145,7 @@ end
 function Bubbles:Load()
 	self:PrepareSettings()
 
-	if (not Settings["chat-bubbles-enable"]) then
+	if not Settings["chat-bubbles-enable"] then
 		return
 	end
 
@@ -166,10 +166,10 @@ local SetToRefresh = function()
 end
 
 local UpdateShowBubbles = function(value)
-	if (value == "ALL") then
+	if value == "ALL" then
 		SetCVar("chatBubbles", 1)
 		SetCVar("chatBubblesParty", 1)
-	elseif (value == "EXCLUDE_PARTY") then
+	elseif value == "EXCLUDE_PARTY" then
 		SetCVar("chatBubbles", 1)
 		SetCVar("chatBubblesParty", 0)
 	else -- "NONE"

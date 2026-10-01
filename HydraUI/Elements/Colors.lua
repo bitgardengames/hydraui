@@ -119,7 +119,7 @@ HydraUI.TotemColors = {}
 function HydraUI:SetColorEntry(t, key, hex)
 	R, G, B = self:HexToRGB(hex)
 
-	if (not t[key]) then
+	if not t[key] then
 		t[key] = {}
 	end
 
@@ -227,7 +227,7 @@ function HydraUI:UpdateColors()
 	self:UpdateDebuffColors()
 	self:UpdateComboColors()
 
-	if (not self.IsMainline) then
+	if not self.IsMainline then
 		self:UpdateHappinessColors()
 		self:UpdateTotemColors()
 	end
@@ -307,7 +307,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Colors"], fun
 	right:CreateColorSelection("color-poison", Settings["color-poison"], Language["Poison"], "")
 	right:CreateColorSelection("color-none", Settings["color-none"], Language["None"], "")
 
-	if (not HydraUI.IsMainline) then
+	if not HydraUI.IsMainline then
 		right:CreateHeader(Language["Pet Happiness Colors"])
 		right:CreateColorSelection("color-happiness-3", Settings["color-happiness-3"], Language["Happy"], "")
 		right:CreateColorSelection("color-happiness-2", Settings["color-happiness-2"], Language["Content"], "")

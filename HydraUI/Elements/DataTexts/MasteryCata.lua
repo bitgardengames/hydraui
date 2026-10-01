@@ -30,7 +30,7 @@ local OnEnter = function(self)
 		.. format("%.2F", Mastery)
 		.. FONT_COLOR_CODE_CLOSE
 
-	if (Bonus > 0) then
+	if Bonus > 0 then
 		Title = Title
 			.. HIGHLIGHT_FONT_COLOR_CODE
 			.. " ("
@@ -47,7 +47,7 @@ local OnEnter = function(self)
 	GameTooltip:SetText(Title)
 
 
-	if (MasteryKnown and TalentTree) then
+	if MasteryKnown and TalentTree then
 		local Spell, Spell2 = GetTalentTreeMasterySpells(TalentTree)
 
 		if Spell then
@@ -80,7 +80,7 @@ local OnLeave = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 

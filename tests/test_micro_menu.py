@@ -15,6 +15,15 @@ class MicroMenuCoverage(unittest.TestCase):
         self.assertIn("self.Buttons[i]:SetParent(self.Panel)", SOURCE)
         self.assertIn("MicroButtons.Buttons[i]:SetParent(MicroButtons.Panel)", SOURCE)
 
+    def test_visible_buttons_are_never_cleared_as_a_batch(self):
+        """Blizzard may run GetEdgeButton synchronously after an anchor changes."""
+        collection = SOURCE.index("if Button:IsShown() then")
+        positioning = SOURCE.index("for i = 1, NumButtons do")
+        clear = SOURCE.index("Button:ClearAllPoints()", collection)
+
+        self.assertGreater(clear, positioning)
+        self.assertNotIn("self.Buttons[i]:ClearAllPoints()", SOURCE)
+
 
 if __name__ == "__main__":
     unittest.main()

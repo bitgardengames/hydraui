@@ -47,6 +47,16 @@ local Assets = Assets
 local Settings = Settings
 local Language = Language
 
+local AddChannelToFrame = ChatFrame_AddChannel or function(Frame, Channel)
+	local WindowID = Frame:GetID()
+
+	if (C_ChatInfo and C_ChatInfo.AddChannelToWindow) then
+		C_ChatInfo.AddChannelToWindow(WindowID, Channel)
+	elseif AddChatWindowChannel then
+		AddChatWindowChannel(WindowID, Channel)
+	end
+end
+
 function Chat:Install()
 	-- General
 	FCF_ResetChatWindows()
@@ -113,11 +123,11 @@ function Chat:Install()
 	FCF_DockFrame(Trade)
 
 	ChatFrame_RemoveAllMessageGroups(Trade)
-	ChatFrame_AddChannel(Trade, TRADE)
-	ChatFrame_AddChannel(Trade, GENERAL)
+	AddChannelToFrame(Trade, TRADE)
+	AddChannelToFrame(Trade, GENERAL)
 
 	if HydraUI.IsMainline then
-		ChatFrame_AddChannel(Trade, "Services")
+		AddChannelToFrame(Trade, "Services")
 	end
 
 	-- Loot

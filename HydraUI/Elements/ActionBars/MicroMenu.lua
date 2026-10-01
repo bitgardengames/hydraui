@@ -144,8 +144,6 @@ function MicroButtons:PositionButtons()
 	for i = 1, #MicroButtons.Buttons do
 		local Button = MicroButtons.Buttons[i]
 
-		Button:ClearAllPoints()
-
 		if Button:IsShown() then
 			VisibleButtons[#VisibleButtons + 1] = Button
 		end
@@ -174,6 +172,11 @@ function MicroButtons:PositionButtons()
 	-- Actual moving
 	for i = 1, NumButtons do
 		local Button = VisibleButtons[i]
+
+		-- Clear and replace each anchor as one operation. Clearing every button
+		-- first leaves visible retail buttons without coordinates while Blizzard's
+		-- MicroMenu layout callbacks run, causing GetEdgeButton to compare nils.
+		Button:ClearAllPoints()
 
 		if i == 1 then
 			Button:SetPoint("TOPLEFT", MicroButtons.Panel, Spacing, -Spacing)
@@ -214,7 +217,6 @@ function MicroButtons:Load()
 
 	for i = 1, #self.Buttons do
 		self.Buttons[i]:SetParent(self.Panel)
-		self.Buttons[i]:ClearAllPoints()
 		self.Buttons[i]:SetHitRectInsets(0, 0, 0, 0)
 
 		if not HydraUI.IsMainline then

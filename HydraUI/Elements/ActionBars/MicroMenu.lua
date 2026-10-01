@@ -190,10 +190,8 @@ function MicroButtons:Load()
 		return
 	end
 
-	if MicroMenu then
-		MicroMenu:SetParent(HydraUI.UIParent)
-	end
-
+	-- Keep the retail MicroMenu parented to Blizzard's MicroMenuContainer. Edit Mode
+	-- still lays out that frame and requires its buttons to have resolved positions.
 	self.Panel = CreateFrame("Frame", "HydraUI Micro Buttons", HydraUI.UIParent, "BackdropTemplate")
 	self.Panel:SetBackdrop(HydraUI.BackdropAndBorder)
 	self.Panel:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))

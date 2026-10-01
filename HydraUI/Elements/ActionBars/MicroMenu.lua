@@ -118,13 +118,32 @@ function MicroButtons:UpdateVisibility()
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self.Panel:SetAlpha(0)
-		self.Panel:Hide()
+
+		if HydraUI.IsMainline then
+			-- Hiding the parent invalidates every button's coordinates before
+			-- Blizzard's OnHide layout callbacks have finished running. Keep the
+			-- retail panel shown but transparent so GetEdgeButton can compare
+			-- resolved positions, and disable the invisible buttons' mouse input.
+			for i = 1, #self.Buttons do
+				self.Buttons[i]:EnableMouse(false)
+			end
+		else
+			self.Panel:Hide()
+		end
 	elseif Settings["micro-buttons-visibility"] == "MOUSEOVER" then
+		for i = 1, #self.Buttons do
+			self.Buttons[i]:EnableMouse(true)
+		end
+
 		self.Panel:SetScript("OnEnter", PanelOnEnter)
 		self.Panel:SetScript("OnLeave", PanelOnLeave)
 		self.Panel:SetAlpha(Settings["micro-buttons-opacity"] / 100)
 		self.Panel:Show()
 	elseif Settings["micro-buttons-visibility"] == "SHOW" then
+		for i = 1, #self.Buttons do
+			self.Buttons[i]:EnableMouse(true)
+		end
+
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self.Panel:SetAlpha(Settings["micro-buttons-max"] / 100)
@@ -302,10 +321,6 @@ function MicroButtons:Load()
 
 	if MainMenuBarPerformanceBar then
 		MainMenuBarPerformanceBar:Hide()
-	end
-
-	if not Settings["micro-buttons-show"] then
-		self.Panel:Hide()
 	end
 
 	if UpdateMicroButtonsParent then

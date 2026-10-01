@@ -12,3 +12,7 @@ def test_vendor_price_is_not_added_on_clients_that_supply_it():
         'if not (HydraUI.IsMainline or HydraUI.IsMists) and Settings["tooltips-show-price"] then'
         in TOOLTIPS_SOURCE
     )
+
+
+def test_guild_name_is_only_added_on_vanilla():
+    assert "if (HydraUI.IsVanilla and Guild) then" in TOOLTIPS_SOURCE

@@ -367,8 +367,8 @@ local OnTooltipSetUnit = function(self)
 			end
 		end
 
-		-- Test guild implementation
-		if Guild then
+		-- Vanilla does not add the guild name to unit tooltips natively
+		if (HydraUI.IsVanilla and Guild) then
 			self:AddLine("<" .. Guild .. ">", 1, 1, 1)
 		end
 

@@ -54,11 +54,11 @@ local FadeOnFinished = function(self)
 end
 
 local UpdateDisplayProgress = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
-	if (value and Settings["experience-progress-visibility"] == "ALWAYS") then
+	if value and Settings["experience-progress-visibility"] == "ALWAYS" then
 		Experience.Progress:Show()
 	else
 		Experience.Progress:Hide()
@@ -68,11 +68,11 @@ local UpdateDisplayProgress = function(value)
 end
 
 local UpdateDisplayPercent = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
-	if (value and Settings["experience-percent-visibility"] == "ALWAYS") then
+	if value and Settings["experience-percent-visibility"] == "ALWAYS" then
 		Experience.Percentage:Show()
 	else
 		Experience.Percentage:Hide()
@@ -82,7 +82,7 @@ local UpdateDisplayPercent = function(value)
 end
 
 local UpdateBarWidth = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
@@ -91,7 +91,7 @@ local UpdateBarWidth = function(value)
 end
 
 local UpdateBarHeight = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
@@ -101,13 +101,13 @@ local UpdateBarHeight = function(value)
 end
 
 local UpdateProgressVisibility = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
-	if (value == "MOUSEOVER") then
+	if value == "MOUSEOVER" then
 		Experience.Progress:Hide()
-	elseif (value == "ALWAYS" and Settings["experience-display-progress"]) then
+	elseif value == "ALWAYS" and Settings["experience-display-progress"] then
 		Experience.Progress:Show()
 	end
 
@@ -115,13 +115,13 @@ local UpdateProgressVisibility = function(value)
 end
 
 local UpdatePercentVisibility = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
-	if (value == "MOUSEOVER") then
+	if value == "MOUSEOVER" then
 		Experience.Percentage:Hide()
-	elseif (value == "ALWAYS" and Settings["experience-display-percent"]) then
+	elseif value == "ALWAYS" and Settings["experience-display-percent"] then
 		Experience.Percentage:Show()
 	end
 
@@ -133,7 +133,7 @@ function Experience:OnMouseUp()
 end
 
 function Experience:UpdateTooltipTimer()
-	if (GameTooltip:IsOwned(self) and GameTooltip:IsShown() and self.Gained > 0) then
+	if GameTooltip:IsOwned(self) and GameTooltip:IsShown() and self.Gained > 0 then
 		self:SetScript("OnUpdate", self.OnUpdate)
 	else
 		self:SetScript("OnUpdate", nil)
@@ -144,7 +144,7 @@ end
 function Experience:MarkTooltipDirty()
 	self.TooltipDirty = true
 
-	if (GameTooltip:IsOwned(self) and GameTooltip:IsShown()) then
+	if GameTooltip:IsOwned(self) and GameTooltip:IsShown() then
 		self:UpdateTooltip()
 	end
 end
@@ -272,7 +272,7 @@ function Experience:Update()
 	local CurrentZone
 
 	-- Expansion transition script, remove after launch
-	if (not self:IsShown() and MaxXP > 0) then
+	if not self:IsShown() and MaxXP > 0 then
 		self:Show()
 	end
 
@@ -286,10 +286,10 @@ function Experience:Update()
 		for i = 1, GetNumQuests() do
 			local Info = GetQuestInfo(i)
 
-			if (Info.isHeader and not Info.isHidden) then
+			if Info.isHeader and not Info.isHidden then
 				ZoneName = Info.title
 			else
-				if (ZoneName and ZoneName == CurrentZone and ReadyForTurnIn(Info.questID)) then
+				if ZoneName and ZoneName == CurrentZone and ReadyForTurnIn(Info.questID) then
 					QuestLogXP = QuestLogXP + GetQuestLogRewardXP(Info.questID)
 				end
 			end
@@ -301,14 +301,14 @@ function Experience:Update()
 			if IsHeader then
 				ZoneName = TitleText
 			else
-				if (ZoneName and ZoneName == CurrentZone and IsComplete) then
+				if ZoneName and ZoneName == CurrentZone and IsComplete then
 					QuestLogXP = QuestLogXP + GetQuestLogRewardXP(QuestID)
 				end
 			end
 		end
 	end
 
-	if (QuestLogXP > 0) then
+	if QuestLogXP > 0 then
 		if HasXPBuff then
 			QuestLogXP = QuestLogXP * XPMod
 		end
@@ -340,28 +340,28 @@ function Experience:Update()
 
 	self.Percentage:SetText(floor((XP / MaxXP * 100 + 0.05) * 10) / 10 .. "%")
 
-	if (XP > 0) then
-		if (self.Bar.Spark:GetAlpha() == 0) then
+	if XP > 0 then
+		if self.Bar.Spark:GetAlpha() == 0 then
 			self.Bar.Spark:SetAlpha(1)
 		end
-	elseif (self.Bar.Spark:GetAlpha() > 0) then
+	elseif self.Bar.Spark:GetAlpha() > 0 then
 		self.Bar.Spark:SetAlpha(0)
 	end
 
-	if (Rested and (Rested > 0)) then
-		if (self.Bar.Rested.Spark:GetAlpha() == 0) then
+	if Rested and (Rested > 0) then
+		if self.Bar.Rested.Spark:GetAlpha() == 0 then
 			self.Bar.Rested.Spark:SetAlpha(1)
 		end
-	elseif (self.Bar.Rested.Spark:GetAlpha() > 0) then
+	elseif self.Bar.Rested.Spark:GetAlpha() > 0 then
 		self.Bar.Rested.Spark:SetAlpha(0)
 	end
 
 	if Settings["experience-animate"] then
-		if (not FirstRun) then
+		if not FirstRun then
 			self.Change:SetChange(XP)
 			self.Change:Play()
 
-			if ((XP > self.LastXP) and not self.Flash:IsPlaying()) then
+			if (XP > self.LastXP) and not self.Flash:IsPlaying() then
 				self.Flash:Play()
 			end
 		else
@@ -372,13 +372,13 @@ function Experience:Update()
 		self.Bar:SetValue(XP)
 	end
 
-	if (MaxXP ~= self.LastMax) then
+	if MaxXP ~= self.LastMax then
 		self.Gained = self.LastMax - self.LastXP + XP + self.Gained
 	else
 		self.Gained = (XP - self.LastXP) + self.Gained
 	end
 
-	if (not self.StartTime) then
+	if not self.StartTime then
 		self.StartTime = GetTime()
 	end
 
@@ -391,7 +391,7 @@ end
 function Experience:PLAYER_LEVEL_UP()
 	MaxXP = UnitXPMax("player")
 
-	if (MaxXP == 0) then
+	if MaxXP == 0 then
 		self:Hide()
 		--self:UnregisterAllEvents()
 		--self:SetScript("OnEnter", nil)
@@ -433,25 +433,25 @@ function Experience:OnEvent(event)
 end
 
 function Experience:OnUpdate(elapsed)
-	if (not GameTooltip:IsOwned(self) or not GameTooltip:IsShown() or self.Gained <= 0) then
+	if not GameTooltip:IsOwned(self) or not GameTooltip:IsShown() or self.Gained <= 0 then
 		self:UpdateTooltipTimer()
 		return
 	end
 
 	self.Elapsed = self.Elapsed + elapsed
 
-	if (self.Elapsed > 1) then
+	if self.Elapsed > 1 then
 		self.Elapsed = 0
 		self:MarkTooltipDirty()
 	end
 end
 
 function Experience:UpdateTooltip()
-	if (not GameTooltip:IsOwned(self)) then
+	if not GameTooltip:IsOwned(self) then
 		return
 	end
 
-	if (not self.TooltipDirty) then
+	if not self.TooltipDirty then
 		self:UpdateTooltipTimer()
 		return
 	end
@@ -467,7 +467,7 @@ function Experience:UpdateTooltip()
 	local SessionTimeToLevel
 	local SessionDuration
 
-	if (self.Gained > 0) then
+	if self.Gained > 0 then
 		local Duration = GetTime() - self.StartTime
 		local PerSec = self.Gained / Duration
 
@@ -490,7 +490,7 @@ function Experience:UpdateTooltip()
 
 	self.TooltipDirty = false
 
-	if (Values == self.TooltipValues) then
+	if Values == self.TooltipValues then
 		self:UpdateTooltipTimer()
 		return
 	end
@@ -514,13 +514,13 @@ function Experience:UpdateTooltip()
 		GameTooltip:AddDoubleLine(HydraUI:Comma(RestedXP), format("%s%%", RestedPercent), 1, 1, 1, 1, 1, 1)
 	end
 
-	if (QuestXP > 0) then
+	if QuestXP > 0 then
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine(Language["Quest Experience"])
 		GameTooltip:AddDoubleLine(HydraUI:Comma(QuestXP), format("%s%%", floor((QuestXP / MaximumXP * 100 + 0.05) * 10) / 10), 1, 1, 1, 1, 1, 1)
 	end
 
-	if (self.Gained > 0) then
+	if self.Gained > 0 then
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine(Language["Session Stats"])
 		GameTooltip:AddDoubleLine(Language["Experience gained"], HydraUI:Comma(self.Gained), 1, 1, 1, 1, 1, 1)
@@ -538,19 +538,19 @@ function Experience:OnEnter()
 		self:SetAlpha(1)
 	end
 
-	if (Settings["experience-display-progress"] and Settings["experience-progress-visibility"] == "MOUSEOVER") then
-		if (not self.Progress:IsShown()) then
+	if Settings["experience-display-progress"] and Settings["experience-progress-visibility"] == "MOUSEOVER" then
+		if not self.Progress:IsShown() then
 			self.Progress:Show()
 		end
 	end
 
-	if (Settings["experience-display-percent"] and Settings["experience-percent-visibility"] == "MOUSEOVER") then
-		if (not self.Percentage:IsShown()) then
+	if Settings["experience-display-percent"] and Settings["experience-percent-visibility"] == "MOUSEOVER" then
+		if not self.Percentage:IsShown() then
 			self.Percentage:Show()
 		end
 	end
 
-	if (not Settings["experience-show-tooltip"]) then
+	if not Settings["experience-show-tooltip"] then
 		return
 	end
 
@@ -569,13 +569,13 @@ function Experience:OnLeave()
 		GameTooltip:Hide()
 	end
 
-	if (Settings["experience-display-progress"] and Settings["experience-progress-visibility"] == "MOUSEOVER") then
+	if Settings["experience-display-progress"] and Settings["experience-progress-visibility"] == "MOUSEOVER" then
 		if self.Progress:IsShown() then
 			self.Progress:Hide()
 		end
 	end
 
-	if (Settings["experience-display-percent"] and Settings["experience-percent-visibility"] == "MOUSEOVER") then
+	if Settings["experience-display-percent"] and Settings["experience-percent-visibility"] == "MOUSEOVER" then
 		if self.Percentage:IsShown() then
 			self.Percentage:Hide()
 		end
@@ -587,7 +587,7 @@ function Experience:OnLeave()
 end
 
 function Experience:Load()
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
@@ -621,7 +621,7 @@ function Experience:Load()
 end
 
 local UpdateBarColor = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
@@ -631,7 +631,7 @@ local UpdateBarColor = function(value)
 end
 
 local UpdateRestedColor = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
@@ -640,7 +640,7 @@ local UpdateRestedColor = function(value)
 end
 
 local UpdateQuestColor = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
@@ -653,13 +653,13 @@ local UpdateExperience = function()
 end
 
 local UpdateTooltipSetting = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
 	Experience.TooltipDirty = true
 
-	if (not value and GameTooltip:IsOwned(Experience)) then
+	if not value and GameTooltip:IsOwned(Experience) then
 		GameTooltip:Hide()
 		Experience:UpdateTooltipTimer()
 	elseif value and GameTooltip:IsOwned(Experience) and GameTooltip:IsShown() then
@@ -668,7 +668,7 @@ local UpdateTooltipSetting = function(value)
 end
 
 local UpdateMouseover = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 
@@ -682,7 +682,7 @@ local UpdateMouseover = function(value)
 end
 
 local UpdateMouseoverOpacity = function(value)
-	if (not Settings["experience-enable"]) then
+	if not Settings["experience-enable"] then
 		return
 	end
 

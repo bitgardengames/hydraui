@@ -17,27 +17,27 @@ local TotemOnUpdate = function(self)
 
 		Bar:SetValue(Time)
 
-		if (Time < 0) then
+		if Time < 0 then
 			ActiveTotemBars[Bar] = nil
 			Bar:Hide()
 		end
 	end
 
-	if (not next(ActiveTotemBars)) then
+	if not next(ActiveTotemBars) then
 		self:SetScript("OnUpdate", nil)
 		self:Hide()
 	end
 end
 
 UF.PostUpdateTotems = function(self, slot, havetotem, name, start, duration, icon)
-	if (not self[slot]) then
+	if not self[slot] then
 		return
 	end
 
-	if (start and duration > 0) then
+	if start and duration > 0 then
 		local Bar = self[slot].Bar
 
-		if (not Bar) then
+		if not Bar then
 			return
 		end
 
@@ -48,7 +48,7 @@ UF.PostUpdateTotems = function(self, slot, havetotem, name, start, duration, ico
 		Bar:Show()
 		ActiveTotemBars[Bar] = true
 
-		if (not TotemUpdater:GetScript("OnUpdate")) then
+		if not TotemUpdater:GetScript("OnUpdate") then
 			TotemUpdater:SetScript("OnUpdate", TotemOnUpdate)
 			TotemUpdater:Show()
 		end
@@ -57,7 +57,7 @@ UF.PostUpdateTotems = function(self, slot, havetotem, name, start, duration, ico
 
 		ActiveTotemBars[Bar] = nil
 
-		if (not next(ActiveTotemBars)) then
+		if not next(ActiveTotemBars) then
 			TotemUpdater:SetScript("OnUpdate", nil)
 			TotemUpdater:Hide()
 		end

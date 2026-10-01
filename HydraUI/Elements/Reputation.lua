@@ -24,25 +24,25 @@ local FadeOnFinished = function(self)
 end
 
 local UpdateProgressVisibility = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
-	if (value == "MOUSEOVER") then
+	if value == "MOUSEOVER" then
 		Reputation.Progress:Hide()
-	elseif (value == "ALWAYS" and Settings["experience-display-progress"]) then
+	elseif value == "ALWAYS" and Settings["experience-display-progress"] then
 		Reputation.Progress:Show()
 	end
 end
 
 local UpdatePercentVisibility = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
-	if (value == "MOUSEOVER") then
+	if value == "MOUSEOVER" then
 		Reputation.Percentage:Hide()
-	elseif (value == "ALWAYS" and Settings["experience-display-percent"]) then
+	elseif value == "ALWAYS" and Settings["experience-display-percent"] then
 		Reputation.Percentage:Show()
 	end
 end
@@ -54,7 +54,7 @@ function Reputation:CreateBar()
 	self:SetSize(Settings["reputation-width"], Settings["reputation-height"])
 	self:SetFrameStrata("MEDIUM")
 
-	if (Settings["experience-enable"] and UnitLevel("player") ~= MAX_PLAYER_LEVEL) then
+	if Settings["experience-enable"] and UnitLevel("player") ~= MAX_PLAYER_LEVEL then
 		local A1, P, A2, X, Y = HydraUI:GetModule("Experience"):GetPoint()
 		local Spacing = Offset + (Settings["experience-height"] / 2) + 12
 
@@ -135,7 +135,7 @@ function Reputation:CreateBar()
 	HydraUI:SetFontInfo(self.Progress, Settings["ui-widget-font"], Settings["ui-font-size"])
 	self.Progress:SetJustifyH("LEFT")
 
-	if (not Settings["reputation-display-progress"] or Settings["reputation-progress-visibility"] ~= "ALWAYS") then
+	if not Settings["reputation-display-progress"] or Settings["reputation-progress-visibility"] ~= "ALWAYS" then
 		self.Progress:Hide()
 	end
 
@@ -144,7 +144,7 @@ function Reputation:CreateBar()
 	HydraUI:SetFontInfo(self.Percentage, Settings["ui-widget-font"], Settings["ui-font-size"])
 	self.Percentage:SetJustifyH("RIGHT")
 
-	if (not Settings["reputation-display-percent"] or Settings["reputation-percent-visibility"] ~= "ALWAYS") then
+	if not Settings["reputation-display-percent"] or Settings["reputation-percent-visibility"] ~= "ALWAYS" then
 		self.Percentage:Hide()
 	end
 
@@ -182,14 +182,14 @@ function Reputation:OnEvent()
 			self.Change:SetChange(Value)
 			self.Change:Play()
 
-			if (not self.Flash:IsPlaying()) then
+			if not self.Flash:IsPlaying() then
 				self.Flash:Play()
 			end
 		else
 			self.Bar:SetValue(Value)
 		end
 
-		if (not self:IsShown()) then
+		if not self:IsShown() then
 			self:Show()
 			self.FadeIn:Play()
 		end
@@ -211,19 +211,19 @@ function Reputation:OnEnter()
 		self:SetAlpha(1)
 	end
 
-	if (Settings["reputation-display-progress"] and Settings["reputation-progress-visibility"] == "MOUSEOVER") then
-		if (not self.Progress:IsShown()) then
+	if Settings["reputation-display-progress"] and Settings["reputation-progress-visibility"] == "MOUSEOVER" then
+		if not self.Progress:IsShown() then
 			self.Progress:Show()
 		end
 	end
 
-	if (Settings["reputation-display-percent"] and Settings["reputation-percent-visibility"] == "MOUSEOVER") then
-		if (not self.Percentage:IsShown()) then
+	if Settings["reputation-display-percent"] and Settings["reputation-percent-visibility"] == "MOUSEOVER" then
+		if not self.Percentage:IsShown() then
 			self.Percentage:Show()
 		end
 	end
 
-	if (not Settings["reputation-show-tooltip"]) then
+	if not Settings["reputation-show-tooltip"] then
 		return
 	end
 
@@ -245,7 +245,7 @@ function Reputation:OnEnter()
 		Name, StandingID, Min, Max, Value = GetWatchedFactionInfo()
 	end
 
-	if (not Name) then
+	if not Name then
 		return
 	end
 
@@ -285,13 +285,13 @@ function Reputation:OnLeave()
 		self.TooltipShown = false
 	end
 
-	if (Settings["reputation-display-progress"] and Settings["reputation-progress-visibility"] == "MOUSEOVER") then
+	if Settings["reputation-display-progress"] and Settings["reputation-progress-visibility"] == "MOUSEOVER" then
 		if self.Progress:IsShown() then
 			self.Progress:Hide()
 		end
 	end
 
-	if (Settings["reputation-display-percent"] and Settings["reputation-percent-visibility"] == "MOUSEOVER") then
+	if Settings["reputation-display-percent"] and Settings["reputation-percent-visibility"] == "MOUSEOVER" then
 		if self.Percentage:IsShown() then
 			self.Percentage:Hide()
 		end
@@ -299,7 +299,7 @@ function Reputation:OnLeave()
 end
 
 function Reputation:Load()
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
@@ -314,11 +314,11 @@ function Reputation:Load()
 end
 
 local UpdateDisplayProgress = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
-	if (value and Settings["reputation-progress-visibility"] == "ALWAYS") then
+	if value and Settings["reputation-progress-visibility"] == "ALWAYS" then
 		Reputation.Progress:Show()
 	else
 		Reputation.Progress:Hide()
@@ -326,11 +326,11 @@ local UpdateDisplayProgress = function(value)
 end
 
 local UpdateDisplayPercent = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
-	if (value and Settings["reputation-percent-visibility"] == "ALWAYS") then
+	if value and Settings["reputation-percent-visibility"] == "ALWAYS" then
 		Reputation.Percentage:Show()
 	else
 		Reputation.Percentage:Hide()
@@ -338,7 +338,7 @@ local UpdateDisplayPercent = function(value)
 end
 
 local UpdateBarWidth = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
@@ -346,7 +346,7 @@ local UpdateBarWidth = function(value)
 end
 
 local UpdateBarHeight = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
@@ -355,7 +355,7 @@ local UpdateBarHeight = function(value)
 end
 
 local UpdateMouseover = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 
@@ -367,7 +367,7 @@ local UpdateMouseover = function(value)
 end
 
 local UpdateMouseoverOpacity = function(value)
-	if (not Settings["reputation-enable"]) then
+	if not Settings["reputation-enable"] then
 		return
 	end
 

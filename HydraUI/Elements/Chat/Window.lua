@@ -171,7 +171,7 @@ end
 function Window:Load()
 	DT = HydraUI:GetModule("DataText")
 
-	if (not Settings["right-window-enable"]) then
+	if not Settings["right-window-enable"] then
 		return
 	end
 
@@ -179,7 +179,7 @@ function Window:Load()
 	self:SetPoint("BOTTOMRIGHT", HydraUI.UIParent, -13, 13)
 	self:SetFrameStrata("BACKGROUND")
 
-	if (Settings["right-window-size"] == "SINGLE") then
+	if Settings["right-window-size"] == "SINGLE" then
 		self:CreateSingleWindow()
 	else
 		self:CreateDoubleWindow()
@@ -191,7 +191,7 @@ function Window:Load()
 end
 
 local UpdateOpacity = function(value)
-	if (Settings["right-window-size"] == "SINGLE") then
+	if Settings["right-window-size"] == "SINGLE" then
 		local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
 
 		Window.Middle.Outside:SetBackdropColor(R, G, B, (Settings["right-window-fill"] / 100))
@@ -199,7 +199,7 @@ local UpdateOpacity = function(value)
 end
 
 local UpdateLeftOpacity = function(value)
-	if (Settings["right-window-size"] ~= "SINGLE") then
+	if Settings["right-window-size"] ~= "SINGLE" then
 		local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
 
 		Window.Left.Outside:SetBackdropColor(R, G, B, (value / 100))
@@ -207,7 +207,7 @@ local UpdateLeftOpacity = function(value)
 end
 
 local UpdateRightOpacity = function(value)
-	if (Settings["right-window-size"] ~= "SINGLE") then
+	if Settings["right-window-size"] ~= "SINGLE" then
 		local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
 
 		Window.Right.Outside:SetBackdropColor(R, G, B, (value / 100))
@@ -215,7 +215,7 @@ local UpdateRightOpacity = function(value)
 end
 
 local UpdateWidth = function(value)
-	if (Settings["right-window-size"] == "SINGLE") then
+	if Settings["right-window-size"] == "SINGLE" then
 		Window.Bottom:SetWidth(value)
 		Window.Middle:SetWidth(value)
 		Window.Top:SetWidth(value)
@@ -234,7 +234,7 @@ local UpdateWidth = function(value)
 end
 
 local UpdateHeight = function(value)
-	if (Settings["right-window-size"] == "SINGLE") then
+	if Settings["right-window-size"] == "SINGLE" then
 		Window.Middle:SetHeight(value)
 	else
 		Window.Left:SetHeight(value)
@@ -243,7 +243,7 @@ local UpdateHeight = function(value)
 end
 
 local UpdateSplitPosition = function(value)
-	if (Settings["right-window-size"] == "SINGLE") then
+	if Settings["right-window-size"] == "SINGLE" then
 		return
 	end
 
@@ -292,7 +292,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Right"], Lang
 
 	left:CreateSlider("right-window-middle-pos", Settings["right-window-middle-pos"], 1, 99, 1, "Set divider", "blah", UpdateSplitPosition, nil, "%")
 
-	if (Settings["right-window-size"] == "SINGLE") then
+	if Settings["right-window-size"] == "SINGLE" then
 		Left:GetParent():Disable()
 		Right:GetParent():Disable()
 	else

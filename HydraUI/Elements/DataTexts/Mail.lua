@@ -13,8 +13,8 @@ local OnEnter = function(self)
 	for Index = 1, 3 do
 		local Sender = Senders[Index]
 
-		if (Sender and Sender ~= "") then
-			if (not HasSender) then
+		if Sender and Sender ~= "" then
+			if not HasSender then
 				GameTooltip:AddLine(HAVE_MAIL_FROM)
 			end
 
@@ -51,7 +51,7 @@ local Update = function(self, event)
 		Result = Result + 1
 	end
 
-	if (HasNewMail() and Result == 0) then
+	if HasNewMail() and Result == 0 then
 		Result = Result + 1
 	end
 

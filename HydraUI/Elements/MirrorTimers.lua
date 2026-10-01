@@ -15,13 +15,13 @@ MirrorTimers.Colors = {
 local function UpdateText(Bar, Value)
 	local Text
 
-	if (Value > 0) then
+	if Value > 0 then
 		Text = format("%s (%s)", Bar.Label, HydraUI:FormatTime(Value))
 	else
 		Text = format("%s", Bar.Label)
 	end
 
-	if (Text ~= Bar.LastText) then
+	if Text ~= Bar.LastText then
 		Bar.LastText = Text
 		Bar.Text:SetText(Text)
 	end

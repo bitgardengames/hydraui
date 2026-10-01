@@ -6,7 +6,7 @@ function GUI:GetCategoryDescriptor(name)
 	local self = self
 	local Category = self.Categories[name]
 
-	if (not Category) then
+	if not Category then
 		Category = {Name = name, Pages = {}, PageLookup = {}}
 		self.Categories[name] = Category
 		tinsert(self.CategoryOrder, Category)
@@ -37,13 +37,13 @@ function GUI:GetOrCreatePage(categoryName, name, parentName)
 	local ParentPage
 
 	if parentName then
-		if (name == parentName) then
+		if name == parentName then
 			error(format("GUI page '%s/%s' cannot be its own parent", categoryName, name), 3)
 		end
 
 		ParentPage = Category.PageLookup[parentName]
 
-		if (not ParentPage) then
+		if not ParentPage then
 			ParentPage = NewPage(Category, parentName)
 			Category.PageLookup[parentName] = ParentPage
 			tinsert(Category.Pages, ParentPage)
@@ -51,7 +51,7 @@ function GUI:GetOrCreatePage(categoryName, name, parentName)
 	end
 
 	if Page then
-		if (Page.Parent ~= ParentPage) then
+		if Page.Parent ~= ParentPage then
 			error(format("Duplicate GUI page identity '%s/%s' registered with different parents", categoryName, name), 3)
 		end
 	else
@@ -88,7 +88,7 @@ function GUI:ValidatePages()
 		local Category = self.CategoryOrder[i]
 
 		for _, Page in next, Category.PageLookup do
-			if (not Page.Defined) then
+			if not Page.Defined then
 				error(format("GUI category '%s' references missing parent page '%s'", Category.Name, Page.Name), 3)
 			elseif Page.Parent and Page.Parent.Parent then
 				error(format("GUI page '%s/%s' has nested parent '%s'; only one child level is supported", Category.Name, Page.Name, Page.Parent.Name), 3)
@@ -109,7 +109,7 @@ end
 
 
 function GUI:AddWidgets(category, name, arg1, arg2)
-	if (type(arg1) == "function") then
+	if type(arg1) == "function" then
 		local Page = self:GetOrCreatePage(category, name)
 
 		tinsert(Page.Callbacks, arg1)

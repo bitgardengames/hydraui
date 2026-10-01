@@ -90,12 +90,12 @@ local SwatchEditBoxOnEditFocusLost = function(self)
 
 	Value = gsub(Value, "#", "")
 
-	if (Value and match(Value, "%x%x%x%x%x%x")) then
+	if Value and match(Value, "%x%x%x%x%x%x") then
 		self:SetText("#"..Value)
 
 		GUI.ColorPicker.Transition:SetChange(HydraUI:HexToRGB(Value))
 		GUI.ColorPicker.Selected = Value
-	elseif (Value and Value == "CLASS") then
+	elseif Value and Value == "CLASS" then
 		local ClassColor = RAID_CLASS_COLORS[HydraUI.UserClass]
 		local ClassHex = HydraUI:RGBToHex(ClassColor.r, ClassColor.g, ClassColor.b)
 
@@ -464,7 +464,7 @@ local CreateColorPicker = function()
 			for j = 1, MAX_SWATCHES_X do
 				Swatch = self.SwatchParent[i][j]
 
-				if (Palette[i] and Palette[i][j]) then
+				if Palette[i] and Palette[i][j] then
 					Swatch.Value = Palette[i][j]
 					Swatch:SetScript("OnMouseUp", ColorSwatchOnMouseUp)
 					Swatch:SetScript("OnEnter", ColorSwatchOnEnter)
@@ -489,7 +489,7 @@ local CreateColorPicker = function()
 			Swatch:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-main-color"]))
 			Swatch:SetBackdropBorderColor(0, 0, 0)
 
-			if (Palette[i] and Palette[i][j]) then
+			if Palette[i] and Palette[i][j] then
 				Swatch.Value = Palette[i][j]
 				Swatch:SetScript("OnMouseUp", ColorSwatchOnMouseUp)
 				Swatch:SetScript("OnEnter", ColorSwatchOnEnter)
@@ -515,18 +515,18 @@ local CreateColorPicker = function()
 			Swatch.Highlight:SetBackdropBorderColor(1, 1, 1)
 			Swatch.Highlight:SetAlpha(0)
 
-			if (not ColorPicker.SwatchParent[i]) then
+			if not ColorPicker.SwatchParent[i] then
 				ColorPicker.SwatchParent[i] = {}
 			end
 
-			if (i == 1) then
-				if (j == 1) then
+			if i == 1 then
+				if j == 1 then
 					Swatch:SetPoint("TOPLEFT", ColorPicker.SwatchParent, 3, -3)
 				else
 					Swatch:SetPoint("LEFT", ColorPicker.SwatchParent[i][j-1], "RIGHT", -1, 0)
 				end
 			else
-				if (j == 1) then
+				if j == 1 then
 					Swatch:SetPoint("TOPLEFT", ColorPicker.SwatchParent[i-1][1], "BOTTOMLEFT", 0, 1)
 				else
 					Swatch:SetPoint("LEFT", ColorPicker.SwatchParent[i][j-1], "RIGHT", -1, 0)
@@ -561,12 +561,12 @@ local ColorSelectionOnLeave = function(self)
 end
 
 local ColorSelectionOnMouseUp = function(self)
-	if (not GUI.ColorPicker) then
+	if not GUI.ColorPicker then
 		CreateColorPicker()
 	end
 
 	if GUI.ColorPicker:IsShown() then
-		if (self ~= GUI.ColorPicker.Active) then
+		if self ~= GUI.ColorPicker.Active then
 			SetSwatchObject(self)
 		else
 			GUI.ColorPicker.FadeOut:Play()
@@ -594,7 +594,7 @@ local ColorRequiresReload = function(self, flag)
 end
 
 GUI.Widgets.CreateColorSelection = function(self, id, value, label, tooltip, hook)
-	if (Settings[id] ~= nil) then
+	if Settings[id] ~= nil then
 		value = Settings[id]
 	end
 	value = Core.NormalizeColor(value)

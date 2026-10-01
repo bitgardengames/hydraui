@@ -25,7 +25,7 @@ end
 local SliderOnValueChanged = function(self)
 	local Value = NormalizeSliderValue(self, self:GetValue())
 
-	if (Value == self.AppliedValue) then
+	if Value == self.AppliedValue then
 		return
 	end
 
@@ -44,28 +44,28 @@ local SliderOnValueChanged = function(self)
 end
 
 local SliderOnMouseWheel = function(self, delta)
-	if (not IsModifierKeyDown()) then
+	if not IsModifierKeyDown() then
 		return
 	end
 
 	local Value = self.EditBox.Value
 	local Step = self.EditBox.StepValue
 
-	if (delta < 0) then
+	if delta < 0 then
 		Value = Value - Step
 	else
 		Value = Value + Step
 	end
 
-	if (Step >= 1) then
+	if Step >= 1 then
 		Value = floor(Value)
 	else
 		Value = Round(Value, (Step <= 0.01 and 2 or 1))
 	end
 
-	if (Value < self.EditBox.MinValue) then
+	if Value < self.EditBox.MinValue then
 		Value = self.EditBox.MinValue
-	elseif (Value > self.EditBox.MaxValue) then
+	elseif Value > self.EditBox.MaxValue then
 		Value = self.EditBox.MaxValue
 	end
 
@@ -77,11 +77,11 @@ end
 local EditBoxOnEnterPressed = function(self)
 	local Value = tonumber(self:GetText())
 
-	if (type(Value) ~= "number") then
+	if type(Value) ~= "number" then
 		return
 	end
 
-	if (Value ~= self.Value) then
+	if Value ~= self.Value then
 		self.Slider:SetValue(Value)
 	end
 
@@ -95,9 +95,9 @@ local EditBoxOnMouseDown = function(self)
 end
 
 local EditBoxOnEditFocusLost = function(self)
-	if (self.Value > self.MaxValue) then
+	if self.Value > self.MaxValue then
 		self.Value = self.MaxValue
-	elseif (self.Value < self.MinValue) then
+	elseif self.Value < self.MinValue then
 		self.Value = self.MinValue
 	end
 
@@ -107,13 +107,13 @@ end
 local EditBoxOnChar = function(self)
 	local Value = tonumber(self:GetText())
 
-	if (type(Value) ~= "number") then
+	if type(Value) ~= "number" then
 		self:SetText(self.Value)
 	end
 end
 
 local EditBoxOnMouseWheel = function(self, delta)
-	if (not IsModifierKeyDown()) then
+	if not IsModifierKeyDown() then
 		return
 	end
 
@@ -122,16 +122,16 @@ local EditBoxOnMouseWheel = function(self, delta)
 		self:ClearFocus()
 	end
 
-	if (delta > 0) then
+	if delta > 0 then
 		self.Value = self.Value + self.StepValue
 
-		if (self.Value > self.MaxValue) then
+		if self.Value > self.MaxValue then
 			self.Value = self.MaxValue
 		end
 	else
 		self.Value = self.Value - self.StepValue
 
-		if (self.Value < self.MinValue) then
+		if self.Value < self.MinValue then
 			self.Value = self.MinValue
 		end
 	end
@@ -202,7 +202,7 @@ local SliderRequiresReload = function(self, flag)
 end
 
 GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, label, tooltip, hook, prefix, postfix)
-	if (Settings[id] ~= nil) then
+	if Settings[id] ~= nil then
 		value = Settings[id]
 	end
 
@@ -217,11 +217,11 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	Anchor:SetScript("OnEnter", AnchorOnEnter)
 	Anchor:SetScript("OnLeave", AnchorOnLeave)
 
-	if (not prefix) then
+	if not prefix then
 		prefix = ""
 	end
 
-	if (not postfix) then
+	if not postfix then
 		postfix = ""
 	end
 

@@ -31,9 +31,9 @@ Announcements.Spells = {
 }
 
 function Announcements:GetChannelToSend()
-	if ((Settings["announcements-channel"] == "SELF") or (IsBattleground() or IsRatedBattleground())) then
+	if (Settings["announcements-channel"] == "SELF") or (IsBattleground() or IsRatedBattleground()) then
 		return
-	elseif (Settings["announcements-channel"] == "GROUP") then
+	elseif Settings["announcements-channel"] == "GROUP" then
 		if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
 			return "INSTANCE_CHAT"
 		elseif IsInGroup(LE_PARTY_CATEGORY_HOME) then
@@ -43,7 +43,7 @@ function Announcements:GetChannelToSend()
 				return "PARTY"
 			end
 		end
-	elseif (Settings["announcements-channel"] == "SAY") then
+	elseif Settings["announcements-channel"] == "SAY" then
 		return "SAY"
 	else
 		return "EMOTE"
@@ -66,7 +66,7 @@ Announcements.Events = {
 	end,
 
 	--[[["SPELL_DISPEL"] = function(target, id, spell)
-		if (not UnitIsFriend("player", target)) then
+		if not UnitIsFriend("player", target) then
 			SendChatMessage(format(DispelledMessage, target, id, spell), "EMOTE")
 		end
 	end,]]
@@ -85,18 +85,18 @@ Announcements.Events = {
 function Announcements:COMBAT_LOG_EVENT_UNFILTERED()
 	_, EventType, _, SourceGUID, _, _, _, _, DestName, _, _, _, _, _, SpellID, SpellName = CombatLogGetCurrentEventInfo()
 
-	if (not self.Events[EventType]) then
+	if not self.Events[EventType] then
 		return
 	end
 
-	if (SourceGUID == MyGUID or SourceGUID == PetGUID) then
+	if SourceGUID == MyGUID or SourceGUID == PetGUID then
 		self.Events[EventType](DestName, SpellID, SpellName)
 	end
 end
 
 function Announcements:GROUP_ROSTER_UPDATE()
-	if (GetNumGroupMembers() > 0) then
-		if (not self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
+	if GetNumGroupMembers() > 0 then
+		if not self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED") then
 			self:UNIT_PET("player")
 			self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 		end
@@ -106,11 +106,11 @@ function Announcements:GROUP_ROSTER_UPDATE()
 end
 
 function Announcements:UNIT_PET(owner)
-	if (owner ~= "player") then
+	if owner ~= "player" then
 		return
 	end
 
-	if (UnitExists("pet") and UnitName("pet") ~= UNKNOWN) then
+	if UnitExists("pet") and UnitName("pet") ~= UNKNOWN then
 		PetGUID = UnitGUID("pet")
 	end
 end
@@ -126,7 +126,7 @@ function Announcements:Load()
 		return
 	end
 
-	if (not Settings["announcements-enable"]) then
+	if not Settings["announcements-enable"] then
 		return
 	end
 

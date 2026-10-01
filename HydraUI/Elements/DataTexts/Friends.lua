@@ -90,7 +90,7 @@ local ProjectIDToName = {
 
 local GetClass = function(class)
 	for Token, Localized in next, LOCALIZED_CLASS_NAMES_MALE do
-		if (Localized == class) then
+		if Localized == class then
 			return Token
 		end
 	end
@@ -134,7 +134,7 @@ ClientInfo["WoW"] = function(name, info)
 	local ClassColor = HydraUI.ClassColors[Class]
 	local ProjectName = ProjectIDToName[info.gameAccountInfo.wowProjectID] or CINEMATIC_NAME_1
 
-	if (not ClassColor) then
+	if not ClassColor then
 		return ProjectName, name
 	end
 
@@ -154,7 +154,7 @@ ClientInfo["WoW"] = function(name, info)
 	local NameInfo = format("|cFF%s%s|r |cFF%s%s|r|cFFFFFFFF|r %s", LevelColor, info.gameAccountInfo.characterLevel, ClassColor, info.gameAccountInfo.characterName, name)
 	local Area = info.gameAccountInfo.areaName
 
-	if (Area == GetRealZoneText()) then
+	if Area == GetRealZoneText() then
 		Area = format("|cFF33FF33%s|r", Area)
 	end
 
@@ -164,18 +164,18 @@ end
 local GetClientInformation = function(client, name, info)
 	local Descriptor = ClientInfo[client]
 
-	if (not Descriptor) then
+	if not Descriptor then
 		return
 	end
 
-	if (type(Descriptor) == "function") then
+	if type(Descriptor) == "function" then
 		return Descriptor(name, info)
 	end
 
 	local GameAccountInfo = info.gameAccountInfo
 	local DisplayName
 
-	if (Descriptor.DisplayName == "richPresence") then
+	if Descriptor.DisplayName == "richPresence" then
 		DisplayName = GameAccountInfo.richPresence
 	else
 		DisplayName = FormatAccountName(name, GameAccountInfo.isGameAFK, GameAccountInfo.isGameBusy, Descriptor.AFKToken or DEFAULT_AFK_MESSAGE, Descriptor.DNDToken or DEFAULT_DND_MESSAGE)
@@ -219,7 +219,7 @@ local OnEnter = function(self)
 			local RealClient, Left, Right = GetClientInformation(Info.gameAccountInfo.clientProgram, Info.accountName, Info)
 
 			if RealClient then
-				if (not FriendList[RealClient]) then
+				if not FriendList[RealClient] then
 					FriendList[RealClient] = AcquireGroup()
 					NumClients = NumClients + 1
 				end
@@ -239,7 +239,7 @@ local OnEnter = function(self)
 		if FriendInfo.connected then
 			local Class = GetClass(FriendInfo.className)
 
-			if (Class == "Unknown") then
+			if Class == "Unknown" then
 				Class = "PRIEST"
 			end
 
@@ -260,7 +260,7 @@ local OnEnter = function(self)
 
 			local NameInfo = format("|cFFFFFFFF|cFF%s%s|r |cFF%s%s|r|cFFFFFFFF|r", LevelColor, FriendInfo.level, ClassColor, Name)
 
-			if (not FriendList[ProjectIDToName[1]]) then
+			if not FriendList[ProjectIDToName[1]] then
 				FriendList[ProjectIDToName[1]] = AcquireGroup()
 				NumClients = NumClients + 1
 			end
@@ -278,7 +278,7 @@ local OnEnter = function(self)
 
 		for i = 1, #info do
 			if info[i][2] then
-				if (info[i][2] == CurrentZone) then
+				if info[i][2] == CurrentZone then
 					GameTooltip:AddDoubleLine(info[i][1], info[i][2], nil, nil, nil, 0.2, 1, 0.2)
 				else
 					GameTooltip:AddDoubleLine(info[i][1], info[i][2], nil, nil, nil, 1, 1, 1)
@@ -288,7 +288,7 @@ local OnEnter = function(self)
 			end
 		end
 
-		if (ClientCount ~= NumClients) then
+		if ClientCount ~= NumClients then
 			GameTooltip:AddLine(" ")
 		end
 	end
@@ -306,7 +306,7 @@ local OnLeave = function(self)
 end
 
 local OnMouseUp = function()
-	if (not InCombatLockdown()) then
+	if not InCombatLockdown() then
 		ToggleFriendsFrame(1)
 	end
 end

@@ -24,7 +24,7 @@ function GUI:SortMenuButtons()
 			local Page = Category.Pages[j]
 			tsort(Page.Children, SortByName)
 
-			if (j == 1) then
+			if j == 1 then
 				Page.Button:SetPoint("TOPLEFT", Category.Frame, "BOTTOMLEFT", 0, -2)
 			else
 				Page.Button:SetPoint("TOPLEFT", Category.Pages[j-1].Button, "BOTTOMLEFT", 0, -2)
@@ -33,7 +33,7 @@ function GUI:SortMenuButtons()
 			self.NumShownButtons = self.NumShownButtons + 1
 		end
 
-		if (i == 1) then
+		if i == 1 then
 			Category.Frame:SetPoint("TOPLEFT", self.MenuParent, "TOPLEFT", SPACING, -SPACING)
 		elseif #Categories[i-1].Pages > 0 then
 			Category.Frame:SetPoint("TOPLEFT", Categories[i-1].Pages[#Categories[i-1].Pages].Button, "BOTTOMLEFT", 0, -2)
@@ -89,7 +89,7 @@ end
 function GUI:ShowWindow(category, name, parent)
 	local Page = type(category) == "table" and category or self:HasButton(category, name, parent)
 
-	if (not Page) then
+	if not Page then
 		error(format("Unknown GUI page '%s/%s'", tostring(category), tostring(name)), 2)
 	end
 
@@ -101,12 +101,12 @@ function GUI:ShowWindow(category, name, parent)
 			PreviousPage.Window:Hide()
 		end
 
-		if (PreviousPage.Button.Selected:GetAlpha() > 0) then
+		if PreviousPage.Button.Selected:GetAlpha() > 0 then
 			PreviousPage.Button.Selected:SetAlpha(0)
 		end
 	end
 
-	if (not Page.Window) then
+	if not Page.Window then
 		Page.Window = self:CreateWidgetWindow(Page)
 	end
 
@@ -117,7 +117,7 @@ function GUI:ShowWindow(category, name, parent)
 			ParentPage.Window:Hide()
 		end
 
-		if (ParentPage.Button.Selected:GetAlpha() > 0) then
+		if ParentPage.Button.Selected:GetAlpha() > 0 then
 			ParentPage.Button.Selected:SetAlpha(0)
 		end
 	elseif #Page.Children > 0 then
@@ -131,7 +131,7 @@ function GUI:ShowWindow(category, name, parent)
 			if ChildPage.Window then
 				ChildPage.Window:Hide()
 
-				if (ChildButton.Selected:GetAlpha() > 0) then
+				if ChildButton.Selected:GetAlpha() > 0 then
 					ChildButton.Selected:SetAlpha(0)
 				end
 			end

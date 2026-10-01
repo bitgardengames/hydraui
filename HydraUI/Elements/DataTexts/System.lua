@@ -28,7 +28,7 @@ end
 local Update = function(self, elapsed)
 	self.Elapsed = self.Elapsed + elapsed
 
-	if (self.Elapsed > 1) then
+	if self.Elapsed > 1 then
 		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r |cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], FPSLabel, HydraUI.ValueColor, floor(GetFramerate()), Settings["data-text-label-color"], MSLabel, HydraUI.ValueColor, select(4, GetNetStats()))
 
 		self.Elapsed = 0

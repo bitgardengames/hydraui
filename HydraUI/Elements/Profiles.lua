@@ -47,19 +47,19 @@ function HydraUI:GetDefaultProfileKey()
 end
 
 function HydraUI:GetActiveProfileName()
-	if (self.ProfileData and self.ProfileData[self.UserProfileKey]) then
+	if self.ProfileData and self.ProfileData[self.UserProfileKey] then
 		return self.ProfileData[self.UserProfileKey]
 	end
 end
 
 function HydraUI:GetActiveProfile()
-	if (self.ProfileData and self.ProfileData[self.UserProfileKey]) then
+	if self.ProfileData and self.ProfileData[self.UserProfileKey] then
 		return self:GetProfile(self.ProfileData[self.UserProfileKey])
 	end
 end
 
 function HydraUI:SetActiveProfile(name)
-	if (self.ProfileData and self.ProfileData[self.UserProfileKey]) then
+	if self.ProfileData and self.ProfileData[self.UserProfileKey] then
 		self.ProfileData[self.UserProfileKey] = name
 	end
 end
@@ -69,7 +69,7 @@ function HydraUI:CountChangedValues(name)
 	local Count = 0
 
 	for ID in next, Profile do
-		if (not self.ProfileMetadata[ID]) then
+		if not self.ProfileMetadata[ID] then
 			Count = Count + 1
 		end
 	end
@@ -78,11 +78,11 @@ function HydraUI:CountChangedValues(name)
 end
 
 function HydraUI:CreateProfileData()
-	if (not self.ProfileData) then -- No profile data exists, create a default
+	if not self.ProfileData then -- No profile data exists, create a default
 		self:CreateProfile(Language["Default"])
 	end
 
-	if (not self.ProfileData[self.UserProfileKey]) then
+	if not self.ProfileData[self.UserProfileKey] then
 		self.ProfileData[self.UserProfileKey] = self:GetMostUsedProfile()
 	end
 end
@@ -94,7 +94,7 @@ function HydraUI:CreateProfileNameID(name)
 	repeat
 		ID = ID + 1
 
-		if (not self.Profiles[format("%s (%d)", name, ID)]) then
+		if not self.Profiles[format("%s (%d)", name, ID)] then
 			Found = true
 		end
 	until Found == true
@@ -103,13 +103,13 @@ function HydraUI:CreateProfileNameID(name)
 end
 
 function HydraUI:AddProfile(profile)
-	if (type(profile) ~= "table") then
+	if type(profile) ~= "table" then
 		return
 	end
 
 	local Name = profile["profile-name"]
 
-	if (not Name) then
+	if not Name then
 		return
 	end
 
@@ -141,11 +141,11 @@ function HydraUI:CreateProfile(name)
 	self:BindSavedVariable("HydraUIProfileData", "ProfileData")
 	self:BindSavedVariable("HydraUIProfiles", "Profiles")
 
-	if (not name) then
+	if not name then
 		name = self:GetDefaultProfileKey()
 	end
 
-	if (not self.ProfileData[self.UserProfileKey]) then
+	if not self.ProfileData[self.UserProfileKey] then
 		self.ProfileData[self.UserProfileKey] = name
 	end
 
@@ -169,12 +169,12 @@ function HydraUI:CreateProfile(name)
 end
 
 function HydraUI:RestoreToDefault(name)
-	if (not self.Profiles[name]) then
+	if not self.Profiles[name] then
 		return
 	end
 
 	for ID in next, self.Profiles[name] do
-		if (not self.ProfileMetadata[ID]) then
+		if not self.ProfileMetadata[ID] then
 			self.Profiles[name][ID] = nil
 		end
 	end
@@ -188,9 +188,9 @@ function HydraUI:GetProfile(name)
 	else
 		local Default = self:GetMostUsedProfile()
 
-		if (not Default) then
+		if not Default then
 			return self:CreateProfile(Language["Default"])
-		elseif (Default and self.Profiles[Default]) then
+		elseif Default and self.Profiles[Default] then
 			return self.Profiles[Default]
 		end
 	end
@@ -198,7 +198,7 @@ end
 
 function HydraUI:SetProfileValue(name, id, value)
 	if self.Profiles[name] then
-		if (value ~= Defaults[id]) then -- Only saving a value if it's different than default
+		if value ~= Defaults[id] then -- Only saving a value if it's different than default
 			self.Profiles[name][id] = value
 
 			self:UpdateProfileLastModified(name)
@@ -217,7 +217,7 @@ function HydraUI:ProfileIsUsedBy(name)
 	local String
 
 	for Key, ProfileName in next, self.ProfileData do
-		if (ProfileName == name) then
+		if ProfileName == name then
 			if First then
 				String = Key
 				First = false
@@ -236,7 +236,7 @@ function HydraUI:GetMostUsedProfile() -- Return most used profile as a fallback 
 	local HighestName
 
 	for Key, ProfileName in next, self.ProfileData do
-		if (not Temp[ProfileName]) then -- In case we renamed something
+		if not Temp[ProfileName] then -- In case we renamed something
 			Temp[ProfileName] = 0
 		end
 
@@ -244,7 +244,7 @@ function HydraUI:GetMostUsedProfile() -- Return most used profile as a fallback 
 	end
 
 	for Name, Value in next, Temp do
-		if (Value > HighestValue) then
+		if Value > HighestValue then
 			HighestValue = Value
 			HighestName = Name
 		end
@@ -258,7 +258,7 @@ function HydraUI:GetNumServedByProfile(name)
 	local Total = 0
 
 	for Key, ProfileName in next, self.ProfileData do
-		if (ProfileName == name) then
+		if ProfileName == name then
 			Count = Count + 1
 		end
 
@@ -277,7 +277,7 @@ function HydraUI:DeleteProfile(name)
 
 		-- If we just wiped out a profile that characters were using, reroute them to an existing profile.
 		for Key, ProfileName in next, self.ProfileData do
-			if (ProfileName == name) then
+			if ProfileName == name then
 				self.ProfileData[Key] = Default
 			end
 		end
@@ -287,7 +287,7 @@ function HydraUI:DeleteProfile(name)
 		self:print(format(Language['No profile exists with the name "%s".'], name))
 	end
 
-	if (self:GetProfileCount() == 0) then
+	if self:GetProfileCount() == 0 then
 		self:CreateProfile(Language["Default"]) -- If we just deleted our last profile, make a new default.
 
 		for Key in next, self.ProfileData do
@@ -295,7 +295,7 @@ function HydraUI:DeleteProfile(name)
 		end
 	end
 
-	if (name == self:GetActiveProfileName()) then
+	if name == self:GetActiveProfileName() then
 		C_UI.Reload()
 	end
 end
@@ -349,7 +349,7 @@ function HydraUI:DeleteUnusedProfiles()
 	end
 
 	for Key, ProfileName in next, self.ProfileData do
-		if (not Counts[ProfileName]) then -- In case we renamed something
+		if not Counts[ProfileName] then -- In case we renamed something
 			Counts[ProfileName] = 0
 		end
 
@@ -357,7 +357,7 @@ function HydraUI:DeleteUnusedProfiles()
 	end
 
 	for Name, Total in next, Counts do
-		if (Total == 0) then
+		if Total == 0 then
 			self:DeleteProfile(Name)
 
 			Deleted = Deleted + 1
@@ -368,12 +368,12 @@ function HydraUI:DeleteUnusedProfiles()
 		Count = 0
 
 		for ID in next, Value do
-			if (not self.ProfileMetadata[ID]) then
+			if not self.ProfileMetadata[ID] then
 				Count = Count + 1
 			end
 		end
 
-		if (Count == 0) then
+		if Count == 0 then
 			self:DeleteProfile(Name)
 
 			Deleted = Deleted + 1
@@ -397,7 +397,7 @@ function HydraUI:CountUnusedProfiles()
 	end
 
 	for Key, ProfileName in next, self.ProfileData do
-		if (not Counts[ProfileName]) then -- In case we renamed something
+		if not Counts[ProfileName] then -- In case we renamed something
 			Counts[ProfileName] = 0
 		end
 
@@ -405,7 +405,7 @@ function HydraUI:CountUnusedProfiles()
 	end
 
 	for Name, Total in next, Counts do
-		if (Total == 0) then
+		if Total == 0 then
 			Unused = Unused + 1
 		end
 	end
@@ -414,12 +414,12 @@ function HydraUI:CountUnusedProfiles()
 		Count = 0
 
 		for ID in next, Value do
-			if (not self.ProfileMetadata[ID]) then
+			if not self.ProfileMetadata[ID] then
 				Count = Count + 1
 			end
 		end
 
-		if (Count == 0) then
+		if Count == 0 then
 			Unused = Unused + 1
 		end
 	end
@@ -430,7 +430,7 @@ function HydraUI:CountUnusedProfiles()
 end
 
 function HydraUI:RenameProfile(from, to)
-	if (not self.Profiles[from]) then
+	if not self.Profiles[from] then
 		return
 	elseif self.Profiles[to] then
 		self:print(format(Language['A profile already exists with the name "%s".'], to))
@@ -447,7 +447,7 @@ function HydraUI:RenameProfile(from, to)
 
 	-- Reroute characters who used this profile
 	for Key, ProfileName in next, self.ProfileData do
-		if (ProfileName == from) then
+		if ProfileName == from then
 			self.ProfileData[Key] = to
 		end
 	end
@@ -477,10 +477,10 @@ function HydraUI:UpdateProfileLastModified(name)
 end
 
 function HydraUI:SetProfileMetadata(name, meta, value) -- /run HydraUIGlobal:get():SetProfileMetadata("ProfileName", "profile-created-by", "Hydra")
-	if (self.Profiles[name] and self.ProfileMetadata[meta]) then
+	if self.Profiles[name] and self.ProfileMetadata[meta] then
 		self.Profiles[name][meta] = value
 
-		if (name == self:GetActiveProfileName()) then
+		if name == self:GetActiveProfileName() then
 			self:UpdateProfileInfo()
 		end
 	end
@@ -530,7 +530,7 @@ end
 
 function HydraUI:MigrateData()
 	for i = #self.MigrateGlobals, 1, -1 do
-		if (not _G[self.MigrateGlobals[i].To]) then
+		if not _G[self.MigrateGlobals[i].To] then
 			_G[self.MigrateGlobals[i].To] = {}
 		end
 
@@ -543,7 +543,7 @@ function HydraUI:MigrateData()
 		end
 	end
 
-	if ((not self.Profiles) or (#self.MigrateValues == 0)) then
+	if (not self.Profiles) or (#self.MigrateValues == 0) then
 		return
 	end
 
@@ -559,9 +559,9 @@ function HydraUI:MigrateMoverData()
 		return
 	end
 
-	if (HydraUIMove and self.Profiles) then
+	if HydraUIMove and self.Profiles then
 		for Key, Profile in next, self.Profiles do
-			if (not Profile.Move) then
+			if not Profile.Move then
 				Profile.Move = {}
 			end
 
@@ -588,7 +588,7 @@ function HydraUI:CloneProfile(profile)
 	local Clone = {}
 
 	for Key, Value in next, profile do
-		if (not self.PreserveSettings[Key]) then -- Ignore preserved settings for serializing
+		if not self.PreserveSettings[Key] then -- Ignore preserved settings for serializing
 			Clone[Key] = Value
 		end
 	end
@@ -608,24 +608,24 @@ end
 function HydraUI:DecodeProfile(encoded)
 	local Decoded = LibDeflate:DecodeForPrint(encoded)
 
-	if (not Decoded) then
+	if not Decoded then
 		return self:print(Language["Failure decoding"])
 	end
 
 	local Decompressed = LibDeflate:DecompressDeflate(Decoded)
 
-	if (not Decompressed) then
+	if not Decompressed then
 		return self:print(Language["Failure decompressing"])
 	end
 
 	local Success, Deserialized = AceSerializer:Deserialize(Decompressed)
 
-	if (not Success) then
+	if not Success then
 		return self:print(Language["Failure deserializing"])
 	end
 
 	-- Check for migrated values
-	if (#self.MigrateValues > 0) then
+	if #self.MigrateValues > 0 then
 		self:Migrate(Deserialized)
 	end
 
@@ -643,7 +643,7 @@ function HydraUI:UpdateProfileInfo()
 		NumServed = format("%d (%s)", NumServed, Language["All"])
 	end
 
-	if (Profile ~= MostUsed) then
+	if Profile ~= MostUsed then
 		MostUsedServed = self:GetNumServedByProfile(MostUsed)
 	end
 
@@ -666,7 +666,7 @@ local AcceptNewProfile = function(value)
 end
 
 local UpdateActiveProfile = function(value)
-	if (value ~= HydraUI:GetActiveProfileName()) then
+	if value ~= HydraUI:GetActiveProfileName() then
 		HydraUI:DisplayPopup(Language["Attention"], format(Language['Are you sure you want to change the current profile to "%s"?'], value), ACCEPT, AcceptNewProfile, CANCEL, nil, value)
 	end
 end
@@ -726,7 +726,7 @@ local DeleteUnused = function()
 end
 
 local RenameProfile = function(value)
-	if (value and match(value, "%S+")) then
+	if value and match(value, "%S+") then
 		HydraUI:RenameProfile(HydraUI:GetActiveProfileName(), value)
 		HydraUI:UpdateProfileInfo()
 	end
@@ -783,7 +783,7 @@ GUI:AddWidgets(Language["General"], Language["Profiles"], function(left, right)
 		NumServed = format("%d (%s)", NumServed, Language["All"])
 	end
 
-	if (Profile ~= MostUsed) then
+	if Profile ~= MostUsed then
 		MostUsedServed = HydraUI:GetNumServedByProfile(MostUsed)
 	end
 

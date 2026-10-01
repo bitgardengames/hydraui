@@ -52,8 +52,8 @@ local GetMouseFocusNew = function()
 end
 
 function KeyBinding:OnKeyUp(key)
-	if (not IsKeyPressIgnoredForBinding(key) and not self.Filter[key] and self.TargetBindingName) then
-		if (key == "ESCAPE") then
+	if not IsKeyPressIgnoredForBinding(key) and not self.Filter[key] and self.TargetBindingName then
+		if key == "ESCAPE" then
 			local Binding = GetBindingKey(self.TargetBindingName)
 
 			if Binding then
@@ -88,10 +88,10 @@ end
 function KeyBinding:OnKeyDown(key)
 	local MouseFocus = GetMouseFocusNew()
 
-	if (MouseFocus and MouseFocus.GetName) then
+	if MouseFocus and MouseFocus.GetName then
 		local Name = MouseFocus:GetName()
 
-		if (not Name) then
+		if not Name then
 			return
 		end
 
@@ -108,7 +108,7 @@ end
 function KeyBinding:OnMouseWheel(delta)
 	local key
 
-	if (delta > 0) then
+	if delta > 0 then
 		key = "MOUSEWHEELUP"
 	else
 		key = "MOUSEWHEELDOWN"
@@ -116,7 +116,7 @@ function KeyBinding:OnMouseWheel(delta)
 
 	local MouseFocus = GetMouseFocusNew()
 
-	if (MouseFocus and MouseFocus.GetName) then
+	if MouseFocus and MouseFocus.GetName then
 		local Name = MouseFocus:GetName()
 
 		if Name then
@@ -130,7 +130,7 @@ function KeyBinding:OnMouseWheel(delta)
 		end
 	end
 
-	if (not self.Filter[key] and self.TargetBindingName) then
+	if not self.Filter[key] and self.TargetBindingName then
 		key = format("%s%s%s%s", IsAltKeyDown() and "ALT-" or "", IsControlKeyDown() and "CTRL-" or "", IsShiftKeyDown() and "SHIFT-" or "", key)
 
 		local OldAction = GetBindingAction(key, true)
@@ -156,10 +156,10 @@ end
 function KeyBinding:OnEvent(event, button)
 	local MouseFocus = GetMouseFocusNew()
 
-	if (MouseFocus and MouseFocus.GetName) then
+	if MouseFocus and MouseFocus.GetName then
 		local Name = MouseFocus:GetName()
 
-		if (not Name) then
+		if not Name then
 			return
 		end
 
@@ -171,8 +171,8 @@ function KeyBinding:OnEvent(event, button)
 		end
 	end
 
-	if (not self.Filter[button] and self.TargetBindingName) then
-		if (button == "MiddleButton") then
+	if not self.Filter[button] and self.TargetBindingName then
+		if button == "MiddleButton" then
 			button = "BUTTON3"
 		end
 
@@ -205,10 +205,10 @@ end
 function KeyBinding:OnUpdate(elapsed)
 	self.Elapsed = self.Elapsed + elapsed
 
-	if (self.Elapsed > 0.05) then
+	if self.Elapsed > 0.05 then
 		local MouseFocus = GetMouseFocusNew()
 
-		if (MouseFocus and MouseFocus.action) then
+		if MouseFocus and MouseFocus.action then
 			self.Hover:SetPoint("TOPLEFT", MouseFocus, 1, -1)
 			self.Hover:SetPoint("BOTTOMRIGHT", MouseFocus, -1, 1)
 			self.Hover:Show()

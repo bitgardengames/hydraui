@@ -34,7 +34,7 @@ end
 local CountMovedFrames = function()
 	local Profile = HydraUI:GetActiveProfile()
 
-	if (not Profile.Move) then
+	if not Profile.Move then
 		return 0
 	end
 
@@ -75,7 +75,7 @@ elseif HydraUI.IsCata then
 			ID, Name, Desc, Icon, PointsSpent = GetTalentTabInfo(i)
 
 			if Name then
-				if (PointsSpent > HighestPoints) then
+				if PointsSpent > HighestPoints then
 					MainSpec = Name
 					HighestPoints = PointsSpent
 				end
@@ -102,8 +102,8 @@ else
 		for i = 1, 5 do -- Default UI uses 5 here for some reason? Just going to roll with it right now even though it makes no sense to me
 			Name, Texture, PointsSpent = GetTalentTabInfo(i)
 
-			if (Name and type(PointsSpent) == "number") then
-				if (PointsSpent > HighestPoints) then
+			if Name and type(PointsSpent) == "number" then
+				if PointsSpent > HighestPoints then
 					MainSpec = Name
 					HighestPoints = PointsSpent
 				end
@@ -134,7 +134,7 @@ local OnShow = function()
 	Debug:RegisterEvent("CVAR_UPDATE")
 	Debug:RegisterEvent("CHARACTER_POINTS_CHANGED")
 
-	if (UnitLevel("player") > 59) then
+	if UnitLevel("player") > 59 then
 		Debug:RegisterEvent("PLAYER_LEVEL_UP")
 	end
 
@@ -207,7 +207,7 @@ function Debug:ADDON_LOADED()
 end
 
 function Debug:CVAR_UPDATE(cvar)
-	if (cvar == "scriptErrors") then
+	if cvar == "scriptErrors" then
 		GUI:GetWidget("dbg-show-errors").Right:SetText(GetCVar("scriptErrors") == "1" and Language["Enabled"] or Language["Disabled"])
 	end
 end

@@ -19,7 +19,7 @@ local SortAlerts = function()
 	for i = 1, #ActiveAlerts do
 		ActiveAlerts[i]:ClearAllPoints()
 
-		if (i == 1) then
+		if i == 1 then
 			ActiveAlerts[i]:SetPoint("TOPRIGHT", _G["HydraUI Minimap"], "BOTTOMRIGHT", 0, -3)
 		else
 			ActiveAlerts[i]:SetPoint("BOTTOM", ActiveAlerts[i-1], "TOP", 0, 2)
@@ -39,7 +39,7 @@ local OnEnter = function(self)
 end
 
 local OnLeave = function(self)
-	if (not self.Hold:IsPlaying()) then
+	if not self.Hold:IsPlaying() then
 		self.Hold:Play()
 	end
 end
@@ -60,7 +60,7 @@ local FadeOutOnFinished = function(self)
 	local Alert = self:GetParent()
 
 	for i = 1, #ActiveAlerts do
-		if (ActiveAlerts[i] == Alert) then
+		if ActiveAlerts[i] == Alert then
 			tinsert(UnusedAlerts, tremove(ActiveAlerts, i))
 
 			break
@@ -78,7 +78,7 @@ local CloseOnMouseUp = function(self)
 	Alert:SetAlpha(0)
 
 	for i = 1, #ActiveAlerts do
-		if (ActiveAlerts[i] == Alert) then
+		if ActiveAlerts[i] == Alert then
 			tinsert(UnusedAlerts, tremove(ActiveAlerts, i))
 
 			break

@@ -1,6 +1,6 @@
 local HydraUI, Language, Assets, Settings = select(2, ...):get()
 
-if (HydraUI.UserClass ~= "DRUID") then
+if HydraUI.UserClass ~= "DRUID" then
 	return
 end
 
@@ -35,7 +35,7 @@ function DruidMana:UNIT_POWER_FREQUENT()
 end
 
 function DruidMana:UPDATE_SHAPESHIFT_FORM()
-	if (UnitPowerType("player") == ManaID) then
+	if UnitPowerType("player") == ManaID then
 		self:Hide()
 	else
 		self:Show()
@@ -126,7 +126,7 @@ end
 
 local UpdateEnableDruidMana = function(value)
 	if value then
-		if (not DruidMana.Bar) then
+		if not DruidMana.Bar then
 			DruidMana:CreateBar()
 		end
 

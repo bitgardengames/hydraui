@@ -19,7 +19,7 @@ function HydraUI:PositionToString(frame)
 end
 
 function HydraUI:StringToPosition(str)
-	if (type(str) == "table") then -- Remove this after a month or two. (June 2nd 2020)
+	if type(str) == "table" then -- Remove this after a month or two. (June 2nd 2020)
 		return unpack(str) -- Migrated data will provide a table here. This leftover will be flushed after one login
 	end
 
@@ -45,7 +45,7 @@ local OnDragStop = function(self)
 
 	local Profile = HydraUI:GetActiveProfile()
 
-	if (not Profile.Move) then
+	if not Profile.Move then
 		Profile.Move = {}
 	end
 
@@ -93,7 +93,7 @@ function HydraUI:ToggleMovers()
 			self.MovingFrames[i]:Show()
 		end
 
-		if (GUI.Loaded and GUI:IsShown()) then
+		if GUI.Loaded and GUI:IsShown() then
 			HydraUI:DisplayPopup(Language["Attention"], Language["Would you like to reopen the settings window?"], ACCEPT, OnAccept, CANCEL, OnCancel) -- PopupOnCancel
 			GUI:Toggle()
 		end
@@ -121,7 +121,7 @@ end
 
 function HydraUI:ResetMover(name)
 	for i = 1, #HydraUI.MovingFrames do
-		if (HydraUI.MovingFrames[i].Name == name) then
+		if HydraUI.MovingFrames[i].Name == name then
 			local A1, Parent, A2, X, Y = unpack(HydraUI.FrameDefaults[HydraUI.MovingFrames[i].Name])
 
 			HydraUI.MovingFrames[i]:ClearAllPoints()
@@ -139,11 +139,11 @@ end
 function HydraUI:IsMoved(frame)
 	local Profile = self:GetActiveProfile()
 
-	if (not Profile.Move) then
+	if not Profile.Move then
 		return
 	end
 
-	if (frame and frame.GetName) then
+	if frame and frame.GetName then
 		if Profile.Move[frame:GetName()] then
 			return true
 		end
@@ -155,7 +155,7 @@ local OnSizeChanged = function(self)
 end
 
 local MoverOnMouseUp = function(self, button)
-	if (button == "RightButton") then
+	if button == "RightButton" then
 		if HydraUI.FrameDefaults[self.Name] then
 			local A1, Parent, A2, X, Y = unpack(HydraUI.FrameDefaults[self.Name])
 			local ParentObject = _G[Parent]
@@ -165,7 +165,7 @@ local MoverOnMouseUp = function(self, button)
 
 			local Profile = HydraUI:GetActiveProfile()
 
-			if (not Profile.Move) then
+			if not Profile.Move then
 				return
 			end
 
@@ -174,7 +174,7 @@ local MoverOnMouseUp = function(self, button)
 	else
 		local F = HydraUI:GetModule("m")
 
-		if (not F.Loaded) then
+		if not F.Loaded then
 			F:LoadFrame()
 		end
 
@@ -193,7 +193,7 @@ local MoverOnMouseUp = function(self, button)
 		F.Lines[5].EditBox:SetText(Round(X))
 		F.Lines[6].EditBox:SetText(Round(Y))
 
-		if (not F:IsShown()) then
+		if not F:IsShown() then
 			F:Show()
 		end
 	end
@@ -216,7 +216,7 @@ local MoverOnEnter = function(self)
 	GameTooltip:Show()
 
 	for i = 1, #HydraUI.MovingFrames do
-		if (HydraUI.MovingFrames[i].Name ~= self.Name) then
+		if HydraUI.MovingFrames[i].Name ~= self.Name then
 			HydraUI.MovingFrames[i]:SetAlpha(0.5)
 		end
 	end
@@ -236,7 +236,7 @@ function HydraUI:CreateMover(frame, padding)
 	local A1, Parent, A2, X, Y = frame:GetPoint()
 	local Name = frame:GetName()
 
-	if (not Name) then
+	if not Name then
 		return
 	end
 
@@ -246,7 +246,7 @@ function HydraUI:CreateMover(frame, padding)
 		Label = gsub(Label, "HydraUI ", "")
 	end
 
-	if (not Parent) then
+	if not Parent then
 		Parent = HydraUIParent
 	end
 
@@ -292,7 +292,7 @@ function HydraUI:CreateMover(frame, padding)
 
 	local Profile = self:GetActiveProfile()
 
-	if (Profile and Profile.Move and Profile.Move[Name]) then
+	if Profile and Profile.Move and Profile.Move[Name] then
 		local A1, Parent, A2, X, Y = self:StringToPosition(Profile.Move[Name])
 
 		Mover:SetPoint(A1, Parent, A2, X, Y)
@@ -419,7 +419,7 @@ function m:UpdateFrameInfo()
 
 	local Profile = HydraUI:GetActiveProfile()
 
-	if (not Profile.Move) then
+	if not Profile.Move then
 		Profile.Move = {}
 	end
 
@@ -429,7 +429,7 @@ end
 function m:UpdateParent()
 	local Name = self:GetText()
 
-	if (not _G[Name]) then
+	if not _G[Name] then
 		return
 	end
 
@@ -445,7 +445,7 @@ end
 function m:UpdateFromPoint()
 	local Point = self:GetText()
 
-	if (not m:ValidatePoint(Point)) then
+	if not m:ValidatePoint(Point) then
 		Point = "CENTER"
 		self:SetText(Point)
 	end
@@ -463,7 +463,7 @@ end
 function m:UpdateToPoint()
 	local Point = self:GetText()
 
-	if (not m:ValidatePoint(Point)) then
+	if not m:ValidatePoint(Point) then
 		Point = "CENTER"
 		self:SetText(Point)
 	end
@@ -481,7 +481,7 @@ end
 function m:UpdateXOffset()
 	local Offset = tonumber(self:GetText())
 
-	if (type(Offset) ~= "number") then
+	if type(Offset) ~= "number" then
 		return
 	end
 
@@ -498,7 +498,7 @@ end
 function m:UpdateYOffset()
 	local Offset = tonumber(self:GetText())
 
-	if (type(Offset) ~= "number") then
+	if type(Offset) ~= "number" then
 		return
 	end
 
@@ -666,7 +666,7 @@ function m:LoadFrame()
 		local Line = CreateFrame("Frame", nil, self.Inner, "BackdropTemplate")
 		Line:SetSize(self.Inner:GetWidth() - 6, 20)
 
-		if (i == 1) then
+		if i == 1 then
 			Line:SetPoint("TOPLEFT", self.Inner, 3, -3)
 		else
 			Line:SetPoint("TOPLEFT", self.Lines[i-1], "BOTTOMLEFT", 0, -2)
@@ -702,7 +702,7 @@ function m:LoadFrame()
 		Button.Arrow:SetPoint("CENTER", Button, 0, 0)
 		Button.Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 
-		if (i == 4) then
+		if i == 4 then
 			Button:SetPoint("RIGHT", self.Lines[7], -2, 0)
 		else
 			Button:SetPoint("RIGHT", self.Nudge[i+1], "LEFT", -2, 0)

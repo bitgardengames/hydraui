@@ -59,38 +59,38 @@ local GetColor = function(p, r1, g1, b1, r2, g2, b2)
 end
 
 local UTF8Sub = function(str, stop) -- utf8 sub derived from tukui
-	if (not str) then
+	if not str then
 		return str
 	end
 
 	local Bytes = len(str)
 
-	if (Bytes <= stop) then
+	if Bytes <= stop then
 		return str
 	else
 		local Len, Pos = 0, 1
 
-		while (Pos <= Bytes) do
+		while Pos <= Bytes do
 			Len = Len + 1
 
 			local c = byte(str, Pos)
 
-			if (c > 0 and c <= 127) then
+			if c > 0 and c <= 127 then
 				Pos = Pos + 1
-			elseif (c >= 192 and c <= 223) then
+			elseif c >= 192 and c <= 223 then
 				Pos = Pos + 2
-			elseif (c >= 224 and c <= 239) then
+			elseif c >= 224 and c <= 239 then
 				Pos = Pos + 3
-			elseif (c >= 240 and c <= 247) then
+			elseif c >= 240 and c <= 247 then
 				Pos = Pos + 4
 			end
 
-			if (Len == stop) then
+			if Len == stop then
 				break
 			end
 		end
 
-		if (Len == stop and Pos <= Bytes) then
+		if Len == stop and Pos <= Bytes then
 			return sub(str, 1, Pos - 1)
 		else
 			return str
@@ -106,7 +106,7 @@ end
 
 Events["Resting"] = "PLAYER_UPDATE_RESTING"
 Methods["Resting"] = function(unit)
-	if (unit == "player" and IsResting()) then
+	if unit == "player" and IsResting() then
 		return "zZz"
 	end
 end
@@ -117,7 +117,7 @@ Methods["Status"] = function(unit)
 		return "|cFFEE4D4D" .. DEAD .. "|r"
 	elseif UnitIsGhost(unit) then
 		return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-	elseif (not UnitIsConnected(unit)) then
+	elseif not UnitIsConnected(unit) then
 		return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
 	elseif UnitIsAFK(unit) then
 		return "|cFFEEEEEE" .. AFK .. "|r"
@@ -130,7 +130,7 @@ Events["Level"] = "UNIT_LEVEL PLAYER_LEVEL_UP UNIT_CLASSIFICATION_CHANGED"
 Methods["Level"] = function(unit)
 	local Level = UnitLevel(unit)
 
-	if (Level == -1) then
+	if Level == -1 then
 		if UnitIsPlayer(unit) then
 			return "??"
 		else
@@ -145,7 +145,7 @@ Events["LevelPlus"] = "UNIT_LEVEL PLAYER_LEVEL_UP UNIT_CLASSIFICATION_CHANGED"
 Methods["LevelPlus"] = function(unit)
 	local Class = UnitClassification(unit)
 
-	if (Class == "worldboss") then
+	if Class == "worldboss" then
 		return "Boss"
 	else
 		local Plus = Methods["Plus"](unit)
@@ -200,9 +200,9 @@ if HydraUI.IsMainline then
 		local Current = UnitHealth(unit)
 		local Max = UnitHealthMax(unit)
 
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+		if (issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)) then
 			return format("%.1f%%", UnitHealthPercent(unit, false, CurveConstants.ScaleTo100))
-		elseif (Max == 0) then
+		elseif Max == 0 then
 			return 0
 		else
 			return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
@@ -213,7 +213,7 @@ else
 		local Current = UnitHealth(unit)
 		local Max = UnitHealthMax(unit)
 
-		if (Max == 0) then
+		if Max == 0 then
 			return 0
 		else
 			return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
@@ -243,7 +243,7 @@ Methods["HealthDeficit"] = function(unit)
 		return "|cFFEE4D4D" .. DEAD .. "|r"
 	elseif UnitIsGhost(unit) then
 		return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-	elseif (not UnitIsConnected(unit)) then
+	elseif not UnitIsConnected(unit) then
 		return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
 	elseif UnitIsAFK(unit) then
 		return "|cFFEEEEEE" .. AFK .. "|r"
@@ -253,7 +253,7 @@ Methods["HealthDeficit"] = function(unit)
 	local Max = UnitHealthMax(unit)
 	local Deficit = Max - Current
 
-	if ((Deficit ~= 0) or (Current ~= Max)) then
+	if (Deficit ~= 0) or (Current ~= Max) then
 		return "-" .. Deficit
 	end
 end
@@ -264,7 +264,7 @@ Methods["HealthDeficit:Short"] = function(unit)
 		return "|cFFEE4D4D" .. DEAD .. "|r"
 	elseif UnitIsGhost(unit) then
 		return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-	elseif (not UnitIsConnected(unit)) then
+	elseif not UnitIsConnected(unit) then
 		return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
 	elseif UnitIsAFK(unit) then
 		return "|cFFEEEEEE" .. AFK .. "|r"
@@ -274,7 +274,7 @@ Methods["HealthDeficit:Short"] = function(unit)
 	local Max = UnitHealthMax(unit)
 	local Deficit = Max - Current
 
-	if ((Deficit ~= 0) or (Current ~= Max)) then
+	if (Deficit ~= 0) or (Current ~= Max) then
 		return "-" .. HydraUI:ShortValue(Deficit)
 	end
 end
@@ -285,7 +285,7 @@ Methods["GroupStatus"] = function(unit)
 		return "|cFFEE4D4D" .. DEAD .. "|r"
 	elseif UnitIsGhost(unit) then
 		return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-	elseif (not UnitIsConnected(unit)) then
+	elseif not UnitIsConnected(unit) then
 		return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
 	elseif UnitIsAFK(unit) then
 		return "|cFFEEEEEE" .. AFK .. "|r"
@@ -295,7 +295,7 @@ Methods["GroupStatus"] = function(unit)
 	local Max = UnitHealthMax(unit)
 	local Color = Methods["HealthColor"](unit)
 
-	if (Max == 0) then
+	if Max == 0 then
 		return Color .. "0|r"
 	else
 		return Color .. floor(Current / Max * 100 + 0.5) .. "|r"
@@ -307,7 +307,7 @@ Methods["HealthColor"] = function(unit)
 	local Current = UnitHealth(unit)
 	local Max = UnitHealthMax(unit)
 
-	if (Current and Max > 0) then
+	if Current and Max > 0 then
 		return "|cFF" .. HydraUI:RGBToHex(GetColor(Current / Max, 0.905, 0.298, 0.235, 0.17, 0.77, 0.4))
 	else
 		return "|cFF" .. HydraUI:RGBToHex(0.18, 0.8, 0.443)
@@ -350,11 +350,11 @@ if HydraUI.IsMainline then
 		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+		if (issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)) then
 			return ""
 		end
 		local Deficit = Max - Current
-		if ((Deficit ~= 0) or (Current ~= Max)) then
+		if (Deficit ~= 0) or (Current ~= Max) then
 			return "-" .. HydraUI:Comma(Deficit)
 		end
 	end
@@ -374,11 +374,11 @@ if HydraUI.IsMainline then
 		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+		if (issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)) then
 			return ""
 		end
 		local Deficit = Max - Current
-		if ((Deficit ~= 0) or (Current ~= Max)) then
+		if (Deficit ~= 0) or (Current ~= Max) then
 			return "-" .. HydraUI:ShortValue(Deficit)
 		end
 	end
@@ -398,11 +398,11 @@ if HydraUI.IsMainline then
 		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+		if (issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)) then
 			return ""
 		end
 		local Color = Methods["HealthColor"](unit)
-		if (Max == 0) then
+		if Max == 0 then
 			return Color .. "0|r"
 		end
 		return Color .. floor(Current / Max * 100 + 0.5) .. "|r"
@@ -410,9 +410,9 @@ if HydraUI.IsMainline then
 
 	Methods["HealthColor"] = function(unit)
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		if ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
+		if (issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)) then
 			return "|cFF" .. HydraUI:RGBToHex(0.18, 0.8, 0.443)
-		elseif (Current and Max > 0) then
+		elseif Current and Max > 0 then
 			return "|cFF" .. HydraUI:RGBToHex(GetColor(Current / Max, 0.905, 0.298, 0.235, 0.17, 0.77, 0.4))
 		else
 			return "|cFF" .. HydraUI:RGBToHex(0.18, 0.8, 0.443)
@@ -424,9 +424,9 @@ Events["Power"] = "UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_POWER_UPDATE"
 Methods["Power"] = function(unit)
 	local Current = UnitPower(unit)
 
-	if (HydraUI.IsMainline and issecretvalue(Current) and not canaccessvalue(Current)) then
+	if HydraUI.IsMainline and issecretvalue(Current) and not canaccessvalue(Current) then
 		return Current
-	elseif (Current ~= 0) then
+	elseif Current ~= 0 then
 		return Current
 	end
 end
@@ -435,9 +435,9 @@ Events["Power:Short"] = "UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_POWER_UPDATE"
 Methods["Power:Short"] = function(unit)
 	local Current = UnitPower(unit)
 
-	if (HydraUI.IsMainline and issecretvalue(Current) and not canaccessvalue(Current)) then
+	if HydraUI.IsMainline and issecretvalue(Current) and not canaccessvalue(Current) then
 		return HydraUI:ShortValue(Current)
-	elseif (Current ~= 0) then
+	elseif Current ~= 0 then
 		return HydraUI:ShortValue(Current)
 	end
 end
@@ -447,9 +447,9 @@ Methods["PowerValues"] = function(unit)
 	local Current = UnitPower(unit)
 	local Max = UnitPowerMax(unit)
 
-	if (HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)))) then
+	if HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
 		return HydraUI:Comma(Current) .. " / " .. HydraUI:Comma(Max)
-	elseif (Max ~= 0) then
+	elseif Max ~= 0 then
 		return Current .. " / " .. Max
 	end
 end
@@ -459,9 +459,9 @@ Methods["PowerValues:Short"] = function(unit)
 	local Current = UnitPower(unit)
 	local Max = UnitPowerMax(unit)
 
-	if (HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)))) then
+	if HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
 		return HydraUI:ShortValue(Current) .. " / " .. HydraUI:ShortValue(Max)
-	elseif (Max ~= 0) then
+	elseif Max ~= 0 then
 		return HydraUI:ShortValue(Current) .. " / " .. HydraUI:ShortValue(Max)
 	end
 end
@@ -471,9 +471,9 @@ Methods["PowerPercent"] = function(unit)
 	local Current = UnitPower(unit)
 	local Max = UnitPowerMax(unit)
 
-	if (HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max)))) then
+	if HydraUI.IsMainline and ((issecretvalue(Current) and not canaccessvalue(Current)) or (issecretvalue(Max) and not canaccessvalue(Max))) then
 		return ""
-	elseif (Current ~= 0) then
+	elseif Current ~= 0 then
 		return floor((Current / Max * 100 + 0.05) * 10) / 10 .. "%"
 	end
 end
@@ -619,7 +619,7 @@ end
 
 Events["PetColor"] = "UNIT_HAPPINESS UNIT_LEVEL PLAYER_LEVEL_UP UNIT_PET UNIT_FACTION"
 Methods["PetColor"] = function(unit)
-	if (HydraUI.UserClass == "HUNTER") then
+	if HydraUI.UserClass == "HUNTER" then
 		return Methods["HappinessColor"](unit)
 	else
 		return Methods["Reaction"](unit)
@@ -628,7 +628,7 @@ end
 
 Events["HappinessColor"] = "UNIT_HAPPINESS UNIT_PET"
 Methods["HappinessColor"] = function(unit)
-	if (unit == "pet") then
+	if unit == "pet" then
 		local Happiness = GetPetHappiness()
 
 		if Happiness then
@@ -684,11 +684,11 @@ Methods["RaidGroup"] = function(unit)
 	for i = 1, MAX_RAID_MEMBERS do
 		Unit, Rank, Group = GetRaidRosterInfo(i)
 
-		if (not Unit) then
+		if not Unit then
 			break
 		end
 
-		if (Unit == Name) then
+		if Unit == Name then
 			return Group
 		end
 	end

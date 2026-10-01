@@ -3,7 +3,7 @@ local HydraUI, Language, Assets, Settings = select(2, ...):get()
 local Objectives = HydraUI:NewModule("PVP Objectives")
 
 local SetBelowMinimapPosition = function(self, anchor, parent)
-	if (parent ~= Objectives.MinimapAnchor) then
+	if parent ~= Objectives.MinimapAnchor then
 		self:ClearAllPoints()
 		self:SetParent(Objectives.MinimapAnchor)
 		self:SetPoint("CENTER", Objectives.MinimapAnchor)

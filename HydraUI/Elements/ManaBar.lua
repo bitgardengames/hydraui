@@ -2,7 +2,7 @@ local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
 local Load = {DRUID = 1, PRIEST = 1, SHAMAN = 1}
 
-if (not Load[HydraUI.UserClass]) then
+if not Load[HydraUI.UserClass] then
 	return
 end
 
@@ -44,7 +44,7 @@ function ManaBar:UNIT_POWER_FREQUENT()
 end
 
 function ManaBar:UPDATE_SHAPESHIFT_FORM()
-	if (UnitPowerType("player") == ManaID) then
+	if UnitPowerType("player") == ManaID then
 		self:Hide()
 	else
 		self:Show()
@@ -54,7 +54,7 @@ end
 function ManaBar:ACTIVE_TALENT_GROUP_CHANGED()
 	local SpecID = GetSpecializationInfo(GetSpecialization())
 
-	if (SpecID and Visibility[HydraUI.UserClass][SpecID]) then
+	if SpecID and Visibility[HydraUI.UserClass][SpecID] then
 		self:Show()
 	else
 		self:Hide()
@@ -120,7 +120,7 @@ function ManaBar:Enable()
 
 	self:UNIT_POWER_UPDATE()
 
-	if (HydraUI.UserClass == "DRUID") then
+	if HydraUI.UserClass == "DRUID" then
 		self:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 	end
 end
@@ -142,7 +142,7 @@ function ManaBar:Load()
 		self:CreateBar()
 		self:Enable()
 
-		if (HydraUI.UserClass == "DRUID") then
+		if HydraUI.UserClass == "DRUID" then
 			self:UPDATE_SHAPESHIFT_FORM()
 		else
 			self:ACTIVE_TALENT_GROUP_CHANGED()
@@ -152,7 +152,7 @@ end
 
 local UpdateEnableManaBar = function(value)
 	if value then
-		if (not ManaBar.Bar) then
+		if not ManaBar.Bar then
 			ManaBar:CreateBar()
 		end
 

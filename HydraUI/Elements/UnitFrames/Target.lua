@@ -156,7 +156,7 @@ local UpdateDebuffSize = UF:CreateUnitUpdater("target", "AuraSize", {element = "
 local UpdateDebuffSpacing = UF:CreateUnitUpdater("target", "AuraSpacing", {element = "Debuffs"})
 
 local UpdateDisplayedAuras = function()
-	if (not HydraUI.UnitFrames["target"]) then
+	if not HydraUI.UnitFrames["target"] then
 		return
 	end
 

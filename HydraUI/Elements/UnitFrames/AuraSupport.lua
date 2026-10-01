@@ -32,13 +32,13 @@ local RegisterAuraTimer = function(button, expiration)
 end
 
 UF.ThreatPostUpdate = function(self, unit, status, r, g, b)
-	if (status and status > 0) then
+	if status and status > 0 then
 		self:SetBackdropBorderColor(r, g, b)
 	end
 end
 
 UF.NPThreatPostUpdate = function(self, unit, status, r, g, b)
-	if (status and status > 0) then
+	if status and status > 0 then
 		self.Top:SetVertexColor(r, g, b)
 		self.Bottom:SetVertexColor(r, g, b)
 	end
@@ -56,13 +56,13 @@ if HydraUI.IsVanilla then
 		local Name, _, _, _, Duration, Expiration, Caster, _, _, SpellID = UnitAura(unit, index, button.filter)
 		local DurationNew, ExpirationNew = LCD:GetAuraDurationByUnit(unit, SpellID, Caster, Name)
 
-		if (Duration == 0 and DurationNew) then
+		if Duration == 0 and DurationNew then
 			Duration = DurationNew
 			Expiration = ExpirationNew
 		end
 
 		if button.cd then
-			if (Duration and Duration > 0) then
+			if Duration and Duration > 0 then
 				button.cd:SetCooldown(Expiration - Duration, Duration)
 				button.cd:Show()
 			else
@@ -79,13 +79,13 @@ if HydraUI.IsVanilla then
 			button.DebuffType:Hide()
 		end
 
-		if ((button.filter == "HARMFUL") and (not button.isPlayer) and debuffType) then
+		if (button.filter == "HARMFUL") and (not button.isPlayer) and debuffType then
 			button.icon:SetDesaturated(true)
 		else
 			button.icon:SetDesaturated(false)
 		end
 
-		if (Expiration and Expiration ~= 0) then
+		if Expiration and Expiration ~= 0 then
 			RegisterAuraTimer(button, Expiration)
 		end
 	end
@@ -94,7 +94,7 @@ else
 		UnregisterAuraTimer(button)
 
 		if button.cd then
-			if (duration and duration > 0) then
+			if duration and duration > 0 then
 				button.cd:SetCooldown(expiration - duration, duration)
 				button.cd:Show()
 			else
@@ -102,7 +102,7 @@ else
 			end
 		end
 
-		if (debuffType and debuffType ~= "") then
+		if debuffType and debuffType ~= "" then
 			local Color = self.__owner.colors.debuff[debuffType]
 
 			button.DebuffType:SetBackdropBorderColor(Color[1], Color[2], Color[3])
@@ -111,20 +111,20 @@ else
 			button.DebuffType:Hide()
 		end
 
-		if ((button.filter == "HARMFUL") and (not button.isPlayer) and debuffType) then
+		if (button.filter == "HARMFUL") and (not button.isPlayer) and debuffType then
 			button.icon:SetDesaturated(true)
 		else
 			button.icon:SetDesaturated(false)
 		end
 
-		if (expiration and expiration ~= 0) then
+		if expiration and expiration ~= 0 then
 			RegisterAuraTimer(button, expiration)
 		end
 	end
 end
 
 local CancelAuraOnMouseUp = function(aura, button)
-	if ((button ~= "RightButton") or InCombatLockdown()) then
+	if (button ~= "RightButton") or InCombatLockdown() then
 		return
 	end
 
@@ -174,7 +174,7 @@ UF.PostCreateIcon = function(unit, button)
 	button.DebuffType:SetBackdrop(HydraUI.Outline)
 	button.DebuffType:SetFrameLevel(button:GetFrameLevel() + 3)
 
-	if (not Settings["unitframes-display-aura-timers"]) then
+	if not Settings["unitframes-display-aura-timers"] then
 		button.Time:SetParent(Hider)
 	end
 end
@@ -242,7 +242,7 @@ if HydraUI.IsMainline then
 
 		}
 	}
-elseif (HydraUI.IsCata or HydraUI.IsMists) then
+elseif HydraUI.IsCata or HydraUI.IsMists then
 	UF.BuffIDs = {
 		["DRUID"] = {
 			-- Regrowth

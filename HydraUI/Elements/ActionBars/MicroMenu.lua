@@ -94,7 +94,7 @@ Defaults["micro-buttons-per-row"] = #MicroButtons.Buttons
 Defaults["micro-buttons-gap"] = 2
 
 local ButtonOnEnter = function(self)
-	if (Settings["micro-buttons-visibility"] == "MOUSEOVER") then
+	if Settings["micro-buttons-visibility"] == "MOUSEOVER" then
 		self:GetParent():SetAlpha(Settings["micro-buttons-max"] / 100)
 	end
 end
@@ -104,7 +104,7 @@ local PanelOnEnter = function(self)
 end
 
 local ButtonOnLeave = function(self)
-	if (Settings["micro-buttons-visibility"] == "MOUSEOVER") then
+	if Settings["micro-buttons-visibility"] == "MOUSEOVER" then
 		self:GetParent():SetAlpha(Settings["micro-buttons-opacity"] / 100)
 	end
 end
@@ -114,17 +114,17 @@ local PanelOnLeave = function(self)
 end
 
 function MicroButtons:UpdateVisibility()
-	if (Settings["micro-buttons-visibility"] == "HIDE") then
+	if Settings["micro-buttons-visibility"] == "HIDE" then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self.Panel:SetAlpha(0)
 		self.Panel:Hide()
-	elseif (Settings["micro-buttons-visibility"] == "MOUSEOVER") then
+	elseif Settings["micro-buttons-visibility"] == "MOUSEOVER" then
 		self.Panel:SetScript("OnEnter", PanelOnEnter)
 		self.Panel:SetScript("OnLeave", PanelOnLeave)
 		self.Panel:SetAlpha(Settings["micro-buttons-opacity"] / 100)
 		self.Panel:Show()
-	elseif (Settings["micro-buttons-visibility"] == "SHOW") then
+	elseif Settings["micro-buttons-visibility"] == "SHOW" then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
 		self.Panel:SetAlpha(Settings["micro-buttons-max"] / 100)
@@ -156,12 +156,12 @@ function MicroButtons:PositionButtons()
 	local Spacing = Settings["micro-buttons-gap"]
 	local Width, Height = MicroButtons.Buttons[1]:GetSize()
 
-	if (NumButtons == 0) then
+	if NumButtons == 0 then
 		MicroButtons.Panel:SetSize(1, 1)
 		return
 	end
 
-	if (NumButtons < PerRow) then
+	if NumButtons < PerRow then
 		PerRow = NumButtons
 	end
 
@@ -175,9 +175,9 @@ function MicroButtons:PositionButtons()
 	for i = 1, NumButtons do
 		local Button = VisibleButtons[i]
 
-		if (i == 1) then
+		if i == 1 then
 			Button:SetPoint("TOPLEFT", MicroButtons.Panel, Spacing, -Spacing)
-		elseif ((i - 1) % PerRow == 0) then
+		elseif (i - 1) % PerRow == 0 then
 			Button:SetPoint("TOP", VisibleButtons[i - PerRow], "BOTTOM", 0, -Spacing)
 		else
 			Button:SetPoint("LEFT", VisibleButtons[i - 1], "RIGHT", Spacing - 2, 0)
@@ -186,7 +186,7 @@ function MicroButtons:PositionButtons()
 end
 
 function MicroButtons:Load()
-	if (not Settings["ab-enable"]) then
+	if not Settings["ab-enable"] then
 		return
 	end
 
@@ -219,7 +219,7 @@ function MicroButtons:Load()
 		self.Buttons[i]:ClearAllPoints()
 		self.Buttons[i]:SetHitRectInsets(0, 0, 0, 0)
 
-		if (not HydraUI.IsMainline) then
+		if not HydraUI.IsMainline then
 			self.Buttons[i]:SetSize(28, 36) -- 10.1.0 Fix required
 		end
 
@@ -266,7 +266,7 @@ function MicroButtons:Load()
 			Disabled:SetPoint("BOTTOMRIGHT", self.Buttons[i], -2, 2)
 		end
 
-		if (not HydraUI.IsMainline) then
+		if not HydraUI.IsMainline then
 			if Normal then
 				Normal:SetTexCoord(0.2, 0.85, 0.5, 0.9)
 			end
@@ -295,7 +295,7 @@ function MicroButtons:Load()
 		MicroButtonPortrait:SetPoint("BOTTOMRIGHT", CharacterMicroButton, -2, 2)
 	end
 
-	if (HydraUI.IsWrath or HydraUI.IsCata or HydraUI.IsMists) then
+	if HydraUI.IsWrath or HydraUI.IsCata or HydraUI.IsMists then
 		PVPMicroButtonTexture:ClearAllPoints()
 		PVPMicroButtonTexture:SetPoint("TOP", PVPMicroButton, 6, -6)
 	end
@@ -304,7 +304,7 @@ function MicroButtons:Load()
 		MainMenuBarPerformanceBar:Hide()
 	end
 
-	if (not Settings["micro-buttons-show"]) then
+	if not Settings["micro-buttons-show"] then
 		self.Panel:Hide()
 	end
 

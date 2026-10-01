@@ -126,7 +126,7 @@ function GUI:CreateUpdateWindow()
 			self:SetCursorPosition(0)
 		end)
 		Box.Input:SetScript("OnTextChanged", function(self)
-			if (self:GetText() ~= self.Link) then
+			if self:GetText() ~= self.Link then
 				self:Insert(self.Link)
 			end
 		end)
@@ -136,7 +136,7 @@ function GUI:CreateUpdateWindow()
 			self:SetCursorPosition(0)
 		end)
 
-		if (i == 1) then
+		if i == 1 then
 			Box:SetPoint("BOTTOMLEFT", self.UpdateWindow.WidgetsBG, 3, 3)
 			Box.Label:SetText(Language["Download at Wago (WeakAuras Addons)"])
 			Box.Input.Link = "https://addons.wago.io/addons/hydraui"
@@ -157,7 +157,7 @@ function GUI:CreateUpdateAlert()
 		return
 	end
 
-	if (not self.Header) then
+	if not self.Header then
 		self.QueueAlert = true
 
 		return

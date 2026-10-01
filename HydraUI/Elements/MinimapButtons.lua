@@ -85,13 +85,13 @@ end
 function MinimapButtons:PositionButtons(perrow, size, spacing)
 	local Total = #self.Items
 
-	if (Total < perrow) then
+	if Total < perrow then
 		perrow = Total
 	end
 
 	local Columns = ceil(Total / perrow)
 
-	if (Columns < 1) then
+	if Columns < 1 then
 		Columns = 1
 	end
 
@@ -106,9 +106,9 @@ function MinimapButtons:PositionButtons(perrow, size, spacing)
 		Button:ClearAllPoints()
 		Button:SetSize(size, size)
 
-		if (i == 1) then
+		if i == 1 then
 			Button:SetPoint("TOPLEFT", self.Panel, 3, -3)
-		elseif ((i - 1) % perrow == 0) then
+		elseif (i - 1) % perrow == 0 then
 			Button:SetPoint("TOP", self.Items[i - perrow], "BOTTOM", 0, -spacing)
 		else
 			Button:SetPoint("LEFT", self.Items[i - 1], "RIGHT", spacing, 0)
@@ -121,29 +121,29 @@ function MinimapButtons:SkinButtons()
 		local Name = Child:GetName()
 		local Type = Child:GetObjectType()
 
-		if (Child:IsShown() and Type ~= "Frame") then
+		if Child:IsShown() and Type ~= "Frame" then
 			local Valid = (Name and not IgnoredBlizzard[Name] and not IsIgnoredAddOn(Name)) or not Name
 
 			if Valid then
 				Child:SetParent(self.Panel)
 
-				if (Child:HasScript("OnDragStart")) then
+				if Child:HasScript("OnDragStart") then
 					Child:SetScript("OnDragStart", nil)
 				end
 
-				if (Child:HasScript("OnDragStop")) then
+				if Child:HasScript("OnDragStop") then
 					Child:SetScript("OnDragStop", nil)
 				end
 
 				for i = 1, Child:GetNumRegions() do
 					local Region = select(i, Child:GetRegions())
 
-					if (Region:GetObjectType() == "Texture") then
+					if Region:GetObjectType() == "Texture" then
 						local ID = Region:GetTextureFileID()
 						local Texture = Region:GetTexture() or ""
 						Texture = lower(Texture)
 
-						if (ID and RemoveByID[ID]) then
+						if ID and RemoveByID[ID] then
 							Region:SetTexture(nil)
 						end
 
@@ -183,8 +183,8 @@ function MinimapButtons:SkinButtons()
 				Child:SetFrameLevel(Minimap:GetFrameLevel() + 10)
 				Child:SetFrameStrata(Minimap:GetFrameStrata())
 
-				if (Type == "Button" or Type == "Frame") then
-					if (Child.SetHighlightTexture) then
+				if Type == "Button" or Type == "Frame" then
+					if Child.SetHighlightTexture then
 						local Highlight = Child:CreateTexture(nil, "ARTWORK")
 						Highlight:SetTexture(Assets:GetTexture(Settings["action-bars-button-highlight"]))
 						Highlight:SetVertexColor(1, 1, 1, 0.2)
@@ -195,7 +195,7 @@ function MinimapButtons:SkinButtons()
 						Child:SetHighlightTexture(Highlight)
 					end
 
-					if (Child.SetPushedTexture) then
+					if Child.SetPushedTexture then
 						local Pushed = Child:CreateTexture(nil, "ARTWORK")
 						Pushed:SetTexture(Assets:GetTexture(Settings["action-bars-button-highlight"]))
 						Pushed:SetVertexColor(0.9, 0.8, 0.1, 0.3)
@@ -236,7 +236,7 @@ local DelayedLoad = function()
 	MinimapButtons:CreatePanel()
 	MinimapButtons:SkinButtons()
 
-	if (#MinimapButtons.Items == 0) then
+	if #MinimapButtons.Items == 0 then
 		MinimapButtons:Hide()
 
 		return
@@ -248,7 +248,7 @@ local DelayedLoad = function()
 end
 
 function MinimapButtons:Load()
-	if (not Settings["minimap-buttons-enable"]) then
+	if not Settings["minimap-buttons-enable"] then
 		return
 	end
 

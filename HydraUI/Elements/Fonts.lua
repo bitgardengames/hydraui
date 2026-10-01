@@ -5,13 +5,13 @@ local Fonts = HydraUI:NewModule("Fonts")
 local Locale = GetLocale()
 local Font
 
-if (Locale == "koKR") then
+if Locale == "koKR" then
 	Font = "Fonts\\2002.TTF"
-elseif (Locale == "zhCN") then
+elseif Locale == "zhCN" then
 	Font = "Fonts\\ARKai_T.ttf"
-elseif (Locale == "zhTW") then
+elseif Locale == "zhTW" then
 	Font = "Fonts\\bLEI00D.ttf"
-elseif (Locale == "ruRU") then
+elseif Locale == "ruRU" then
 	Font = "Fonts\\FRIZQT___CYR.TTF"
 end
 
@@ -38,7 +38,7 @@ function Fonts:UpdateFont(object)
 
 	local _, Size, Outline = object:GetFont()
 
-	if (Size < 12) then
+	if Size < 12 then
 		Size = 12
 	end
 
@@ -53,7 +53,7 @@ function Fonts:Load()
 
 	HydraUI:SetFontInfo(AutoFollowStatusText, Settings["status-font"], Settings["status-font-size"], Settings["status-font-flags"])
 
-	if (not Settings["replace-ui-fonts"]) then
+	if not Settings["replace-ui-fonts"] then
 		return
 	end
 

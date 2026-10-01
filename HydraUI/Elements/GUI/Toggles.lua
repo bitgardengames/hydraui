@@ -28,7 +28,7 @@ local CheckboxOnMouseUp = function(self)
 
 	SetVariable(self.ID, self.Value)
 
-	if (self.ReloadFlag) then
+	if self.ReloadFlag then
 		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, self.Value, self.ID)
 	elseif self.Hook then
 		self.Hook(self.Value, self.ID)
@@ -50,7 +50,7 @@ local CheckboxRequiresReload = function(self, flag)
 end
 
 GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
-	if (Settings[id] ~= nil) then
+	if Settings[id] ~= nil then
 		value = Settings[id]
 	end
 
@@ -172,20 +172,20 @@ local SwitchOnMouseUp = function(self)
 end
 
 local SwitchOnMouseWheel = function(self, delta)
-	if (not IsModifierKeyDown()) then
+	if not IsModifierKeyDown() then
 		return
 	end
 
 	local CurrentValue = self.Value
 	local NewValue
 
-	if (delta < 0) then
+	if delta < 0 then
 		NewValue = false
 	else
 		NewValue = true
 	end
 
-	if (CurrentValue ~= NewValue) then
+	if CurrentValue ~= NewValue then
 		SwitchOnMouseUp(self) -- This is already set up to handle everything, so just pass it along
 	end
 end
@@ -227,7 +227,7 @@ local SwitchRequiresReload = function(self, flag)
 end
 
 GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
-	if (Settings[id] ~= nil) then
+	if Settings[id] ~= nil then
 		value = Settings[id]
 	end
 

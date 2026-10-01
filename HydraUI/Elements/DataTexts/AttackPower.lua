@@ -13,7 +13,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 
@@ -25,7 +25,7 @@ local Update = function(self, event, unit)
 	local RangedBase, RangedPositiveBuffs, RangedNegativeBuffs = UnitRangedAttackPower("player")
 	local Ranged = RangedBase + RangedPositiveBuffs + RangedNegativeBuffs
 
-	if (HydraUI.UserClass == "HUNTER") then
+	if HydraUI.UserClass == "HUNTER" then
 		Rating = Ranged
 	else
 		Rating = Attack

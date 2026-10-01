@@ -22,7 +22,7 @@ local StatusLabels = {
 local OnUpdate = function(self, elapsed)
 	self.Elapsed = self.Elapsed + elapsed
 
-	if (self.Elapsed > 10) then
+	if self.Elapsed > 10 then
 		GuildRoster()
 
 		self.Elapsed = 0
@@ -34,7 +34,7 @@ local OnEnter = function(self)
 		return
 	end
 
-	if (not IsInGuild()) then
+	if not IsInGuild() then
 		return
 	end
 
@@ -48,14 +48,14 @@ local OnEnter = function(self)
 	local Name, Rank, RankIndex, Level, ClassName, Zone, Note, OfficerNote, Online, Status, Class
 	local Color, LevelColor
 
-	if (not NumOnlineAndMobile) then
+	if not NumOnlineAndMobile then
 		NumOnlineAndMobile = NumOnline
 	end
 
 	GameTooltip:AddDoubleLine(GuildName, format("%s/%s", NumOnlineAndMobile, NumTotal), nil, nil, nil, 1, 1, 1)
 	GameTooltip:AddLine(" ")
 
-	if (GuildMessage and GuildMessage ~= "") then
+	if GuildMessage and GuildMessage ~= "" then
 		GameTooltip:AddLine(GUILD_MOTD_LABEL2)
 		GameTooltip:AddLine(GuildMessage, 1, 1, 1, true)
 		GameTooltip:AddLine(" ")
@@ -74,13 +74,13 @@ local OnEnter = function(self)
 	end
 
 	for i = 1, NumTotal do
-		if (Count == Limit) then
+		if Count == Limit then
 			break
 		end
 
 		Name, Rank, RankIndex, Level, ClassName, Zone, Note, OfficerNote, Online, Status, Class = GetGuildRosterInfo(i)
 
-		if (Name and Online) then
+		if Name and Online then
 			Name = match(Name, "(%S+)-%S+")
 			Color = RAID_CLASS_COLORS[Class].colorStr
 			LevelColor = GetQuestDifficultyColor(Level)
@@ -95,7 +95,7 @@ local OnEnter = function(self)
 			if IsModifierKeyDown() then
 				GameTooltip:AddDoubleLine(Name, Rank, nil, nil, nil, 1, 1, 1)
 			else
-				if (Zone == CurrentZone or Zone == CurrentText) then
+				if Zone == CurrentZone or Zone == CurrentText then
 					Zone = format("|cFF33FF33%s|r", Zone)
 				end
 
@@ -106,14 +106,14 @@ local OnEnter = function(self)
 		end
 	end
 
-	if (NumOnlineAndMobile > MaxCharacters) then
+	if NumOnlineAndMobile > MaxCharacters then
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine(NumOnlineAndMobile - MaxCharacters .. Language[" more characters not shown"], 1, 1, 1)
 	end
 
 	self.TooltipShown = true
 
-	if (not self:GetScript("OnUpdate")) then
+	if not self:GetScript("OnUpdate") then
 		self.Elapsed = 0
 		self:SetScript("OnUpdate", OnUpdate)
 	end
@@ -132,13 +132,13 @@ local OnLeave = function(self)
 end
 
 local Update = function(self, event)
-	if (not IsInGuild()) then
+	if not IsInGuild() then
 		self.Text:SetText(Language["No Guild"])
 
 		return
 	end
 
-	if (event == "MODIFIER_STATE_CHANGED") then
+	if event == "MODIFIER_STATE_CHANGED" then
 		GameTooltip:ClearLines()
 		OnEnter(self)
 	else
@@ -151,7 +151,7 @@ local Update = function(self, event)
 
 		local Total, Online, OnlineAndMobile = GetNumGuildMembers()
 
-		if (not OnlineAndMobile) then
+		if not OnlineAndMobile then
 			OnlineAndMobile = Online
 		end
 
@@ -166,10 +166,10 @@ local OnMouseUp = function()
 
 	if HydraUI.IsMainline then
 		ToggleCommunitiesFrame()
-	elseif (HydraUI.IsCata or HydraUI.IsMists) then
+	elseif HydraUI.IsCata or HydraUI.IsMists then
 		ToggleGuildFrame()
 	else
-		if (GetCVar("useClassicGuildUI") == "1") then
+		if GetCVar("useClassicGuildUI") == "1" then
 			ToggleGuildFrame()
 		else
 			ToggleCommunitiesFrame()

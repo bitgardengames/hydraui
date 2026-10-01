@@ -13,7 +13,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 
@@ -21,7 +21,7 @@ local Update = function(self, event, unit)
 	local Hit = GetHitModifier()
 	local Spell = GetSpellHitModifier()
 
-	if (Spell > Hit) then
+	if Spell > Hit then
 		Rating = Spell
 	else
 		Rating = Hit

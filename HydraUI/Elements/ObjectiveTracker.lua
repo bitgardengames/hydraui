@@ -1,6 +1,8 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
-if HydraUI.IsMainline then return end -- Stopping support with TWW
+if HydraUI.IsMainline then
+	return -- Stopping support with TWW
+end
 
 local Tracker = HydraUI:NewModule("Objective Tracker")
 
@@ -43,13 +45,13 @@ function Tracker:MoveTrackerFrame()
 end
 
 local AddObjective = function(self, block, objective)
-	if (block.HeaderText and not block.HeaderText.Handled) then
+	if block.HeaderText and not block.HeaderText.Handled then
 		HydraUI:SetFontInfo(block.HeaderText, Settings["tracker-header-font"], Settings["tracker-header-font-size"], Settings["tracker-header-font-flags"])
 		block.HeaderText:SetTextColor(HydraUI:HexToRGB(Settings["tracker-color-header"]))
 		block.HeaderText.Handled = true
 	end
 
-	if (block.itemButton and not block.itemButton.Handled) then
+	if block.itemButton and not block.itemButton.Handled then
 		local ItemButton = block.itemButton
 
 		ItemButton:ClearAllPoints()
@@ -103,11 +105,11 @@ local AddObjective = function(self, block, objective)
 
 	local Line = block.lines[objective]
 
-	if (Line and not Line.Handled) then
+	if Line and not Line.Handled then
 		HydraUI:SetFontInfo(Line.Text, Settings["tracker-font"], Settings["tracker-font-size"], Settings["tracker-font-flags"])
 		Line.Handled = true
 
-		if (Line.Dash and not Line.Dash.Handled) then
+		if Line.Dash and not Line.Dash.Handled then
 			HydraUI:SetFontInfo(Line.Dash, Settings["tracker-font"], Settings["tracker-font-size"], Settings["tracker-font-flags"])
 			Line.Dash.Handled = true
 		end
@@ -152,7 +154,7 @@ local MinimizeHook = function(button, collapsed)
 	for i = 1, button:GetNumRegions() do
 		local Region = select(i, button:GetRegions())
 
-		if (Region and Region:GetObjectType() == "Texture") then
+		if Region and Region:GetObjectType() == "Texture" then
 			Region:SetTexture(nil)
 		end
 	end
@@ -180,13 +182,13 @@ function Tracker:CreateCustomHeader(tracker)
 		for i = 1, tracker.MinimizeButton:GetNumRegions() do
 			local Region = select(i, tracker.MinimizeButton:GetRegions())
 
-			if (Region and Region:GetObjectType() == "Texture") then
+			if Region and Region:GetObjectType() == "Texture" then
 				Region:SetTexture(nil)
 			end
 		end
 	end
 
-	if (tracker and tracker.CreateTexture) then
+	if tracker and tracker.CreateTexture then
 		tracker.BG = tracker:CreateTexture(nil, "BORDER")
 		tracker.BG:SetPoint("TOPLEFT", tracker, 0, -2)
 		tracker.BG:SetPoint("BOTTOMRIGHT", tracker, 12, -1)
@@ -267,7 +269,7 @@ function Tracker:StyleWindow()
 	ObjectiveTrackerFrame.BG.InnerBorder:SetBackdrop(HydraUI.Outline)
 	ObjectiveTrackerFrame.BG.InnerBorder:SetBackdropBorderColor(0, 0, 0)
 
-	if (not Settings["tracker-enable-backdrop"]) then
+	if not Settings["tracker-enable-backdrop"] then
 		ObjectiveTrackerFrame.BG:Hide()
 	end
 
@@ -382,7 +384,7 @@ local SkinAutoQuestPopup = function()
 
 		local QuestTitle = C_QuestLog.GetTitleForQuestID(QuestID)
 
-		if (QuestTitle and QuestTitle ~= "") then
+		if QuestTitle and QuestTitle ~= "" then
 			local Block = AUTO_QUEST_POPUP_TRACKER_MODULE:GetBlock(QuestID)
 
 			if Block then
@@ -392,7 +394,7 @@ local SkinAutoQuestPopup = function()
 				BlockContents:SetPoint("LEFT", Block, 0, 2)
 				BlockContents:GetParent():SetWidth(268)
 
-				if (not BlockContents.Backdrop) then
+				if not BlockContents.Backdrop then
 					BlockContents.Backdrop = CreateFrame("Frame", nil, BlockContents, "BackdropTemplate")
 					--BlockContents.Backdrop:SetPoint("TOPLEFT", BlockContents:GetParent(), 36, -1)
 					--BlockContents.Backdrop:SetPoint("BOTTOMRIGHT", BlockContents:GetParent(), 40, 1)
@@ -413,7 +415,7 @@ local SkinAutoQuestPopup = function()
 					BlockContents.Backdrop.Highlight:Hide()
 				end
 
-				if (not BlockContents.Handled) then
+				if not BlockContents.Handled then
 					HydraUI:SetFontInfo(BlockContents.TopText, Settings["tracker-font"], Settings["tracker-font-size"], Settings["tracker-font-flags"])
 					HydraUI:SetFontInfo(BlockContents.BottomText, Settings["tracker-font"], Settings["tracker-font-size"], Settings["tracker-font-flags"])
 					HydraUI:SetFontInfo(BlockContents.QuestName, Settings["tracker-header-font"], Settings["tracker-header-font-size"], Settings["tracker-header-font-flags"])
@@ -424,7 +426,7 @@ local SkinAutoQuestPopup = function()
 				if  (PopupType == "COMPLETE") then
 					BlockContents.QuestionMark:ClearAllPoints()
 					BlockContents.QuestionMark:SetPoint("LEFT", BlockContents.Backdrop, 18, 0)
-				elseif (PopupType == "OFFER") then
+				elseif PopupType == "OFFER" then
 					BlockContents.Exclamation:ClearAllPoints()
 					BlockContents.Exclamation:SetPoint("LEFT", BlockContents.Backdrop, 18, 0)
 				end
@@ -487,12 +489,12 @@ local UpdateScenarioBlock = function()
 end
 
 function Tracker:AddHooks()
-	if (not ObjectiveTrackerFrame.initialized) then -- I'll move or hook this case later, but the tracker also loads on player entering world, so sometimes we need to start it
+	if not ObjectiveTrackerFrame.initialized then -- I'll move or hook this case later, but the tracker also loads on player entering world, so sometimes we need to start it
 		ObjectiveTracker_Initialize(ObjectiveTrackerFrame)
 
 		--ObjectiveTracker_Update() -- Tainting in 9.1
 
-		if (not QuestSuperTracking_IsSuperTrackedQuestValid()) then
+		if not QuestSuperTracking_IsSuperTrackedQuestValid() then
 			QuestSuperTracking_ChooseClosestQuest()
 		end
 
@@ -520,7 +522,7 @@ function Tracker:AddHooks()
 end
 
 function Tracker:Load()
-	if (not Settings["tracker-enable"]) then
+	if not Settings["tracker-enable"] then
 		return
 	end
 
@@ -589,7 +591,7 @@ local UpdateBackdropOpacity = function(value)
 end
 
 local UpdateEnableBackdrop = function(value)
-	if (value and not ObjectiveTrackerFrame.collapsed) then
+	if value and not ObjectiveTrackerFrame.collapsed then
 		ObjectiveTrackerFrame.BG:Show()
 	else
 		ObjectiveTrackerFrame.BG:Hide()

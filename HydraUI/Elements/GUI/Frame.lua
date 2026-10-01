@@ -41,7 +41,7 @@ local ScrollWidgetColumn = function(parent, widgets, oldOffset, offset, point)
 		if (widget.HydraScrollAnchor ~= anchor) or (widget.HydraScrollPoint ~= point) then
 			widget:ClearAllPoints()
 
-			if (i == first) then
+			if i == first then
 				widget:SetPoint(point, parent, point, point == "TOPLEFT" and SPACING or -SPACING, -SPACING)
 			else
 				widget:SetPoint("TOP", predecessor, "BOTTOM", 0, -2)
@@ -225,11 +225,11 @@ function GUI:CreateWidgetWindow(page)
 		Calls[i] = nil
 	end
 
-	if (#Window.LeftWidgetsBG.Widgets > 0) then
+	if #Window.LeftWidgetsBG.Widgets > 0 then
 		Window.LeftWidgetsBG:CreateFooter()
 	end
 
-	if (#Window.RightWidgetsBG.Widgets > 0) then
+	if #Window.RightWidgetsBG.Widgets > 0 then
 		Window.RightWidgetsBG:CreateFooter()
 	end
 
@@ -243,7 +243,7 @@ function GUI:CreateWidgetWindow(page)
 		AfterRender = AfterRenderWidgetRows,
 	})
 
-	if (Window.MaxScroll > 1) then
+	if Window.MaxScroll > 1 then
 		AddWindowScrollBar(Window)
 	else
 		Window.ScrollFiller = CreateFrame("Frame", nil, Window, "BackdropTemplate")
@@ -369,8 +369,11 @@ local CreateNavigationRegion = function(self)
 				local Anchor = (i == First) and Owner.MenuParent or Predecessor
 				if Row.HydraScrollAnchor ~= Anchor then
 					Row:ClearAllPoints()
-					if i == First then Row:SetPoint("TOPLEFT", Owner.MenuParent, SPACING, -SPACING)
-					else Row:SetPoint("TOP", Predecessor, "BOTTOM", 0, -2) end
+					if i == First then
+						Row:SetPoint("TOPLEFT", Owner.MenuParent, SPACING, -SPACING)
+					else
+						Row:SetPoint("TOP", Predecessor, "BOTTOM", 0, -2)
+					end
 					Row.HydraScrollAnchor = Anchor
 				end
 			end
@@ -406,7 +409,7 @@ local CreateCloseControl = function(self)
 		GUI.ScaleOut:Play()
 		GUI.FadeOut:Play()
 
-		if (GUI.ColorPicker and GUI.ColorPicker:GetAlpha() > 0) then
+		if GUI.ColorPicker and GUI.ColorPicker:GetAlpha() > 0 then
 			GUI.ColorPicker.FadeOut:Play()
 		end
 	end)

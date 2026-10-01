@@ -62,7 +62,7 @@ function Assets:SetTexture(name, path, silent)
 
 	Textures[name] = path
 
-	if (not silent) then
+	if not silent then
 		TextureList[name] = path
 
 		SharedMedia:Register("statusbar", name, path)
@@ -89,7 +89,7 @@ function Assets:SetStyle(name, info, silent)
 
 	Styles[name] = info
 
-	if (not silent) then
+	if not silent then
 		local Key = name
 
 		-- Just sprinkling on some flavor. Really rub it in.
@@ -114,7 +114,7 @@ function Assets:GetStyleList()
 end
 
 function Assets:ApplyStyle(name)
-	if (not Styles[name]) then
+	if not Styles[name] then
 		return HydraUI:print(format(Language['No style exists with the name "%s"'], name))
 	end
 
@@ -122,7 +122,7 @@ function Assets:ApplyStyle(name)
 
 	if Profile then
 		for ID, Value in next, Styles[name] do
-			if (Value ~= Defaults[ID]) then
+			if Value ~= Defaults[ID] then
 				Profile[ID] = Value
 			else
 				Profile[ID] = nil
@@ -141,7 +141,7 @@ function Assets:SetPalette(name, info, silent)
 
 	Palettes[name] = info
 
-	if (not silent) then
+	if not silent then
 		PaletteList[name] = info
 	end
 end

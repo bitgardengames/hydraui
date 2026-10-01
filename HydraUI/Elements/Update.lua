@@ -30,14 +30,14 @@ local QueueTail = 0
 local Throttle = HydraUI:GetModule("Throttle")
 
 function Update:QueueChannel(channel, target)
-	if (not channel) then
+	if not channel then
 		return
 	end
 
 	for i = QueueHead, QueueTail do
 		local Data = Queue[i]
 
-		if (Data[1] == channel and Data[2] == target) then
+		if Data[1] == channel and Data[2] == target then
 			return
 		end
 	end
@@ -45,7 +45,7 @@ function Update:QueueChannel(channel, target)
 	local Data
 	local Last = #Tables
 
-	if (Last == 0) then
+	if Last == 0 then
 		Data = {channel, target}
 	else
 		Data = Tables[Last]
@@ -57,7 +57,7 @@ function Update:QueueChannel(channel, target)
 	QueueTail = QueueTail + 1
 	Queue[QueueTail] = Data
 
-	if (not self:GetScript("OnUpdate")) then
+	if not self:GetScript("OnUpdate") then
 		self:SetScript("OnUpdate", self.OnUpdate)
 	end
 end
@@ -65,10 +65,10 @@ end
 function Update:OnUpdate(elapsed)
 	self.Timer = self.Timer - elapsed
 
-	if (self.Timer <= 0) then
+	if self.Timer <= 0 then
 		local Data = Queue[QueueHead]
 
-		if (not Data) then
+		if not Data then
 			QueueHead = 1
 			QueueTail = 0
 			self:SetScript("OnUpdate", nil)
@@ -80,7 +80,7 @@ function Update:OnUpdate(elapsed)
 		Queue[QueueHead] = nil
 		QueueHead = QueueHead + 1
 
-		if (QueueHead > QueueTail) then
+		if QueueHead > QueueTail then
 			QueueHead = 1
 			QueueTail = 0
 		end
@@ -93,7 +93,7 @@ function Update:OnUpdate(elapsed)
 
 		self.Timer = 5
 
-		if (QueueTail == 0) then
+		if QueueTail == 0 then
 			self:SetScript("OnUpdate", nil)
 		end
 	end
@@ -123,37 +123,37 @@ function Update:GROUP_ROSTER_UPDATE()
 	local Home = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
 	local Instance = GetNumGroupMembers(LE_PARTY_CATEGORY_INSTANCE)
 
-	if (Home == 0 and self.SentHome) then
+	if Home == 0 and self.SentHome then
 		self.SentHome = false
 	end
 
-	if (Instance == 0 and self.SentInst) then
+	if Instance == 0 and self.SentInst then
 		self.SentInst = false
 	end
 
-	if (Instance > 0 and not self.SentInst) then
+	if Instance > 0 and not self.SentInst then
 		self:QueueChannel("INSTANCE_CHAT")
 		self.SentInst = true
-	elseif (Home > 0 and not self.SentHome) then
+	elseif Home > 0 and not self.SentHome then
 		self:QueueChannel(IsInRaid(LE_PARTY_CATEGORY_HOME) and "RAID" or IsInGroup(LE_PARTY_CATEGORY_HOME) and "PARTY")
 		self.SentHome = true
 	end
 end
 
 function Update:CHAT_MSG_ADDON(prefix, message, channel, sender)
-	if (sender == User or prefix ~= Prefix) then
+	if sender == User or prefix ~= Prefix then
 		return
 	end
 
 	message = tonumber(message)
 
-	if (not message) then
+	if not message then
 		return
 	end
 
-	if (AddOnNum > message) then -- We have a higher version, share it
+	if AddOnNum > message then -- We have a higher version, share it
 		self:QueueChannel(channel)
-	elseif (message > AddOnNum) then -- We're behind!
+	elseif message > AddOnNum then -- We're behind!
 		HydraUI:print(Language["You can get an updated version of HydraUI at https://www.curseforge.com/wow/addons/hydraui"])
 
 		HydraUI:GetModule("GUI"):CreateUpdateAlert()
@@ -170,7 +170,7 @@ function Update:ZoneVersionCheck()
 
 	local Zone = GetZoneText()
 
-	if (Zone ~= self.Zone and not Throttle:IsThrottled("version")) then
+	if Zone ~= self.Zone and not Throttle:IsThrottled("version") then
 		self:QueueChannel("YELL")
 		self.Zone = Zone
 		Throttle:Start("version", 10)
@@ -191,7 +191,7 @@ function Update:OnEvent(event, ...)
 	end
 end
 
-if (not HydraUI.IsMainline) then
+if not HydraUI.IsMainline then
 	Update:RegisterEvent("ZONE_CHANGED")
 	Update:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 end

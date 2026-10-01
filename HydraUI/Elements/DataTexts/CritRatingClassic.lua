@@ -25,7 +25,7 @@ local OnMouseUp = function()
 end
 
 local Update = function(self, event, unit)
-	if (unit and unit ~= "player") then
+	if unit and unit ~= "player" then
 		return
 	end
 
@@ -33,9 +33,9 @@ local Update = function(self, event, unit)
 	local Spell = GetSpellCrit()
 	local Melee = GetCritChance()
 
-	if (HydraUI.UserClass == "HUNTER") then
+	if HydraUI.UserClass == "HUNTER" then
 		Crit = GetRangedCritChance()
-	elseif (Spell > Melee) then
+	elseif Spell > Melee then
 		Crit = Spell
 	else
 		Crit = Melee

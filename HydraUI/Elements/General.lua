@@ -4,7 +4,7 @@ local Throttle = HydraUI:GetModule("Throttle")
 local GUI = HydraUI:GetModule("GUI")
 
 function HydraUI:WelcomeMessage()
-	if (not Settings["ui-display-welcome"]) then
+	if not Settings["ui-display-welcome"] then
 		return
 	end
 
@@ -115,7 +115,7 @@ end)
 local Durability = HydraUI:NewModule("Durability")
 
 local SetDurabilityPosition = function(self, anchor, parent)
-	if (parent ~= Durability) then
+	if parent ~= Durability then
 		self:ClearAllPoints()
 		self:SetPoint("CENTER", Durability, 0, 0)
 	end
@@ -136,7 +136,7 @@ if VehicleSeatIndicator then
 	local SeatIndicator = HydraUI:NewModule("Vehicle Seats")
 
 	local SetSeatIndicatorPosition = function(self, anchor, parent)
-		if (parent ~= SeatIndicator) then
+		if parent ~= SeatIndicator then
 			self:ClearAllPoints()
 			self:SetPoint("CENTER", SeatIndicator, 0, 0)
 		end

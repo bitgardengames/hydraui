@@ -32,7 +32,7 @@ function Loot:LOOT_READY()
 	self:ResetQueue()
 
 	if (GetCVar("autoLootDefault") == "1" and not IsModifiedClick("AUTOLOOTTOGGLE")) or (GetCVar("autoLootDefault") ~= "1" and IsModifiedClick("AUTOLOOTTOGGLE")) then
-		if (IsInGroup() and GetLootMethod() == "master") then
+		if IsInGroup() and GetLootMethod() == "master" then
 			self.Grouped = true
 		end
 
@@ -41,21 +41,21 @@ function Loot:LOOT_READY()
 		for i = GetNumLootItems(), 1, -1 do
 			_, _, _, _, Quality, Locked = GetLootSlotInfo(i)
 
-			if (Locked ~= nil and not Locked) then
-				if (not self.Grouped or Quality < Threshold) then
+			if Locked ~= nil and not Locked then
+				if not self.Grouped or Quality < Threshold then
 					self.LootSlots[#self.LootSlots + 1] = i
 				end
 			end
 		end
 
-		if (#self.LootSlots > 0) then
+		if #self.LootSlots > 0 then
 			self:SetScript("OnUpdate", self.OnUpdate)
 		end
 	end
 end
 
 function Loot:OnUpdate()
-	if (#self.LootSlots == 0) then
+	if #self.LootSlots == 0 then
 		self:ResetQueue()
 		return
 	end
@@ -64,7 +64,7 @@ function Loot:OnUpdate()
 		LootSlot(self.LootSlots[i])
 	end
 
-	if (GetNumLootItems() == 0) then
+	if GetNumLootItems() == 0 then
 		self:ResetQueue()
 		CloseLoot()
 	end
@@ -75,7 +75,7 @@ function Loot:OnEvent(event, ...)
 end
 
 function Loot:Load()
-	if (not Settings["fast-loot"]) then
+	if not Settings["fast-loot"] then
 		return
 	end
 

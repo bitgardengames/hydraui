@@ -69,7 +69,7 @@ end
 local SetEditBoxToLink = function(box, text)
 	box:SetText("")
 
-	if (not box:IsShown()) then
+	if not box:IsShown() then
 		ChatEdit_ActivateChat(box)
 	else
 		ChatEdit_UpdateHeader(box)
@@ -81,41 +81,41 @@ local SetEditBoxToLink = function(box, text)
 end
 
 ItemRefTooltip.SetHyperlink = function(self, link, text, button, chatFrame)
-	if (sub(link, 1, 3) == "url") then
+	if sub(link, 1, 3) == "url" then
 		local EditBox = ChatEdit_ChooseBoxForSend()
 		local Link = sub(link, 5)
 
 		EditBox:SetAttribute("chatType", "URL")
 
 		SetEditBoxToLink(EditBox, Link)
-	elseif (sub(link, 1, 5) == "email") then
+	elseif sub(link, 1, 5) == "email" then
 		local EditBox = ChatEdit_ChooseBoxForSend()
 		local Email = sub(link, 7)
 
 		EditBox:SetAttribute("chatType", "EMAIL")
 
 		SetEditBoxToLink(EditBox, Email)
-	elseif (sub(link, 1, 7) == "discord") then
+	elseif sub(link, 1, 7) == "discord" then
 		local EditBox = ChatEdit_ChooseBoxForSend()
 		local Link = sub(link, 9)
 
 		EditBox:SetAttribute("chatType", "DISCORD")
 
 		SetEditBoxToLink(EditBox, Link)
-	elseif (sub(link, 1, 6) == "friend") then
+	elseif sub(link, 1, 6) == "friend" then
 		local EditBox = ChatEdit_ChooseBoxForSend()
 		local Tag = sub(link, 8)
 
 		EditBox:SetAttribute("chatType", "FRIEND")
 
 		SetEditBoxToLink(EditBox, Tag)
-	elseif (sub(link, 1, 7) == "command") then
+	elseif sub(link, 1, 7) == "command" then
 		local EditBox = ChatEdit_ChooseBoxForSend()
 		local Command = sub(link, 9)
 
 		EditBox:SetText("")
 
-		if (not EditBox:IsShown()) then
+		if not EditBox:IsShown() then
 			ChatEdit_ActivateChat(EditBox)
 		else
 			ChatEdit_UpdateHeader(EditBox)

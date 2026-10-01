@@ -45,7 +45,7 @@ local Disable = function(object)
 		object:UnregisterAllEvents()
 	end
 
-	if (object.HasScript and object:HasScript("OnUpdate")) then
+	if object.HasScript and object:HasScript("OnUpdate") then
 		object:SetScript("OnUpdate", nil)
 	end
 
@@ -54,7 +54,7 @@ local Disable = function(object)
 end
 
 local OnMouseWheel = function(self, delta)
-	if (delta < 0) then
+	if delta < 0 then
 		if IsShiftKeyDown() then
 			self:ScrollToBottom()
 		elseif IsControlKeyDown() then
@@ -64,7 +64,7 @@ local OnMouseWheel = function(self, delta)
 		else
 			self:ScrollDown()
 		end
-	elseif (delta > 0) then
+	elseif delta > 0 then
 		if IsShiftKeyDown() then
 			self:ScrollToTop()
 		elseif IsControlKeyDown() then
@@ -80,11 +80,11 @@ end
 local UpdateHeader = function(editbox)
 	local ChatType = editbox:GetAttribute("chatType")
 
-	if (ChatType == "CHANNEL") then
+	if ChatType == "CHANNEL" then
 		if editbox:GetAttribute("channelTarget") then
 			local ID = GetChannelName(editbox:GetAttribute("channelTarget"))
 
-			if (ID == 0) then
+			if ID == 0 then
 				Chat.EditBox.Outside:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 			else
 				Chat.EditBox.Outside:SetBackdropColor(ChatTypeInfo[ChatType..ID].r * 0.2, ChatTypeInfo[ChatType..ID].g * 0.2, ChatTypeInfo[ChatType..ID].b * 0.2)
@@ -162,13 +162,13 @@ local OnEditFocusGained = function(self)
 end
 
 local CheckForBottom = function(self)
-	if (not self:AtBottom() and not self.JumpButton.FadeIn:IsPlaying()) then
-		if (self.JumpButton:GetAlpha() == 0) then
+	if not self:AtBottom() and not self.JumpButton.FadeIn:IsPlaying() then
+		if self.JumpButton:GetAlpha() == 0 then
 			self.JumpButton:Show()
 			self.JumpButton.FadeIn:Play()
 		end
-	elseif (self:AtBottom() and self.JumpButton:IsShown() and not self.JumpButton.FadeOut:IsPlaying()) then
-		if (self.JumpButton:GetAlpha() > 0) then
+	elseif self:AtBottom() and self.JumpButton:IsShown() and not self.JumpButton.FadeOut:IsPlaying() then
+		if self.JumpButton:GetAlpha() > 0 then
 			self.JumpButton.FadeOut:Play()
 		end
 	end
@@ -207,7 +207,7 @@ local ValidLinkTypes = {
 local OnHyperlinkEnter = function(self, link, text, button)
 	local LinkType = match(link, "^(%a+):")
 
-	if (not ValidLinkTypes[LinkType]) then
+	if not ValidLinkTypes[LinkType] then
 		return
 	end
 
@@ -237,7 +237,7 @@ function Chat:StyleChatFrame(frame)
 		return
 	end
 
-	if (frame ~= ChatFrame2) then
+	if frame ~= ChatFrame2 then
 		frame.OldAddMessage = frame.AddMessage
 		frame.AddMessage = Chat.OverrideAddMessage
 	end
@@ -321,7 +321,7 @@ function Chat:StyleChatFrame(frame)
 
 	FCF_SetChatWindowFontSize(nil, frame, 12)
 
-	if (not frame.isLocked) then
+	if not frame.isLocked then
 		FCF_SetLocked(frame, 1)
 	end
 
@@ -401,11 +401,11 @@ end
 local OpenTemporaryWindow = function()
 	local Frame = FCF_GetCurrentChatFrame()
 
-	if (Frame.name and Frame.name == PET_BATTLE_COMBAT_LOG) then
+	if Frame.name and Frame.name == PET_BATTLE_COMBAT_LOG then
 		return FCF_Close(Frame)
 	end
 
-	if (not Frame.Styled) then
+	if not Frame.Styled then
 		Chat:StyleChatFrame(Frame)
 	end
 end
@@ -440,7 +440,7 @@ function Chat:MoveChatFrames()
 			FCF_Close(Frame)
 		end
 
-		if (Settings["right-window-enable"] and (Settings["right-window-size"] == "SINGLE") and (Frame.name and Frame.name == Settings["rw-single-embed"])) then
+		if Settings["right-window-enable"] and (Settings["right-window-size"] == "SINGLE") and (Frame.name and Frame.name == Settings["rw-single-embed"]) then
 			local EmbedFrame = Chat.Window:GetEmbedFrame()
 
 			FCF_UnDockFrame(Frame)
@@ -458,7 +458,7 @@ function Chat:MoveChatFrames()
 				FCF_DockFrame(Frame)
 			end
 
-			if (Frame == ChatFrame1) then
+			if Frame == ChatFrame1 then
 				Frame:SetUserPlaced(true)
 				Frame:ClearAllPoints()
 				--Frame:SetHeight(92)
@@ -469,7 +469,7 @@ function Chat:MoveChatFrames()
 			end
 		end
 
-		if (not Frame.isLocked) then
+		if not Frame.isLocked then
 			FCF_SetLocked(Frame, true)
 		end
 
@@ -491,7 +491,7 @@ function Chat:MoveChatFrames()
 	GeneralDockManager:ClearAllPoints()
 	GeneralDockManager:SetFrameStrata("MEDIUM")
 
-	if (HydraUI.ClientVersion >= 100000) then
+	if HydraUI.ClientVersion >= 100000 then
 		GeneralDockManager:SetPoint("LEFT", self.Top, 0, 0)
 		GeneralDockManager:SetPoint("RIGHT", self.Top, 0, 0)
 	else
@@ -538,7 +538,7 @@ function Chat:StyleChatFrames()
 		for i = 1, Child:GetNumRegions() do
 			local Region = select(i, Child:GetRegions())
 
-			if (Region:GetObjectType() == "FontString") then
+			if Region:GetObjectType() == "FontString" then
 				HydraUI:SetFontInfo(Region, Settings["chat-tab-font"], Settings["chat-tab-font-size"], Settings["chat-tab-font-flags"])
 			end
 		end

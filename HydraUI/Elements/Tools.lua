@@ -12,7 +12,7 @@ local reverse = string.reverse
 
 -- Tools
 function HydraUI:HexToRGB(hex)
-	if (not hex) then
+	if not hex then
 		return
 	end
 
@@ -24,13 +24,13 @@ function HydraUI:RGBToHex(r, g, b)
 end
 
 function HydraUI:FormatTime(seconds)
-	if (seconds > 86399) then
+	if seconds > 86399 then
 		return format("%dd", ceil(seconds / 86400))
-	elseif (seconds > 3599) then
+	elseif seconds > 3599 then
 		return format("%dh", ceil(seconds / 3600))
-	elseif (seconds > 59) then
+	elseif seconds > 59 then
 		return format("%dm", ceil(seconds / 60))
-	elseif (seconds > 5) then
+	elseif seconds > 5 then
 		return format("%ds", floor(seconds))
 	end
 
@@ -42,11 +42,11 @@ function HydraUI:FormatFullTime(seconds)
 	local Hours = floor((seconds % 86400) / 3600)
 	local Mins = floor((seconds % 3600) / 60)
 
-	if (Days > 0) then
+	if Days > 0 then
 		return format("%dd", Days)
-	elseif (Hours > 0) then
+	elseif Hours > 0 then
 		return format("%dh %sm", Hours, Mins)
-	elseif (Mins > 0) then
+	elseif Mins > 0 then
 		return format("%sm", Mins)
 	else
 		return format("%ss", floor(seconds))
@@ -54,13 +54,13 @@ function HydraUI:FormatFullTime(seconds)
 end
 
 function HydraUI:AuraFormatTime(seconds)
-	if (seconds > 86399) then
+	if seconds > 86399 then
 		return format("%dd", ceil(seconds / 86400))
-	elseif (seconds > 3599) then
+	elseif seconds > 3599 then
 		return format("%dh", ceil(seconds / 3600))
-	elseif (seconds > 59) then
+	elseif seconds > 59 then
 		return format("%dm", ceil(seconds / 60))
-	elseif (seconds > 5) then
+	elseif seconds > 5 then
 		return format("%d", floor(seconds))
 	end
 
@@ -83,13 +83,13 @@ local DurationBoundaryOffset = 0.001
 local function GetNextDurationChange(remaining)
 	local Boundary
 
-	if (remaining > 86399) then
+	if remaining > 86399 then
 		Boundary = math.max(86399, (ceil(remaining / 86400) - 1) * 86400)
-	elseif (remaining > 3599) then
+	elseif remaining > 3599 then
 		Boundary = math.max(3599, (ceil(remaining / 3600) - 1) * 3600)
-	elseif (remaining > 59) then
+	elseif remaining > 59 then
 		Boundary = math.max(59, (ceil(remaining / 60) - 1) * 60)
-	elseif (remaining > 5) then
+	elseif remaining > 5 then
 		Boundary = floor(remaining)
 	else
 		-- This mirrors the rounding used by both %.1f duration formatters.
@@ -100,7 +100,7 @@ local function GetNextDurationChange(remaining)
 end
 
 local function ScheduleDurationDeadline(Deadline)
-	if (Deadline == DurationTextDeadline) then
+	if Deadline == DurationTextDeadline then
 		return
 	end
 
@@ -124,7 +124,7 @@ function DurationText:ScheduleNext()
 	local Deadline
 
 	for _, Record in pairs(self.Buttons) do
-		if (Record.Deadline and (not Deadline or Record.Deadline < Deadline)) then
+		if Record.Deadline and (not Deadline or Record.Deadline < Deadline) then
 			Deadline = Record.Deadline
 		end
 	end
@@ -133,7 +133,7 @@ function DurationText:ScheduleNext()
 end
 
 local function ScheduleRecord(record)
-	if (record.Deadline and (not DurationTextDeadline or record.Deadline < DurationTextDeadline)) then
+	if record.Deadline and (not DurationTextDeadline or record.Deadline < DurationTextDeadline) then
 		ScheduleDurationDeadline(record.Deadline)
 	end
 end
@@ -153,7 +153,7 @@ function DurationText:Unregister(button)
 		Record.OnUnregister(button)
 	end
 
-	if (not DurationTextUpdatingDue and WasScheduled) then
+	if not DurationTextUpdatingDue and WasScheduled then
 		self:ScheduleNext()
 	end
 end
@@ -161,14 +161,14 @@ end
 function DurationText:UpdateButton(button, record, now)
 	local Remaining = record.GetRemaining(button, now)
 
-	if (not Remaining or Remaining <= 0) then
+	if not Remaining or Remaining <= 0 then
 		self:Unregister(button)
 		return false
 	end
 
 	local Text = record.Format(Remaining)
 
-	if (Text ~= record.LastText) then
+	if Text ~= record.LastText then
 		record.LastText = Text
 		record.Text:SetText(Text)
 	end
@@ -191,7 +191,7 @@ function DurationText:Register(button, text, formatter, getRemaining, onUnregist
 	Record.GetRemaining = getRemaining
 	Record.OnUnregister = onUnregister
 
-	if (self:UpdateButton(button, Record, GetTime()) and not DurationTextUpdatingDue) then
+	if self:UpdateButton(button, Record, GetTime()) and not DurationTextUpdatingDue then
 		ScheduleRecord(Record)
 	end
 end
@@ -202,7 +202,7 @@ function DurationText:UpdateDue()
 	DurationTextUpdatingDue = true
 
 	for Button, Record in pairs(self.Buttons) do
-		if (Record.Deadline <= Now) then
+		if Record.Deadline <= Now then
 			if Button:IsShown() then
 				self:UpdateButton(Button, Record, Now)
 			else
@@ -219,11 +219,11 @@ HydraUI.DurationText = DurationText
 
 if HydraUI.IsMainline then
 	function HydraUI:ShortValue(num)
-		if (issecretvalue(num) and not canaccessvalue(num)) then
+		if issecretvalue(num) and not canaccessvalue(num) then
 			return AbbreviateNumbers(num)
-		elseif (num > 999999) then
+		elseif num > 999999 then
 			return format("%.2fm", num / 1000000)
-		elseif (num > 999) then
+		elseif num > 999 then
 			return format("%.1fk", num / 1000)
 		end
 
@@ -231,11 +231,11 @@ if HydraUI.IsMainline then
 	end
 
 	function HydraUI:Comma(number)
-		if (not number) then
+		if not number then
 			return
 		end
 
-		if (issecretvalue(number) and not canaccessvalue(number)) then
+		if issecretvalue(number) and not canaccessvalue(number) then
 			return BreakUpLargeNumbers(number)
 		end
 
@@ -245,9 +245,9 @@ if HydraUI.IsMainline then
 	end
 else
 	function HydraUI:ShortValue(num)
-		if (num > 999999) then
+		if num > 999999 then
 			return format("%.2fm", num / 1000000)
-		elseif (num > 999) then
+		elseif num > 999 then
 			return format("%.1fk", num / 1000)
 		end
 
@@ -255,7 +255,7 @@ else
 	end
 
 	function HydraUI:Comma(number)
-		if (not number) then
+		if not number then
 			return
 		end
 
@@ -272,13 +272,13 @@ function HydraUI:CopperToGold(copper)
 	local Separator = ""
 	local String = ""
 
-	if (Gold > 0) then
+	if Gold > 0 then
 		String = self:Comma(Gold) .. "|cffffe02eg|r"
 		Separator = " "
 	end
 
-	if (Silver > 0) then
-		if (Silver < 10) then
+	if Silver > 0 then
+		if Silver < 10 then
 			Silver = "0" .. Silver
 		end
 
@@ -286,8 +286,8 @@ function HydraUI:CopperToGold(copper)
 		Separator = " "
 	end
 
-	if (Copper > 0 or String == "") then
-		if (Copper < 10) then
+	if Copper > 0 or String == "" then
+		if Copper < 10 then
 			Copper = "0" .. Copper
 		end
 
@@ -305,11 +305,11 @@ end
 function HydraUI:IsToday(s)
 	local Date, Time = match(s, "(%d+%-%d+%-%d+)%s(.+)")
 
-	if (not Date or not Time) then
+	if not Date or not Time then
 		return s
 	end
 
-	if (Date == date("%Y-%m-%d")) then
+	if Date == date("%Y-%m-%d") then
 		s = format("%s %s", Language["Today"], Time)
 	end
 
@@ -317,11 +317,11 @@ function HydraUI:IsToday(s)
 end
 
 function HydraUI:BindSavedVariable(global, key)
-	if (not _G[global]) then
+	if not _G[global] then
 		_G[global] = {}
 	end
 
-	if (not self[key]) then
+	if not self[key] then
 		self[key] = _G[global]
 	end
 end
@@ -345,11 +345,11 @@ local NewPrint = function(...)
 	local NumArgs = select("#", ...)
 	local String = ""
 
-	if (NumArgs == 0) then
+	if NumArgs == 0 then
 		return
-	elseif (NumArgs > 1) then
+	elseif NumArgs > 1 then
 		for i = 1, NumArgs do
-			if (i == 1) then
+			if i == 1 then
 				String = tostring(select(i, ...))
 			else
 				String = format("%s %s", String, tostring(select(i, ...)))
@@ -391,7 +391,7 @@ local GetFontObject = function(font, size, flags)
 	local CacheKey = format("%s\031%s\031%s", Font, tostring(size), FontFlags)
 	local FontObject = FontObjectCache[CacheKey]
 
-	if (not FontObject) then
+	if not FontObject then
 		FontObjectCount = FontObjectCount + 1
 		FontObject = CreateFont("HydraUIFontObject" .. FontObjectCount)
 		FontObject:SetFont(Font, size, FontFlags)
@@ -410,7 +410,7 @@ local GetFontObject = function(font, size, flags)
 end
 
 function HydraUI:SetFontInfo(object, font, size, flags)
-	if (not object) then
+	if not object then
 		return
 	end
 
@@ -446,7 +446,7 @@ local Inside = {
 }
 
 function HydraUI:AddBackdrop(frame, texture)
-	if (frame.Outside or frame.Inside) then
+	if frame.Outside or frame.Inside then
 		return
 	end
 
@@ -467,7 +467,7 @@ function HydraUI:AddBackdrop(frame, texture)
 	frame.Outside:SetBackdropBorderColor(0, 0, 0)
 	frame.Outside:SetBackdropColor(0, 0, 0, 0)
 
-	if (Border == 0) then
+	if Border == 0 then
 		return
 	end
 

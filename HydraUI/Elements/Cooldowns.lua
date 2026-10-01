@@ -36,7 +36,7 @@ local GetSpellCooldown = C_Spell and C_Spell.GetSpellCooldown or GetSpellCooldow
 local function GetSpellCooldownValues(id)
 	local Start, Duration = GetSpellCooldown(id)
 
-	if (type(Start) == "table") then
+	if type(Start) == "table" then
 		return Start.startTime, Start.duration
 	end
 
@@ -62,13 +62,13 @@ Cooldowns.TextureFilter = {
 function Cooldowns:GetTexture(cd, id)
 	local Texture
 
-	if (cd == "item") then
+	if cd == "item" then
 		Texture = select(10, GetItemInfo(id))
 	else
 		Texture = GetSpellTexture(id)
 	end
 
-	if (not self.TextureFilter[Texture]) then
+	if not self.TextureFilter[Texture] then
 		return Texture
 	end
 end
@@ -87,7 +87,7 @@ function Cooldowns:ShowReady(kind, id)
 		if Settings["cooldowns-text"] then
 			local Name
 
-			if (kind == "item") then
+			if kind == "item" then
 				Name = GetItemInfo(id)
 			else
 				Name = GetSpellInfo(id)
@@ -109,7 +109,7 @@ local function ReleaseRecord(records, id)
 		records[id] = nil
 		ActiveCount = ActiveCount - 1
 
-		if (Record.Kind == "item") then
+		if Record.Kind == "item" then
 			Record.ID = nil
 			Record.Deadline = nil
 			ItemTables[#ItemTables + 1] = Record
@@ -118,7 +118,7 @@ local function ReleaseRecord(records, id)
 end
 
 local function GetCooldown(kind, id)
-	if (kind == "item") then
+	if kind == "item" then
 		return GetItemCooldown(id)
 	end
 
@@ -131,7 +131,7 @@ end
 
 local function FindEarliestDeadline(records, deadline)
 	for _, Record in pairs(records) do
-		if (Record.Deadline and (not deadline or Record.Deadline < deadline)) then
+		if Record.Deadline and (not deadline or Record.Deadline < deadline) then
 			deadline = Record.Deadline
 		end
 	end
@@ -143,7 +143,7 @@ function Cooldowns:ScheduleNext()
 	local Deadline = FindEarliestDeadline(ActiveSpells)
 	Deadline = FindEarliestDeadline(ActiveItems, Deadline)
 
-	if (Deadline == CooldownDeadline) then
+	if Deadline == CooldownDeadline then
 		return
 	end
 
@@ -166,7 +166,7 @@ end
 local function UpdateRecord(records, kind, id, start, duration)
 	local Record = records[id]
 
-	if (start and IsTrackedCooldown(kind, duration)) then
+	if start and IsTrackedCooldown(kind, duration) then
 		if not Record then
 			Record = (kind == "item" and table.remove(ItemTables, #ItemTables)) or {}
 			Record.ID = id
@@ -178,7 +178,7 @@ local function UpdateRecord(records, kind, id, start, duration)
 		Record.Deadline = start + duration
 	elseif Record then
 		-- An update before the known deadline is a cancellation, not completion.
-		if (Record.Deadline <= GetTime()) then
+		if Record.Deadline <= GetTime() then
 			Cooldowns:ShowReady(kind, id)
 		end
 
@@ -188,10 +188,10 @@ end
 
 local function UpdateExpiredRecords(records, kind, now)
 	for ID, Record in pairs(records) do
-		if (Record.Deadline <= now) then
+		if Record.Deadline <= now then
 			local Start, Duration = GetCooldown(kind, ID)
 
-			if (Start and IsTrackedCooldown(kind, Duration) and Start + Duration > now) then
+			if Start and IsTrackedCooldown(kind, Duration) and Start + Duration > now then
 				Record.Deadline = Start + Duration
 			else
 				Cooldowns:ShowReady(kind, ID)
@@ -203,7 +203,7 @@ end
 
 -- Called by the one-shot deadline timer, rather than once per frame.
 function Cooldowns:OnUpdate()
-	if (ActiveCount == 0) then
+	if ActiveCount == 0 then
 		return
 	end
 
@@ -241,7 +241,7 @@ function Cooldowns:BAG_UPDATE_COOLDOWN()
 end
 
 function Cooldowns:UNIT_SPELLCAST_SUCCEEDED(unit, guid, id)
-	if (unit == "player") then
+	if unit == "player" then
 		if self.Blacklist["player"][id] then
 			return
 		end
@@ -263,7 +263,7 @@ end
 local UseAction = function(slot)
 	local ActionType, ItemID = GetActionInfo(slot)
 
-	if (ActionType == "item") then
+	if ActionType == "item" then
 		StartItem(ItemID)
 	end
 end
@@ -293,7 +293,7 @@ function Cooldowns:OnEvent(event, ...)
 end
 
 function Cooldowns:Load()
-	if (not Settings["cooldowns-enable"]) then
+	if not Settings["cooldowns-enable"] then
 		return
 	end
 
@@ -341,9 +341,9 @@ function Cooldowns:Load()
 	hooksecurefunc("UseAction", UseAction)
 	hooksecurefunc("UseInventoryItem", UseInventoryItem)
 
-	if (C_Container and C_Container.UseContainerItem) then
+	if C_Container and C_Container.UseContainerItem then
 		hooksecurefunc(C_Container, "UseContainerItem", UseContainerItem)
-	elseif (UseContainerItem and type(UseContainerItem) == "function") then
+	elseif UseContainerItem and type(UseContainerItem) == "function" then
 		hooksecurefunc("UseContainerItem", UseContainerItem)
 	end
 end

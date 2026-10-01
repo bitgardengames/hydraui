@@ -91,7 +91,7 @@ local ProjectIDToName = {
 
 local GetClass = function(class)
 	for Token, Localized in next, LOCALIZED_CLASS_NAMES_MALE do
-		if (Localized == class) then
+		if Localized == class then
 			return Token
 		end
 	end
@@ -132,7 +132,7 @@ ClientInfo = {
 ClientInfo["WoW"] = function(name, id)
 	local HasFocus, CharacterName, Client, RealmName, RealmID, Faction, Race, Class, Blank, Area, Level, RichPresence, CustomMessage, CustomMessageTime, IsOnline, GameAccountID, BNetAccountID, IsAFK, IsBusy, GUID, WoWProjectID, IsWoWMobile = BNGetGameAccountInfo(id)
 
-	if (not Class:find("%S")) then
+	if not Class:find("%S") then
 		Class = "DEMONHUNTER"
 	else
 		Class = GetClass(Class)
@@ -155,11 +155,11 @@ ClientInfo["WoW"] = function(name, id)
 
 	local NameInfo = format("|cFF%s%s|r |cFF%s%s|r|cFFFFFFFF|r %s", LevelColor, Level, ClassColor, CharacterName, name)
 
-	if (not Area or Area == "") then
+	if not Area or Area == "" then
 		Area = RichPresence:gsub("- (.+)", "")
 	end
 
-	if (Area == GetRealZoneText()) then
+	if Area == GetRealZoneText() then
 		Area = format("|cFF33FF33%s|r", Area)
 	end
 
@@ -171,11 +171,11 @@ end
 local GetClientInformation = function(client, name, id)
 	local Descriptor = ClientInfo[client]
 
-	if (not Descriptor) then
+	if not Descriptor then
 		return
 	end
 
-	if (type(Descriptor) == "function") then
+	if type(Descriptor) == "function" then
 		return Descriptor(name, id)
 	end
 
@@ -225,7 +225,7 @@ local OnEnter = function(self)
 		local RealClient, Left, Right = GetClientInformation(Client, AccountName, (BNetIDGameAccount or PresenceID))
 
 		if RealClient then
-			if (not FriendList[RealClient]) then
+			if not FriendList[RealClient] then
 				FriendList[RealClient] = AcquireGroup()
 				NumClients = NumClients + 1
 			end
@@ -244,7 +244,7 @@ local OnEnter = function(self)
 		if FriendInfo.connected then
 			local Class = GetClass(FriendInfo.className)
 
-			if (Class == "Unknown") then
+			if Class == "Unknown" then
 				Class = "PRIEST"
 			end
 
@@ -265,7 +265,7 @@ local OnEnter = function(self)
 
 			local NameInfo = format("|cFFFFFFFF|cFF%s%s|r |cFF%s%s|r|cFFFFFFFF|r", LevelColor, FriendInfo.level, ClassColor, Name)
 
-			if (not FriendList[ProjectIDToName[ID]]) then
+			if not FriendList[ProjectIDToName[ID]] then
 				FriendList[ProjectIDToName[ID]] = AcquireGroup()
 				NumClients = NumClients + 1
 			end
@@ -283,7 +283,7 @@ local OnEnter = function(self)
 
 		for i = 1, #info do
 			if info[i][2] then
-				if (info[i][2] == CurrentZone) then
+				if info[i][2] == CurrentZone then
 					GameTooltip:AddDoubleLine(info[i][1], info[i][2], nil, nil, nil, 0.2, 1, 0.2)
 				else
 					GameTooltip:AddDoubleLine(info[i][1], info[i][2], nil, nil, nil, 1, 1, 1)
@@ -293,7 +293,7 @@ local OnEnter = function(self)
 			end
 		end
 
-		if (ClientCount ~= NumClients) then
+		if ClientCount ~= NumClients then
 			GameTooltip:AddLine(" ")
 		end
 	end
@@ -311,7 +311,7 @@ local OnLeave = function(self)
 end
 
 local OnMouseUp = function()
-	if (not InCombatLockdown()) then
+	if not InCombatLockdown() then
 		ToggleFriendsFrame(1)
 	end
 end

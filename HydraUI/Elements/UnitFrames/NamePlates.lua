@@ -158,7 +158,7 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 		Buffs.PostCreateIcon = UF.PostCreateIcon
 		Buffs.PostUpdateIcon = UF.PostUpdateIcon
 
-		if (Settings["nameplates-buffs-direction"] == "LTR") then
+		if Settings["nameplates-buffs-direction"] == "LTR" then
 			Buffs.initialAnchor = "TOPLEFT"
 			Buffs["growth-x"] = "RIGHT"
 			Buffs["growth-y"] = "UP"
@@ -184,7 +184,7 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	Debuffs.showStealableBuffs = true
 	Debuffs.disableMouse = true
 
-	if (Settings["nameplates-debuffs-direction"] == "LTR") then
+	if Settings["nameplates-debuffs-direction"] == "LTR" then
 		Debuffs.initialAnchor = "TOPLEFT"
 		Debuffs["growth-x"] = "RIGHT"
 		Debuffs["growth-y"] = "UP"
@@ -275,13 +275,13 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	TargetIndicator.Right:SetPoint("LEFT", TargetIndicator, "RIGHT", -3, 0)
 	TargetIndicator.Right:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
 
-	if (Settings["nameplates-target-indicator-size"] == "SMALL") then
+	if Settings["nameplates-target-indicator-size"] == "SMALL" then
 		TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left"))
 		TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right"))
-	elseif (Settings["nameplates-target-indicator-size"] == "LARGE") then
+	elseif Settings["nameplates-target-indicator-size"] == "LARGE" then
 		TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left Large"))
 		TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right Large"))
-	elseif (Settings["nameplates-target-indicator-size"] == "HUGE") then
+	elseif Settings["nameplates-target-indicator-size"] == "HUGE" then
 		TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left Huge"))
 		TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right Huge"))
 	end
@@ -321,7 +321,7 @@ UF.NamePlateCVars = {
 }
 
 UF.NamePlateCallback = function(plate)
-	if (not plate) then
+	if not plate then
 		return
 	end
 
@@ -334,13 +334,13 @@ UF.NamePlateCallback = function(plate)
 	if Settings["nameplates-enable-target-indicator"] then
 		plate:EnableElement("TargetIndicator")
 
-		if (Settings["nameplates-target-indicator-size"] == "SMALL") then
+		if Settings["nameplates-target-indicator-size"] == "SMALL" then
 			plate.TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left"))
 			plate.TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right"))
-		elseif (Settings["nameplates-target-indicator-size"] == "LARGE") then
+		elseif Settings["nameplates-target-indicator-size"] == "LARGE" then
 			plate.TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left Large"))
 			plate.TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right Large"))
-		elseif (Settings["nameplates-target-indicator-size"] == "HUGE") then
+		elseif Settings["nameplates-target-indicator-size"] == "HUGE" then
 			plate.TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left Huge"))
 			plate.TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right Huge"))
 		end
@@ -355,7 +355,7 @@ UF.NamePlateCallback = function(plate)
 	end
 
 	if plate.Buffs then
-		if (Settings["nameplates-buffs-direction"] == "LTR") then
+		if Settings["nameplates-buffs-direction"] == "LTR" then
 			plate.Buffs.initialAnchor = "TOPLEFT"
 			plate.Buffs["growth-x"] = "RIGHT"
 			plate.Buffs["growth-y"] = "UP"
@@ -369,7 +369,7 @@ UF.NamePlateCallback = function(plate)
 	if plate.Debuffs then
 		plate.Debuffs.onlyShowPlayer = Settings["nameplates-only-player-debuffs"]
 
-		if (Settings["nameplates-debuffs-direction"] == "LTR") then
+		if Settings["nameplates-debuffs-direction"] == "LTR" then
 			plate.Debuffs.initialAnchor = "TOPLEFT"
 			plate.Debuffs["growth-x"] = "RIGHT"
 			plate.Debuffs["growth-y"] = "UP"
@@ -537,13 +537,13 @@ local NamePlateSetTargetIndicatorSize = function(self, value)
 		return
 	end
 
-	if (value == "SMALL") then
+	if value == "SMALL" then
 		self.TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left"))
 		self.TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right"))
-	elseif (value == "LARGE") then
+	elseif value == "LARGE" then
 		self.TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left Large"))
 		self.TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right Large"))
-	elseif (value == "HUGE") then
+	elseif value == "HUGE" then
 		self.TargetIndicator.Left:SetTexture(Assets:GetTexture("Arrow Left Huge"))
 		self.TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right Huge"))
 	end
@@ -567,7 +567,7 @@ local NamePlateSetBuffDirection = function(self, value)
 		return
 	end
 
-	if (Settings["nameplates-buffs-direction"] == "LTR") then
+	if Settings["nameplates-buffs-direction"] == "LTR" then
 		self.Buffs.initialAnchor = "TOPLEFT"
 		self.Buffs["growth-x"] = "RIGHT"
 		self.Buffs["growth-y"] = "UP"
@@ -589,7 +589,7 @@ local NamePlateSetDebuffDirection = function(self, value)
 		return
 	end
 
-	if (Settings["nameplates-debuffs-direction"] == "LTR") then
+	if Settings["nameplates-debuffs-direction"] == "LTR" then
 		self.Debuffs.initialAnchor = "TOPLEFT"
 		self.Debuffs["growth-x"] = "RIGHT"
 		self.Debuffs["growth-y"] = "UP"

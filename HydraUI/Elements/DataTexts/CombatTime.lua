@@ -11,7 +11,7 @@ local OnUpdate = function(self, elapsed)
 	self.Elapsed = self.Elapsed + elapsed
 	self.Throttle = self.Throttle + elapsed
 
-	if (self.Throttle > 1) then
+	if self.Throttle > 1 then
 		self.Text:SetText(SecondsToTime(self.Elapsed))
 
 		self.Throttle = 0
@@ -19,13 +19,13 @@ local OnUpdate = function(self, elapsed)
 end
 
 local Update = function(self, event)
-	if (event == "PLAYER_REGEN_DISABLED") then
+	if event == "PLAYER_REGEN_DISABLED" then
 		self.Elapsed = 0
 		self.Throttle = 0
 		self:SetScript("OnUpdate", OnUpdate)
 		self.Text:SetText(SecondsToTime(0))
 		self.Text:SetTextColor(HydraUI:HexToRGB(HydraUI.ValueColor))
-	elseif (event == "PLAYER_REGEN_ENABLED") then
+	elseif event == "PLAYER_REGEN_ENABLED" then
 		self:SetScript("OnUpdate", nil)
 		self.Text:SetTextColor(1, 1, 1)
 	end

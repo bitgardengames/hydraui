@@ -51,6 +51,13 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
             self.assertIn(f"function resource:{method}", SOURCE)
         self.assertIn("frame.ClassResource, frame.AuraParent = resource, resource", SOURCE)
 
+    def test_resource_color_preserves_all_return_values(self):
+        self.assertIn("local function GetSegmentColor(index)", SOURCE)
+        self.assertIn("return descriptor.color(index)", SOURCE)
+        self.assertIn("return HydraUI:HexToRGB(Settings[descriptor.colorSetting])", SOURCE)
+        self.assertIn("local r, g, b = GetSegmentColor(i)", SOURCE)
+        self.assertNotIn("descriptor.color and descriptor.color(i) or", SOURCE)
+
     def test_settings_updates_only_use_canonical_component(self):
         for name, call in (
             ("UpdatePlayerWidth", "Frame.ClassResource:SetWidth(value)"),

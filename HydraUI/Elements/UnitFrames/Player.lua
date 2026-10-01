@@ -265,6 +265,13 @@ local function BuildPlayerComponents(factory, self, unit)
 			local function Segment(bar, i)
 				return descriptor.totems and bar[i].Bar or bar[i]
 			end
+			local function GetSegmentColor(index)
+				if descriptor.color then
+					return descriptor.color(index)
+				end
+
+				return HydraUI:HexToRGB(Settings[descriptor.colorSetting])
+			end
 			local function Count(bar)
 				local count = descriptor.countProvider and descriptor.countProvider() or descriptor.count
 				return math.max(1, math.min(count or descriptor.count, descriptor.count))
@@ -332,7 +339,9 @@ local function BuildPlayerComponents(factory, self, unit)
 				else
 					resource[i] = segment
 				end
-				local r, g, b = descriptor.color and descriptor.color(i) or HydraUI:HexToRGB(Settings[descriptor.colorSetting])
+				-- Logical expressions collapse multiple return values to one in Lua.
+				-- Resolve each branch directly so all three color channels survive.
+				local r, g, b = GetSegmentColor(i)
 				segment:SetStatusBarColor(r, g, b)
 				segment.bg = resource:CreateTexture(nil, "BORDER")
 				segment.bg:SetAllPoints(segment)

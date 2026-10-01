@@ -410,7 +410,7 @@ local OnTooltipSetItem = function(self)
 		return
 	end
 
-	if (not HydraUI.IsMainline or not HydraUI.IsMists) and Settings["tooltips-show-price"] then
+	if not (HydraUI.IsMainline or HydraUI.IsMists) and Settings["tooltips-show-price"] then
 		local Price = select(11, GetItemInfo(Link))
 
 		if Price then

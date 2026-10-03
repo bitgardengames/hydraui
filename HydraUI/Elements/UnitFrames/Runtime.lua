@@ -165,28 +165,117 @@ function Runtime:CreateUnit(unit, name, parent)
 end
 
 function Runtime:CreateNamePlates(callback, cvars)
-	for key, value in pairs(cvars or {}) do SetCVar(key, value) end
+	local namePlateAPI = C_NamePlate
+	if not namePlateAPI or not namePlateAPI.GetNamePlateForUnit then
+		return
+	end
+
+	local layers = setmetatable({}, {__mode = "k"})
+	local units = {}
+	self.NamePlateLayers = layers
+
+	local function ApplyCVars()
+		local setCVar = C_CVar and C_CVar.SetCVar or SetCVar
+		if not setCVar then
+			return
+		end
+		for key, value in pairs(cvars or {}) do
+			setCVar(key, value)
+		end
+	end
+
+	local function IsUsablePlate(plate)
+		if not plate then
+			return false
+		end
+		return not plate.IsForbidden or not plate:IsForbidden()
+	end
+
+	local function Resolve(unit)
+		if not unit then
+			return
+		end
+		local plate = namePlateAPI.GetNamePlateForUnit(unit)
+		if IsUsablePlate(plate) then
+			return plate
+		end
+	end
+
+	local function ClearLayer(layer)
+		if not layer then
+			return
+		end
+		self:SetUnit(layer, nil)
+		-- SetUnit clears component-owned state (including aura icons and casts).
+		-- Tags are shared helpers rather than components, so explicitly blank them.
+		if layer.HydraTags then
+			for fontString in pairs(layer.HydraTags) do
+				fontString:SetText("")
+			end
+		end
+		layer:Hide()
+	end
+
 	local driver = CreateFrame("Frame")
 	driver:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 	driver:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 	driver:RegisterEvent("PLAYER_TARGET_CHANGED")
+	if IsLoggedIn and IsLoggedIn() then
+		ApplyCVars()
+	else
+		driver:RegisterEvent("PLAYER_LOGIN")
+	end
 	driver:SetScript("OnEvent", function(_, event, unit)
-		if event == "PLAYER_TARGET_CHANGED" then unit = "target" end
-		local plate = unit and C_NamePlate.GetNamePlateForUnit(unit)
-		if not plate then return end
-		if event == "NAME_PLATE_UNIT_REMOVED" then
-			if callback then callback(plate.unitFrame, event, unit) end
-			if plate.unitFrame then
-				self:SetUnit(plate.unitFrame, nil)
+		if event == "PLAYER_LOGIN" then
+			ApplyCVars()
+			driver:UnregisterEvent("PLAYER_LOGIN")
+			return
+		end
+		if event == "PLAYER_TARGET_CHANGED" then
+			-- Both the old and new target need their target/threat presentation reset.
+			for _, layer in pairs(units) do
+				if layer.unit then
+					layer:HydraUpdateAll(event)
+				end
 			end
 			return
 		end
-		if not plate.unitFrame then
-			plate.unitFrame = CreateFrame("Button", nil, plate)
-			plate.unitFrame.isNamePlate = true
-			Initialize(plate.unitFrame, unit)
-		else self:SetUnit(plate.unitFrame, unit) end
-		if callback then callback(plate.unitFrame, event, unit) end
-		plate.unitFrame:HydraUpdateAll(event)
+
+		local plate = Resolve(unit)
+		if event == "NAME_PLATE_UNIT_REMOVED" then
+			local layer = units[unit] or (plate and layers[plate])
+			if callback then
+				callback(layer, event, unit)
+			end
+			units[unit] = nil
+			ClearLayer(layer)
+			return
+		end
+		if not plate then
+			return
+		end
+		local layer = layers[plate]
+		if not layer then
+			-- This is a visual-only, unprotected child.  Never write unit or click
+			-- attributes onto Blizzard's protected nameplate hierarchy.
+			layer = CreateFrame("Frame", nil, plate)
+			layer:EnableMouse(false)
+			layer.isNamePlate = true
+			layers[plate] = layer
+			Initialize(layer, unit, true, "nameplate")
+		else
+			self:SetUnit(layer, unit, false, true)
+			layer:Show()
+		end
+		units[unit] = layer
+		if callback then
+			callback(layer, event, unit)
+		end
+		layer:HydraUpdateAll(event)
 	end)
+	self.NamePlateDriver = driver
+end
+
+function Runtime:GetNamePlateLayer(plate)
+	return self.NamePlateLayers and self.NamePlateLayers[plate]
 end

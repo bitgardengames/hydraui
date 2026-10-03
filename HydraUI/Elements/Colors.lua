@@ -115,6 +115,10 @@ HydraUI.DebuffColors = {}
 HydraUI.HappinessColors = {}
 HydraUI.ComboPoints = {}
 HydraUI.TotemColors = {}
+-- Unit-frame handlers consume these stable tables directly.  Keep their
+-- identity when settings change, just like the class/reaction/power tables.
+HydraUI.TappedColor = {}
+HydraUI.DisconnectedColor = {}
 
 function HydraUI:SetColorEntry(t, key, hex)
 	R, G, B = self:HexToRGB(hex)
@@ -143,6 +147,13 @@ function HydraUI:UpdateClassColors()
 	self:SetColorEntry(self.ClassColors, "SHAMAN", Settings["color-shaman"])
 	self:SetColorEntry(self.ClassColors, "WARLOCK", Settings["color-warlock"])
 	self:SetColorEntry(self.ClassColors, "WARRIOR", Settings["color-warrior"])
+end
+
+function HydraUI:UpdateUnitStatusColors()
+	local r, g, b = self:HexToRGB(Settings["color-tapped"])
+	self.TappedColor[1], self.TappedColor[2], self.TappedColor[3] = r, g, b
+	r, g, b = self:HexToRGB(Settings["color-disconnected"])
+	self.DisconnectedColor[1], self.DisconnectedColor[2], self.DisconnectedColor[3] = r, g, b
 end
 
 function HydraUI:UpdateReactionColors()
@@ -220,6 +231,7 @@ function HydraUI:UpdateTotemColors()
 end
 
 function HydraUI:UpdateColors()
+	self:UpdateUnitStatusColors()
 	self:UpdateClassColors()
 	self:UpdateReactionColors()
 	self:UpdateZoneColors()
@@ -240,8 +252,8 @@ function HydraUI:UpdateoUFColors()
 	Colors.reaction = HydraUI.ReactionColors
 	Colors.power = HydraUI.PowerColors
 	Colors.debuff = HydraUI.DebuffColors
-	Colors.tapped = {HydraUI:HexToRGB(Settings["color-tapped"])}
-	Colors.disconnected = {HydraUI:HexToRGB(Settings["color-disconnected"])}
+	Colors.tapped = HydraUI.TappedColor
+	Colors.disconnected = HydraUI.DisconnectedColor
 	Colors.health = {HydraUI:HexToRGB(Settings["ui-header-texture-color"])}
 end
 

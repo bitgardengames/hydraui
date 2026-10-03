@@ -89,10 +89,11 @@ function UF:BuildGroupFrame(frame, unit, descriptor)
 	health.DeadAnim.Out = fadeOut
 	local healthName = UF:CreateFontString(health, Settings[prefix .. "-font"], Settings[prefix .. "-font-size"], Settings[prefix .. "-font-flags"], "BOTTOM", "CENTER", 0, 1, "CENTER")
 	local healthBottom = UF:CreateFontString(health, Settings[prefix .. "-font"], Settings[prefix .. "-font-size"], Settings[prefix .. "-font-flags"], "TOP", "CENTER", 0, -1, "CENTER")
-	health.colorDisconnected, health.Smooth = true, true
+	health.colorDisconnected, health.Smooth = true, Settings[prefix .. "-health-smooth"]
 	UF:SetHealthAttributes(health, Settings[prefix .. "-health-color"])
 	local power, powerBG = UF:CreatePowerBar(frame, Settings[prefix .. "-power-height"], Settings[descriptor.powerTextureKey], Settings[prefix .. "-power-reverse"])
 	power.frequentUpdates = true
+	power.Smooth = Settings[prefix .. "-power-smooth"]
 	UF:SetPowerAttributes(power, Settings[prefix .. "-power-color"])
 	local debuffs = descriptor.createDebuffs(frame, health, descriptor.debuffFilter)
 	CreateAuraWatch(frame, health, descriptor)

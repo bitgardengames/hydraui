@@ -5,8 +5,8 @@ local function Install(UF, Hider)
 -- oUF chooses its client-specific aura implementation while its files load.
 -- Keep that decision here instead of checking the client/API on every aura
 -- event.  The runtime consumes these wrappers in Components.lua.
-local AuraImplementation = ns.oUF.Private.elements.Auras
-local AuraWatchImplementation = ns.oUF.Private.elements.AuraWatch
+local AuraImplementation = ns.UnitFrameOUFBridge.elements.Auras
+local AuraWatchImplementation = ns.UnitFrameOUFBridge.elements.AuraWatch
 
 local function ClearContainer(container)
 	if not container then

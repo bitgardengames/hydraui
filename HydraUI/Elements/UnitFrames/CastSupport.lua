@@ -6,7 +6,7 @@ local UnitIsPlayer = UnitIsPlayer
 local Class, Colors
 
 local function Install(UF, Hider)
-local CastImplementation = ns.oUF.Private.elements.Castbar
+local CastImplementation = ns.UnitFrameOUFBridge.elements.Castbar
 local ActiveCastbars = setmetatable({}, {__mode = "k"})
 local CastUpdater = CreateFrame("Frame")
 

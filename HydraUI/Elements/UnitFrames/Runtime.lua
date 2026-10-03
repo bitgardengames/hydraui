@@ -5,8 +5,7 @@ local Runtime = {}
 ns.UnitFrameRuntime = Runtime
 
 local oUF = ns.oUF
-local private = oUF.Private
-local frameMethods = private.frame_metatable.__index
+local frameMethods = ns.UnitFrameOUFBridge.frameMethods
 local components = ns.UnitFrameComponents
 
 local secondaryUnits = {

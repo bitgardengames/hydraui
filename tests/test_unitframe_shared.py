@@ -198,6 +198,21 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
 
 
 class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
+    def test_ouf_bridge_survives_private_api_cleanup(self):
+        library = Path(__file__).parents[1] / "HydraUI/Elements/Libraries/oUF"
+        finalize = (library / "finalize.lua").read_text()
+        bridge = finalize.index("ns.UnitFrameOUFBridge =")
+        cleanup = finalize.index("ns.oUF.Private = nil")
+
+        self.assertLess(bridge, cleanup)
+        self.assertIn("elements = ns.oUF.Private.elements", finalize)
+        self.assertIn("frameMethods = ns.oUF.Private.frame_metatable.__index", finalize)
+
+        for module in ("Components", "AuraSupport", "CastSupport", "Runtime"):
+            source = (ROOT / f"{module}.lua").read_text()
+            self.assertIn("ns.UnitFrameOUFBridge", source)
+            self.assertNotIn("ns.oUF.Private", source)
+
     def test_pet_range_settings_are_read_when_frames_are_built(self):
         for filename, style_name, prefix in (
             ("PartyPets.lua", "partypet", "party"),

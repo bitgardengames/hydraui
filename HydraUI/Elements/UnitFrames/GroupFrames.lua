@@ -89,11 +89,10 @@ function UF:BuildGroupFrame(frame, unit, descriptor)
 	health.DeadAnim.Out = fadeOut
 	local healthName = UF:CreateFontString(health, Settings[prefix .. "-font"], Settings[prefix .. "-font-size"], Settings[prefix .. "-font-flags"], "BOTTOM", "CENTER", 0, 1, "CENTER")
 	local healthBottom = UF:CreateFontString(health, Settings[prefix .. "-font"], Settings[prefix .. "-font-size"], Settings[prefix .. "-font-flags"], "TOP", "CENTER", 0, -1, "CENTER")
-	health.colorDisconnected, health.Smooth = true, Settings[prefix .. "-health-smooth"]
+	health.colorDisconnected, health.Smooth = true, true
 	UF:SetHealthAttributes(health, Settings[prefix .. "-health-color"])
 	local power, powerBG = UF:CreatePowerBar(frame, Settings[prefix .. "-power-height"], Settings[descriptor.powerTextureKey], Settings[prefix .. "-power-reverse"])
 	power.frequentUpdates = true
-	power.Smooth = Settings[prefix .. "-power-smooth"]
 	UF:SetPowerAttributes(power, Settings[prefix .. "-power-color"])
 	local debuffs = descriptor.createDebuffs(frame, health, descriptor.debuffFilter)
 	CreateAuraWatch(frame, health, descriptor)
@@ -142,8 +141,8 @@ function UF:BuildGroupFrame(frame, unit, descriptor)
 	dispel.bg:SetPoint("BOTTOMRIGHT", dispel, 1, -1)
 	dispel.bg:SetTexture(Assets:GetTexture("Blank"))
 	dispel.bg:SetVertexColor(0, 0, 0)
-	UF:Tag(frame, healthName, Settings[prefix .. "-health-top"])
-	UF:Tag(frame, healthBottom, Settings[prefix .. "-health-bottom"])
+	frame:Tag(healthName, Settings[prefix .. "-health-top"])
+	frame:Tag(healthBottom, Settings[prefix .. "-health-bottom"])
 	frame.Range = {
 		insideAlpha = Settings[prefix .. "-in-range"] / 100,
 		outsideAlpha = Settings[prefix .. "-out-of-range"] / 100,

@@ -1,7 +1,7 @@
 local addon, ns = ...
 local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
-local Runtime = ns.UnitFrameRuntime
+local oUF = ns.oUF or oUF
 local floor = math.floor
 
 local function Install(UF, Hider)
@@ -42,7 +42,7 @@ function UF:SpawnSingletonFrames()
 	for _, descriptor in ipairs(SingletonUnits) do
 		if Settings[descriptor.enabled] then
 			local dimensions = descriptor.dimensions
-			local frame = Runtime:CreateUnit(descriptor.unit, descriptor.globalName, HydraUI.UIParent)
+			local frame = oUF:Spawn(descriptor.unit, descriptor.globalName)
 			frame:SetSize(Settings[dimensions.width], Settings[dimensions.health] + Settings[dimensions.power] + 3)
 			frame:SetPoint(descriptor.defaultAnchor[1], HydraUI.UIParent, descriptor.defaultAnchor[2], descriptor.defaultAnchor[3], descriptor.defaultAnchor[4])
 			frame:SetParent(HydraUI.UIParent)
@@ -182,7 +182,7 @@ end
 function UF:SpawnBossFrames()
 	if Settings["unitframes-boss-enable"] then
 		for i = 1, 8 do
-			local Boss = Runtime:CreateUnit("boss" .. i, "HydraUI Boss " .. i, HydraUI.UIParent)
+			local Boss = oUF:Spawn("boss" .. i, "HydraUI Boss " .. i)
 			Boss:SetSize(Settings["unitframes-boss-width"], Settings["unitframes-boss-health-height"] + Settings["unitframes-boss-power-height"] + 3)
 			Boss:SetParent(HydraUI.UIParent)
 
@@ -227,52 +227,11 @@ function UF:BuildHeaderAttributes(options)
 	}
 end
 
-local HeaderInitialConfig = [=[
-	local header = self:GetParent()
-	self:SetWidth(header:GetAttribute("initial-width"))
-	self:SetHeight(header:GetAttribute("initial-height"))
-	self:SetAttribute("*type1", "target")
-	self:SetAttribute("*type2", "togglemenu")
-	self:SetAttribute("_onattributechanged", [[
-		if name == "unit" then
-			self:GetParent():CallMethod("RefreshChild", self:GetName())
-		end
-	]])
-	RegisterUnitWatch(self)
-	header:CallMethod("RefreshChild", self:GetName())
-]=]
-
--- This creator is intentionally local to party/raid spawning. Singleton and
--- nameplate frames have different lifecycles and must not acquire header logic.
-local function CreateSecureHeader(name, template, styleKey, visibility, ...)
-	local header = CreateFrame("Frame", name, HydraUI.UIParent, template)
-	header:SetAttribute("template", "SecureUnitButtonTemplate,SecureHandlerAttributeTemplate")
-	for i = 1, select("#", ...), 2 do
-		header:SetAttribute(select(i, ...), select(i + 1, ...))
-	end
-	header:SetAttribute("initialConfigFunction", HeaderInitialConfig)
-
-	header.RefreshChild = function(_, childName)
-		Runtime:RefreshHeaderChild(_G[childName], styleKey)
-	end
-	local function DiscoverChildren(self)
-		UF:ForEachHeaderChild(self, function(child)
-			Runtime:RefreshHeaderChild(child, styleKey)
-		end)
-	end
-	header:SetScript("OnShow", DiscoverChildren)
-	header:RegisterEvent("GROUP_ROSTER_UPDATE")
-	header:SetScript("OnEvent", DiscoverChildren)
-
-	RegisterAttributeDriver(header, "state-visibility", visibility)
-	return header
-end
-
 function UF:SpawnPartyHeaders()
 	if Settings["party-enable"] then
 		local XOffset, YOffset = self:GetGrowthOffsets(Settings["party-point"], Settings["party-spacing"])
 
-		local Party = CreateSecureHeader("HydraUI Party", "SecureGroupHeaderTemplate", "party", "[group:raid] hide; [group:party] show; show",
+		local Party = oUF:SpawnHeader("HydraUI Party", nil, "party,solo",
 			"initial-width", Settings["party-width"],
 			"initial-height", (Settings["party-health-height"] + Settings["party-power-height"] + 3),
 			"isTesting", false,
@@ -282,7 +241,13 @@ function UF:SpawnPartyHeaders()
 			"showRaid", false,
 			"xOffset", XOffset,
 			"yOffset", YOffset,
-			"point", Settings["party-point"]
+			"point", Settings["party-point"],
+			"oUF-initialConfigFunction", [[
+				local Header = self:GetParent()
+
+				self:SetWidth(Header:GetAttribute("initial-width"))
+				self:SetHeight(Header:GetAttribute("initial-height"))
+			]]
 		)
 
 		self.PartyAnchor = CreateFrame("Frame", "HydraUI Party Anchor", HydraUI.UIParent)
@@ -301,7 +266,7 @@ function UF:SpawnPartyHeaders()
 		if Settings["party-pets-enable"] then
 			local XOffset, YOffset = self:GetGrowthOffsets(Settings["party-point"], Settings["party-spacing"])
 
-			local PartyPet = CreateSecureHeader("HydraUI Party Pets", "SecureGroupPetHeaderTemplate", "partypet", "[group:raid] hide; [group:party] show; show",
+			local PartyPet = oUF:SpawnHeader("HydraUI Party Pets", "SecureGroupPetHeaderTemplate", "party,solo",
 				"initial-width", Settings["party-pets-width"],
 				"initial-height", (Settings["party-pets-health-height"] + 2),
 				"showSolo", Settings["party-show-solo"],
@@ -310,7 +275,13 @@ function UF:SpawnPartyHeaders()
 				"showRaid", false,
 				"xOffset", XOffset,
 				"yOffset", YOffset,
-				"point", Settings["party-point"]
+				"point", Settings["party-point"],
+				"oUF-initialConfigFunction", [[
+					local Header = self:GetParent()
+
+					self:SetWidth(Header:GetAttribute("initial-width"))
+					self:SetHeight(Header:GetAttribute("initial-height"))
+				]]
 			)
 
 			self.PartyPetAnchor = CreateFrame("Frame", "HydraUI Party Pet Anchor", HydraUI.UIParent)
@@ -330,7 +301,7 @@ end
 
 function UF:SpawnRaidHeaders()
 	if Settings["raid-enable"] then
-		local Raid = CreateSecureHeader("HydraUI Raid", "SecureGroupHeaderTemplate", "raid", "[group:raid] show; hide",
+		local Raid = oUF:SpawnHeader("HydraUI Raid", nil, "raid,solo",
 			"initial-width", Settings["raid-width"],
 			"initial-height", (Settings["raid-health-height"] + Settings["raid-power-height"] + 3),
 			"isTesting", false,
@@ -344,7 +315,13 @@ function UF:SpawnRaidHeaders()
 			"maxColumns", Settings["raid-max-columns"],
 			"unitsPerColumn", Settings["raid-units-per-column"],
 			"columnSpacing", Settings["raid-column-spacing"],
-			"columnAnchorPoint", Settings["raid-column-anchor"]
+			"columnAnchorPoint", Settings["raid-column-anchor"],
+			"oUF-initialConfigFunction", [[
+				local Header = self:GetParent()
+
+				self:SetWidth(Header:GetAttribute("initial-width"))
+				self:SetHeight(Header:GetAttribute("initial-height"))
+			]]
 		)
 
 		local UnitHeight = (Settings["raid-health-height"] + Settings["raid-power-height"]) + 1
@@ -373,7 +350,7 @@ function UF:SpawnRaidHeaders()
 		UpdateRaidSortingMethod(Settings["raid-sorting-method"])
 
 		if Settings["raid-pets-enable"] then
-			local RaidPet = CreateSecureHeader("HydraUI Raid Pets", "SecureGroupPetHeaderTemplate", "raidpet", "[group:raid] show; hide",
+			local RaidPet = oUF:SpawnHeader("HydraUI Raid Pets", "SecureGroupPetHeaderTemplate", "raid,solo",
 			"initial-width", Settings["raid-pets-width"],
 			"initial-height", (Settings["raid-pets-health-height"] + 2),
 			"isTesting", false,
@@ -387,7 +364,13 @@ function UF:SpawnRaidHeaders()
 			"maxColumns", Settings["raid-max-columns"],
 			"unitsPerColumn", Settings["raid-units-per-column"],
 			"columnSpacing", Settings["raid-column-spacing"],
-			"columnAnchorPoint", Settings["raid-column-anchor"]
+			"columnAnchorPoint", Settings["raid-column-anchor"],
+			"oUF-initialConfigFunction", [[
+				local Header = self:GetParent()
+
+				self:SetWidth(Header:GetAttribute("initial-width"))
+				self:SetHeight(Header:GetAttribute("initial-height"))
+			]]
 			)
 
 			self.RaidPetAnchor = CreateFrame("Frame", "HydraUI Raid Pet Anchor", HydraUI.UIParent)
@@ -412,7 +395,7 @@ function UF:SpawnNameplates()
 		UF.NamePlateCVars.nameplateMinAlpha = (Settings["nameplates-unselected-alpha"] / 100)
 		UF.NamePlateCVars.nameplateMaxAlpha = (Settings["nameplates-unselected-alpha"] / 100)
 
-		Runtime:CreateNamePlates(UF.NamePlateCallback, UF.NamePlateCVars)
+		oUF:SpawnNamePlates(nil, UF.NamePlateCallback, UF.NamePlateCVars)
 	end
 end
 

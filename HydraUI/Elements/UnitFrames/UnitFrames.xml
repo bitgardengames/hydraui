@@ -3,8 +3,6 @@
 	<Script file="AuraSupport.lua"/>
 	<Script file="CastSupport.lua"/>
 	<Script file="TotemSupport.lua"/>
-	<Script file="Components.lua"/>
-	<Script file="Runtime.lua"/>
 	<Script file="Spawning.lua"/>
 	<Script file="UnitFrames.lua"/>
 </Ui>

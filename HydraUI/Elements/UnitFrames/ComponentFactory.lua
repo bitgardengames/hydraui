@@ -233,28 +233,28 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 		power = self:CreatePowerBar(frame, FamilySetting(config, "-power-height"), Setting(config.powerTextureKey), powerReverse)
 		power.frequentUpdates = true
 		power.colorReaction = config.powerReaction
-		power.Smooth = FamilySetting(config, "-power-smooth")
+		power.Smooth = true
 		self:SetPowerAttributes(power, FamilySetting(config, "-power-color"))
 		if config.powerTags then
 			powerLeft = self:CreateFontString(power, font, fontSize, fontFlags, leftSpec.point, leftSpec.point, leftSpec.x, 0, leftSpec.justify)
 			powerRight = self:CreateFontString(power, font, fontSize, fontFlags, rightSpec.point, rightSpec.point, rightSpec.x, 0, rightSpec.justify)
-			self:Tag(frame, powerLeft, FamilySetting(config, "-power-left"))
-			self:Tag(frame, powerRight, FamilySetting(config, "-power-right"))
+			frame:Tag(powerLeft, FamilySetting(config, "-power-left"))
+			frame:Tag(powerRight, FamilySetting(config, "-power-right"))
 		end
 	end
 
 	if healthLeft then
-		self:Tag(frame, healthLeft, FamilySetting(config, "-health-left"))
+		frame:Tag(healthLeft, FamilySetting(config, "-health-left"))
 	end
 	if healthRight then
-		self:Tag(frame, healthRight, FamilySetting(config, "-health-right"))
+		frame:Tag(healthRight, FamilySetting(config, "-health-right"))
 	end
 	frame.Health, frame.HealthLeft, frame.HealthRight = health, healthLeft, healthRight
 	frame.Power, frame.PowerLeft, frame.PowerRight = power, powerLeft, powerRight
 
 	if config.middleTag then
 		local middle = self:CreateFontString(health, font, fontSize, fontFlags, "CENTER", "CENTER", 0, 0, "CENTER")
-		self:Tag(frame, middle, config.middleTag)
+		frame:Tag(middle, config.middleTag)
 		frame.HealthMiddle = middle
 	end
 	if config.mouseoverKey then

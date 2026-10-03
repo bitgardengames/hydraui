@@ -2,65 +2,6 @@ local addon, ns = ...
 local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
 local function Install(UF, Hider)
--- oUF chooses its client-specific aura implementation while its files load.
--- Keep that decision here instead of checking the client/API on every aura
--- event.  The runtime consumes these wrappers in Components.lua.
-local AuraImplementation = ns.oUF.Private.elements.Auras
-local AuraWatchImplementation = ns.oUF.Private.elements.AuraWatch
-
-local function ClearContainer(container)
-	if not container then
-		return
-	end
-	for index = 1, #container do
-		container[index]:Hide()
-	end
-	container.visibleButtons = 0
-	container.visibleBuffs = 0
-	container.visibleDebuffs = 0
-end
-
-local function ClearAuras(frame)
-	ClearContainer(frame.Buffs)
-	ClearContainer(frame.Debuffs)
-	if frame.AuraWatch and frame.AuraWatch.icons then
-		for _, icon in pairs(frame.AuraWatch.icons) do
-			icon:Hide()
-		end
-	end
-end
-
-if AuraImplementation then
-	ns.UnitFrameAuraComponent = {
-		update = AuraImplementation.update,
-		enable = function(frame)
-			-- HydraUI deliberately supports only its split Buffs/Debuffs
-			-- containers; don't activate an unrelated oUF Auras container.
-			if not (frame.Buffs or frame.Debuffs) then
-				return false
-			end
-			return AuraImplementation.enable(frame)
-		end,
-		disable = function(frame)
-			AuraImplementation.disable(frame)
-			ClearAuras(frame)
-		end,
-		clear = ClearAuras,
-	}
-end
-
-if AuraWatchImplementation then
-	ns.UnitFrameAuraWatchComponent = {
-		update = AuraWatchImplementation.update,
-		enable = AuraWatchImplementation.enable,
-		disable = function(frame)
-			AuraWatchImplementation.disable(frame)
-			ClearAuras(frame)
-		end,
-		clear = ClearAuras,
-	}
-end
-
 local UnregisterAuraTimer = function(button)
 	HydraUI.DurationText:Unregister(button)
 	button.LastAuraTime = nil

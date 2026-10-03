@@ -88,7 +88,6 @@ A default texture will be applied to the StatusBar and Texture widgets if they d
 
 local _, ns = ...
 local oUF = ns.oUF
-local HydraUI = ns:get()
 
 local FALLBACK_ICON = 136243 -- Interface\ICONS\Trade_Engineering
 local FAILED = _G.FAILED or 'Failed'
@@ -102,28 +101,7 @@ local ClientVersion = select(4, GetBuildInfo())
 local IsClassic = ClientVersion > 10000 and ClientVersion < 20000
 local LibCC
 
-if HydraUI.IsMainline then
-	local MainlineUnitCastingInfo = UnitCastingInfo
-	local MainlineUnitChannelInfo = UnitChannelInfo
-
-	UnitCastingInfo = function(unit)
-		local name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible, spellID = MainlineUnitCastingInfo(unit)
-		if (issecretvalue(startTime) and not canaccessvalue(startTime)) or (issecretvalue(endTime) and not canaccessvalue(endTime)) then
-			return
-		end
-
-		return name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible, spellID
-	end
-
-	UnitChannelInfo = function(unit)
-		local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID, isEmpowered, numStages = MainlineUnitChannelInfo(unit)
-		if (issecretvalue(startTime) and not canaccessvalue(startTime)) or (issecretvalue(endTime) and not canaccessvalue(endTime)) then
-			return
-		end
-
-		return name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID, isEmpowered, numStages
-	end
-elseif IsClassic then
+if IsClassic then
 	LibCC = LibStub("LibClassicCasterino", true)
 	
     UnitCastingInfo = function(unit)

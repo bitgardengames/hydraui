@@ -20,10 +20,6 @@ local callback, objects, headers = {}, {}, {}
 local elements = {}
 local activeElements = {}
 
--- HydraUI's deliberately small unit-frame runtime consumes the element
--- implementations without using oUF's style/factory layer.
-Private.elements = elements
-
 local PetBattleFrameHider = CreateFrame('Frame', (global or parent) .. '_PetBattleFrameHider', UIParent, 'SecureHandlerStateTemplate')
 PetBattleFrameHider:SetAllPoints()
 PetBattleFrameHider:SetFrameStrata('LOW')

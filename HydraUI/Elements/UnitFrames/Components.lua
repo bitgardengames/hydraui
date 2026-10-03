@@ -7,7 +7,7 @@
 local _, ns = ...
 local HydraUI = ns:get()
 
-local loaded = ns.oUF.Private.elements
+local loaded = ns.UnitFrameOUFBridge.elements
 
 -- Event documentation lives beside the component selection.  `unit = true`
 -- means RegisterUnitEvent is used; false means the event is shared.  Some

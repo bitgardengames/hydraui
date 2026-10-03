@@ -88,6 +88,7 @@ A default texture will be applied to the StatusBar and Texture widgets if they d
 
 local _, ns = ...
 local oUF = ns.oUF
+local HydraUI = ns:get()
 
 local FALLBACK_ICON = 136243 -- Interface\ICONS\Trade_Engineering
 local FAILED = _G.FAILED or 'Failed'
@@ -136,6 +137,13 @@ local function CastStart(self, event, unit)
 	end
 
 	if(not name or (isTradeSkill and element.hideTradeSkills)) then
+		resetAttributes(element)
+		element:Hide()
+
+		return
+	end
+
+	if HydraUI.IsMainline and ((issecretvalue(startTime) and not canaccessvalue(startTime)) or (issecretvalue(endTime) and not canaccessvalue(endTime))) then
 		resetAttributes(element)
 		element:Hide()
 
@@ -227,6 +235,13 @@ local function CastUpdate(self, event, unit, castID, spellID)
 	end
 
 	if(not name) then return end
+
+	if HydraUI.IsMainline and ((issecretvalue(startTime) and not canaccessvalue(startTime)) or (issecretvalue(endTime) and not canaccessvalue(endTime))) then
+		resetAttributes(element)
+		element:Hide()
+
+		return
+	end
 
 	if(element.empowering) then
 		endTime = endTime + GetUnitEmpowerHoldAtMaxTime(unit)

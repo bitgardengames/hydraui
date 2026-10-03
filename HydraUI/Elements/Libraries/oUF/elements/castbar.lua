@@ -164,6 +164,13 @@ local function CastStart(self, event, unit)
 		return
 	end
 
+	if HydraUI.IsMainline and ((issecretvalue(startTime) and not canaccessvalue(startTime)) or (issecretvalue(endTime) and not canaccessvalue(endTime))) then
+		resetAttributes(element)
+		element:Hide()
+
+		return
+	end
+
 	element.casting = event == 'UNIT_SPELLCAST_START'
 	element.channeling = event == 'UNIT_SPELLCAST_CHANNEL_START'
 	element.empowering = event == 'UNIT_SPELLCAST_EMPOWER_START'
@@ -249,6 +256,13 @@ local function CastUpdate(self, event, unit, castID, spellID)
 	end
 
 	if(not name) then return end
+
+	if HydraUI.IsMainline and ((issecretvalue(startTime) and not canaccessvalue(startTime)) or (issecretvalue(endTime) and not canaccessvalue(endTime))) then
+		resetAttributes(element)
+		element:Hide()
+
+		return
+	end
 
 	if(element.empowering) then
 		endTime = endTime + GetUnitEmpowerHoldAtMaxTime(unit)

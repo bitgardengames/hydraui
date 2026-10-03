@@ -411,7 +411,11 @@ local RunForAllNamePlates = function(func, value)
 
 	if NamePlates then
 		for i = 1, #NamePlates do
-			func(NamePlates[i].unitFrame, value)
+			local plate = NamePlates[i]
+			local layer = ns.UnitFrameRuntime:GetNamePlateLayer(plate)
+			if layer then
+				func(layer, value)
+			end
 		end
 	end
 end

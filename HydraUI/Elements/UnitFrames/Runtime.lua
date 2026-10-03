@@ -71,7 +71,7 @@ local function DisableElement(self, name)
 	return element.disable(self)
 end
 
-local function Initialize(frame, unit)
+local function Initialize(frame, unit, secureUnit, styleKey)
 	frame.__hydraEvents, frame.__hydraUnitEvents = {}, {}
 	frame.__hydraUpdates, frame.__hydraEnabled, frame.__elements = {}, {}, {}
 	frame.RegisterEvent, frame.UnregisterEvent = RegisterEvent, UnregisterEvent
@@ -83,8 +83,8 @@ local function Initialize(frame, unit)
 	-- mature parsers while the runtime owns lifecycle and event registration.
 	frame.Tag, frame.Untag, frame.UpdateTags = frameMethods.Tag, frameMethods.Untag, frameMethods.UpdateTags
 	frame:SetScript("OnEvent", Dispatch)
-	Runtime:SetUnit(frame, unit, true)
-	Runtime:ApplyStyle(frame, unit)
+	Runtime:SetUnit(frame, unit, true, secureUnit)
+	Runtime:ApplyStyle(frame, unit, styleKey)
 	for name in pairs(elements) do frame:EnableElement(name, unit) end
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD", UpdateAll, true)
 	frame:SetScript("OnShow", function(self) self:HydraUpdateAll("OnShow") end)
@@ -101,21 +101,39 @@ function Runtime:ResolveStyle(unit)
 	if unit:match("^nameplate") then return HydraUI.StyleFuncs.nameplate end
 end
 
-function Runtime:ApplyStyle(frame, unit)
-	local style = self:ResolveStyle(unit)
+function Runtime:ApplyStyle(frame, unit, styleKey)
+	local style = self:ResolveStyle(styleKey or unit)
 	if style then style(frame, unit) end
 end
 
-function Runtime:SetUnit(frame, unit, initial)
+function Runtime:SetUnit(frame, unit, initial, secureUnit)
 	frame.unit = unit
 	frame.id = unit and unit:match("(%d+)$")
-	if unit then frame:SetAttribute("unit", unit) end
+	-- A group header owns its children's unit attribute. Writing it back from
+	-- insecure code would be both redundant and forbidden while in combat.
+	if unit and not secureUnit then frame:SetAttribute("unit", unit) end
 	if not initial then
 		for event in pairs(frame.__hydraUnitEvents) do
-			local other = secondaryUnits[event] and secondaryUnits[event][unit]
-			getmetatable(frame).__index.RegisterUnitEvent(frame, event, unit, other or "")
+			getmetatable(frame).__index.UnregisterEvent(frame, event)
+			if unit then
+				local other = secondaryUnits[event] and secondaryUnits[event][unit]
+				getmetatable(frame).__index.RegisterUnitEvent(frame, event, unit, other or "")
+			end
 		end
 		frame:HydraUpdateAll("HydraUnitChanged")
+	end
+end
+
+-- Secure headers create and reassign their children. This is deliberately a
+-- non-secure half of that lifecycle: the secure snippet only reports that a
+-- child changed, and HydraUI installs/styles it exactly once here.
+function Runtime:RefreshHeaderChild(frame, styleKey)
+	if not frame then return end
+	local unit = frame:GetAttribute("unit")
+	if not frame.__hydraEnabled then
+		Initialize(frame, unit, true, styleKey)
+	elseif frame.unit ~= unit then
+		self:SetUnit(frame, unit, false, true)
 	end
 end
 
@@ -129,33 +147,6 @@ function Runtime:CreateUnit(unit, name, parent)
 	_G.ClickCastFrames = _G.ClickCastFrames or {}
 	_G.ClickCastFrames[frame] = true
 	return frame
-end
-
-local initialConfig = [[
-	self:SetWidth(self:GetParent():GetAttribute('initial-width'))
-	self:SetHeight(self:GetParent():GetAttribute('initial-height'))
-	self:SetAttribute('*type1', 'target')
-	self:SetAttribute('*type2', 'togglemenu')
-	RegisterUnitWatch(self)
-	self:GetParent():CallMethod('InitializeChild', self:GetName())
-]]
-
-function Runtime:CreateHeader(name, template, visibility, ...)
-	local header = CreateFrame("Frame", name, HydraUI.UIParent, template or "SecureGroupHeaderTemplate")
-	header.InitializeChild = function(_, childName)
-		local child = _G[childName]
-		if child and not child.__hydraEnabled then Initialize(child, child:GetAttribute("unit")) end
-	end
-	header:SetAttribute("template", "SecureUnitButtonTemplate")
-	for i = 1, select("#", ...), 2 do header:SetAttribute(select(i, ...), select(i + 1, ...)) end
-	header:SetAttribute("initialConfigFunction", initialConfig)
-	header:SetScript("OnShow", function(self)
-		for _, child in ipairs({self:GetChildren()}) do
-			if not child.__hydraEnabled and child:GetAttribute("unit") then Initialize(child, child:GetAttribute("unit")) end
-		end
-	end)
-	if visibility then RegisterAttributeDriver(header, "state-visibility", visibility) end
-	return header
 end
 
 function Runtime:CreateNamePlates(callback, cvars)

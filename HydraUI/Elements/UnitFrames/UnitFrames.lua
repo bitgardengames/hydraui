@@ -1,10 +1,6 @@
 local addon, ns = ...
 local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
-local oUF = ns.oUF or oUF
-
-local find = string.find
-
 Defaults["unitframes-only-player-debuffs"] = false
 Defaults["unitframes-show-player-buffs"] = true
 Defaults["unitframes-show-player-debuffs"] = true
@@ -64,30 +60,6 @@ end
 if CompactRaidFrameManager then
 	CompactRaidFrameManager:SetParent(UIParent)
 end
-
-local Style = function(self, unit)
-	local StyleFunc = HydraUI.StyleFuncs[unit]
-
-	if (not StyleFunc) and find(unit, "raidpet") and Settings["raid-pets-enable"] then
-		StyleFunc = HydraUI.StyleFuncs["raidpet"]
-	elseif (not StyleFunc) and find(unit, "raid") and Settings["raid-enable"] then
-		StyleFunc = HydraUI.StyleFuncs["raid"]
-	elseif (not StyleFunc) and find(unit, "partypet") and Settings["party-enable"] and Settings["party-pets-enable"] then
-		StyleFunc = HydraUI.StyleFuncs["partypet"]
-	elseif (not StyleFunc) and find(unit, "party") and not find(unit, "pet") and Settings["party-enable"] then
-		StyleFunc = HydraUI.StyleFuncs["party"]
-	elseif (not StyleFunc) and find(unit, "nameplate") and Settings["nameplates-enable"] then
-		StyleFunc = HydraUI.StyleFuncs["nameplate"]
-	elseif (not StyleFunc) and find(unit, "boss%d") then
-		StyleFunc = HydraUI.StyleFuncs["boss"]
-	end
-
-	if StyleFunc then
-		StyleFunc(self, unit)
-	end
-end
-
-oUF:RegisterStyle("HydraUI", Style)
 
 ns.UnitFrameSpawning(UF, Hider)
 

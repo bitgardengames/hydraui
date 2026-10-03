@@ -110,6 +110,16 @@ function Runtime:ApplyStyle(frame, unit, styleKey)
 end
 
 function Runtime:SetUnit(frame, unit, initial, secureUnit)
+	if not initial and frame.unit ~= unit then
+		-- A unit event for the old token can no longer clean these visual
+		-- objects once a secure header or nameplate has been reassigned.
+		for _, name in ipairs(components.order) do
+			local component = components[name]
+			if frame.__hydraEnabled[name] and component.clear then
+				component.clear(frame)
+			end
+		end
+	end
 	frame.unit = unit
 	frame.id = unit and unit:match("(%d+)$")
 	-- A group header owns its children's unit attribute. Writing it back from
@@ -123,7 +133,9 @@ function Runtime:SetUnit(frame, unit, initial, secureUnit)
 				getmetatable(frame).__index.RegisterUnitEvent(frame, event, unit, other or "")
 			end
 		end
-		frame:HydraUpdateAll("HydraUnitChanged")
+		if unit and UnitExists(unit) then
+			frame:HydraUpdateAll("HydraUnitChanged")
+		end
 	end
 end
 
@@ -164,6 +176,9 @@ function Runtime:CreateNamePlates(callback, cvars)
 		if not plate then return end
 		if event == "NAME_PLATE_UNIT_REMOVED" then
 			if callback then callback(plate.unitFrame, event, unit) end
+			if plate.unitFrame then
+				self:SetUnit(plate.unitFrame, nil)
+			end
 			return
 		end
 		if not plate.unitFrame then

@@ -233,7 +233,7 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 		power = self:CreatePowerBar(frame, FamilySetting(config, "-power-height"), Setting(config.powerTextureKey), powerReverse)
 		power.frequentUpdates = true
 		power.colorReaction = config.powerReaction
-		power.Smooth = true
+		power.Smooth = FamilySetting(config, "-power-smooth")
 		self:SetPowerAttributes(power, FamilySetting(config, "-power-color"))
 		if config.powerTags then
 			powerLeft = self:CreateFontString(power, font, fontSize, fontFlags, leftSpec.point, leftSpec.point, leftSpec.x, 0, leftSpec.justify)

@@ -6,8 +6,8 @@ ns.UnitFrameRuntime = Runtime
 
 local oUF = ns.oUF
 local private = oUF.Private
-local elements = private.elements
 local frameMethods = private.frame_metatable.__index
+local components = ns.UnitFrameComponents
 
 local secondaryUnits = {
 	UNIT_ENTERED_VEHICLE = {pet = "player"},
@@ -53,7 +53,7 @@ local function UpdateAll(self, event)
 end
 
 local function EnableElement(self, name, unit)
-	local element = elements[name]
+	local element = components[name]
 	if not element or self.__hydraEnabled[name] then return end
 	if element.enable(self, unit or self.unit) then
 		self.__hydraEnabled[name] = true
@@ -62,7 +62,7 @@ local function EnableElement(self, name, unit)
 end
 
 local function DisableElement(self, name)
-	local element = elements[name]
+	local element = components[name]
 	if not element or not self.__hydraEnabled[name] then return end
 	for i, update in ipairs(self.__hydraUpdates) do
 		if update == element.update then table.remove(self.__hydraUpdates, i) break end
@@ -74,6 +74,7 @@ end
 local function Initialize(frame, unit, secureUnit, styleKey)
 	frame.__hydraEvents, frame.__hydraUnitEvents = {}, {}
 	frame.__hydraUpdates, frame.__hydraEnabled, frame.__elements = {}, {}, {}
+	frame.colors = oUF.colors
 	frame.RegisterEvent, frame.UnregisterEvent = RegisterEvent, UnregisterEvent
 	frame.EnableElement, frame.DisableElement = EnableElement, DisableElement
 	frame.IsElementEnabled = function(self, name) return self.__hydraEnabled[name] end
@@ -82,10 +83,12 @@ local function Initialize(frame, unit, secureUnit, styleKey)
 	-- Tags are an element helper, not part of frame creation. Reuse only these
 	-- mature parsers while the runtime owns lifecycle and event registration.
 	frame.Tag, frame.Untag, frame.UpdateTags = frameMethods.Tag, frameMethods.Untag, frameMethods.UpdateTags
+	frame.ColorGradient = frameMethods.ColorGradient
 	frame:SetScript("OnEvent", Dispatch)
 	Runtime:SetUnit(frame, unit, true, secureUnit)
 	Runtime:ApplyStyle(frame, unit, styleKey)
-	for name in pairs(elements) do frame:EnableElement(name, unit) end
+	components.ApplyColors(frame)
+	for _, name in ipairs(components.order) do frame:EnableElement(name, unit) end
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD", UpdateAll, true)
 	frame:SetScript("OnShow", function(self) self:HydraUpdateAll("OnShow") end)
 	return frame

@@ -286,12 +286,12 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 		TargetIndicator.Right:SetTexture(Assets:GetTexture("Arrow Right Huge"))
 	end
 
-	self:Tag(Top, Settings["nameplates-top-text"])
-	self:Tag(TopLeft, Settings["nameplates-topleft-text"])
-	self:Tag(TopRight, Settings["nameplates-topright-text"])
-	self:Tag(Bottom, Settings["nameplates-bottom-text"])
-	self:Tag(BottomRight, Settings["nameplates-bottomright-text"])
-	self:Tag(BottomLeft, Settings["nameplates-bottomleft-text"])
+	UF:Tag(self, Top, Settings["nameplates-top-text"])
+	UF:Tag(self, TopLeft, Settings["nameplates-topleft-text"])
+	UF:Tag(self, TopRight, Settings["nameplates-topright-text"])
+	UF:Tag(self, Bottom, Settings["nameplates-bottom-text"])
+	UF:Tag(self, BottomRight, Settings["nameplates-bottomright-text"])
+	UF:Tag(self, BottomLeft, Settings["nameplates-bottomleft-text"])
 
 	self.Health = Health
 	self.Top = Top

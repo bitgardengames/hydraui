@@ -142,8 +142,8 @@ function UF:BuildGroupFrame(frame, unit, descriptor)
 	dispel.bg:SetPoint("BOTTOMRIGHT", dispel, 1, -1)
 	dispel.bg:SetTexture(Assets:GetTexture("Blank"))
 	dispel.bg:SetVertexColor(0, 0, 0)
-	frame:Tag(healthName, Settings[prefix .. "-health-top"])
-	frame:Tag(healthBottom, Settings[prefix .. "-health-bottom"])
+	UF:Tag(frame, healthName, Settings[prefix .. "-health-top"])
+	UF:Tag(frame, healthBottom, Settings[prefix .. "-health-bottom"])
 	frame.Range = {
 		insideAlpha = Settings[prefix .. "-in-range"] / 100,
 		outsideAlpha = Settings[prefix .. "-out-of-range"] / 100,

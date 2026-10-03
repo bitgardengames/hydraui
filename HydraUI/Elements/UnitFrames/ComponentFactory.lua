@@ -238,23 +238,23 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 		if config.powerTags then
 			powerLeft = self:CreateFontString(power, font, fontSize, fontFlags, leftSpec.point, leftSpec.point, leftSpec.x, 0, leftSpec.justify)
 			powerRight = self:CreateFontString(power, font, fontSize, fontFlags, rightSpec.point, rightSpec.point, rightSpec.x, 0, rightSpec.justify)
-			frame:Tag(powerLeft, FamilySetting(config, "-power-left"))
-			frame:Tag(powerRight, FamilySetting(config, "-power-right"))
+			self:Tag(frame, powerLeft, FamilySetting(config, "-power-left"))
+			self:Tag(frame, powerRight, FamilySetting(config, "-power-right"))
 		end
 	end
 
 	if healthLeft then
-		frame:Tag(healthLeft, FamilySetting(config, "-health-left"))
+		self:Tag(frame, healthLeft, FamilySetting(config, "-health-left"))
 	end
 	if healthRight then
-		frame:Tag(healthRight, FamilySetting(config, "-health-right"))
+		self:Tag(frame, healthRight, FamilySetting(config, "-health-right"))
 	end
 	frame.Health, frame.HealthLeft, frame.HealthRight = health, healthLeft, healthRight
 	frame.Power, frame.PowerLeft, frame.PowerRight = power, powerLeft, powerRight
 
 	if config.middleTag then
 		local middle = self:CreateFontString(health, font, fontSize, fontFlags, "CENTER", "CENTER", 0, 0, "CENTER")
-		frame:Tag(middle, config.middleTag)
+		self:Tag(frame, middle, config.middleTag)
 		frame.HealthMiddle = middle
 	end
 	if config.mouseoverKey then

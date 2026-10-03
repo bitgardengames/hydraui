@@ -53,6 +53,13 @@ local names = {
 local components = {}
 for _, name in ipairs(names) do
 	local implementation = loaded[name]
+	if name == "Auras" then
+		implementation = ns.UnitFrameAuraComponent or implementation
+	elseif name == "AuraWatch" then
+		implementation = ns.UnitFrameAuraWatchComponent or implementation
+	elseif name == "Castbar" then
+		implementation = ns.UnitFrameCastComponent or implementation
+	end
 	if implementation then
 		components[name] = {
 			name = name,
@@ -60,6 +67,7 @@ for _, name in ipairs(names) do
 			update = implementation.update,
 			enable = implementation.enable,
 			disable = implementation.disable,
+			clear = implementation.clear,
 		}
 	end
 end

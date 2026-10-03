@@ -6,6 +6,58 @@ local UnitIsPlayer = UnitIsPlayer
 local Class, Colors
 
 local function Install(UF, Hider)
+local CastImplementation = ns.oUF.Private.elements.Castbar
+local ActiveCastbars = setmetatable({}, {__mode = "k"})
+local CastUpdater = CreateFrame("Frame")
+
+-- All HydraUI castbars are advanced by this one driver.  The selected oUF
+-- implementation still owns client-specific event handling and field setup.
+CastUpdater:SetScript("OnUpdate", function(_, elapsed)
+	for castbar, update in pairs(ActiveCastbars) do
+		update(castbar, elapsed)
+	end
+end)
+
+local function ClearCastbar(frame)
+	local castbar = frame.Castbar
+	if not castbar then
+		return
+	end
+	castbar.casting = nil
+	castbar.channeling = nil
+	castbar.empowering = nil
+	castbar.castID = nil
+	castbar.spellID = nil
+	castbar.holdTime = 0
+	castbar:Hide()
+end
+
+if CastImplementation then
+	ns.UnitFrameCastComponent = {
+		update = CastImplementation.update,
+		enable = function(frame, unit)
+			if not CastImplementation.enable(frame, unit) then
+				return false
+			end
+			local castbar = frame.Castbar
+			local update = castbar:GetScript("OnUpdate")
+			if update then
+				castbar:SetScript("OnUpdate", nil)
+				ActiveCastbars[castbar] = update
+			end
+			return true
+		end,
+		disable = function(frame)
+			if frame.Castbar then
+				ActiveCastbars[frame.Castbar] = nil
+			end
+			CastImplementation.disable(frame)
+			ClearCastbar(frame)
+		end,
+		clear = ClearCastbar,
+	}
+end
+
 UF.PostCastStart = function(self, unit)
 	if self.notInterruptible then
 		self:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))
@@ -28,7 +80,7 @@ UF.PostCastStart = function(self, unit)
 	end
 end
 
-UF.PostCastInterruptible = function(self)
+UF.PostCastInterruptible = function(self, unit)
 	if self.notInterruptible then
 		self:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))
 		self.bg:SetVertexColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))

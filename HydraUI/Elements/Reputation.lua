@@ -231,7 +231,7 @@ function Reputation:OnEnter()
 
 	local Name, StandingID, Min, Max, Value
 
-	if HydraUI.IsMainline then
+	if GetWatchedFactionData then
 		local Data = GetWatchedFactionData()
 
 		if Data then

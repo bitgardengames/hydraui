@@ -7,6 +7,7 @@ local Events, Methods = {}, {}
 local format = string.format
 local floor = math.floor
 local sub = string.sub
+local gsub = string.gsub
 local len = string.len
 local byte = string.byte
 local tonumber = tonumber
@@ -742,24 +743,34 @@ local function Compile(tagString)
 end
 
 local function FormatTagString(binding, unit, realUnit)
-	local output = {}
+	local output, values = {}, {}
 	for i = 1, #binding.parts do
 		local part = binding.parts[i]
 		if type(part) == "string" then
-			output[#output + 1] = part
+			output[#output + 1] = gsub(part, "%%", "%%%%")
 		else
 			local method = Methods[part.name]
 			local value = method and method(unit, realUnit, unpack(part.arguments))
-			if value ~= nil and value ~= "" then
-				output[#output + 1] = part.prefix .. tostring(value) .. part.suffix
+			-- Secret values cannot be compared or coerced by addon code, but
+			-- SetFormattedText is allowed to display them. Keep the value as a
+			-- formatting argument so prefixes and suffixes still work in combat.
+			local secret = HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)
+			if secret or (value ~= nil and value ~= "") then
+				output[#output + 1] = gsub(part.prefix, "%%", "%%%%") .. "%s" .. gsub(part.suffix, "%%", "%%%%")
+				values[#values + 1] = value
 			end
 		end
 	end
-	return table.concat(output)
+	return table.concat(output), values
 end
 
 local function UpdateBinding(frame, binding)
-	binding.fontString:SetText(FormatTagString(binding, frame.unit, binding.fontString.overrideUnit and frame.realUnit))
+	local output, values = FormatTagString(binding, frame.unit, binding.fontString.overrideUnit and frame.realUnit)
+	if #values > 0 then
+		binding.fontString:SetFormattedText(output, unpack(values))
+	else
+		binding.fontString:SetText(output)
+	end
 end
 
 local function TagEvent(frame, event, unit)

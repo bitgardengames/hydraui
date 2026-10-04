@@ -1,5 +1,6 @@
 local _, ns = ...
-local Handlers = ns.UnitFrameComponentHandlers
+local HydraUI = ns:get()
+local UnitFrames = HydraUI.UnitFrames
 
 local function Force(element, update)
 	return function()
@@ -12,7 +13,7 @@ local function Install(name, events, update, enable)
 		local element = frame[name]
 		return (element.Override or update)(frame, ...)
 	end
-	Handlers[name] = {
+	UnitFrames:RegisterComponent(name, {
 		update = Path,
 		enable = function(frame)
 			local element = frame[name]
@@ -32,7 +33,7 @@ local function Install(name, events, update, enable)
 				frame:UnregisterEvent(events[i][1], Path)
 			end
 		end,
-	}
+	})
 end
 
 local function TextureIndicator(name, predicate, texture)

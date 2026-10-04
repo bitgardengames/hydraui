@@ -1,5 +1,5 @@
 local addon, ns = ...
-local HydraUI, Language, Assets, Settings, Defaults = ns:get()
+local HydraUI = ns:get()
 
 local GetTime = GetTime
 

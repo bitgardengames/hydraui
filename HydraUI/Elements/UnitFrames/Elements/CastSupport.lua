@@ -1,5 +1,5 @@
 local addon, ns = ...
-local HydraUI, Language, Assets, Settings, Defaults = ns:get()
+local HydraUI, _, _, Settings = ns:get()
 
 local UnitClass = UnitClass
 local UnitIsPlayer = UnitIsPlayer

@@ -11,7 +11,9 @@ if not HydraUI.IsMainline then
 				break
 			end
 			if visitor(index, name, icon, count, debuffType, duration, expiration,
-				caster, isStealable, spellID) == false then break end
+				caster, isStealable, spellID) == false then
+				break
+			end
 		end
 	end
 end

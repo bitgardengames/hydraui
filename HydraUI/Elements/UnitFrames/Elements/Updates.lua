@@ -1,5 +1,5 @@
 local _, ns = ...
-local HydraUI, Language, Assets, Settings = ns:get()
+local HydraUI, _, Assets, Settings = ns:get()
 
 local UF = HydraUI:GetModule("Unit Frames")
 

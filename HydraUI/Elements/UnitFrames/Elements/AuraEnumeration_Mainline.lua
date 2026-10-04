@@ -12,7 +12,9 @@ if HydraUI.IsMainline then
 			end
 			if visitor(index, aura.name, aura.icon, aura.applications, aura.dispelName,
 				aura.duration, aura.expirationTime, aura.sourceUnit, aura.isStealable,
-				aura.spellId, aura) == false then break end
+				aura.spellId, aura) == false then
+				break
+			end
 		end
 	end
 end

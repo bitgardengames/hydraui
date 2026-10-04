@@ -8,12 +8,33 @@ local PlayerResourceEvents = {
 	"UNIT_POWER_UPDATE",
 }
 
+local RuneColors = {
+	{1, 0, 0}, -- Blood
+	{0, 1, 1}, -- Frost
+	{0, 0.5, 0}, -- Unholy
+	{0.9, 0.1, 1}, -- Death
+}
+
+local function UpdateRuneColor(segment)
+	local runeType = GetRuneType and GetRuneType(segment:GetID())
+	local color = runeType and RuneColors[runeType]
+	local r, g, b
+	if color then
+		r, g, b = unpack(color)
+	else
+		r, g, b = HydraUI:HexToRGB(Settings["color-runes"])
+	end
+	segment:SetStatusBarColor(r, g, b)
+	segment.bg:SetVertexColor(r, g, b)
+end
+
 local function UpdateRune(segment)
 	local startTime, duration, ready = GetRuneCooldown(segment:GetID())
 	duration = duration or 1
 	segment:SetMinMaxValues(0, duration)
 	segment:SetValue(ready and duration or math.max(0, GetTime() - (startTime or 0)))
 	segment:SetScript("OnUpdate", ready and nil or UpdateRune)
+	UpdateRuneColor(segment)
 end
 
 local function ChargedPoints()
@@ -28,7 +49,8 @@ local function ChargedPoints()
 end
 
 local function UpdatePlayerResources(frame, event, unit)
-	if unit and unit ~= "player" then
+	-- Rune events pass a rune index in the callback's third argument, not a unit.
+	if type(unit) == "string" and unit ~= "player" then
 		return
 	end
 
@@ -452,6 +474,7 @@ local function BuildPlayerComponents(factory, self, unit)
 					segment.Charged:Hide()
 				end
 				if descriptor.runes then
+					segment:SetID(i)
 					segment.Duration = 0
 					segment.Shine = segment:CreateTexture(nil, "ARTWORK")
 					segment.Shine:SetAllPoints()

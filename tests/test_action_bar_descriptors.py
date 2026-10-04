@@ -3,7 +3,9 @@ from pathlib import Path
 import re
 import unittest
 
-SOURCE = (Path(__file__).parents[1] / "HydraUI/Elements/ActionBars/ActionBars.lua").read_text()
+ACTION_BAR_DIR = Path(__file__).parents[1] / "HydraUI/Elements/ActionBars"
+ACTION_BAR_MODULES = ("ActionBars.lua", "Buttons.lua", "Bars.lua", "TotemBar.lua", "Settings.lua")
+SOURCE = "\n".join((ACTION_BAR_DIR / module).read_text() for module in ACTION_BAR_MODULES)
 
 
 class ActionBarDescriptorCoverage(unittest.TestCase):
@@ -17,6 +19,16 @@ class ActionBarDescriptorCoverage(unittest.TestCase):
         self.assertIn('Defaults[key .. "-per-row"] = descriptor.defaultPerRow', SOURCE)
         self.assertIn('Defaults[key .. "-button-max"] = 12', SOURCE)
         self.assertNotRegex(SOURCE, r'Defaults\["ab-bar[1-8]-')
+
+    def test_implementation_is_split_into_focused_modules(self):
+        for module in ACTION_BAR_MODULES:
+            source = (ACTION_BAR_DIR / module).read_text()
+            self.assertLess(len(source.splitlines()), 600, module)
+
+        for toc in (Path(__file__).parents[1] / "HydraUI").glob("HydraUI_*.toc"):
+            source = toc.read_text()
+            positions = [source.index("Elements\\ActionBars\\" + module) for module in ACTION_BAR_MODULES]
+            self.assertEqual(sorted(positions), positions, toc.name)
 
     def test_missing_optional_bars_are_skipped_everywhere(self):
         self.assertIn("if not descriptor.available() then", SOURCE)

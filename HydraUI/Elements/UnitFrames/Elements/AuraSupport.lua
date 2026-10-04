@@ -1,7 +1,8 @@
 local addon, ns = ...
 local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
-local function Install(UF, Hider)
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local Hider = assert(ns.UnitFrameHider, "unit-frame core must create the hider")
 local UnregisterAuraTimer = function(button)
 	HydraUI.DurationText:Unregister(button)
 	button.LastAuraTime = nil
@@ -545,7 +546,3 @@ local function EnableAuras(frame)
 end
 ns.UnitFrameComponentHandlers.Auras={update=UpdateAuras,enable=EnableAuras,disable=function(frame) if frame.Buffs then frame.Buffs:Hide() end
 	if frame.Debuffs then frame.Debuffs:Hide() end end}
-
-end
-
-ns.UnitFrameAuraSupport = Install

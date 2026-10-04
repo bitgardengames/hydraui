@@ -1,10 +1,8 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local Installers = ns.UnitFrameElementInstallers or {}
-ns.UnitFrameElementInstallers = Installers
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
 
-Installers[#Installers + 1] = function(UF, Hider)
 function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativePoint, x, y, texture, backgroundTexture, backgroundTopLeftX, backgroundTopLeftY, backgroundBottomRightX, backgroundBottomRightY, font, fontSize, fontFlags, timeX, textX, textWidth, iconSize, iconX, iconBackground, safeZoneEnabled, showTradeSkills, timeToHold, classColor, postCastStart, postCastStop, postCastFail, postCastInterruptible)
 	local castbar = CreateFrame("StatusBar", name, frame)
 	castbar:SetSize(width, height)
@@ -59,6 +57,4 @@ function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativ
 	castbar.PostCastInterruptible = postCastInterruptible
 	frame.Castbar = castbar
 	return castbar
-end
-
 end

@@ -1,10 +1,8 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local Installers = ns.UnitFrameElementInstallers or {}
-ns.UnitFrameElementInstallers = Installers
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
 
-Installers[#Installers + 1] = function(UF, Hider)
 function UF:CreateAuraContainer(frame, name, parent, width, height, point, relativeTo, relativePoint, x, y, iconSize, spacing, num, initialAnchor, tooltipAnchor, growthX, growthY, postCreateIcon, postUpdateIcon, customFilter, onlyShowPlayer, showStealableBuffs)
 	local auras = CreateFrame("Frame", name, parent or frame)
 	auras:SetSize(width, height)
@@ -24,6 +22,4 @@ function UF:CreateAuraContainer(frame, name, parent, width, height, point, relat
 	auras.onlyShowPlayer = onlyShowPlayer
 	auras.showStealableBuffs = showStealableBuffs
 	return auras
-end
-
 end

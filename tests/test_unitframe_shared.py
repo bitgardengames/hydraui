@@ -311,7 +311,7 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
     def test_manifest_loads_support_modules_before_coordinator(self):
         manifest = (ROOT / "UnitFrames.xml").read_text()
         coordinator = manifest.index('file="UnitFrames.lua"')
-        for module in ("Elements/Factory", "Elements/AuraSupport", "Elements/CastSupport",
+        for module in ("Elements/AuraSupport", "Elements/CastSupport",
                        "Elements/TotemSupport", "Spawning"):
             self.assertLess(manifest.index(f'file="{module}.lua"'), coordinator)
 
@@ -334,8 +334,13 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
             for method in methods:
                 self.assertRegex(source, rf"UF[.:]{method}\b")
 
-    def test_coordinator_delegates_constructor_installation(self):
-        source = (ROOT / "UnitFrames.lua").read_text()
-        for module in ("ComponentFactory", "AuraSupport", "CastSupport",
-                       "TotemSupport", "Spawning"):
-            self.assertIn(f"ns.UnitFrame{module}(UF, Hider)", source)
+    def test_elements_attach_directly_without_deferred_installers(self):
+        coordinator = (ROOT / "UnitFrames.lua").read_text()
+        sources = "\n".join(path.read_text() for path in ELEMENTS.glob("*.lua"))
+        sources += (ROOT / "Spawning.lua").read_text()
+
+        self.assertIn("ns.UnitFrameModule", coordinator)
+        self.assertNotIn("UnitFrameElementInstallers", sources)
+        self.assertNotIn("UnitFrameComponentFactory", coordinator + sources)
+        for module in ("AuraSupport", "CastSupport", "TotemSupport", "Spawning"):
+            self.assertNotIn(f"ns.UnitFrame{module}(UF, Hider)", coordinator)

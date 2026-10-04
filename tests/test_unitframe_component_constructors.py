@@ -4,7 +4,13 @@ import re
 import unittest
 
 ROOT = Path(__file__).parents[1] / "HydraUI/Elements/UnitFrames"
-SHARED = (ROOT / "ComponentFactory.lua").read_text()
+FRAMES = ROOT / "Frames"
+ELEMENTS = ROOT / "Elements"
+SHARED = "\n".join(
+    (ELEMENTS / name).read_text()
+    for name in ("Common.lua", "SingleUnit.lua", "PortraitWidget.lua", "Castbar.lua",
+                 "Auras.lua", "RaidTarget.lua", "Updates.lua")
+)
 
 
 def body(name):
@@ -15,7 +21,7 @@ def body(name):
 
 class ComponentConstructorCoverage(unittest.TestCase):
     def test_portrait_matches_ouf_availability_and_class_defaults(self):
-        source = SHARED[SHARED.index("local function UpdatePortrait"):SHARED.index("local function UpdateThreat")]
+        source = (ELEMENTS / "Portrait.lua").read_text()
         for behavior in (
             "UnitIsConnected(unit) and UnitIsVisible(unit)",
             "TalkToMeQuestionMark.m2",
@@ -47,7 +53,7 @@ class ComponentConstructorCoverage(unittest.TestCase):
 
     def test_all_component_callers_avoid_option_tables(self):
         constructors = ("CreatePortrait", "CreateCastbar", "CreateAuraContainer")
-        for path in ROOT.glob("*.lua"):
+        for path in ROOT.rglob("*.lua"):
             source = path.read_text()
             for constructor in constructors:
                 self.assertNotRegex(source, rf"{constructor}\([^)]*,\s*\{{")
@@ -66,20 +72,20 @@ class ComponentConstructorCoverage(unittest.TestCase):
 
     def test_small_unit_auras_still_use_the_shared_constructor(self):
         for module in ("Pet", "TargetTarget"):
-            source = (ROOT / f"{module}.lua").read_text()
+            source = (FRAMES / f"{module}.lua").read_text()
             self.assertIn("CreateAuraContainer(frame,", source)
             self.assertNotRegex(source, r'CreateFrame\("Frame", frame:GetName\(\) \.\. "(?:Buffs|Debuffs)"')
 
     def test_optional_client_behavior_is_passed_directly(self):
-        player = (ROOT / "Player.lua").read_text()
-        target = (ROOT / "Target.lua").read_text()
+        player = (FRAMES / "Player.lua").read_text()
+        target = (FRAMES / "Target.lua").read_text()
         self.assertIn("true, true, 0.7, Settings[\"unitframes-player-cast-classcolor\"]", player)
         self.assertIn("nil, true, 0.3, Settings[\"unitframes-target-cast-classcolor\"]", target)
 
     def test_all_non_group_styles_have_one_factory_entry_point(self):
         for module in ("Player", "Target", "Focus", "Boss", "Pet",
                        "TargetTarget", "PartyPets", "RaidPets"):
-            source = (ROOT / f"{module}.lua").read_text()
+            source = (FRAMES / f"{module}.lua").read_text()
             style = source[source.index("HydraUI.StyleFuncs["):]
             style = style[:style.index("\nend")]
             self.assertIn("UF:BuildSingleUnitFrame(self, unit,", style)

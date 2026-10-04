@@ -191,25 +191,12 @@ function Window:Load()
 end
 
 local UpdateOpacity = function(value)
+	local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
+
 	if Settings["right-window-size"] == "SINGLE" then
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
-
-		Window.Middle.Outside:SetBackdropColor(R, G, B, (Settings["right-window-fill"] / 100))
-	end
-end
-
-local UpdateLeftOpacity = function(value)
-	if Settings["right-window-size"] ~= "SINGLE" then
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
-
+		Window.Middle.Outside:SetBackdropColor(R, G, B, (value / 100))
+	else
 		Window.Left.Outside:SetBackdropColor(R, G, B, (value / 100))
-	end
-end
-
-local UpdateRightOpacity = function(value)
-	if Settings["right-window-size"] ~= "SINGLE" then
-		local R, G, B = HydraUI:HexToRGB(Settings["ui-window-main-color"])
-
 		Window.Right.Outside:SetBackdropColor(R, G, B, (value / 100))
 	end
 end
@@ -286,18 +273,9 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Right"], Lang
 	left:CreateSlider("right-window-width", Settings["right-window-width"], 300, 650, 1, Language["Window Width"], Language["Set the width of the window"], UpdateWidth)
 	left:CreateSlider("right-window-height", Settings["right-window-height"], 40, 350, 1, Language["Window Height"], Language["Set the height of the window"], UpdateHeight)
 
-	local Single = left:CreateSlider("right-window-fill", Settings["right-window-fill"], 0, 100, 5, Language["Background Opacity"], Language["Set the opacity of the window background"], UpdateOpacity, nil, "%")
-	local Left = left:CreateSlider("right-window-left-fill", Settings["right-window-left-fill"], 0, 100, 5, Language["Left Opacity"], Language["Set the opacity of the left window background"], UpdateLeftOpacity, nil, "%")
-	local Right = left:CreateSlider("right-window-right-fill", Settings["right-window-right-fill"], 0, 100, 5, Language["Right Opacity"], Language["Set the opacity of the right window background"], UpdateRightOpacity, nil, "%")
+	left:CreateSlider("right-window-fill", Settings["right-window-fill"], 0, 100, 5, Language["Background Opacity"], Language["Set the opacity of the window background"], UpdateOpacity, nil, "%")
 
 	left:CreateSlider("right-window-middle-pos", Settings["right-window-middle-pos"], 1, 99, 1, "Set divider", "blah", UpdateSplitPosition, nil, "%")
-
-	if Settings["right-window-size"] == "SINGLE" then
-		Left:GetParent():Disable()
-		Right:GetParent():Disable()
-	else
-		Single:GetParent():Disable()
-	end
 
 	right:CreateHeader("Window Style")
 	right:CreateDropdown("right-window-size", Settings["right-window-size"], {[Language["Single"]] = "SINGLE", [Language["Double"]] = "DOUBLE"}, Language["Set Window Size"], Language["Set the number of windows to be displayed"], ReloadUI):RequiresReload(true)

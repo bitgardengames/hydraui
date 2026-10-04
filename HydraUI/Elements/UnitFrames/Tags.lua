@@ -1,9 +1,7 @@
 local addon, ns = ...
 local HydraUI, Language = ns:get()
 
--- Tags belong to HydraUI.  Keeping these registries local is important: unit
--- buttons created by the native core must not silently depend on a third-party tag
--- element being enabled (or even loaded).
+-- Tags belong to HydraUI.  Keeping these registries local is important: unit buttons created by the native core must not silently depend on a third-party tag element being enabled (or even loaded).
 local Events, Methods = {}, {}
 
 local format = string.format
@@ -315,8 +313,7 @@ Methods["HealthColor"] = function(unit)
 	end
 end
 
--- Retail health can be secret in combat. These are separate implementations
--- so classic clients retain the direct paths above without per-update checks.
+-- Retail health can be secret in combat. These are separate implementations so classic clients retain the direct paths above without per-update checks.
 if HydraUI.IsMainline then
 	Methods["Health"] = function(unit)
 		return HydraUI:Comma(UnitHealth(unit))
@@ -644,7 +641,7 @@ end
 
 Events["PartyIndex"] = "GROUP_ROSTER_UPDATE"
 Methods["PartyIndex"] = function(unit)
-	local Header = _G["HydraUI Party"]
+	local Header = HydraUI.UnitFrames["party"]
 
 	if Header and Header:GetAttribute("isTesting") then
 		if TestPartyIndex >= 5 then
@@ -664,7 +661,7 @@ end
 
 Events["RaidIndex"] = "GROUP_ROSTER_UPDATE"
 Methods["RaidIndex"] = function(unit)
-	local Header = _G["HydraUI Raid"]
+	local Header = HydraUI.UnitFrames["raid"]
 
 	if Header and Header:GetAttribute("isTesting") then
 		if TestRaidIndex >= 25 then
@@ -695,10 +692,7 @@ Methods["RaidGroup"] = function(unit)
 	end
 end
 
--- Compile profile tag strings into small descriptors.  The accepted syntax is
--- the same syntax HydraUI profiles have always used:
--- [prefix$>Tag<$suffix(arg,arg)].  Prefix and suffix are conditional on a
--- non-empty tag result, while ordinary text is copied verbatim.
+-- Compile profile tags such as [prefix$>Tag<$suffix(arg,arg)] into descriptors; the prefix and suffix require a non-empty result, while ordinary text is copied verbatim.
 local function ParseTag(token)
 	local body = sub(token, 2, -2)
 	local prefix, suffix = "", ""

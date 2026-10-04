@@ -37,8 +37,7 @@ local UF = HydraUI:GetModule("Unit Frames")
 local GetNamePlates = C_NamePlate.GetNamePlates
 
 HydraUI.StyleFuncs["nameplate"] = function(self, unit)
-	-- The Blizzard nameplate parent already supplies its effective world/UI scale.
-	-- Applying UIParent's scale here as well would multiply that scale on the child.
+	-- The Blizzard nameplate parent already supplies its effective world/UI scale. Applying UIParent's scale here as well would multiply that scale on the child.
 	self:SetScale(1)
 	self:SetSize(Settings["nameplates-width"], Settings["nameplates-height"])
 	self:SetPoint("CENTER", 0, 0)
@@ -336,7 +335,7 @@ function UF:CreateNamePlateDriver()
 
 	local function DisableBlizzardPlate(base)
 		local blizzard = base and (base.UnitFrame or base.unitFrame)
-		if blizzard and blizzard ~= base.HydraUIUnitFrame then
+		if blizzard and blizzard ~= base._unitFrame then
 			blizzard:UnregisterAllEvents()
 			blizzard:Hide()
 			blizzard:SetAlpha(0)
@@ -349,12 +348,11 @@ function UF:CreateNamePlateDriver()
 			return
 		end
 		DisableBlizzardPlate(base)
-		local plate = base.HydraUIUnitFrame
+		local plate = base._unitFrame
 		if not plate then
-			-- Keep the Blizzard nameplate as the parent, just as oUF did.  Reparenting
-			-- this frame to HydraUIParent would detach it from the world-space plate.
+			-- Keep the Blizzard nameplate as the parent, just as oUF did.  Reparenting this frame to HydraUIParent would detach it from the world-space plate.
 			plate = HydraUI.UnitFrames:CreateNamePlateButton(base, unit, HydraUI.StyleFuncs.nameplate)
-			base.HydraUIUnitFrame = plate
+			base._unitFrame = plate
 		end
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)
 		self.NamePlatesByUnit[unit] = plate
@@ -372,8 +370,7 @@ function UF:CreateNamePlateDriver()
 		self.NamePlatesByUnit[unit] = nil
 	end
 
-	-- Blizzard initializes its nameplate CVars during login. Match oUF's timing so
-	-- those defaults cannot overwrite HydraUI's 1:1 nameplate scale afterwards.
+	-- Blizzard initializes its nameplate CVars during login. Match oUF's timing so those defaults cannot overwrite HydraUI's 1:1 nameplate scale afterwards.
 	if IsLoggedIn() then
 		ApplyCVars()
 	else
@@ -392,7 +389,7 @@ function UF:CreateNamePlateDriver()
 			Removed(unit)
 		else
 			local plate = C_NamePlate.GetNamePlateForUnit("target")
-			plate = plate and plate.HydraUIUnitFrame
+			plate = plate and plate._unitFrame
 			UF.NamePlateCallback(plate, event, "target")
 			if plate then
 				plate:UpdateAllElements(event)
@@ -492,8 +489,8 @@ local RunForAllNamePlates = function(func, value)
 
 	if NamePlates then
 		for i = 1, #NamePlates do
-			if NamePlates[i].HydraUIUnitFrame then
-				func(NamePlates[i].HydraUIUnitFrame, value)
+			if NamePlates[i]._unitFrame then
+				func(NamePlates[i]._unitFrame, value)
 			end
 		end
 	end

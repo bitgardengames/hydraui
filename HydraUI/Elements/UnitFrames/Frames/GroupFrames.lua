@@ -5,9 +5,7 @@ local function Setting(descriptor, suffix)
 	return Settings[descriptor.prefix .. suffix]
 end
 
--- Group frame descriptors are deliberately data-only and live for the lifetime of
--- the addon.  Settings callbacks can therefore pass one stable object through the
--- header iterator instead of manufacturing a closure (or a children table).
+-- Group frame descriptors are deliberately data-only and live for the lifetime of the addon.  Settings callbacks can therefore pass one stable object through the header iterator instead of manufacturing a closure (or a children table).
 local function CreateAuraWatch(frame, health, descriptor)
 	if not descriptor.indicators.auraWatch or not UF.BuffIDs[HydraUI.UserClass] then
 		return

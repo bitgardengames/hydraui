@@ -5,8 +5,7 @@ local UnitClass = UnitClass
 local UnitIsPlayer = UnitIsPlayer
 local Class, Colors
 
--- Select the spell-info adapter once.  The hot event path is shared by every
--- client and does not repeatedly inspect the project version.
+-- Select the spell-info adapter once.  The hot event path is shared by every client and does not repeatedly inspect the project version.
 local CastingInfo, ChannelInfo
 if HydraUI.IsMainline then
 	CastingInfo = function(unit)

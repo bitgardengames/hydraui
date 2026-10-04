@@ -44,8 +44,7 @@ function UF:SetPowerAttributes(power, value)
 	end
 end
 
--- Constructors for the common visual pieces accept resolved, explicit values.
--- Style modules remain responsible for choosing settings and frame-specific behavior.
+-- Constructors for the common visual pieces accept resolved, explicit values. Style modules remain responsible for choosing settings and frame-specific behavior.
 function UF:CreateBackdrop(frame, texture, layer, relativeTo, colorR, colorG, colorB)
 	local backdrop = frame:CreateTexture(nil, layer or "BACKGROUND")
 	if relativeTo then

@@ -132,10 +132,7 @@ local function Points(name, powerType)
 		UpdatePoints(frame, ...)
 		frame.__pointsName = nil
 	end, function(frame, element)
-		-- Player.lua owns its canonical resource container because it also
-		-- handles rune cooldowns, charged points, and client-specific layouts.
-		-- Alias fields remain available to callers without installing a second
-		-- updater over the same status bars.
+		-- Player.lua owns the resource container and its rune, charged-point, and client-specific behavior; aliases should not install duplicate updaters.
 		if frame.ClassResource == element then
 			return false
 		end

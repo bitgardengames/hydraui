@@ -55,8 +55,7 @@ end
 
 local function Enable(frame)
 	frame.SmoothBar = SmoothBar
-	-- Health and power historically opted into smoothing unless a layout
-	-- explicitly disabled it.
+	-- Health and power historically opted into smoothing unless a layout explicitly disabled it.
 	if frame.Health and frame.Health.Smooth ~= false then
 		frame:SmoothBar(frame.Health)
 	end

@@ -221,15 +221,15 @@ if __name__ == "__main__":
 
 
 class UnitFrameSpawnerCoverage(unittest.TestCase):
-    def test_frame_kinds_share_the_hydra_runtime_initializer(self):
+    def test_frame_kinds_share_the_runtime_initializer(self):
         source = (ROOT / "Core.lua").read_text()
         initializer = source[
             source.index("local function PrepareFrame"):
-            source.index("local function BuildComponents")
+            source.index("local function BuildElements")
         ]
 
-        for state in ("_hydraEvents", "_hydraUnitEvents", "_hydraRefreshers",
-                      "_hydraEnabledComponents"):
+        for state in ("_events", "_unitEvents", "_refreshers",
+                      "_enabledElements"):
             self.assertIn(state, initializer)
         for constructor in ("CreateUnitButton", "InitializeHeaderChild",
                             "CreateNamePlateButton"):

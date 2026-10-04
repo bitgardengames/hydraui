@@ -1,6 +1,7 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
 local AB = HydraUI:NewModule("Action Bars")
+local GUI = HydraUI:GetModule("GUI")
 local NumPad = KEY_NUMPAD1:gsub("%s%S$", "")
 local WheelUp = KEY_MOUSEWHEELUP
 local WheelDown = KEY_MOUSEWHEELDOWN
@@ -178,3 +179,8 @@ function AB:Load()
 		hooksecurefunc("ActionButton_Update", AB.UpdateButtonStatus)
 	end
 end
+
+GUI:AddWidgets(Language["General"], Language["Action Bars"], function(left, right)
+	left:CreateHeader(Language["Enable"])
+	left:CreateSwitch("ab-enable", Settings["ab-enable"], Language["Enable Action Bar"], Language["Enable action bars module"], ReloadUI):RequiresReload(true)
+end)

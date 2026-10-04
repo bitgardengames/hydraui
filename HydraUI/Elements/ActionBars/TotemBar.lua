@@ -1,6 +1,7 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
 local AB = HydraUI:GetModule("Action Bars")
+local GUI = HydraUI:GetModule("GUI")
 
 function AB:UpdateFlyout()
 	if not self.FlyoutArrow then
@@ -194,3 +195,18 @@ function AB:StyleTotemBar()
 		self:DisableBar(self.TotemBar)
 	end
 end
+
+local UpdateEnableTotemBar = function(value)
+	if value then
+		AB:EnableBar(AB.TotemBar)
+	else
+		AB:DisableBar(AB.TotemBar)
+	end
+end
+
+
+
+GUI:AddWidgets(Language["General"], Language["Totem Bar"], Language["Action Bars"], function(left, right)
+	left:CreateHeader(Language["Enable"])
+	left:CreateSwitch("ab-totem-enable", Settings["ab-totem-enable"], Language["Enable Bar"], Language["Enable the totem bar"], UpdateEnableTotemBar)
+end)

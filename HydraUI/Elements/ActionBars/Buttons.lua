@@ -1,6 +1,7 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
 local AB = HydraUI:GetModule("Action Bars")
+local GUI = HydraUI:GetModule("GUI")
 
 local IsUsableAction = IsUsableAction
 local NUM_PET_ACTION_SLOTS = NUM_PET_ACTION_SLOTS
@@ -383,3 +384,99 @@ function AB:UpdateButtonStatus(check, inrange)
 		self.icon:SetVertexColor(HydraUI:HexToRGB("4C4C4C"))
 	end
 end
+
+function AB:SetButtonRegionAlpha(regionName, alpha, includeAuxiliaryBars)
+	for _, bar in ipairs(self.Bars or {}) do
+		for i = 1, #bar do
+			local region = bar[i][regionName]
+			if region then
+				region:SetAlpha(alpha)
+			end
+		end
+	end
+
+	if includeAuxiliaryBars then
+		local function updateAuxiliaryBar(bar)
+			if not bar then
+				return
+			end
+			for i = 1, #bar do
+				local region = bar[i][regionName]
+				if region then
+					region:SetAlpha(alpha)
+				end
+			end
+		end
+
+		updateAuxiliaryBar(self.PetBar)
+		updateAuxiliaryBar(self.StanceBar)
+		if ExtraActionButton1 and ExtraActionButton1[regionName] then
+			ExtraActionButton1[regionName]:SetAlpha(alpha)
+		end
+	end
+end
+
+local UpdateShowHotKey = function(value)
+	AB:SetButtonRegionAlpha("HotKey", value and 1 or 0, true)
+end
+local UpdateShowMacroName = function(value)
+	AB:SetButtonRegionAlpha("Name", value and 1 or 0, false)
+end
+local UpdateShowCount = function(value)
+	AB:SetButtonRegionAlpha("Count", value and 1 or 0, false)
+end
+
+function AB:UpdateButtonFont(button)
+	if button.HotKey then
+		HydraUI:SetFontInfo(button.HotKey, Settings["ab-font"], Settings["ab-font-size"], Settings["ab-font-flags"])
+	end
+
+	if button.Name then
+		HydraUI:SetFontInfo(button.Name, Settings["ab-font"], Settings["ab-font-size"], Settings["ab-font-flags"])
+	end
+
+	if button.Count then
+		HydraUI:SetFontInfo(button.Count, Settings["ab-font"], Settings["ab-font-size"], Settings["ab-font-flags"])
+	end
+
+	if button.cooldown then
+		local Cooldown = button.cooldown:GetRegions()
+
+		if Cooldown then
+			HydraUI:SetFontInfo(Cooldown, Settings["ab-font"], Settings["ab-cd-size"], Settings["ab-font-flags"])
+		end
+	end
+end
+
+local UpdateActionBarFont = function()
+	for _, bar in ipairs(AB.Bars or {}) do
+		for i = 1, #bar do
+			AB:UpdateButtonFont(bar[i])
+		end
+	end
+
+	local auxiliaryBars = { "PetBar", "StanceBar" }
+	for _, field in ipairs(auxiliaryBars) do
+		local bar = AB[field]
+		if bar then
+			for i = 1, #bar do
+				AB:UpdateButtonFont(bar[i])
+			end
+		end
+	end
+end
+
+
+
+GUI:AddWidgets(Language["General"], Language["Action Bars"], function(left, right)
+	left:CreateHeader(Language["Styling"])
+	left:CreateSwitch("ab-show-hotkey", Settings["ab-show-hotkey"], Language["Show Hotkeys"], Language["Display hotkey text on action buttons"], UpdateShowHotKey)
+	left:CreateSwitch("ab-show-macro", Settings["ab-show-macro"], Language["Show Macro Names"], Language["Display macro name text on action buttons"], UpdateShowMacroName)
+	left:CreateSwitch("ab-show-count", Settings["ab-show-count"], Language["Show Count Text"], Language["Display count text on action buttons"], UpdateShowCount)
+
+	left:CreateHeader(Language["Font"])
+	left:CreateDropdown("ab-font", Settings["ab-font"], Assets:GetFontList(), Language["Font"], Language["Set the font of the action bar buttons"], UpdateActionBarFont, "Font")
+	left:CreateSlider("ab-font-size", Settings["ab-font-size"], 8, 42, 1, Language["Font Size"], Language["Set the font size of the action bar buttons"], UpdateActionBarFont)
+	left:CreateSlider("ab-cd-size", Settings["ab-cd-size"], 8, 42, 1, Language["Cooldown Font Size"], Language["Set the font size of the action bar cooldowns"], UpdateActionBarFont)
+	left:CreateDropdown("ab-font-flags", Settings["ab-font-flags"], Assets:GetFlagsList(), Language["Font Flags"], Language["Set the font flags of the action bar buttons"], UpdateActionBarFont)
+end)

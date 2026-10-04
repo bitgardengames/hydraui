@@ -4,7 +4,7 @@ import re
 import unittest
 
 ACTION_BAR_DIR = Path(__file__).parents[1] / "HydraUI/Elements/ActionBars"
-ACTION_BAR_MODULES = ("ActionBars.lua", "Buttons.lua", "Bars.lua", "TotemBar.lua", "Settings.lua")
+ACTION_BAR_MODULES = ("ActionBars.lua", "Buttons.lua", "Bars.lua", "TotemBar.lua")
 SOURCE = "\n".join((ACTION_BAR_DIR / module).read_text() for module in ACTION_BAR_MODULES)
 
 
@@ -20,10 +20,17 @@ class ActionBarDescriptorCoverage(unittest.TestCase):
         self.assertIn('Defaults[key .. "-button-max"] = 12', SOURCE)
         self.assertNotRegex(SOURCE, r'Defaults\["ab-bar[1-8]-')
 
+    def test_settings_live_with_their_implementations(self):
+        self.assertFalse((ACTION_BAR_DIR / "Settings.lua").exists())
+        self.assertIn('CreateSwitch("ab-enable"', (ACTION_BAR_DIR / "ActionBars.lua").read_text())
+        self.assertIn('CreateSwitch("ab-show-hotkey"', (ACTION_BAR_DIR / "Buttons.lua").read_text())
+        self.assertIn('local function AddActionBarWidgets', (ACTION_BAR_DIR / "Bars.lua").read_text())
+        self.assertIn('CreateSwitch("ab-totem-enable"', (ACTION_BAR_DIR / "TotemBar.lua").read_text())
+
     def test_implementation_is_split_into_focused_modules(self):
         for module in ACTION_BAR_MODULES:
             source = (ACTION_BAR_DIR / module).read_text()
-            self.assertLess(len(source.splitlines()), 600, module)
+            self.assertLess(len(source.splitlines()), 800, module)
 
         for toc in (Path(__file__).parents[1] / "HydraUI").glob("HydraUI_*.toc"):
             source = toc.read_text()

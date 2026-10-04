@@ -1,5 +1,5 @@
 local _, ns = ...
-local Handlers = ns.UnitFrameComponentHandlers
+local Handlers = ns.UnitFrameElementHandlers
 
 local ThreatEvents = {
 	"UNIT_THREAT_SITUATION_UPDATE",

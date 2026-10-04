@@ -176,21 +176,21 @@ local function CastOnUpdate(bar, elapsed)
 end
 
 local function ReadCast(unit)
-	local name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID = CastingInfo(unit)
+	local name, text, texture, startMS, endMS, isTradeSkill, castID, notInterruptible, spellID = CastingInfo(unit)
 	if name then
-		return name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID,false,false
+		return name, text, texture, startMS, endMS, isTradeSkill, castID, notInterruptible, spellID, false, false
 	end
 	local numStages
-	name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID,_,numStages = ChannelInfo(unit)
-	return name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID,true,numStages and numStages > 0
+	name, text, texture, startMS, endMS, isTradeSkill, castID, notInterruptible, spellID, _, numStages = ChannelInfo(unit)
+	return name, text, texture, startMS, endMS, isTradeSkill, castID, notInterruptible, spellID, true, numStages and numStages > 0
 end
 
-local function StartCast(frame,event,unit)
-	if unit~=frame.unit then
+local function StartCast(frame, event, unit)
+	if unit ~= frame.unit then
 		return
 	end
-	local bar=frame.Castbar
-	local name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID,channel,empower = ReadCast(unit)
+	local bar = frame.Castbar
+	local name, text, texture, startMS, endMS, isTradeSkill, castID, notInterruptible, spellID, channel, empower = ReadCast(unit)
 	if not name or (isTradeSkill and not bar.showTradeSkills) then
 		ResetCast(bar)
 		bar:Hide()
@@ -199,14 +199,14 @@ local function StartCast(frame,event,unit)
 	if empower and GetUnitEmpowerHoldAtMaxTime then
 		endMS = endMS + GetUnitEmpowerHoldAtMaxTime(unit)
 	end
-	bar.startTime,bar.endTime=startMS/1000,endMS/1000
-	bar.max=bar.endTime-bar.startTime
-	bar.casting,bar.channeling,bar.empowering=not channel,channel and not empower,empower
-	bar.duration=bar.channeling and (bar.endTime-GetTime()) or (GetTime()-bar.startTime)
-	bar.delay,bar.holdTime=0,0
-	bar.castID,bar.spellID=castID,spellID
-	bar.notInterruptible=notInterruptible
-	bar:SetMinMaxValues(0,bar.max)
+	bar.startTime, bar.endTime = startMS / 1000, endMS / 1000
+	bar.max = bar.endTime - bar.startTime
+	bar.casting, bar.channeling, bar.empowering = not channel, channel and not empower, empower
+	bar.duration = bar.channeling and (bar.endTime - GetTime()) or (GetTime() - bar.startTime)
+	bar.delay, bar.holdTime = 0, 0
+	bar.castID, bar.spellID = castID, spellID
+	bar.notInterruptible = notInterruptible
+	bar:SetMinMaxValues(0, bar.max)
 	bar:SetValue(bar.duration)
 	if bar.Text then
 		bar.Text:SetText(text ~= "" and text or name)
@@ -224,75 +224,77 @@ local function StartCast(frame,event,unit)
 		bar.Spark:Show()
 	end
 	bar:Show()
-	if bar.SafeZone and unit=="player" and bar.max > 0 then
-		local horizontal=bar:GetOrientation()=="HORIZONTAL"
-		local ratio=math.min(1,(select(4,GetNetStats())/1000)/bar.max)
+	if bar.SafeZone and unit == "player" and bar.max > 0 then
+		local horizontal = bar:GetOrientation() == "HORIZONTAL"
+		local ratio = math.min(1, (select(4, GetNetStats()) / 1000) / bar.max)
 		bar.SafeZone:ClearAllPoints()
 		bar.SafeZone:SetPoint(horizontal and "TOP" or "LEFT")
 		bar.SafeZone:SetPoint(horizontal and "BOTTOM" or "RIGHT")
-		local reverse=bar:GetReverseFill()
+		local reverse = bar:GetReverseFill()
 		if bar.channeling then
 			bar.SafeZone:SetPoint(reverse and (horizontal and "RIGHT" or "TOP") or (horizontal and "LEFT" or "BOTTOM"))
 		else
 			bar.SafeZone:SetPoint(reverse and (horizontal and "LEFT" or "BOTTOM") or (horizontal and "RIGHT" or "TOP"))
 		end
-		bar.SafeZone[horizontal and "SetWidth" or "SetHeight"](bar.SafeZone,bar[horizontal and "GetWidth" or "GetHeight"](bar)*ratio)
+		local setSize = horizontal and bar.SafeZone.SetWidth or bar.SafeZone.SetHeight
+		local getSize = horizontal and bar.GetWidth or bar.GetHeight
+		setSize(bar.SafeZone, getSize(bar) * ratio)
 	end
 	if bar.PostCastStart then
 		bar:PostCastStart(unit)
 	end
 end
 
-local function UpdateCast(frame,event,unit,castID,spellID)
-	if unit~=frame.unit or not SameCast(frame.Castbar,castID,spellID) then
+local function UpdateCast(frame, event, unit, castID, spellID)
+	if unit ~= frame.unit or not SameCast(frame.Castbar, castID, spellID) then
 		return
 	end
-	local bar=frame.Castbar
-	local name,_,_,startMS,endMS
-	if event=="UNIT_SPELLCAST_DELAYED" then
-		name,_,_,startMS,endMS=CastingInfo(unit)
+	local bar = frame.Castbar
+	local name, _, _, startMS, endMS
+	if event == "UNIT_SPELLCAST_DELAYED" then
+		name, _, _, startMS, endMS = CastingInfo(unit)
 	else
-		name,_,_,startMS,endMS=ChannelInfo(unit)
+		name, _, _, startMS, endMS = ChannelInfo(unit)
 	end
 	if not name then
 		return
 	end
 	if bar.empowering and GetUnitEmpowerHoldAtMaxTime then
-		endMS=endMS+GetUnitEmpowerHoldAtMaxTime(unit)
+		endMS = endMS + GetUnitEmpowerHoldAtMaxTime(unit)
 	end
-	local startTime,endTime=startMS/1000,endMS/1000
+	local startTime, endTime = startMS / 1000, endMS / 1000
 	local delta
 	if bar.channeling then
-		delta=bar.startTime-startTime
-		bar.duration=endTime-GetTime()
+		delta = bar.startTime - startTime
+		bar.duration = endTime - GetTime()
 	else
-		delta=startTime-bar.startTime
-		bar.duration=GetTime()-startTime
+		delta = startTime - bar.startTime
+		bar.duration = GetTime() - startTime
 	end
 	bar.delay=(bar.delay or 0)+math.max(0,delta)
-	bar.startTime,bar.endTime,bar.max=startTime,endTime,endTime-startTime
-	bar:SetMinMaxValues(0,bar.max)
+	bar.startTime, bar.endTime, bar.max = startTime, endTime, endTime - startTime
+	bar:SetMinMaxValues(0, bar.max)
 	bar:SetValue(bar.duration)
 	if bar.PostCastUpdate then
 		bar:PostCastUpdate(unit)
 	end
 end
 
-local function StopCast(frame,event,unit,castID,spellID)
-	local bar=frame.Castbar
-	if unit~=frame.unit or not SameCast(bar,castID,spellID) then
+local function StopCast(frame, event, unit, castID, spellID)
+	local bar = frame.Castbar
+	if unit ~= frame.unit or not SameCast(bar, castID, spellID) then
 		return
 	end
-	local failed=event=="UNIT_SPELLCAST_FAILED" and "FAILED" or event=="UNIT_SPELLCAST_INTERRUPTED" and "INTERRUPTED"
-	FinishCast(bar,failed,unit,spellID)
+	local failed = event == "UNIT_SPELLCAST_FAILED" and "FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" and "INTERRUPTED"
+	FinishCast(bar, failed, unit, spellID)
 end
 
-local function Interruptible(frame,event,unit)
-	local bar=frame.Castbar
-	if unit~=frame.unit or not bar:IsShown() then
+local function Interruptible(frame, event, unit)
+	local bar = frame.Castbar
+	if unit ~= frame.unit or not bar:IsShown() then
 		return
 	end
-	bar.notInterruptible=event=="UNIT_SPELLCAST_NOT_INTERRUPTIBLE"
+	bar.notInterruptible = event == "UNIT_SPELLCAST_NOT_INTERRUPTIBLE"
 	if bar.Shield then
 		bar.Shield:SetShown(bar.notInterruptible)
 	end
@@ -301,48 +303,54 @@ local function Interruptible(frame,event,unit)
 	end
 end
 
-local CastEvents={
-	UNIT_SPELLCAST_START=StartCast,UNIT_SPELLCAST_CHANNEL_START=StartCast,
-	UNIT_SPELLCAST_DELAYED=UpdateCast,UNIT_SPELLCAST_CHANNEL_UPDATE=UpdateCast,
-	UNIT_SPELLCAST_STOP=StopCast,UNIT_SPELLCAST_CHANNEL_STOP=StopCast,
-	UNIT_SPELLCAST_FAILED=StopCast,UNIT_SPELLCAST_INTERRUPTED=StopCast,
-	UNIT_SPELLCAST_INTERRUPTIBLE=Interruptible,UNIT_SPELLCAST_NOT_INTERRUPTIBLE=Interruptible,
+local CastEvents = {
+	UNIT_SPELLCAST_START = StartCast,
+	UNIT_SPELLCAST_CHANNEL_START = StartCast,
+	UNIT_SPELLCAST_DELAYED = UpdateCast,
+	UNIT_SPELLCAST_CHANNEL_UPDATE = UpdateCast,
+	UNIT_SPELLCAST_STOP = StopCast,
+	UNIT_SPELLCAST_CHANNEL_STOP = StopCast,
+	UNIT_SPELLCAST_FAILED = StopCast,
+	UNIT_SPELLCAST_INTERRUPTED = StopCast,
+	UNIT_SPELLCAST_INTERRUPTIBLE = Interruptible,
+	UNIT_SPELLCAST_NOT_INTERRUPTIBLE = Interruptible,
 }
 if HydraUI.IsMainline then
-	CastEvents.UNIT_SPELLCAST_EMPOWER_START=StartCast
-	CastEvents.UNIT_SPELLCAST_EMPOWER_UPDATE=UpdateCast
-	CastEvents.UNIT_SPELLCAST_EMPOWER_STOP=StopCast
+	CastEvents.UNIT_SPELLCAST_EMPOWER_START = StartCast
+	CastEvents.UNIT_SPELLCAST_EMPOWER_UPDATE = UpdateCast
+	CastEvents.UNIT_SPELLCAST_EMPOWER_STOP = StopCast
 end
+
 local function EnableCast(frame)
-	local bar=frame.Castbar
+	local bar = frame.Castbar
 	if not bar then
 		return
 	end
-	bar.__owner=frame
-	bar.ForceUpdate=function()
-		StartCast(frame,"ForceUpdate",frame.unit)
+	bar.__owner = frame
+	bar.ForceUpdate = function()
+		StartCast(frame, "ForceUpdate", frame.unit)
 	end
-	bar:SetScript("OnUpdate",bar.OnUpdate or CastOnUpdate)
+	bar:SetScript("OnUpdate", bar.OnUpdate or CastOnUpdate)
 	bar:Hide()
 	if LibCC then
-		bar.__classicCallback=function(event,...)
-			local handler=CastEvents[event]
+		bar.__classicCallback = function(event, ...)
+			local handler = CastEvents[event]
 			if handler then
-				handler(frame,event,...)
+				handler(frame, event, ...)
 			end
 		end
 		for event in pairs(CastEvents) do
-			LibCC.RegisterCallback(frame,event,bar.__classicCallback)
+			LibCC.RegisterCallback(frame, event, bar.__classicCallback)
 		end
 	else
-		for event,handler in pairs(CastEvents) do
-			frame:RegisterEvent(event,handler)
+		for event, handler in pairs(CastEvents) do
+			frame:RegisterEvent(event, handler)
 		end
 	end
-	if frame.unit=="player" and not frame.isNamePlate then
+	if frame.unit == "player" and not frame.isNamePlate then
 		if CastingBarFrame_SetUnit then
 			CastingBarFrame_SetUnit(CastingBarFrame,nil)
-			CastingBarFrame_SetUnit(PetCastingBarFrame,nil)
+			CastingBarFrame_SetUnit(PetCastingBarFrame, nil)
 		elseif PlayerCastingBarFrame then
 			PlayerCastingBarFrame:SetUnit(nil)
 			if PetCastingBarFrame then
@@ -352,19 +360,26 @@ local function EnableCast(frame)
 	end
 	return true
 end
+
 local function DisableCast(frame)
-	local bar=frame.Castbar
+	local bar = frame.Castbar
 	ResetCast(bar)
-	bar:SetScript("OnUpdate",nil)
+	bar:SetScript("OnUpdate", nil)
 	bar:Hide()
 	if LibCC then
 		for event in pairs(CastEvents) do
 			LibCC.UnregisterCallback(frame,event)
 		end
 	else
-		for event,handler in pairs(CastEvents) do
-			frame:UnregisterEvent(event,handler)
+		for event, handler in pairs(CastEvents) do
+			frame:UnregisterEvent(event, handler)
 		end
 	end
 end
-ns.UnitFrameComponentHandlers.Castbar={update=function() end,enable=EnableCast,disable=DisableCast}
+ns.UnitFrameElementHandlers.Castbar = {
+	-- Cast events drive this element directly; full frame refreshes need no work.
+	update = function()
+	end,
+	enable = EnableCast,
+	disable = DisableCast,
+}

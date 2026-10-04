@@ -4,6 +4,57 @@ local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 local floor = math.floor
 
 local function Install(UF, Hider)
+local function HideBlizzardFrame(frame, keepParent)
+	if not frame then
+		return
+	end
+	frame:UnregisterAllEvents()
+	frame:Hide()
+	if not keepParent then
+		frame:SetParent(Hider)
+	end
+	for _, child in pairs({frame.healthBar or frame.healthbar, frame.manabar, frame.castBar or frame.spellbar, frame.powerBarAlt, frame.BuffFrame}) do
+		if child then
+			child:UnregisterAllEvents()
+		end
+	end
+end
+
+-- Mirror the stock-frame suppression performed by oUF without making the
+-- native unit-frame runtime depend on the bundled oUF reference copy.
+function UF:DisableBlizzardUnitFrame(unit)
+	if unit == "player" then
+		HideBlizzardFrame(_G.PlayerFrame)
+		-- Blizzard still needs these events to switch the vehicle unit safely.
+		if _G.PlayerFrame then
+			for _, event in ipairs({"PLAYER_ENTERING_WORLD", "UNIT_ENTERING_VEHICLE", "UNIT_ENTERED_VEHICLE", "UNIT_EXITING_VEHICLE", "UNIT_EXITED_VEHICLE"}) do
+				_G.PlayerFrame:RegisterEvent(event)
+			end
+			_G.PlayerFrame:SetUserPlaced(true)
+			_G.PlayerFrame:SetDontSavePosition(true)
+		end
+	elseif unit == "pet" then
+		HideBlizzardFrame(_G.PetFrame)
+	elseif unit == "target" then
+		HideBlizzardFrame(_G.TargetFrame)
+		HideBlizzardFrame(_G.ComboFrame)
+	elseif unit == "focus" then
+		HideBlizzardFrame(_G.FocusFrame)
+		HideBlizzardFrame(_G.TargetofFocusFrame)
+	elseif unit == "targettarget" then
+		HideBlizzardFrame(_G.TargetFrameToT)
+	elseif unit == "boss" then
+		for index = 1, (_G.MAX_BOSS_FRAMES or 5) do
+			HideBlizzardFrame(_G["Boss" .. index .. "TargetFrame"])
+		end
+	elseif unit == "party" then
+		HideBlizzardFrame(_G.PartyFrame)
+		for index = 1, (_G.MAX_PARTY_MEMBERS or 4) do
+			HideBlizzardFrame(_G["PartyMemberFrame" .. index])
+		end
+	end
+end
+
 local UpdateRaidSortingMethod = function(value)
 	if value == "CLASS" then
 		HydraUI.UnitFrames["raid"]:SetAttribute("groupingOrder", "DEATHKNIGHT,DEMONHUNTER,DRUID,HUNTER,MAGE,MONK,PALADIN,PRIEST,SHAMAN,WARLOCK,WARRIOR")
@@ -40,6 +91,7 @@ UF.SingletonUnits = SingletonUnits
 function UF:SpawnSingletonFrames()
 	for _, descriptor in ipairs(SingletonUnits) do
 		if Settings[descriptor.enabled] then
+			UF:DisableBlizzardUnitFrame(descriptor.unit)
 			local dimensions = descriptor.dimensions
 			local frame = HydraUI.UnitFrames:CreateUnitButton(descriptor.unit, descriptor.globalName, HydraUI.StyleFuncs[descriptor.unit])
 			frame:SetSize(Settings[dimensions.width], Settings[dimensions.health] + Settings[dimensions.power] + 3)
@@ -180,6 +232,7 @@ end
 
 function UF:SpawnBossFrames()
 	if Settings["unitframes-boss-enable"] then
+		self:DisableBlizzardUnitFrame("boss")
 		for i = 1, 8 do
 			local Boss = HydraUI.UnitFrames:CreateUnitButton("boss" .. i, "HydraUI Boss " .. i, HydraUI.StyleFuncs["boss"])
 			Boss:SetSize(Settings["unitframes-boss-width"], Settings["unitframes-boss-health-height"] + Settings["unitframes-boss-power-height"] + 3)
@@ -278,6 +331,9 @@ local function HeaderAttributes(values)
 end
 
 function UF:SpawnPartyHeaders()
+	if Settings["party-enable"] then
+		self:DisableBlizzardUnitFrame("party")
+	end
 	if not Settings["party-enable"] then
 		return
 	end

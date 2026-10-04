@@ -114,8 +114,15 @@ local function StartCast(frame,event,unit)
 		return
 	end
 	local bar=frame.Castbar
-	local channel=event:find("CHANNEL")~=nil
-	local name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID=(channel and ChannelInfo or CastingInfo)(unit)
+	local channel=event:find("CHANNEL")~=nil or event:find("EMPOWER")~=nil
+	local adapter=channel and ChannelInfo or CastingInfo
+	local name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID=adapter(unit)
+	-- A forced refresh does not tell us which kind of spell is active. Try the
+	-- channel adapter when the ordinary cast adapter has no result.
+	if event=="ForceUpdate" and not name then
+		channel=true
+		name,text,texture,startMS,endMS,isTradeSkill,castID,notInterruptible,spellID=ChannelInfo(unit)
+	end
 	if not name or (isTradeSkill and not bar.showTradeSkills) then
 		return FinishCast(bar)
 	end
@@ -125,7 +132,8 @@ local function StartCast(frame,event,unit)
 	bar.castID,bar.spellID=castID,spellID
 	bar.notInterruptible=notInterruptible
 	bar:SetMinMaxValues(0,bar.duration)
-	bar:SetValue(channel and bar.duration or 0)
+	local now=GetTime()
+	bar:SetValue(channel and math.max(0,bar.endTime-now) or math.max(0,now-bar.startTime))
 	bar.Text:SetText(text or name)
 	bar.Icon:SetTexture(texture)
 	bar:SetScript("OnUpdate",CastOnUpdate)
@@ -144,15 +152,31 @@ local function Interruptible(frame,event,unit) if unit==frame.unit then frame.Ca
 		frame.Castbar:PostCastInterruptible(unit) end end
 	end
 local CastEvents={UNIT_SPELLCAST_START=StartCast,UNIT_SPELLCAST_CHANNEL_START=StartCast,UNIT_SPELLCAST_DELAYED=StartCast,UNIT_SPELLCAST_CHANNEL_UPDATE=StartCast,UNIT_SPELLCAST_STOP=StopCast,UNIT_SPELLCAST_CHANNEL_STOP=StopCast,UNIT_SPELLCAST_FAILED=StopCast,UNIT_SPELLCAST_INTERRUPTED=StopCast,UNIT_SPELLCAST_INTERRUPTIBLE=Interruptible,UNIT_SPELLCAST_NOT_INTERRUPTIBLE=Interruptible}
+if HydraUI.IsMainline then
+	CastEvents.UNIT_SPELLCAST_EMPOWER_START=StartCast
+	CastEvents.UNIT_SPELLCAST_EMPOWER_UPDATE=StartCast
+	CastEvents.UNIT_SPELLCAST_EMPOWER_STOP=StopCast
+end
 local function EnableCast(frame)
 	local bar=frame.Castbar
 	if not bar then
 		return
 	end
 	bar.__owner=frame
-	bar.ForceUpdate=function() StartCast(frame,"UNIT_SPELLCAST_START",frame.unit) end
+	bar.ForceUpdate=function() StartCast(frame,"ForceUpdate",frame.unit) end
 	for event,handler in pairs(CastEvents) do
 		frame:RegisterEvent(event,handler)
+	end
+	if frame.unit=="player" and not frame.isNamePlate then
+		if CastingBarFrame_SetUnit then
+			CastingBarFrame_SetUnit(CastingBarFrame,nil)
+			CastingBarFrame_SetUnit(PetCastingBarFrame,nil)
+		elseif PlayerCastingBarFrame then
+			PlayerCastingBarFrame:SetUnit(nil)
+			if PetCastingBarFrame then
+				PetCastingBarFrame:SetUnit(nil)
+			end
+		end
 	end
 	return true
 end

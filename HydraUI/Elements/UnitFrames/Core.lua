@@ -53,7 +53,11 @@ local function RegisterEvent(self, event, handler, global)
 	else
 		self.unitEvents[event] = true
 		local otherUnit = secondaryUnits[event] and secondaryUnits[event][self.unit]
-		self.__nativeRegisterUnitEvent(self, event, self.unit, otherUnit or "")
+		if otherUnit then
+			self.__nativeRegisterUnitEvent(self, event, self.unit, otherUnit)
+		else
+			self.__nativeRegisterUnitEvent(self, event, self.unit)
+		end
 	end
 end
 
@@ -94,7 +98,11 @@ local function UpdateUnit(self, event)
 		self.unit, self.realUnit = unit, unit ~= realUnit and realUnit or nil
 		for registeredEvent in next, self.unitEvents do
 			local otherUnit = secondaryUnits[registeredEvent] and secondaryUnits[registeredEvent][unit]
-			self.__nativeRegisterUnitEvent(self, registeredEvent, unit, otherUnit or "")
+			if otherUnit then
+				self.__nativeRegisterUnitEvent(self, registeredEvent, unit, otherUnit)
+			else
+				self.__nativeRegisterUnitEvent(self, registeredEvent, unit)
+			end
 		end
 	end
 	self:UpdateAllElements(event or "RefreshUnit")
@@ -162,6 +170,10 @@ local function UpdateAllElements(self, event)
 	for i = 1, #self.__updates do
 		self.__updates[i](self, event, self.unit)
 	end
+	-- Tags are not elements, but they still need the same forced refresh used
+	-- when a frame acquires a new target/focus/header unit. Unit events keep
+	-- them current between those full refreshes.
+	self:UpdateTags(event)
 	if self.PostUpdate then
 		self:PostUpdate(event)
 	end

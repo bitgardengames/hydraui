@@ -148,7 +148,7 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 
 	-- Buffs
 	if Settings["nameplates-enable-auras"] then
-		local Buffs = CreateFrame("Frame", self:GetName() .. "Buffs", self)
+		local Buffs = CreateFrame("Frame", nil, self)
 		Buffs:SetSize(Settings["nameplates-width"], 26)
 		Buffs:SetPoint("BOTTOM", self, "TOP", 0, 10)
 		Buffs.size = 26
@@ -171,7 +171,7 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	end
 
 	-- Debuffs
-	local Debuffs = CreateFrame("Frame", self:GetName() .. "Debuffs", self)
+	local Debuffs = CreateFrame("Frame", nil, self)
 	Debuffs:SetSize(Settings["nameplates-width"], 26)
 	Debuffs.size = 26
 	Debuffs.spacing = 2

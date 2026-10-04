@@ -1,6 +1,11 @@
 local _, ns = ...
+local HydraUI = ns:get()
 local Handlers = ns.UnitFrameElementHandlers
 local RangeFrames, RangeDriver = {}, nil
+
+local function IsInaccessible(value)
+	return HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)
+end
 
 local function UpdateRange(frame)
 	local range = frame.Range
@@ -8,8 +13,22 @@ local function UpdateRange(frame)
 		range:PreUpdate()
 	end
 
-	local inRange, checked = UnitInRange(frame.unit)
 	local connected = UnitIsConnected(frame.unit)
+	if IsInaccessible(connected) then
+		connected = nil
+	end
+
+	local inRange, checked
+	if connected then
+		inRange, checked = UnitInRange(frame.unit)
+		if IsInaccessible(inRange) then
+			inRange = nil
+		end
+		if IsInaccessible(checked) then
+			checked = nil
+		end
+	end
+
 	local outsideRange = connected and checked and not inRange
 	frame:SetAlpha(outsideRange and range.outsideAlpha or range.insideAlpha)
 

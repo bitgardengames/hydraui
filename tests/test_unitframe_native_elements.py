@@ -87,3 +87,15 @@ def test_pvp_indicator_honor_level_event_is_retail_only():
     assert source.index(retail_guard) < source.index(event_registration) < source.index(
         "\nend", source.index(retail_guard)
     )
+
+
+def test_range_fader_does_not_inspect_inaccessible_secret_results():
+    source = (ROOT / "Elements/Range.lua").read_text()
+
+    assert "HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)" in source
+    assert "if IsInaccessible(connected) then" in source
+    assert "if IsInaccessible(inRange) then" in source
+    assert "if IsInaccessible(checked) then" in source
+    assert source.index("if IsInaccessible(checked) then") < source.index(
+        "local outsideRange = connected and checked and not inRange"
+    )

@@ -10,7 +10,7 @@ implementation and are not migration consumers.
 | Consumer | Dependency | Migration step |
 | --- | --- | --- |
 | `UnitFrames.lua` | Resolves `ns.oUF` (with the legacy global fallback) and registers the `HydraUI` style. | **1 - runtime boundary** |
-| `Spawning.lua` | Resolves the same runtime; spawns singleton/boss frames, secure party/raid and pet headers, and nameplates. Its four headers supply `oUF-initialConfigFunction`. | **2 - frame creation** |
+| `Spawning.lua` | Resolves the legacy runtime only for secure party/raid and pet headers and nameplates. Its four headers supply `oUF-initialConfigFunction`; singleton and boss buttons now use the HydraUI core. | **2 - frame creation (singletons complete)** |
 | `Tags.lua` | Resolves the runtime and writes HydraUI tag functions and event strings into `oUF.Tags.Methods` and `oUF.Tags.Events`. | **3 - tags** |
 | `NamePlates.lua` | Resolves the runtime for availability, and its layout uses frame methods and elements supplied by that runtime. | **4 - elements and updates** |
 | `Colors.lua` | Reads `Namespace.oUF` and replaces the runtime's class, reaction, power, debuff, tapped, disconnected, and health color tables. | **1 - runtime boundary** |
@@ -28,7 +28,7 @@ per-client bundled XML entries and reference implementation.
 
 | API | HydraUI use | Migration step |
 | --- | --- | --- |
-| `Spawn` | Singleton frames from the descriptor table and `boss1` through `boss5` in `Spawning.lua`. | **2** |
+| `CreateUnitButton` | HydraUI-owned singleton frames from the descriptor table and `boss1` through `boss8` in `Spawning.lua`. | **2 (complete)** |
 | `SpawnHeader` | Party, party-pet, raid, and raid-pet secure headers in `Spawning.lua`. Preserve visibility, grouping, sorting, templates, and initial configuration attributes. | **2** |
 | `SpawnNamePlates` | One driver registration using `UF.NamePlateCallback` and `UF.NamePlateCVars`. | **2** |
 | `Tag` | Six nameplate text regions, shared unit-frame health/power regions, and group-frame health regions. | **3** |

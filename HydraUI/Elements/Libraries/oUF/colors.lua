@@ -346,6 +346,7 @@ function oUF:ColorGradient(...)
 end
 
 oUF.colors = colors
+ns.UnitFrameColors = colors
 oUF.useHCYColorGradient = false
 
 frame_metatable.__index.colors = colors

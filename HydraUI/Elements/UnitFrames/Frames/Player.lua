@@ -4,7 +4,7 @@ local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 -- descriptor actually instantiated by BuildPlayerComponents is touched.
 local PlayerResourceEvents = {
 	"PLAYER_SPECIALIZATION_CHANGED",
-	"PLAYER_TALENT_UPDATE",
+	HydraUI.IsMists and "ACTIVE_TALENT_GROUP_CHANGED" or "PLAYER_TALENT_UPDATE",
 	"UNIT_AURA",
 	"UNIT_DISPLAYPOWER",
 	"UNIT_MAXPOWER",

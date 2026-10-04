@@ -50,7 +50,8 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
 
     def test_resource_visibility_and_values_follow_runtime_state(self):
         for token in (
-            '"PLAYER_SPECIALIZATION_CHANGED"', '"PLAYER_TALENT_UPDATE"',
+            '"PLAYER_SPECIALIZATION_CHANGED"',
+            'HydraUI.IsMists and "ACTIVE_TALENT_GROUP_CHANGED" or "PLAYER_TALENT_UPDATE"',
             '"UNIT_AURA"', "descriptor.active()", "resource:SetShown(active)",
             "descriptor.currentProvider", "descriptor.maximumProvider",
             "UnitPowerDisplayMod", "current - i + 1",

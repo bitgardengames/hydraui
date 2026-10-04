@@ -33,6 +33,10 @@ def test_player_resources_preserve_dynamic_ouf_behavior():
     assert 'GetUnitChargedPowerPoints("player")' in source
     assert 'segment.Charged:SetShown(charged[i] == true)' in source
     assert 'segment:SetScript("OnUpdate", ready and nil or UpdateRune)' in source
+    assert 'segment:SetID(i)' in source
+    assert 'type(unit) == "string" and unit ~= "player"' in source
+    assert 'GetRuneType(segment:GetID())' in source
+    assert 'segment:SetStatusBarColor(r, g, b)' in source
     assert 'frame:UnregisterEvent("RUNE_POWER_UPDATE", UpdatePlayerResources)' in source
     assert "if frame.ClassResource == element then" in extended
 

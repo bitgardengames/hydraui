@@ -1,10 +1,8 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local Installers = ns.UnitFrameElementInstallers or {}
-ns.UnitFrameElementInstallers = Installers
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
 
-Installers[#Installers + 1] = function(UF, Hider)
 local function Setting(key)
 	return key and Settings[key]
 end
@@ -13,9 +11,8 @@ local function FamilySetting(config, suffix)
 	return Setting(config.settingsPrefix .. suffix)
 end
 
--- These descriptions are shared by every singleton style.  Keep them in this
--- file's installer scope so every BuildSingleUnitFrame invocation can access
--- them without recreating the tables for each frame.
+-- These descriptions are shared by every singleton style.  Keep them in this file so every
+-- BuildSingleUnitFrame invocation can access them without recreating the tables for each frame.
 local SingleUnitText = {
 	left = {point = "LEFT", x = 3, justify = "LEFT"},
 	right = {point = "RIGHT", x = -3, justify = "RIGHT"},
@@ -120,6 +117,4 @@ function UF:BuildSingleUnitFrame(frame, unit, config)
 		config.postBuild(self, frame, unit)
 	end
 	return frame
-end
-
 end

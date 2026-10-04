@@ -14,7 +14,7 @@ Defaults["unitframes-font-size"] = 12
 Defaults["unitframes-font-flags"] = ""
 Defaults["unitframes-display-aura-timers"] = true
 
-local UF = HydraUI:NewModule("Unit Frames")
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before the coordinator")
 
 local function ForEachChild(operation, value, descriptor, child, ...)
 	if not child then
@@ -39,15 +39,6 @@ end
 
 HydraUI.UnitFrames = HydraUI.UnitFrames or {}
 HydraUI.StyleFuncs = {}
-
-local Hider = CreateFrame("Frame", nil, HydraUI.UIParent, "SecureHandlerStateTemplate")
-Hider:Hide()
-
--- Focused modules install the existing public UF methods on the shared module.
-ns.UnitFrameComponentFactory(UF, Hider)
-ns.UnitFrameAuraSupport(UF, Hider)
-ns.UnitFrameCastSupport(UF, Hider)
-ns.UnitFrameTotemSupport(UF, Hider)
 
 function UF:GetRoleTexCoords(role)
 	if role == "TANK" then
@@ -87,7 +78,6 @@ end
 
 UF.Style = Style
 
-ns.UnitFrameSpawning(UF, Hider)
 
 function UF:Load()
 	self:SpawnSingletonFrames()

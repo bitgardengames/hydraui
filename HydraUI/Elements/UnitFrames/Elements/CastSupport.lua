@@ -31,7 +31,7 @@ else
 	end
 end
 
-local function Install(UF, Hider)
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
 UF.PostCastStart = function(self, unit)
 	if self.notInterruptible then
 		self:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))
@@ -368,7 +368,3 @@ local function DisableCast(frame)
 	end
 end
 ns.UnitFrameComponentHandlers.Castbar={update=function() end,enable=EnableCast,disable=DisableCast}
-
-end
-
-ns.UnitFrameCastSupport = Install

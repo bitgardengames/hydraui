@@ -1,10 +1,8 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local Installers = ns.UnitFrameElementInstallers or {}
-ns.UnitFrameElementInstallers = Installers
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
 
-Installers[#Installers + 1] = function(UF, Hider)
 function UF:SetFrameWidth(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
@@ -351,6 +349,4 @@ function UF:CreateUnitUpdater(unit, operation, options)
 			update(self, frame, value, options)
 		end
 	end
-end
-
 end

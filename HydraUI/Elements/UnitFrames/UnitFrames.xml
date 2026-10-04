@@ -20,7 +20,6 @@
 	<Script file="Elements/Auras.lua"/>
 	<Script file="Elements/RaidTarget.lua"/>
 	<Script file="Elements/Updates.lua"/>
-	<Script file="Elements/Factory.lua"/>
 	<Script file="Elements/AuraEnumeration_Mainline.lua"/>
 	<Script file="Elements/AuraEnumeration_Classic.lua"/>
 	<Script file="Elements/AuraSupport.lua"/>

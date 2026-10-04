@@ -1,10 +1,8 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local Installers = ns.UnitFrameElementInstallers or {}
-ns.UnitFrameElementInstallers = Installers
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
 
-Installers[#Installers + 1] = function(UF, Hider)
 function UF:SetHealthAttributes(health, value)
 	if value == "CLASS" then
 		health.colorClass = true
@@ -165,6 +163,4 @@ function UF:CreateFontString(parent, font, size, flags, point, relativePoint, x,
 	text:SetPoint(point, parent, relativePoint or point, x or 0, y or 0)
 	text:SetJustifyH(justify or point)
 	return text
-end
-
 end

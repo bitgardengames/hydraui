@@ -1,10 +1,8 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local Installers = ns.UnitFrameElementInstallers or {}
-ns.UnitFrameElementInstallers = Installers
+local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
 
-Installers[#Installers + 1] = function(UF, Hider)
 function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relativePoint, x, y, alpha, backgroundTexture, backgroundVisible)
 	local portrait
 	if style == "2D" then
@@ -34,6 +32,4 @@ function UF:CreatePortrait(frame, style, width, height, point, relativeTo, relat
 
 	frame.Portrait = portrait
 	return portrait
-end
-
 end

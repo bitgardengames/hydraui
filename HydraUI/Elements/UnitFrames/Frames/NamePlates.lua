@@ -326,6 +326,11 @@ function UF:CreateNamePlateDriver()
 	local driver = CreateFrame("Frame", "HydraUINamePlateDriver")
 	self.NamePlateDriver = driver
 	self.NamePlatesByUnit = {}
+	local function ApplyCVars()
+		for cvar, value in next, self.NamePlateCVars do
+			C_CVar.SetCVar(cvar, value)
+		end
+	end
 
 	local function DisableBlizzardPlate(base)
 		local blizzard = base and (base.UnitFrame or base.unitFrame)
@@ -363,14 +368,21 @@ function UF:CreateNamePlateDriver()
 		self.NamePlatesByUnit[unit] = nil
 	end
 
-	for cvar, value in next, self.NamePlateCVars do
-		C_CVar.SetCVar(cvar, value)
+	-- Blizzard initializes its nameplate CVars during login. Match oUF's timing so
+	-- those defaults cannot overwrite HydraUI's 1:1 nameplate scale afterwards.
+	if IsLoggedIn() then
+		ApplyCVars()
+	else
+		driver:RegisterEvent("PLAYER_LOGIN")
 	end
 	driver:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 	driver:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 	driver:RegisterEvent("PLAYER_TARGET_CHANGED")
 	driver:SetScript("OnEvent", function(_, event, unit)
-		if event == "NAME_PLATE_UNIT_ADDED" then
+		if event == "PLAYER_LOGIN" then
+			ApplyCVars()
+			driver:UnregisterEvent("PLAYER_LOGIN")
+		elseif event == "NAME_PLATE_UNIT_ADDED" then
 			Added(unit)
 		elseif event == "NAME_PLATE_UNIT_REMOVED" then
 			Removed(unit)

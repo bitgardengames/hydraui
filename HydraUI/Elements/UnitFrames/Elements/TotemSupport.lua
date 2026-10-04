@@ -101,7 +101,7 @@ local function DisableTotems(frame)
 	end
 end
 
-ns.UnitFrameElementHandlers.Totems = {
+UF.ElementHandlers.Totems = {
 	update = UpdateTotems,
 	enable = EnableTotems,
 	disable = DisableTotems,

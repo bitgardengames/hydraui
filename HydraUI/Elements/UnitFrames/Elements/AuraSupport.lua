@@ -2,7 +2,7 @@ local addon, ns = ...
 local HydraUI, _, _, Settings = ns:get()
 
 local UF = HydraUI:GetModule("Unit Frames")
-local Hider = assert(ns.UnitFrameHider, "unit-frame core must create the hider")
+local Hider = assert(UF.Hider, "unit-frame core must create the hider")
 local UnregisterAuraTimer = function(button)
 	HydraUI.DurationText:Unregister(button)
 	button.LastAuraTime = nil
@@ -455,7 +455,7 @@ UF.PostCreateAuraWatchIcon = function(auras, icon)
 	icon.overlay:SetTexture()
 end
 
-local EnumerateAuras = ns.UnitFrameEnumerateAuras
+local EnumerateAuras = UF.EnumerateAuras
 local function AuraTooltipEnter(button)
 	GameTooltip:SetOwner(button, button.__container.tooltipAnchor or "ANCHOR_BOTTOMRIGHT")
 	GameTooltip:SetUnitAura(button.__owner.unit, button.__index, button.filter)
@@ -575,7 +575,7 @@ local function DisableAuras(frame)
 	end
 end
 
-ns.UnitFrameElementHandlers.Auras = {
+UF.ElementHandlers.Auras = {
 	update = UpdateAuras,
 	enable = EnableAuras,
 	disable = DisableAuras,

@@ -1,21 +1,20 @@
 local _, ns = ...
 local HydraUI = ns:get()
 
-HydraUI:NewModule("Unit Frames")
+local UF = HydraUI:NewModule("Unit Frames")
 
 local Hider = CreateFrame("Frame", nil, HydraUI.UIParent, "SecureHandlerStateTemplate")
 Hider:Hide()
-ns.UnitFrameHider = Hider
+UF.Hider = Hider
 
 local UnitFrames = HydraUI.UnitFrames or {}
 HydraUI.UnitFrames = UnitFrames
 
--- Elements belong to HydraUI's unit-frame runtime. Each element registers a small lifecycle record and is enabled only when a style creates its widget. Keep the old namespace key as a compatibility alias for third-party styles.
-ns.UnitFrameElementHandlers = ns.UnitFrameElementHandlers or ns.UnitFrameComponentHandlers or {}
-ns.UnitFrameComponentHandlers = ns.UnitFrameElementHandlers
-local elementHandlers = ns.UnitFrameElementHandlers
-local colors = ns.UnitFrameColors
-local tag, untag, updateTags = ns.UnitFrameTag, ns.UnitFrameUntag, ns.UnitFrameUpdateTags
+-- Element lifecycle state is private to HydraUI's unit-frame module. The addon
+-- namespace is only used to obtain HydraUI and is not a library registry.
+UF.ElementHandlers = {}
+local elementHandlers = UF.ElementHandlers
+local colors = HydraUI:GetUnitFrameColors()
 
 local secondaryUnits = {
 	UNIT_ENTERED_VEHICLE = {pet = "player"},
@@ -35,9 +34,6 @@ function UnitFrames:RegisterElement(name, lifecycle)
 
 	elementHandlers[name] = lifecycle
 end
-
--- Compatibility for extensions written during the native-runtime migration.
-UnitFrames.RegisterComponent = UnitFrames.RegisterElement
 
 local function DispatchEvent(self, event, ...)
 	if not self:IsVisible() then
@@ -262,9 +258,9 @@ local function PrepareFrame(frame, unit, pollsUnit)
 	frame.Refresh = Refresh
 	-- Kept as a transition alias for extensions written against earlier HydraUI releases. New code should describe its intent with Refresh.
 	frame.UpdateAllElements = Refresh
-	frame.Tag = tag
-	frame.Untag = untag
-	frame.UpdateTags = updateTags
+	frame.Tag = UF.Tag
+	frame.Untag = UF.Untag
+	frame.UpdateTags = UF.UpdateTags
 	frame:SetScript("OnEvent", DispatchEvent)
 end
 

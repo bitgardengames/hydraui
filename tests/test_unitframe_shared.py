@@ -57,6 +57,14 @@ def constructor_block(source: str, constructor: str) -> str:
 
 
 class SharedUnitFrameCoverage(unittest.TestCase):
+    def test_nameplate_scale_cvars_are_applied_after_login(self):
+        source = (FRAMES / "NamePlates.lua").read_text()
+        driver = source[source.index("function UF:CreateNamePlateDriver"):source.index("UF.NamePlateCallback =")]
+        self.assertIn("if IsLoggedIn() then", driver)
+        self.assertIn('driver:RegisterEvent("PLAYER_LOGIN")', driver)
+        self.assertIn('if event == "PLAYER_LOGIN" then', driver)
+        self.assertIn("ApplyCVars()", driver)
+
     def test_health_path_calls_color_update_without_ambiguous_syntax(self):
         shared = (ELEMENTS / "Health.lua").read_text()
         health_path = shared[shared.index("local function HealthPath"):shared.index("local function EnableHealth")]

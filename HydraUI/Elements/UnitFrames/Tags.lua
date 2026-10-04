@@ -1,9 +1,10 @@
 local addon, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local oUF = ns.oUF or oUF
-local Events = oUF.Tags.Events
-local Methods = oUF.Tags.Methods
+-- Tags belong to HydraUI.  Keeping these registries local is important: unit
+-- buttons created by the native core must not silently depend on oUF's tag
+-- element being enabled (or even loaded).
+local Events, Methods = {}, {}
 
 local format = string.format
 local floor = math.floor
@@ -693,3 +694,125 @@ Methods["RaidGroup"] = function(unit)
 		end
 	end
 end
+
+-- Compile profile tag strings into small descriptors.  The accepted syntax is
+-- the same syntax HydraUI profiles have always used:
+-- [prefix$>Tag<$suffix(arg,arg)].  Prefix and suffix are conditional on a
+-- non-empty tag result, while ordinary text is copied verbatim.
+local function ParseTag(token)
+	local body = sub(token, 2, -2)
+	local prefix, suffix = "", ""
+	local before, rest = body:match("^(.-)%$>(.*)$")
+	if before then
+		prefix, body = before, rest
+	end
+	local name, after = body:match("^(.-)<%$(.*)$")
+	if name then
+		body, suffix = name, after
+	end
+	local tagName, argumentString = body:match("^([^%(]+)%((.*)%)$")
+	tagName = tagName or body
+	local arguments = {}
+	if argumentString and argumentString ~= "" then
+		for argument in argumentString:gmatch("[^,]+") do
+			arguments[#arguments + 1] = argument
+		end
+	end
+	return {name = tagName, prefix = prefix, suffix = suffix, arguments = arguments}
+end
+
+local function Compile(tagString)
+	local parts, subscriptions, cursor = {}, {}, 1
+	while true do
+		local first, last = tagString:find("%b[]", cursor)
+		if not first then
+			if cursor <= #tagString then
+				parts[#parts + 1] = sub(tagString, cursor)
+			end
+			break
+		end
+		if first > cursor then
+			parts[#parts + 1] = sub(tagString, cursor, first - 1)
+		end
+		local descriptor = ParseTag(sub(tagString, first, last))
+		parts[#parts + 1] = descriptor
+		local declarations = Events[descriptor.name]
+		if declarations then
+			for event in declarations:gmatch("%S+") do
+				subscriptions[event] = true
+			end
+		end
+		cursor = last + 1
+	end
+	return parts, subscriptions
+end
+
+local function FormatTagString(binding, unit, realUnit)
+	local output = {}
+	for i = 1, #binding.parts do
+		local part = binding.parts[i]
+		if type(part) == "string" then
+			output[#output + 1] = part
+		else
+			local method = Methods[part.name]
+			local value = method and method(unit, realUnit, unpack(part.arguments))
+			if value ~= nil and value ~= "" then
+				output[#output + 1] = part.prefix .. tostring(value) .. part.suffix
+			end
+		end
+	end
+	return table.concat(output)
+end
+
+local function UpdateBinding(frame, binding)
+	binding.fontString:SetText(FormatTagString(binding, frame.unit, binding.fontString.overrideUnit and frame.realUnit))
+end
+
+local function TagEvent(frame, event, unit)
+	if unit and unit ~= frame.unit and unit ~= frame.realUnit then
+		return
+	end
+	for i = 1, #frame.__tags do
+		local binding = frame.__tags[i]
+		if binding.subscriptions[event] then
+			UpdateBinding(frame, binding)
+		end
+	end
+end
+
+function ns.UnitFrameTag(frame, fontString, tagString)
+	frame.__tags = frame.__tags or {}
+	local parts, subscriptions = Compile(tagString or "")
+	local binding = {fontString = fontString, tagString = tagString, parts = parts, subscriptions = subscriptions}
+	frame.__tags[#frame.__tags + 1] = binding
+	fontString.__owner, fontString.__tagBinding = frame, binding
+	for event in next, subscriptions do
+		-- UNIT_* events carry a unit; the remaining declarations are shared.
+		frame:RegisterEvent(event, TagEvent, not event:match("^UNIT_"))
+	end
+	UpdateBinding(frame, binding)
+end
+
+function ns.UnitFrameUntag(frame, fontString)
+	if not frame.__tags then
+		return
+	end
+	for i = #frame.__tags, 1, -1 do
+		if frame.__tags[i].fontString == fontString then
+			table.remove(frame.__tags, i)
+		end
+	end
+	fontString.__owner, fontString.__tagBinding = nil, nil
+end
+
+function ns.UnitFrameUpdateTags(frame, event)
+	if not frame.__tags then
+		return
+	end
+	for i = 1, #frame.__tags do
+		UpdateBinding(frame, frame.__tags[i])
+	end
+end
+
+ns.UnitFrameTagEvents = Events
+ns.UnitFrameTagMethods = Methods

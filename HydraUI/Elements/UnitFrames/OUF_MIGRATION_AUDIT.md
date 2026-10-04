@@ -11,7 +11,7 @@ implementation and are not migration consumers.
 | --- | --- | --- |
 | `UnitFrames.lua` | Resolves `ns.oUF` (with the legacy global fallback) and registers the `HydraUI` style. | **1 - runtime boundary** |
 | `Spawning.lua` | Resolves the legacy runtime only for secure party/raid and pet headers and nameplates. Its four headers supply `oUF-initialConfigFunction`; singleton and boss buttons now use the HydraUI core. | **2 - frame creation (singletons complete)** |
-| `Tags.lua` | Resolves the runtime and writes HydraUI tag functions and event strings into `oUF.Tags.Methods` and `oUF.Tags.Events`. | **3 - tags** |
+| `Tags.lua` | Native parser, formatter, and event subscriptions; no oUF dependency remains. | **Migrated** |
 | `NamePlates.lua` | Resolves the runtime for availability, and its layout uses frame methods and elements supplied by that runtime. | **4 - elements and updates** |
 | `Colors.lua` | Reads `Namespace.oUF` and replaces the runtime's class, reaction, power, debuff, tapped, disconnected, and health color tables. | **1 - runtime boundary** |
 | `HydraUI_Camelot.toc`, `HydraUI_Mainline.toc` | Load `Elements\\Libraries\\oUF\\oUF_Mainline.xml`. | **5 - packaging removal** |

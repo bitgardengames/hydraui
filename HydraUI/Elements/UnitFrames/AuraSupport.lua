@@ -454,6 +454,98 @@ UF.PostCreateAuraWatchIcon = function(auras, icon)
 	icon.overlay:SetTexture()
 end
 
+local EnumerateAuras = ns.UnitFrameEnumerateAuras
+local function AuraTooltipEnter(button)
+	GameTooltip:SetOwner(button, button.__container.tooltipAnchor or "ANCHOR_BOTTOMRIGHT")
+	GameTooltip:SetUnitAura(button.__owner.unit, button.__index, button.filter)
+end
+local function AuraTooltipLeave() GameTooltip:Hide() end
+
+local function AcquireAuraButton(container, position)
+	local button = container[position]
+	if button then
+		return button
+	end
+	button = CreateFrame("Button", (container:GetName() or "HydraUIAura") .. position, container)
+	button:SetSize(container.size, container.size)
+	button.icon = button:CreateTexture(nil, "ARTWORK")
+	button.icon:SetAllPoints()
+	button.count = button:CreateFontString(nil, "OVERLAY")
+	button.cd = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+	button.cd:SetAllPoints()
+	button.__container, button.__owner = container, container.__owner
+	button:SetScript("OnEnter", AuraTooltipEnter)
+		button:SetScript("OnLeave", AuraTooltipLeave)
+	container[position] = button
+	if container.PostCreateIcon then
+		container:PostCreateIcon(button)
+	end
+	return button
+end
+
+local function LayoutAura(container, button, position)
+	local spacing, columns = container.spacing or 0, math.max(1, math.floor((container:GetWidth() + (container.spacing or 0)) / (container.size + (container.spacing or 0))))
+	local column, row = (position - 1) % columns, math.floor((position - 1) / columns)
+	local x = column * (container.size + spacing) * (container["growth-x"] == "LEFT" and -1 or 1)
+	local y = row * (container.size + spacing) * (container["growth-y"] == "UP" and 1 or -1)
+	button:ClearAllPoints()
+		button:SetPoint(container.initialAnchor or "TOPLEFT", container, container.initialAnchor or "TOPLEFT", x, y)
+end
+
+local function UpdateAuraContainer(frame, container, filter)
+	local position, limit = 0, container.num or 32
+	EnumerateAuras(frame.unit, filter, function(index, name, icon, count, debuffType, duration, expiration, caster, stealable, spellID, auraData)
+		local isPlayer = caster == "player" or caster == "pet" or caster == "vehicle"
+		if container.onlyShowPlayer and not isPlayer then
+			return
+		end
+		if container.CustomFilter and not container:CustomFilter(frame.unit, {name=name,spellId=spellID,sourceUnit=caster,isFromPlayerOrPlayerPet=isPlayer}, frame) then
+			return
+		end
+		position = position + 1
+		if position > limit then
+			return false
+		end
+		local button = AcquireAuraButton(container, position)
+		button.__index, button.filter, button.isPlayer = index, filter, isPlayer
+		button.icon:SetTexture(icon)
+		button.count:SetText(count and count > 1 and count or "")
+		button:SetSize(container.size, container.size)
+		LayoutAura(container, button, position)
+		button:Show()
+		if container.showStealableBuffs and stealable then button.DebuffType:SetBackdropBorderColor(.2,.6,1)
+	button.DebuffType:Show() end
+		if container.PostUpdateIcon then
+			container:PostUpdateIcon(frame.unit,button,index,position,duration,expiration,debuffType,stealable)
+		end
+	end)
+	for i=position+1,#container do container[i]:Hide()
+	UnregisterAuraTimer(container[i]) end
+end
+
+local function UpdateAuras(frame,event,unit)
+	if unit and unit~=frame.unit then
+		return
+	end
+	if frame.Buffs then
+		UpdateAuraContainer(frame,frame.Buffs,"HELPFUL")
+	end
+	if frame.Debuffs then
+		UpdateAuraContainer(frame,frame.Debuffs,"HARMFUL")
+	end
+end
+local function EnableAuras(frame)
+	if not frame.Buffs and not frame.Debuffs then
+		return
+	end
+	for _,container in ipairs({frame.Buffs,frame.Debuffs}) do if container then container.__owner=frame
+	container.ForceUpdate=function() UpdateAuras(frame,"ForceUpdate",frame.unit) end end end
+	frame:RegisterEvent("UNIT_AURA",UpdateAuras)
+	return true
+end
+ns.UnitFrameComponentHandlers.Auras={update=UpdateAuras,enable=EnableAuras,disable=function(frame) if frame.Buffs then frame.Buffs:Hide() end
+	if frame.Debuffs then frame.Debuffs:Hide() end end}
+
 end
 
 ns.UnitFrameAuraSupport = Install

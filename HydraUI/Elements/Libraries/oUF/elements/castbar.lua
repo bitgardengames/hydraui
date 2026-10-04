@@ -97,11 +97,24 @@ local UnitChannelInfo = UnitChannelInfo
 local GetNetStats = GetNetStats
 local GetTime = GetTime
 
+local HydraUI = ns:get()
 local ClientVersion = select(4, GetBuildInfo())
 local IsClassic = ClientVersion > 10000 and ClientVersion < 20000
 local LibCC
 
-if IsClassic then
+local MainlineUnitCastingInfo, MainlineUnitChannelInfo = UnitCastingInfo, UnitChannelInfo
+if HydraUI.IsMainline then
+	UnitCastingInfo = function(unit)
+		local name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible, spellID = MainlineUnitCastingInfo(unit)
+		if issecretvalue(startTime) or issecretvalue(endTime) then return end
+		return name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible, spellID
+	end
+	UnitChannelInfo = function(unit)
+		local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID = MainlineUnitChannelInfo(unit)
+		if issecretvalue(startTime) or issecretvalue(endTime) then return end
+		return name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID
+	end
+elseif IsClassic then
 	LibCC = LibStub("LibClassicCasterino", true)
 	
     UnitCastingInfo = function(unit)

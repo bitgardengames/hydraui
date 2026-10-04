@@ -1,6 +1,8 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="Core.lua"/>
 	<Script file="ComponentFactory.lua"/>
+	<Script file="AuraEnumeration_Mainline.lua"/>
+	<Script file="AuraEnumeration_Classic.lua"/>
 	<Script file="AuraSupport.lua"/>
 	<Script file="CastSupport.lua"/>
 	<Script file="TotemSupport.lua"/>

@@ -4,6 +4,7 @@ local HydraUI = ns:get()
 local UnitFrames = HydraUI.UnitFrames or {}
 HydraUI.UnitFrames = UnitFrames
 
+ns.UnitFrameComponentHandlers = ns.UnitFrameComponentHandlers or {}
 local componentHandlers = ns.UnitFrameComponentHandlers
 local colors = ns.UnitFrameColors
 local tag, untag, updateTags = ns.UnitFrameTag, ns.UnitFrameUntag, ns.UnitFrameUpdateTags

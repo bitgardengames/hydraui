@@ -27,9 +27,6 @@ EXPECTED_REFERENCES = {
     "HydraUI/Elements/UnitFrames/Spawning.lua": Counter(
         {"oUF": 7, "oUF-": 4, "ns.oUF": 1}
     ),
-    "HydraUI/Elements/UnitFrames/Tags.lua": Counter(
-        {"oUF": 4, "ns.oUF": 1}
-    ),
     "HydraUI/Elements/UnitFrames/UnitFrames.lua": Counter(
         {"oUF": 3, "ns.oUF": 1}
     ),

@@ -1,5 +1,5 @@
 local addon, ns = ...
-local HydraUI, Language, Assets, Settings, Defaults = ns:get()
+local HydraUI, _, _, Settings = ns:get()
 
 local floor = math.floor
 
@@ -384,8 +384,10 @@ function UF:SpawnRaidHeaders()
 		unitHeight * (Settings["raid-max-columns"] + 1) + Settings["raid-y-offset"] * (Settings["raid-max-columns"] - 1))
 	self.RaidAnchor:SetPoint("BOTTOMLEFT", HydraUIChatFrameTop, "TOPLEFT", -3, 10)
 	if CompactRaidFrameContainer then
-		CompactRaidFrameContainer:UnregisterAllEvents(); CompactRaidFrameContainer:SetParent(Hider)
-		CompactRaidFrameManager:UnregisterAllEvents(); CompactRaidFrameManager:SetParent(Hider)
+		CompactRaidFrameContainer:UnregisterAllEvents()
+		CompactRaidFrameContainer:SetParent(Hider)
+		CompactRaidFrameManager:UnregisterAllEvents()
+		CompactRaidFrameManager:SetParent(Hider)
 	end
 	Raid:SetPoint("BOTTOMLEFT", self.RaidAnchor)
 	HydraUI:CreateMover(self.RaidAnchor)

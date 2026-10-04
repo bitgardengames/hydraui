@@ -1,5 +1,5 @@
 local _, ns = ...
-local HydraUI, Language, Assets, Settings = ns:get()
+local HydraUI, _, Assets = ns:get()
 
 local UF = HydraUI:GetModule("Unit Frames")
 
@@ -149,8 +149,12 @@ function UF:CreateMouseoverHighlight(frame, health, texture, enabled, colorR, co
 	highlight:SetAlpha(0)
 	highlight:SetDrawLayer("OVERLAY", sublevel or 7)
 	frame.Highlight = highlight
-	frame:HookScript("OnEnter", function(owner) owner.Highlight:SetAlpha(alpha or 0.15) end)
-	frame:HookScript("OnLeave", function(owner) owner.Highlight:SetAlpha(0) end)
+	frame:HookScript("OnEnter", function(owner)
+		owner.Highlight:SetAlpha(alpha or 0.15)
+	end)
+	frame:HookScript("OnLeave", function(owner)
+		owner.Highlight:SetAlpha(0)
+	end)
 	if not enabled then
 		highlight:Hide()
 	end

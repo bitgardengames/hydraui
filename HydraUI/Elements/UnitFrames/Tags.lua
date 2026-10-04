@@ -1,5 +1,5 @@
 local addon, ns = ...
-local HydraUI, Language, Assets, Settings = ns:get()
+local HydraUI, Language = ns:get()
 
 -- Tags belong to HydraUI.  Keeping these registries local is important: unit
 -- buttons created by the native core must not silently depend on a third-party tag

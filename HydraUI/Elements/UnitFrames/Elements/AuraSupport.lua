@@ -1,5 +1,5 @@
 local addon, ns = ...
-local HydraUI, Language, Assets, Settings, Defaults = ns:get()
+local HydraUI, _, _, Settings = ns:get()
 
 local UF = HydraUI:GetModule("Unit Frames")
 local Hider = assert(ns.UnitFrameHider, "unit-frame core must create the hider")
@@ -460,7 +460,9 @@ local function AuraTooltipEnter(button)
 	GameTooltip:SetOwner(button, button.__container.tooltipAnchor or "ANCHOR_BOTTOMRIGHT")
 	GameTooltip:SetUnitAura(button.__owner.unit, button.__index, button.filter)
 end
-local function AuraTooltipLeave() GameTooltip:Hide() end
+local function AuraTooltipLeave()
+	GameTooltip:Hide()
+end
 
 local function AcquireAuraButton(container, position)
 	local button = container[position]
@@ -476,7 +478,7 @@ local function AcquireAuraButton(container, position)
 	button.cd:SetAllPoints()
 	button.__container, button.__owner = container, container.__owner
 	button:SetScript("OnEnter", AuraTooltipEnter)
-		button:SetScript("OnLeave", AuraTooltipLeave)
+	button:SetScript("OnLeave", AuraTooltipLeave)
 	container[position] = button
 	if container.PostCreateIcon then
 		container:PostCreateIcon(button)
@@ -490,7 +492,7 @@ local function LayoutAura(container, button, position)
 	local x = column * (container.size + spacing) * (container["growth-x"] == "LEFT" and -1 or 1)
 	local y = row * (container.size + spacing) * (container["growth-y"] == "UP" and 1 or -1)
 	button:ClearAllPoints()
-		button:SetPoint(container.initialAnchor or "TOPLEFT", container, container.initialAnchor or "TOPLEFT", x, y)
+	button:SetPoint(container.initialAnchor or "TOPLEFT", container, container.initialAnchor or "TOPLEFT", x, y)
 end
 
 local function UpdateAuraContainer(frame, container, filter)
@@ -500,8 +502,16 @@ local function UpdateAuraContainer(frame, container, filter)
 		if container.onlyShowPlayer and not isPlayer then
 			return
 		end
-		if container.CustomFilter and not container:CustomFilter(frame.unit, {name=name,spellId=spellID,sourceUnit=caster,isFromPlayerOrPlayerPet=isPlayer}, frame) then
-			return
+		if container.CustomFilter then
+			local aura = {
+				name = name,
+				spellId = spellID,
+				sourceUnit = caster,
+				isFromPlayerOrPlayerPet = isPlayer,
+			}
+			if not container:CustomFilter(frame.unit, aura, frame) then
+				return
+			end
 		end
 		position = position + 1
 		if position > limit then
@@ -514,35 +524,59 @@ local function UpdateAuraContainer(frame, container, filter)
 		button:SetSize(container.size, container.size)
 		LayoutAura(container, button, position)
 		button:Show()
-		if container.showStealableBuffs and stealable then button.DebuffType:SetBackdropBorderColor(.2,.6,1)
-	button.DebuffType:Show() end
+		if container.showStealableBuffs and stealable then
+			button.DebuffType:SetBackdropBorderColor(0.2, 0.6, 1)
+			button.DebuffType:Show()
+		end
 		if container.PostUpdateIcon then
-			container:PostUpdateIcon(frame.unit,button,index,position,duration,expiration,debuffType,stealable)
+			container:PostUpdateIcon(frame.unit, button, index, position, duration, expiration, debuffType, stealable)
 		end
 	end)
-	for i=position+1,#container do container[i]:Hide()
-	UnregisterAuraTimer(container[i]) end
+	for index = position + 1, #container do
+		container[index]:Hide()
+		UnregisterAuraTimer(container[index])
+	end
 end
 
-local function UpdateAuras(frame,event,unit)
-	if unit and unit~=frame.unit then
+local function UpdateAuras(frame, _, unit)
+	if unit and unit ~= frame.unit then
 		return
 	end
 	if frame.Buffs then
-		UpdateAuraContainer(frame,frame.Buffs,"HELPFUL")
+		UpdateAuraContainer(frame, frame.Buffs, "HELPFUL")
 	end
 	if frame.Debuffs then
-		UpdateAuraContainer(frame,frame.Debuffs,"HARMFUL")
+		UpdateAuraContainer(frame, frame.Debuffs, "HARMFUL")
 	end
 end
+
 local function EnableAuras(frame)
 	if not frame.Buffs and not frame.Debuffs then
 		return
 	end
-	for _,container in ipairs({frame.Buffs,frame.Debuffs}) do if container then container.__owner=frame
-	container.ForceUpdate=function() UpdateAuras(frame,"ForceUpdate",frame.unit) end end end
-	frame:RegisterEvent("UNIT_AURA",UpdateAuras)
+	for _, container in ipairs({frame.Buffs, frame.Debuffs}) do
+		if container then
+			container.__owner = frame
+			container.ForceUpdate = function()
+				UpdateAuras(frame, "ForceUpdate", frame.unit)
+			end
+		end
+	end
+	frame:RegisterEvent("UNIT_AURA", UpdateAuras)
 	return true
 end
-ns.UnitFrameComponentHandlers.Auras={update=UpdateAuras,enable=EnableAuras,disable=function(frame) if frame.Buffs then frame.Buffs:Hide() end
-	if frame.Debuffs then frame.Debuffs:Hide() end end}
+
+local function DisableAuras(frame)
+	if frame.Buffs then
+		frame.Buffs:Hide()
+	end
+	if frame.Debuffs then
+		frame.Debuffs:Hide()
+	end
+end
+
+ns.UnitFrameComponentHandlers.Auras = {
+	update = UpdateAuras,
+	enable = EnableAuras,
+	disable = DisableAuras,
+}

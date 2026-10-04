@@ -1,6 +1,10 @@
 local _, ns = ...
-local HydraUI = ns:get()
 local Handlers = ns.UnitFrameComponentHandlers
+
+local ThreatEvents = {
+	"UNIT_THREAT_SITUATION_UPDATE",
+	"UNIT_THREAT_LIST_UPDATE",
+}
 
 local function Force(element, update)
 	return function()
@@ -8,41 +12,60 @@ local function Force(element, update)
 	end
 end
 
-local function UpdateThreat(frame,event,unit)
+local function UpdateThreat(frame, _, unit)
 	if unit and unit ~= frame.unit then
 		return
 	end
-	local e=frame.ThreatIndicator
-	if e.PreUpdate then
-		e:PreUpdate(frame.unit)
+
+	local indicator = frame.ThreatIndicator
+	if indicator.PreUpdate then
+		indicator:PreUpdate(frame.unit)
 	end
-	local feedback = e.feedbackUnit
+
+	local feedbackUnit = indicator.feedbackUnit
 	local status
-	if not feedback or feedback == frame.unit or UnitExists(feedback) then
-		status=UnitThreatSituation(feedback or frame.unit, feedback and frame.unit or nil)
+	if not feedbackUnit or feedbackUnit == frame.unit or UnitExists(feedbackUnit) then
+		status = UnitThreatSituation(feedbackUnit or frame.unit, feedbackUnit and frame.unit or nil)
 	end
-	local color=status and frame.colors.threat[status]
-		if color then
-		if e.SetVertexColor then
-			e:SetVertexColor(unpack(color))
+
+	local color = status and frame.colors.threat[status]
+	if color then
+		if indicator.SetVertexColor then
+			indicator:SetVertexColor(unpack(color))
 		end
-		e:Show()
+		indicator:Show()
 	else
-		e:Hide()
+		indicator:Hide()
 	end
-	if e.PostUpdate then
-		e:PostUpdate(frame.unit,status,color and color[1],color and color[2],color and color[3])
+
+	if indicator.PostUpdate then
+		indicator:PostUpdate(frame.unit, status, color and color[1], color and color[2], color and color[3])
 	end
 end
-local function EnableThreat(frame) local e=frame.ThreatIndicator
-	if not e then
+
+local function EnableThreat(frame)
+	local indicator = frame.ThreatIndicator
+	if not indicator then
 		return
 	end
-	e.__owner,e.ForceUpdate=frame,Force(e,UpdateThreat)
-	frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE",UpdateThreat)
-	frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE",UpdateThreat)
-	return true end
-Handlers.ThreatIndicator={update=UpdateThreat,enable=EnableThreat,disable=function(frame)
+
+	indicator.__owner = frame
+	indicator.ForceUpdate = Force(indicator, UpdateThreat)
+	for _, event in ipairs(ThreatEvents) do
+		frame:RegisterEvent(event, UpdateThreat)
+	end
+	return true
+end
+
+local function DisableThreat(frame)
 	frame.ThreatIndicator:Hide()
-	Unregister(frame, UpdateThreat, "UNIT_THREAT_SITUATION_UPDATE", "UNIT_THREAT_LIST_UPDATE")
-end}
+	for _, event in ipairs(ThreatEvents) do
+		frame:UnregisterEvent(event, UpdateThreat)
+	end
+end
+
+Handlers.ThreatIndicator = {
+	update = UpdateThreat,
+	enable = EnableThreat,
+	disable = DisableThreat,
+}

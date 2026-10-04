@@ -29,7 +29,6 @@ HydraUI.UserClass = select(2, UnitClass("player"))
 HydraUI.UserRace = UnitRace("player")
 HydraUI.UserRealm = GetRealmName()
 HydraUI.ClientLocale = GetLocale()
-HydraUI.UserLocale = HydraUI.ClientLocale
 HydraUI.UserProfileKey = format("%s:%s", HydraUI.UserName, HydraUI.UserRealm)
 HydraUI.ClientVersion = select(4, GetBuildInfo())
 
@@ -44,8 +43,8 @@ HydraUI.IsCata = HydraUI.ClientVersion > 40000 and HydraUI.ClientVersion < 50000
 HydraUI.IsMists = HydraUI.ClientVersion > 50000 and HydraUI.ClientVersion < 60000
 HydraUI.IsMainline = IsMainlineProject
 
-if HydraUI.UserLocale == "enGB" then
-	HydraUI.UserLocale = "enUS"
+if HydraUI.ClientLocale == "enGB" then
+	HydraUI.ClientLocale = "enUS"
 end
 
 -- Language
@@ -71,37 +70,26 @@ HydraUI.Languages = {
 	["zhTW"] = "\231\185\129\233\171\148\228\184\173\230\150\135",
 }
 
-local SavedLocale = (type(HydraUIData) == "table") and HydraUIData.Language
+HydraUI.UserLocale = HydraUI.ClientLocale
 
-if SavedLocale and HydraUI.Languages[SavedLocale] then
-	HydraUI.UserLocale = SavedLocale
-	HydraUI.SelectedLanguage = SavedLocale
-else
-	HydraUI.SelectedLanguage = "AUTO"
+if type(HydraUIProfileData) == "table" and type(HydraUIProfiles) == "table" then
+	local ProfileName = HydraUIProfileData[HydraUI.UserProfileKey]
+	local Profile = ProfileName and HydraUIProfiles[ProfileName]
+	local Locale = Profile and Profile["ui-language"]
+
+	if HydraUI.Languages[Locale] then
+		HydraUI.UserLocale = Locale
+	end
 end
 
 function HydraUI:GetLanguageList()
-	local Languages = { [Language["System Default"]] = "AUTO" }
+	local Languages = {}
 
 	for Locale, Name in pairs(self.Languages) do
 		Languages[Name] = Locale
 	end
 
 	return Languages
-end
-
-function HydraUI:SetLanguage(locale)
-	if (locale ~= "AUTO") and (not self.Languages[locale]) then
-		return
-	end
-
-	if type(HydraUIData) ~= "table" then
-		HydraUIData = {}
-	end
-
-	HydraUIData.Language = (locale ~= "AUTO") and locale or nil
-
-	ReloadUI()
 end
 
 -- Modules and plugins

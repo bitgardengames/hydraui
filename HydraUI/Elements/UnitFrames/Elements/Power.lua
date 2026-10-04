@@ -18,10 +18,22 @@ local function Force(element, update)
 	end
 end
 
-local function SetPowerColor(frame, bar, unit, powerType, token)
-	local color
+local function SetPowerColor(frame, bar, unit, powerType, token, altR, altG, altB)
+	local color, r, g, b
 	if bar.colorPower then
 		color = frame.colors.power[token] or frame.colors.power[powerType]
+		if not color then
+			if bar.GetAlternativeColor then
+				r, g, b = bar:GetAlternativeColor(unit, powerType, token, altR, altG, altB)
+			elseif altR then
+				r, g, b = altR, altG, altB
+				if r > 1 or g > 1 or b > 1 then
+					r, g, b = r / 255, g / 255, b / 255
+				end
+			else
+				color = frame.colors.power.MANA
+			end
+		end
 	elseif bar.colorClass and UnitIsPlayer(unit) then
 		local _, class = UnitClass(unit)
 		color = frame.colors.class[class]
@@ -30,13 +42,16 @@ local function SetPowerColor(frame, bar, unit, powerType, token)
 	end
 
 	if color then
-		bar:SetStatusBarColor(color[1], color[2], color[3])
+		r, g, b = color[1], color[2], color[3]
+	end
+	if r then
+		bar:SetStatusBarColor(r, g, b)
 		if bar.bg then
 			local multiplier = bar.bg.multiplier or 1
-			bar.bg:SetVertexColor(color[1] * multiplier, color[2] * multiplier, color[3] * multiplier)
+			bar.bg:SetVertexColor(r * multiplier, g * multiplier, b * multiplier)
 		end
 	end
-	return color
+	return r, g, b
 end
 
 local function UpdatePower(frame, _, unit)
@@ -45,7 +60,7 @@ local function UpdatePower(frame, _, unit)
 	end
 
 	local bar = frame.Power
-	local powerType, token = UnitPowerType(unit)
+	local powerType, token, altR, altG, altB = UnitPowerType(unit)
 	local displayType, minimum
 	if bar.displayAltPower and bar.GetDisplayPower then
 		displayType, minimum = bar:GetDisplayPower(unit)
@@ -60,9 +75,9 @@ local function UpdatePower(frame, _, unit)
 	bar:SetValue(UnitIsConnected(unit) and current or maximum)
 	bar.cur, bar.min, bar.max, bar.displayType = current, minimum, maximum, displayType
 
-	local color = SetPowerColor(frame, bar, unit, powerType, token)
+	local r, g, b = SetPowerColor(frame, bar, unit, powerType, token, altR, altG, altB)
 	if bar.PostUpdateColor then
-		bar:PostUpdateColor(unit, color and color[1], color and color[2], color and color[3])
+		bar:PostUpdateColor(unit, r, g, b)
 	end
 	if bar.PostUpdate then
 		bar:PostUpdate(unit, current, minimum, maximum)

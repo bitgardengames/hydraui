@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 import unittest
 
-SOURCE = (Path(__file__).parents[1] / "HydraUI/Elements/UnitFrames/Player.lua").read_text()
+SOURCE = (Path(__file__).parents[1] / "HydraUI/Elements/UnitFrames/Frames/Player.lua").read_text()
 
 
 def function_body(name):

@@ -9,6 +9,13 @@ import re
 import unittest
 
 ROOT = Path(__file__).parents[1] / "HydraUI/Elements/UnitFrames"
+FRAMES = ROOT / "Frames"
+ELEMENTS = ROOT / "Elements"
+FACTORY = "\n".join(
+    (ELEMENTS / name).read_text()
+    for name in ("Common.lua", "SingleUnit.lua", "PortraitWidget.lua", "Castbar.lua",
+                 "Auras.lua", "RaidTarget.lua", "Updates.lua")
+)
 STYLES = {
     "Player": "unitframes-player",
     "Target": "unitframes-target",
@@ -51,14 +58,14 @@ def constructor_block(source: str, constructor: str) -> str:
 
 class SharedUnitFrameCoverage(unittest.TestCase):
     def test_health_path_calls_color_update_without_ambiguous_syntax(self):
-        shared = (ROOT / "ComponentFactory.lua").read_text()
+        shared = (ELEMENTS / "Health.lua").read_text()
         health_path = shared[shared.index("local function HealthPath"):shared.index("local function EnableHealth")]
         self.assertIn("local updateColor = bar.UpdateColor or HealthColor", health_path)
         self.assertIn("updateColor(frame, event, unit)", health_path)
         self.assertNotRegex(health_path, r"(?m)^\s*\(")
 
     def test_singleton_settings_use_shared_update_factory(self):
-        shared = (ROOT / "ComponentFactory.lua").read_text()
+        shared = FACTORY
         self.assertIn("function UF:CreateUnitUpdater(unit, operation, options)", shared)
         for operation in ("Width", "HealthHeight", "PowerHeight", "HealthColor",
                           "PowerColor", "HealthReverse", "PowerReverse",
@@ -66,7 +73,7 @@ class SharedUnitFrameCoverage(unittest.TestCase):
                           "AuraSpacing", "ElementEnabled"):
             self.assertIn(f"function UnitOperations.{operation}", shared)
         for module in ("Focus", "Pet", "TargetTarget", "Boss", "Target", "Player"):
-            self.assertIn("UF:CreateUnitUpdater(", (ROOT / f"{module}.lua").read_text())
+            self.assertIn("UF:CreateUnitUpdater(", (FRAMES / f"{module}.lua").read_text())
 
     def test_single_unit_styles_delegate_with_family_descriptors(self):
         for module, prefix in (("Player", "unitframes-player"),
@@ -78,14 +85,14 @@ class SharedUnitFrameCoverage(unittest.TestCase):
                                ("PartyPets", "party-pets"),
                                ("RaidPets", "raid-pets")):
             with self.subTest(module=module):
-                source = (ROOT / f"{module}.lua").read_text()
+                source = (FRAMES / f"{module}.lua").read_text()
                 self.assertIn(f'settingsPrefix = "{prefix}"', source)
                 self.assertIn("UF:BuildSingleUnitFrame(self, unit,", source)
                 self.assertNotIn("UF:CreateHealthBar(", source)
                 self.assertNotIn("UF:CreatePowerBar(", source)
 
     def test_single_unit_builder_resolves_family_settings_and_optional_hooks(self):
-        source = (ROOT / "ComponentFactory.lua").read_text()
+        source = FACTORY
         build = source[source.index("function UF:BuildSingleUnitFrame"):source.index("function UF:CreatePortrait")]
         self.assertIn('config.settingsPrefix .. suffix', source)
         for hook in ("portrait", "cast", "auras", "postBuild"):
@@ -95,10 +102,10 @@ class SharedUnitFrameCoverage(unittest.TestCase):
             self.assertIn(field, build)
 
     def test_party_and_raid_use_the_shared_group_builder(self):
-        shared = (ROOT / "GroupFrames.lua").read_text()
+        shared = (FRAMES / "GroupFrames.lua").read_text()
         self.assertIn("function UF:BuildGroupFrame", shared)
         for module, family in (("Party", "party"), ("Raid", "raid")):
-            source = (ROOT / f"{module}.lua").read_text()
+            source = (FRAMES / f"{module}.lua").read_text()
             self.assertRegex(source, rf'prefix\s*=\s*"{family}"')
             self.assertIn("UF:BuildGroupFrame(frame, unit,", source)
 
@@ -110,26 +117,26 @@ class SharedUnitFrameCoverage(unittest.TestCase):
 
         for module, health_texture, mouseover, debuff_filter in cases:
             with self.subTest(module=module):
-                source = (ROOT / f"{module}.lua").read_text()
+                source = (FRAMES / f"{module}.lua").read_text()
                 self.assertRegex(source, rf'healthTextureKey\s*=\s*"{health_texture}"')
                 self.assertRegex(source, rf'mouseoverKey\s*=\s*"{mouseover}"')
                 self.assertIn(debuff_filter, source)
 
     def test_group_updates_reuse_operation_and_header_iterator(self):
-        shared = (ROOT / "GroupFrames.lua").read_text()
+        shared = (FRAMES / "GroupFrames.lua").read_text()
         update = re.search(r"function UF:UpdateGroupFrames(.*?)\nend", shared, re.S).group(0)
         self.assertIn("self:ForEachHeaderChild(header, Operations[operation], value, descriptor)", update)
         self.assertNotIn("function(", update)
 
     def test_pet_styles_map_their_own_family_settings_in_the_factory(self):
-        factory = (ROOT / "ComponentFactory.lua").read_text()
+        factory = FACTORY
         self.assertIn('FamilySetting(config, "-width")', factory)
         self.assertIn('FamilySetting(config, "-health-height")', factory)
         self.assertIn('FamilySetting(config, "-health-reverse")', factory)
         cases = (("PartyPets", "party-pets", "party"), ("RaidPets", "raid-pets", "raid"))
         for module, pet_prefix, parent_prefix in cases:
             with self.subTest(module=module):
-                source = (ROOT / f"{module}.lua").read_text()
+                source = (FRAMES / f"{module}.lua").read_text()
                 self.assertIn(f'settingsPrefix = "{pet_prefix}"', source)
                 self.assertNotIn("CreateHealAndAbsorbBars", source)
                 self.assertNotIn(f'Settings["{parent_prefix}-width"]', source)
@@ -137,8 +144,8 @@ class SharedUnitFrameCoverage(unittest.TestCase):
                 self.assertNotIn(f'Settings["{parent_prefix}-health-reverse"]', source)
 
     def test_family_descriptors_declare_optional_components_and_client_branches(self):
-        player = (ROOT / "Player.lua").read_text()
-        boss = (ROOT / "Boss.lua").read_text()
+        player = (FRAMES / "Player.lua").read_text()
+        boss = (FRAMES / "Boss.lua").read_text()
         self.assertIn('powerEnabledKey = "unitframes-player-enable-power"', player)
         self.assertIn("HydraUI.IsMainline", player)
         self.assertIn("HydraUI.IsVanilla or HydraUI.IsTBC", player)
@@ -146,7 +153,7 @@ class SharedUnitFrameCoverage(unittest.TestCase):
         self.assertIn("threat = false", boss)
 
     def test_live_health_texture_update_reaches_every_prediction_texture(self):
-        shared = (ROOT / "ComponentFactory.lua").read_text()
+        shared = FACTORY
         update = re.search(
             r"local function SetHeaderHealthTexture\(frame, resolvedTexture\)(.*?)"
             r"function UF:SetHeaderHealthTexture\(header, value\)(.*?)\nend",
@@ -163,13 +170,13 @@ class SharedUnitFrameCoverage(unittest.TestCase):
         self.assertIn("self:ForEachHeaderChild(header, SetHeaderHealthTexture, texture)", update)
         self.assertNotIn("function(frame, resolvedTexture)", update)
         for module, unit in (("PartyPets", "partypet"), ("RaidPets", "raidpet")):
-            source = (ROOT / f"{module}.lua").read_text()
+            source = (FRAMES / f"{module}.lua").read_text()
             self.assertIn(
                 f'UF:SetHeaderHealthTexture(HydraUI.UnitFrames["{unit}"], value)',
                 source,
             )
-        self.assertNotIn("GetTetxure", (ROOT / "PartyPets.lua").read_text())
-        self.assertNotIn("Unit.Health.HealBar", (ROOT / "PartyPets.lua").read_text())
+        self.assertNotIn("GetTetxure", (FRAMES / "PartyPets.lua").read_text())
+        self.assertNotIn("Unit.Health.HealBar", (FRAMES / "PartyPets.lua").read_text())
 
 
 if __name__ == "__main__":
@@ -223,7 +230,7 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
             ("PartyPets.lua", "partypet", "party"),
             ("RaidPets.lua", "raidpet", "raid"),
         ):
-            source = (ROOT / filename).read_text()
+            source = (FRAMES / filename).read_text()
             style_start = source.index(f'HydraUI.StyleFuncs["{style_name}"]')
             build_start = source.index("UF:BuildSingleUnitFrame", style_start)
             before_style = source[:style_start]
@@ -259,25 +266,26 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
     def test_manifest_loads_support_modules_before_coordinator(self):
         manifest = (ROOT / "UnitFrames.xml").read_text()
         coordinator = manifest.index('file="UnitFrames.lua"')
-        for module in ("ComponentFactory", "AuraSupport", "CastSupport",
-                       "TotemSupport", "Spawning"):
+        for module in ("Elements/Factory", "Elements/AuraSupport", "Elements/CastSupport",
+                       "Elements/TotemSupport", "Spawning"):
             self.assertLess(manifest.index(f'file="{module}.lua"'), coordinator)
 
     def test_public_apis_remain_installed_on_uf(self):
         expected = {
-            "ComponentFactory.lua": ("CreateHealthBar", "CreatePowerBar", "CreatePortrait",
-                                     "CreateCastbar", "CreateAuraContainer", "SetHealthTexture",
-                                     "SetHealthHeight", "SetHealthReverseFill"),
-            "AuraSupport.lua": ("PostCreateIcon", "PostUpdateIcon",
-                                "PostCreateAuraWatchIcon"),
-            "CastSupport.lua": ("PostCastStart", "PostCastStop", "PostCastFail"),
-            "TotemSupport.lua": ("PostUpdateTotems",),
-            "Spawning.lua": ("SpawnSingletonFrames", "SpawnBossFrames",
-                             "BuildHeaderAttributes", "SpawnPartyHeaders",
-                             "SpawnRaidHeaders", "SpawnNameplates"),
+            ELEMENTS / "Common.lua": ("CreateHealthBar", "CreatePowerBar"),
+            ELEMENTS / "PortraitWidget.lua": ("CreatePortrait",),
+            ELEMENTS / "Castbar.lua": ("CreateCastbar",),
+            ELEMENTS / "Auras.lua": ("CreateAuraContainer",),
+            ELEMENTS / "Updates.lua": ("SetHealthTexture", "SetHealthHeight", "SetHealthReverseFill"),
+            ELEMENTS / "AuraSupport.lua": ("PostCreateIcon", "PostUpdateIcon", "PostCreateAuraWatchIcon"),
+            ELEMENTS / "CastSupport.lua": ("PostCastStart", "PostCastStop", "PostCastFail"),
+            ELEMENTS / "TotemSupport.lua": ("PostUpdateTotems",),
+            ROOT / "Spawning.lua": ("SpawnSingletonFrames", "SpawnBossFrames",
+                                    "BuildHeaderAttributes", "SpawnPartyHeaders",
+                                    "SpawnRaidHeaders", "SpawnNameplates"),
         }
-        for filename, methods in expected.items():
-            source = (ROOT / filename).read_text()
+        for path, methods in expected.items():
+            source = path.read_text()
             for method in methods:
                 self.assertRegex(source, rf"UF[.:]{method}\b")
 

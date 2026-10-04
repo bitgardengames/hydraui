@@ -4,7 +4,7 @@ from pathlib import Path
 
 SOURCE = (
     Path(__file__).parents[1]
-    / "HydraUI/Elements/UnitFrames/CastSupport.lua"
+    / "HydraUI/Elements/UnitFrames/Elements/CastSupport.lua"
 ).read_text()
 
 

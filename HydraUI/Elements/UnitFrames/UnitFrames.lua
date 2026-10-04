@@ -78,7 +78,6 @@ end
 
 UF.Style = Style
 
-
 function UF:Load()
 	self:SpawnSingletonFrames()
 	self:SpawnBossFrames()

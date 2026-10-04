@@ -9,11 +9,14 @@ local function HideBlizzardFrame(frame, keepParent)
 	if not frame then
 		return
 	end
+
 	frame:UnregisterAllEvents()
 	frame:Hide()
+
 	if not keepParent then
 		frame:SetParent(Hider)
 	end
+
 	for _, child in pairs({frame.healthBar or frame.healthbar, frame.manabar, frame.castBar or frame.spellbar, frame.powerBarAlt, frame.BuffFrame}) do
 		if child then
 			child:UnregisterAllEvents()
@@ -21,36 +24,35 @@ local function HideBlizzardFrame(frame, keepParent)
 	end
 end
 
--- Mirror the stock-frame suppression performed by oUF without making the
--- native unit-frame runtime depend on the bundled oUF reference copy.
+-- Mirror the stock-frame suppression performed by oUF without making the native unit-frame runtime depend on the bundled oUF reference copy.
 function UF:DisableBlizzardUnitFrame(unit)
 	if unit == "player" then
-		HideBlizzardFrame(_G.PlayerFrame)
+		HideBlizzardFrame(PlayerFrame)
 		-- Blizzard still needs these events to switch the vehicle unit safely.
-		if _G.PlayerFrame then
+		if PlayerFrame then
 			for _, event in ipairs({"PLAYER_ENTERING_WORLD", "UNIT_ENTERING_VEHICLE", "UNIT_ENTERED_VEHICLE", "UNIT_EXITING_VEHICLE", "UNIT_EXITED_VEHICLE"}) do
-				_G.PlayerFrame:RegisterEvent(event)
+				PlayerFrame:RegisterEvent(event)
 			end
-			_G.PlayerFrame:SetUserPlaced(true)
-			_G.PlayerFrame:SetDontSavePosition(true)
+			PlayerFrame:SetUserPlaced(true)
+			PlayerFrame:SetDontSavePosition(true)
 		end
 	elseif unit == "pet" then
-		HideBlizzardFrame(_G.PetFrame)
+		HideBlizzardFrame(PetFrame)
 	elseif unit == "target" then
-		HideBlizzardFrame(_G.TargetFrame)
-		HideBlizzardFrame(_G.ComboFrame)
+		HideBlizzardFrame(TargetFrame)
+		HideBlizzardFrame(ComboFrame)
 	elseif unit == "focus" then
-		HideBlizzardFrame(_G.FocusFrame)
-		HideBlizzardFrame(_G.TargetofFocusFrame)
+		HideBlizzardFrame(FocusFrame)
+		HideBlizzardFrame(TargetofFocusFrame)
 	elseif unit == "targettarget" then
-		HideBlizzardFrame(_G.TargetFrameToT)
+		HideBlizzardFrame(TargetFrameToT)
 	elseif unit == "boss" then
-		for index = 1, (_G.MAX_BOSS_FRAMES or 5) do
+		for index = 1, (MAX_BOSS_FRAMES or 5) do
 			HideBlizzardFrame(_G["Boss" .. index .. "TargetFrame"])
 		end
 	elseif unit == "party" then
-		HideBlizzardFrame(_G.PartyFrame)
-		for index = 1, (_G.MAX_PARTY_MEMBERS or 4) do
+		HideBlizzardFrame(PartyFrame)
+		for index = 1, (MAX_PARTY_MEMBERS or 4) do
 			HideBlizzardFrame(_G["PartyMemberFrame" .. index])
 		end
 	end
@@ -87,6 +89,7 @@ local SingletonUnits = {
 	{unit = "pet", globalName = "HydraUI Pet", enabled = "pet-enable", dimensions = {width = "unitframes-pet-width", health = "unitframes-pet-health-height", power = "unitframes-pet-power-height"}, defaultAnchor = {"TOPLEFT", "CENTER", -68, -341}, postSpawn = "ConfigurePet"},
 	{unit = "focus", globalName = "HydraUI Focus", enabled = "focus-enable", dimensions = {width = "unitframes-focus-width", health = "unitframes-focus-health-height", power = "unitframes-focus-power-height"}, defaultAnchor = {"RIGHT", "CENTER", -68, 304}, postSpawn = "ConfigureFocus"},
 }
+
 UF.SingletonUnits = SingletonUnits
 
 function UF:SpawnSingletonFrames()
@@ -228,7 +231,6 @@ function UF:SpawnSingletonFrames()
 		HydraUI.UnitFrames["focus"] = Focus
 		HydraUI:CreateMover(Focus)
 	end
-
 end
 
 function UF:SpawnBossFrames()
@@ -250,27 +252,31 @@ function UF:SpawnBossFrames()
 			HydraUI.UnitFrames["boss" .. i] = Boss
 		end
 	end
-
 end
 
 function UF:GetGrowthOffsets(point, spacing)
 	if point == "LEFT" then
 		return spacing, 0
 	end
+
 	if point == "RIGHT" then
 		return -spacing, 0
 	end
+
 	if point == "TOP" then
 		return 0, -spacing
 	end
+
 	if point == "BOTTOM" then
 		return 0, spacing
 	end
+
 	return 0, 0
 end
 
 function UF:BuildHeaderAttributes(options)
 	assert(options.width and options.height, "header attributes require width and height")
+
 	return {
 		"initial-width", options.width, "initial-height", options.height,
 		"showSolo", options.showSolo, "showPlayer", options.showPlayer,
@@ -291,32 +297,43 @@ local HEADER_INITIAL_CONFIG = [[
 
 function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
 	assert(not InCombatLockdown(), "secure group headers cannot be created during combat")
+
 	local template = petHeader and "SecureGroupPetHeaderTemplate" or "SecureGroupHeaderTemplate"
 	local header = CreateFrame("Frame", name, HydraUI.UIParent, template)
 	header:SetAttribute("template", "SecureUnitButtonTemplate")
 	header:SetAttribute("initialConfigFunction", HEADER_INITIAL_CONFIG)
+
 	for index = 1, #attributes, 2 do
 		header:SetAttribute(attributes[index], attributes[index + 1])
 	end
+
 	header.InitializeChild = function(_, childName)
 		local child = _G[childName]
+
 		if not child or child.__hydraInitialized then
 			return
 		end
+
 		local unit = child:GetAttribute("unit")
+
 		if not unit then
 			return
 		end
+
 		local style = petHeader and (visibility == "party" and "partypet" or "raidpet") or visibility
 		HydraUI.UnitFrames:InitializeHeaderChild(child, unit, HydraUI.StyleFuncs[style])
 	end
+
 	local condition
+
 	if visibility == "party" then
 		condition = attributes[attributes.showSoloIndex + 1] and "[group:raid] hide; [group:party] show; [nogroup] show; hide" or "[group:party] show; hide"
 	else
 		condition = attributes[attributes.showSoloIndex + 1] and "[group:raid] show; [nogroup] show; hide" or "[group:raid] show; hide"
 	end
+
 	RegisterStateDriver(header, "visibility", condition)
+
 	return header
 end
 
@@ -371,6 +388,7 @@ function UF:SpawnRaidHeaders()
 	if not Settings["raid-enable"] then
 		return
 	end
+
 	local common = {"initial-width", Settings["raid-width"], "initial-height", Settings["raid-health-height"] + Settings["raid-power-height"] + 3,
 		"isTesting", false, "showPlayer", true, "showParty", false, "showRaid", true,
 		"point", Settings["raid-point"], "xOffset", Settings["raid-x-offset"], "yOffset", Settings["raid-y-offset"],
@@ -383,12 +401,14 @@ function UF:SpawnRaidHeaders()
 	self.RaidAnchor:SetSize(maxSize * Settings["raid-width"] + maxSize * Settings["raid-x-offset"] - 2,
 		unitHeight * (Settings["raid-max-columns"] + 1) + Settings["raid-y-offset"] * (Settings["raid-max-columns"] - 1))
 	self.RaidAnchor:SetPoint("BOTTOMLEFT", HydraUIChatFrameTop, "TOPLEFT", -3, 10)
+
 	if CompactRaidFrameContainer then
 		CompactRaidFrameContainer:UnregisterAllEvents()
 		CompactRaidFrameContainer:SetParent(Hider)
 		CompactRaidFrameManager:UnregisterAllEvents()
 		CompactRaidFrameManager:SetParent(Hider)
 	end
+
 	Raid:SetPoint("BOTTOMLEFT", self.RaidAnchor)
 	HydraUI:CreateMover(self.RaidAnchor)
 	HydraUI.UnitFrames["raid"] = Raid
@@ -416,6 +436,7 @@ function UF:SpawnNameplates()
 	if not Settings["nameplates-enable"] then
 		return
 	end
+
 	UF.NamePlateCVars.nameplateSelectedAlpha = Settings["nameplates-selected-alpha"] / 100
 	UF.NamePlateCVars.nameplateMinAlpha = Settings["nameplates-unselected-alpha"] / 100
 	UF.NamePlateCVars.nameplateMaxAlpha = Settings["nameplates-unselected-alpha"] / 100

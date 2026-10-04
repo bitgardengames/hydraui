@@ -1,4 +1,4 @@
--- This is my death strike module from Legion, I need to rewrite it as an oUF plugin
+-- This is my death strike module from Legion, I need to rewrite it for the native unit-frame runtime
 local HydraUI, Language, Assets, Settings = select(2, ...):get()
 
 local Frame = CreateFrame("Frame")

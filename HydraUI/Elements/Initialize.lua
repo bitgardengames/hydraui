@@ -213,7 +213,7 @@ function HydraUI:OnEvent(event)
 	self:ApplyProfile(self:GetActiveProfileName())
 
 	self:UpdateColors()
-	self:UpdateoUFColors()
+	self:UpdateUnitFrameColors()
 
 	self:WelcomeMessage()
 

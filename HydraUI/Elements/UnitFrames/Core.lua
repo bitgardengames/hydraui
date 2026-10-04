@@ -234,3 +234,82 @@ function UnitFrames:CreateUnitButton(unit, globalName, builder)
 	_G.ClickCastFrames[frame] = true
 	return frame
 end
+
+-- Blizzard creates secure-header children for us.  Adopt one into the native
+-- unit-frame runtime exactly once after its secure attributes have been set.
+function UnitFrames:InitializeHeaderChild(frame, unit, builder)
+	if frame.__hydraInitialized then
+		return
+	end
+	frame.__hydraInitialized = true
+	frame.__nativeRegisterEvent = frame.RegisterEvent
+	frame.__nativeRegisterUnitEvent = frame.RegisterUnitEvent
+	frame.__nativeUnregisterEvent = frame.UnregisterEvent
+	frame.__events, frame.unitEvents = {}, {}
+	frame.__updates, frame.__enabledElements = {}, {}
+	frame.__elements, frame.colors = frame.__updates, colors
+	frame.unit, frame.realUnit = unit, nil
+	frame.__eventless = false
+	frame.RegisterEvent, frame.UnregisterEvent = RegisterEvent, UnregisterEvent
+	frame.EnableElement, frame.DisableElement = EnableElement, DisableElement
+	frame.IsElementEnabled = function(owner, name)
+		return owner.__enabledElements[name]
+	end
+	frame.UpdateAllElements = UpdateAllElements
+	frame.Tag, frame.Untag, frame.UpdateTags = tag, untag, updateTags
+	frame.Enable, frame.Disable, frame.IsEnabled = Enable, Disable, UnitWatchRegistered
+	frame:SetScript("OnEvent", Dispatch)
+	builder(frame, unit)
+	for name in next, componentHandlers do
+		frame:EnableElement(name, unit)
+	end
+	frame:RegisterEvent("PLAYER_ENTERING_WORLD", UpdateUnit, true)
+	frame:RegisterEvent("UNIT_ENTERED_VEHICLE", UpdateUnit)
+	frame:RegisterEvent("UNIT_EXITED_VEHICLE", UpdateUnit)
+	frame:RegisterEvent("UNIT_PET", UpdatePet)
+	frame:SetScript("OnShow", UpdateUnit)
+	frame:HookScript("OnAttributeChanged", UnitAttributeChanged)
+	_G.ClickCastFrames = _G.ClickCastFrames or {}
+	_G.ClickCastFrames[frame] = true
+end
+
+function UnitFrames:CreateNamePlateButton(parent, unit, builder)
+	local frame = CreateFrame("Button", nil, parent)
+	frame.__nativeRegisterEvent = frame.RegisterEvent
+	frame.__nativeRegisterUnitEvent = frame.RegisterUnitEvent
+	frame.__nativeUnregisterEvent = frame.UnregisterEvent
+	frame.__events, frame.unitEvents, frame.__updates, frame.__enabledElements = {}, {}, {}, {}
+	frame.__elements, frame.colors, frame.unit = frame.__updates, colors, unit
+	frame.RegisterEvent, frame.UnregisterEvent = RegisterEvent, UnregisterEvent
+	frame.EnableElement, frame.DisableElement = EnableElement, DisableElement
+	frame.IsElementEnabled = function(owner, name)
+		return owner.__enabledElements[name]
+	end
+	frame.UpdateAllElements = UpdateAllElements
+	frame.Tag, frame.Untag, frame.UpdateTags = tag, untag, updateTags
+	frame:SetScript("OnEvent", Dispatch)
+	frame:EnableMouse(false)
+	frame.isNamePlate = true
+	builder(frame, unit)
+	for name in next, componentHandlers do
+		frame:EnableElement(name, unit)
+	end
+	return frame
+end
+
+function UnitFrames:SetNamePlateUnit(frame, unit)
+	if not unit then
+		for event in next, frame.unitEvents do
+			frame.__nativeUnregisterEvent(frame, event)
+		end
+		frame.unit = nil
+		frame:Hide()
+		return
+	end
+	frame.unit = unit
+	for event in next, frame.unitEvents do
+		frame.__nativeRegisterUnitEvent(frame, event, unit)
+	end
+	frame:Show()
+	frame:UpdateAllElements("RefreshUnit")
+end

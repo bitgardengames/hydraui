@@ -1,8 +1,6 @@
 local addon, ns = ...
 local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
-local oUF = ns.oUF or oUF
-
 local find = string.find
 
 Defaults["unitframes-only-player-debuffs"] = false
@@ -87,7 +85,7 @@ local Style = function(self, unit)
 	end
 end
 
-oUF:RegisterStyle("HydraUI", Style)
+UF.Style = Style
 
 ns.UnitFrameSpawning(UF, Hider)
 

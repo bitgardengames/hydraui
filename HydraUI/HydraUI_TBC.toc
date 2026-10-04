@@ -15,7 +15,6 @@ Elements\Libraries\AceSerializer-3.0.lua
 Elements\Libraries\ChatThrottleLib.lua
 Elements\Libraries\LibDeflate.lua
 Elements\Libraries\LibMotion.lua
-Elements\Libraries\oUF\oUF_TBC.xml
 Elements\Libraries\LibQuestXP\LibQuestXPDB.lua
 Elements\Libraries\LibQuestXP\LibQuestXP.lua
 Elements\Libraries\LibClassicDurations\LibClassicDurations.xml

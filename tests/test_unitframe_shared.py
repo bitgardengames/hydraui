@@ -137,6 +137,23 @@ class SharedUnitFrameCoverage(unittest.TestCase):
             self.assertRegex(source, rf'prefix\s*=\s*"{family}"')
             self.assertIn("UF:BuildGroupFrame(frame, unit,", source)
 
+    def test_group_builder_delegates_complex_widgets_to_focused_helpers(self):
+        shared = (FRAMES / "GroupFrames.lua").read_text()
+        build = shared[shared.index("function UF:BuildGroupFrame"):shared.index("local Operations")]
+
+        for helper in ("CreateDeadAnimation", "CreatePhaseIndicator",
+                       "CreateDispelIndicator"):
+            self.assertLess(shared.index(f"local function {helper}"),
+                            shared.index("function UF:BuildGroupFrame"))
+            self.assertIn(f"{helper}(", build)
+
+        # Constructors whose return values are installed on the frame should not
+        # create throwaway locals in this frequently used group-frame path.
+        self.assertIn("UF:CreateHealAndAbsorbBars(", build)
+        self.assertNotIn("local heal, absorbs =", build)
+        self.assertIn("UF:CreateMouseoverHighlight(frame,", build)
+        self.assertNotIn("local highlight =", build)
+
     def test_group_descriptors_keep_family_specific_options(self):
         cases = (
             ("Party", "PartyHealthTexture", "PartyEnableMouseover", "PartyDebuffFilter"),

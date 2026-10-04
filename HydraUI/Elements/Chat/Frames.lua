@@ -223,13 +223,18 @@ local OnHyperlinkLeave = function(self)
 	GameTooltip:Hide()
 end
 
-function Chat:OverrideAddMessage(msg, ...)
+local ShortenChannelNames = function(self, event, msg, ...)
 	if Settings["chat-shorten-channels"] and (type(msg) == "string") then
 		msg = gsub(msg, "|h%[(%d+)%.%s.-%]|h", "|h[%1]|h")
 	end
 
+	return false, msg, ...
+end
+
+ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", ShortenChannelNames)
+
+local SaveMessage = function(self, msg, ...)
 	Chat:SaveMessage(self, msg, ...)
-	self.OldAddMessage(self, msg, ...)
 end
 
 function Chat:StyleChatFrame(frame)
@@ -238,8 +243,7 @@ function Chat:StyleChatFrame(frame)
 	end
 
 	if frame ~= ChatFrame2 then
-		frame.OldAddMessage = frame.AddMessage
-		frame.AddMessage = Chat.OverrideAddMessage
+		hooksecurefunc(frame, "AddMessage", SaveMessage)
 	end
 
 	local FrameName = frame:GetName()

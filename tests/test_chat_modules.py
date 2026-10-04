@@ -56,6 +56,15 @@ def test_data_text_module_is_cached_when_chat_frames_are_initialized():
     assert "HydraUI:GetModule" not in focus_hooks
 
 
+def test_chat_message_customization_does_not_replace_blizzard_add_message():
+    frames = source("Frames.lua")
+
+    assert 'ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", ShortenChannelNames)' in frames
+    assert 'hooksecurefunc(frame, "AddMessage", SaveMessage)' in frames
+    assert "frame.AddMessage =" not in frames
+    assert "frame.OldAddMessage" not in frames
+
+
 def test_right_window_uses_one_background_opacity_setting():
     window = source("Window.lua")
     coordinator = (ROOT / "Chat.lua").read_text()

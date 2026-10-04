@@ -5,6 +5,7 @@ local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 -- UI
 Defaults["ui-display-welcome"] = true
 Defaults["ui-border-thickness"] = 0
+Defaults["ui-language"] = HydraUI.ClientLocale
 
 -- Main
 Defaults["ui-style"] = "HydraUI"

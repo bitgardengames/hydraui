@@ -88,10 +88,11 @@ Install("TargetIndicator", function(frame)
 end, nil, {{"PLAYER_TARGET_CHANGED", true}})
 
 Install("GroupRoleIndicator", function(frame)
-	local element, role = frame.GroupRoleIndicator, UnitGroupRolesAssigned(frame.unit)
+	local element = frame.GroupRoleIndicator
+	local role = UnitGroupRolesAssigned(frame.unit)
 	if role == "TANK" or role == "HEALER" or role == "DAMAGER" then
 		element:SetTexCoord(GetTexCoordsForRoleSmallCircle(role))
-	element:Show()
+		element:Show()
 	else
 		element:Hide()
 	end
@@ -145,19 +146,25 @@ if HydraUI.IsMainline and not HydraUI.IsForever then
 	PvPIndicatorEvents[#PvPIndicatorEvents + 1] = {"HONOR_LEVEL_UPDATE", true}
 end
 
-Install("PvPIndicator", UpdatePvP, function() return true end, PvPIndicatorEvents)
+Install("PvPIndicator", UpdatePvP, function()
+	return true
+end, PvPIndicatorEvents)
 
 local function ReadyFinished(animation)
 	animation:GetParent():Hide()
 end
+
 Install("ReadyCheckIndicator", function(frame, event)
-	local element, status = frame.ReadyCheckIndicator, GetReadyCheckStatus(frame.unit)
+	local element = frame.ReadyCheckIndicator
+	local status = GetReadyCheckStatus(frame.unit)
 	if status then
 		element:SetTexture(status == "ready" and element.readyTexture or status == "notready" and element.notReadyTexture or element.waitingTexture)
 		element.status = status
-	element:Show()
-	elseif event ~= "READY_CHECK_FINISHED" then element.status = nil
-	element:Hide() end
+		element:Show()
+	elseif event ~= "READY_CHECK_FINISHED" then
+		element.status = nil
+		element:Hide()
+	end
 	if event == "READY_CHECK_FINISHED" then
 		if element.status == "waiting" then
 			element:SetTexture(element.notReadyTexture)

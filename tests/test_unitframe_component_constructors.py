@@ -84,6 +84,13 @@ class ComponentConstructorCoverage(unittest.TestCase):
             self.assertIn("CreateAuraContainer(frame,", source)
             self.assertNotRegex(source, r'CreateFrame\("Frame", frame:GetName\(\) \.\. "(?:Buffs|Debuffs)"')
 
+    def test_nameplate_aura_frames_do_not_require_a_named_owner(self):
+        source = (FRAMES / "NamePlates.lua").read_text()
+
+        self.assertEqual(source.count('CreateFrame("Frame", nil, self)'), 3)
+        self.assertNotIn('self:GetName() .. "Buffs"', source)
+        self.assertNotIn('self:GetName() .. "Debuffs"', source)
+
     def test_optional_client_behavior_is_passed_directly(self):
         player = (FRAMES / "Player.lua").read_text()
         target = (FRAMES / "Target.lua").read_text()

@@ -5,12 +5,34 @@ local Handlers = ns.UnitFrameComponentHandlers or {}
 ns.UnitFrameComponentHandlers = Handlers
 
 local function Force(element, update)
-	return function() return update(element.__owner, "ForceUpdate", element.__owner.unit) end
+	return function()
+		return update(element.__owner, "ForceUpdate", element.__owner.unit)
+	end
 end
 
-local function HealthColor(frame, element, unit)
-	local color
-	if element.colorClass and UnitIsPlayer(unit) then
+local function Run(element, fallback, frame, ...)
+	return (element.Override or fallback)(frame, ...)
+end
+
+local function Unregister(frame, handler, ...)
+	for i = 1, select("#", ...) do
+		frame:UnregisterEvent(select(i, ...), handler)
+	end
+end
+
+local function HealthColor(frame, event, unit)
+	if unit ~= frame.unit then
+		return
+	end
+	local element, color = frame.Health
+	if element.colorDisconnected and not UnitIsConnected(unit) then
+		color = frame.colors.disconnected
+	elseif element.colorTapping and not UnitPlayerControlled(unit) and UnitIsTapDenied(unit) then
+		color = frame.colors.tapped
+	elseif element.colorThreat and not UnitPlayerControlled(unit) then
+		local threat = UnitThreatSituation("player", unit)
+		color = threat and frame.colors.threat[threat]
+	elseif element.colorClass and UnitIsPlayer(unit) then
 		local _, class = UnitClass(unit)
 		color = frame.colors.class[class]
 	elseif element.colorSelection and UnitSelectionColor then
@@ -21,10 +43,19 @@ local function HealthColor(frame, element, unit)
 	elseif element.colorHealth then
 		color = frame.colors.health
 	end
+	local r, g, b
 	if color then
-		element:SetStatusBarColor(color[1], color[2], color[3])
-		if element.bg then local m = element.bg.multiplier or 1
-		element.bg:SetVertexColor(color[1]*m, color[2]*m, color[3]*m) end
+		r, g, b = color[1], color[2], color[3]
+	end
+	if b then
+		element:SetStatusBarColor(r, g, b)
+		if element.bg then
+			local m = element.bg.multiplier or 1
+			element.bg:SetVertexColor(r*m, g*m, b*m)
+		end
+	end
+	if element.PostUpdateColor then
+		element:PostUpdateColor(unit, r, g, b)
 	end
 end
 
@@ -39,10 +70,24 @@ local function UpdateHealth(frame, event, unit)
 	bar:SetMinMaxValues(0, maximum)
 		bar:SetValue(UnitIsConnected(unit) and current or maximum)
 	bar.cur, bar.max = current, maximum
-	HealthColor(frame, bar, unit)
+	local inaccessible = HydraUI.IsMainline and issecretvalue(current) and not canaccessvalue(current)
+	if not inaccessible and current == 0 then
+		if frame.HealBar then
+			frame.HealBar:SetValue(0)
+		end
+		if frame.AbsorbsBar then
+			frame.AbsorbsBar:SetValue(0)
+		end
+	end
 	if bar.PostUpdate then
 		bar:PostUpdate(unit, current, maximum)
 	end
+end
+
+local function HealthPath(frame, event, unit, ...)
+	local bar = frame.Health
+	Run(bar, UpdateHealth, frame, event, unit, ...)
+	(bar.UpdateColor or HealthColor)(frame, event, unit)
 end
 
 local function EnableHealth(frame)
@@ -50,28 +95,40 @@ local function EnableHealth(frame)
 		if not bar then
 			return
 		end
-	bar.__owner, bar.ForceUpdate = frame, Force(bar, UpdateHealth)
-	for _, event in ipairs({"UNIT_HEALTH", "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH", "UNIT_CONNECTION", "UNIT_FACTION"}) do
-		frame:RegisterEvent(event, UpdateHealth)
+	bar.__owner, bar.ForceUpdate = frame, Force(bar, HealthPath)
+	for _, event in ipairs({HydraUI.IsMainline and "UNIT_HEALTH" or "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH"}) do
+		frame:RegisterEvent(event, HealthPath)
 	end
+	for _, event in ipairs({"UNIT_CONNECTION", "PARTY_MEMBER_ENABLE", "PARTY_MEMBER_DISABLE", "UNIT_FACTION", "UNIT_FLAGS", "UNIT_THREAT_LIST_UPDATE"}) do
+		frame:RegisterEvent(event, HealthColor)
+	end
+	bar:Show()
 	return true
 end
-local function DisableHealth(frame) frame.Health:Hide() end
-Handlers.Health = {update=UpdateHealth, enable=EnableHealth, disable=DisableHealth}
+local function DisableHealth(frame)
+	frame.Health:Hide()
+	Unregister(frame, HealthPath, "UNIT_HEALTH", "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH")
+	Unregister(frame, HealthColor, "UNIT_CONNECTION", "PARTY_MEMBER_ENABLE", "PARTY_MEMBER_DISABLE", "UNIT_FACTION", "UNIT_FLAGS", "UNIT_THREAT_LIST_UPDATE")
+end
+Handlers.Health = {update=HealthPath, enable=EnableHealth, disable=DisableHealth}
 
 local function UpdatePower(frame, event, unit)
 	if unit ~= frame.unit then
 		return
 	end
 	local bar = frame.Power
-		local powerType, token = UnitPowerType(unit)
-	local current, maximum = UnitPower(unit, powerType), UnitPowerMax(unit, powerType)
+	local powerType, token = UnitPowerType(unit)
+	local displayType, minimum
+	if bar.displayAltPower and bar.GetDisplayPower then
+		displayType, minimum = bar:GetDisplayPower(unit)
+	end
+	local current, maximum = UnitPower(unit, displayType), UnitPowerMax(unit, displayType)
 	if bar.PreUpdate then
 		bar:PreUpdate(unit)
 	end
-	bar:SetMinMaxValues(0, maximum)
-		bar:SetValue(current)
-		bar.cur, bar.max = current, maximum
+	bar:SetMinMaxValues(minimum or 0, maximum)
+	bar:SetValue(UnitIsConnected(unit) and current or maximum)
+	bar.cur, bar.min, bar.max, bar.displayType = current, minimum, maximum, displayType
 	local color
 	if bar.colorPower then color = frame.colors.power[token] or frame.colors.power[powerType]
 	elseif bar.colorClass and UnitIsPlayer(unit) then local _, class=UnitClass(unit)
@@ -81,10 +138,15 @@ local function UpdatePower(frame, event, unit)
 	end
 	if color then bar:SetStatusBarColor(color[1],color[2],color[3])
 		if bar.bg then
-			bar.bg:SetVertexColor(color[1],color[2],color[3]) end
+			local multiplier = bar.bg.multiplier or 1
+			bar.bg:SetVertexColor(color[1] * multiplier,color[2] * multiplier,color[3] * multiplier)
 		end
+		end
+	if bar.PostUpdateColor then
+		bar:PostUpdateColor(unit, color and color[1], color and color[2], color and color[3])
+	end
 	if bar.PostUpdate then
-		bar:PostUpdate(unit,current,maximum)
+		bar:PostUpdate(unit,current,minimum,maximum)
 	end
 end
 local function EnablePower(frame)
@@ -92,16 +154,21 @@ local function EnablePower(frame)
 		if not bar then
 			return
 		end
-		bar.__owner,bar.ForceUpdate=frame,Force(bar,UpdatePower)
-	for _,event in ipairs({"UNIT_POWER_UPDATE","UNIT_POWER_FREQUENT","UNIT_MAXPOWER","UNIT_DISPLAYPOWER","UNIT_CONNECTION"}) do
+	bar.__owner,bar.ForceUpdate=frame,Force(bar,UpdatePower)
+	for _,event in ipairs({bar.frequentUpdates and "UNIT_POWER_FREQUENT" or "UNIT_POWER_UPDATE","UNIT_MAXPOWER","UNIT_DISPLAYPOWER","UNIT_POWER_BAR_HIDE","UNIT_POWER_BAR_SHOW","UNIT_CONNECTION","UNIT_FACTION","UNIT_FLAGS","UNIT_THREAT_LIST_UPDATE"}) do
 		frame:RegisterEvent(event,UpdatePower)
 	end
+	bar:Show()
 	return true
 end
-Handlers.Power={update=UpdatePower,enable=EnablePower,disable=function(frame) frame.Power:Hide() end}
+local function DisablePower(frame)
+	frame.Power:Hide()
+	Unregister(frame, UpdatePower, "UNIT_POWER_UPDATE", "UNIT_POWER_FREQUENT", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER", "UNIT_POWER_BAR_HIDE", "UNIT_POWER_BAR_SHOW", "UNIT_CONNECTION", "UNIT_FACTION", "UNIT_FLAGS", "UNIT_THREAT_LIST_UPDATE")
+end
+Handlers.Power={update=UpdatePower,enable=EnablePower,disable=DisablePower}
 
 local function UpdatePortrait(frame,event,unit)
-	if unit and unit ~= frame.unit then
+	if unit and not UnitIsUnit(frame.unit, unit) then
 		return
 	end
 	local portrait=frame.Portrait
@@ -111,7 +178,7 @@ local function UpdatePortrait(frame,event,unit)
 	if portrait:IsObjectType("PlayerModel") then portrait:ClearModel()
 		portrait:SetUnit(frame.unit) else SetPortraitTexture(portrait,frame.unit) end
 	if portrait.PostUpdate then
-		portrait:PostUpdate(frame.unit,true)
+		portrait:PostUpdate(frame.unit, true)
 	end
 end
 local function EnablePortrait(frame)
@@ -123,16 +190,29 @@ local function EnablePortrait(frame)
 	frame:RegisterEvent("UNIT_MODEL_CHANGED",UpdatePortrait)
 	frame:RegisterEvent("UNIT_PORTRAIT_UPDATE",UpdatePortrait)
 	frame:RegisterEvent("PORTRAITS_UPDATED",UpdatePortrait,true)
+	frame:RegisterEvent("UNIT_CONNECTION",UpdatePortrait)
+	p:Show()
 	return true
 end
-Handlers.Portrait={update=UpdatePortrait,enable=EnablePortrait,disable=function(frame) frame.Portrait:Hide() end}
+local function DisablePortrait(frame)
+	frame.Portrait:Hide()
+	Unregister(frame, UpdatePortrait, "UNIT_MODEL_CHANGED", "UNIT_PORTRAIT_UPDATE", "PORTRAITS_UPDATED", "UNIT_CONNECTION")
+end
+Handlers.Portrait={update=UpdatePortrait,enable=EnablePortrait,disable=DisablePortrait}
 
 local function UpdateThreat(frame,event,unit)
 	if unit and unit ~= frame.unit then
 		return
 	end
-		local e=frame.ThreatIndicator
-		local status=UnitThreatSituation(e.feedbackUnit or frame.unit, e.feedbackUnit and frame.unit or nil)
+	local e=frame.ThreatIndicator
+	if e.PreUpdate then
+		e:PreUpdate(frame.unit)
+	end
+	local feedback = e.feedbackUnit
+	local status
+	if not feedback or feedback == frame.unit or UnitExists(feedback) then
+		status=UnitThreatSituation(feedback or frame.unit, feedback and frame.unit or nil)
+	end
 	local color=status and frame.colors.threat[status]
 		if color then
 		if e.SetVertexColor then
@@ -154,9 +234,15 @@ local function EnableThreat(frame) local e=frame.ThreatIndicator
 	frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE",UpdateThreat)
 	frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE",UpdateThreat)
 	return true end
-Handlers.ThreatIndicator={update=UpdateThreat,enable=EnableThreat,disable=function(frame) frame.ThreatIndicator:Hide() end}
+Handlers.ThreatIndicator={update=UpdateThreat,enable=EnableThreat,disable=function(frame)
+	frame.ThreatIndicator:Hide()
+	Unregister(frame, UpdateThreat, "UNIT_THREAT_SITUATION_UPDATE", "UNIT_THREAT_LIST_UPDATE")
+end}
 
 local function UpdateRaidTarget(frame) local e=frame.RaidTargetIndicator
+	if e.PreUpdate then
+		e:PreUpdate()
+	end
 	local index=GetRaidTargetIndex(frame.unit)
 	if index then SetRaidTargetIconTexture(e,index)
 	e:Show() else e:Hide() end
@@ -170,30 +256,50 @@ local function EnableRaidTarget(frame) local e=frame.RaidTargetIndicator
 	e.__owner,e.ForceUpdate=frame,Force(e,UpdateRaidTarget)
 	frame:RegisterEvent("RAID_TARGET_UPDATE",UpdateRaidTarget,true)
 	return true end
-Handlers.RaidTargetIndicator={update=UpdateRaidTarget,enable=EnableRaidTarget,disable=function(frame) frame.RaidTargetIndicator:Hide() end}
+Handlers.RaidTargetIndicator={update=UpdateRaidTarget,enable=EnableRaidTarget,disable=function(frame) frame.RaidTargetIndicator:Hide(); frame:UnregisterEvent("RAID_TARGET_UPDATE",UpdateRaidTarget) end}
 
 local function UpdatePrediction(frame,event,unit)
 	if unit and unit~=frame.unit then
 		return
 	end
-	local maximum=UnitHealthMax(frame.unit)
+	local health, maximum=UnitHealth(frame.unit),UnitHealthMax(frame.unit)
 	local incoming=UnitGetIncomingHeals and (UnitGetIncomingHeals(frame.unit) or 0) or 0
-	if frame.HealBar then frame.HealBar:SetMinMaxValues(0,maximum)
-	frame.HealBar:SetValue(incoming) end
-	if frame.AbsorbsBar then frame.AbsorbsBar:SetMinMaxValues(0,maximum)
-	frame.AbsorbsBar:SetValue(UnitGetTotalAbsorbs(frame.unit) or 0) end
+	local inaccessible = HydraUI.IsMainline and ((issecretvalue(health) and not canaccessvalue(health)) or (issecretvalue(maximum) and not canaccessvalue(maximum)) or (issecretvalue(incoming) and not canaccessvalue(incoming)))
+	if frame.HealBar then
+		frame.HealBar:SetMinMaxValues(0,maximum)
+		frame.HealBar:SetValue(not inaccessible and health > 0 and math.min(incoming, maximum-health) or 0)
+	end
+	if frame.AbsorbsBar then
+		frame.AbsorbsBar:SetMinMaxValues(0,maximum)
+	local absorbs=UnitGetTotalAbsorbs(frame.unit) or 0
+	local secret=HydraUI.IsMainline and issecretvalue(absorbs) and not canaccessvalue(absorbs)
+		frame.AbsorbsBar:SetValue(not inaccessible and not secret and health > 0 and math.min(absorbs,maximum-health) or 0)
+	end
 end
 local function EnablePrediction(frame) if not frame.HealBar then return end
 	frame.HealBar.__owner=frame
 	frame.HealBar.ForceUpdate=Force(frame.HealBar,UpdatePrediction)
 	frame:RegisterEvent("UNIT_HEAL_PREDICTION",UpdatePrediction)
+	frame:RegisterEvent("UNIT_MAXHEALTH",UpdatePrediction)
+	frame:RegisterEvent("UNIT_HEALTH",UpdatePrediction)
 	frame:RegisterEvent("UNIT_ABSORB_AMOUNT_CHANGED",UpdatePrediction)
+	frame:RegisterEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED",UpdatePrediction)
+	frame.HealBar:SetMinMaxValues(0,1); frame.HealBar:SetValue(0); frame.HealBar:Show()
+	if frame.AbsorbsBar then
+		frame.AbsorbsBar:SetMinMaxValues(0,1); frame.AbsorbsBar:SetValue(0); frame.AbsorbsBar:Show()
+	end
 	return true end
 Handlers.HealPrediction={update=UpdatePrediction,enable=EnablePrediction,disable=function(frame) frame.HealBar:Hide()
-	if frame.AbsorbsBar then frame.AbsorbsBar:Hide() end end}
+	if frame.AbsorbsBar then
+		frame.AbsorbsBar:Hide()
+	end
+	Unregister(frame,UpdatePrediction,"UNIT_HEAL_PREDICTION","UNIT_MAXHEALTH","UNIT_HEALTH","UNIT_ABSORB_AMOUNT_CHANGED","UNIT_HEAL_ABSORB_AMOUNT_CHANGED") end}
 
 local RangeFrames, RangeDriver = {}, nil
 local function UpdateRange(frame) local e=frame.Range
+	if e.PreUpdate then
+		e:PreUpdate()
+	end
 	local inRange,checked=UnitInRange(frame.unit)
 	local connected=UnitIsConnected(frame.unit)
 	frame:SetAlpha(connected and checked and not inRange and (e.outsideAlpha or .55) or (e.insideAlpha or 1))
@@ -201,6 +307,7 @@ local function UpdateRange(frame) local e=frame.Range
 		e:PostUpdate(frame,inRange,checked,connected) end
 	end
 local function EnableRange(frame) if not frame.Range then return end
+	frame.Range.__owner=frame; frame.Range.insideAlpha=frame.Range.insideAlpha or 1; frame.Range.outsideAlpha=frame.Range.outsideAlpha or .55
 	RangeFrames[frame]=true
 	if not RangeDriver then RangeDriver=CreateFrame("Frame")
 	local elapsed=0
@@ -210,8 +317,8 @@ local function EnableRange(frame) if not frame.Range then return end
 		if owner:IsShown() then UpdateRange(owner) end end end end)
 	end
 	return true end
-Handlers.Range={update=UpdateRange,enable=EnableRange,disable=function(frame) RangeFrames[frame]=nil
-	frame:SetAlpha(1) end}
+Handlers.Range={enable=EnableRange,disable=function(frame) RangeFrames[frame]=nil
+	frame:SetAlpha(frame.Range.insideAlpha or 1) end}
 
 local function Install(UF, Hider)
 function UF:SetHealthAttributes(health, value)

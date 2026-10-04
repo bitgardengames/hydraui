@@ -3,7 +3,7 @@ local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
 local floor = math.floor
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 local Hider = assert(ns.UnitFrameHider, "unit-frame core must create the hider")
 local function HideBlizzardFrame(frame, keepParent)
 	if not frame then

@@ -31,7 +31,7 @@ else
 	end
 end
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 UF.PostCastStart = function(self, unit)
 	if self.notInterruptible then
 		self:SetStatusBarColor(HydraUI:HexToRGB(Settings["color-casting-uninterruptible"]))

@@ -339,7 +339,16 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
         sources = "\n".join(path.read_text() for path in ELEMENTS.glob("*.lua"))
         sources += (ROOT / "Spawning.lua").read_text()
 
-        self.assertIn("ns.UnitFrameModule", coordinator)
+        core = (ROOT / "Core.lua").read_text()
+        self.assertIn('HydraUI:NewModule("Unit Frames")', core)
+        self.assertNotIn("ns.UnitFrameModule", core + coordinator + sources)
+        self.assertIn('HydraUI:GetModule("Unit Frames")', coordinator)
+        for path in (ELEMENTS / "Common.lua", ELEMENTS / "PortraitWidget.lua",
+                     ELEMENTS / "Castbar.lua", ELEMENTS / "Auras.lua",
+                     ELEMENTS / "Updates.lua", ELEMENTS / "AuraSupport.lua",
+                     ELEMENTS / "CastSupport.lua", ELEMENTS / "TotemSupport.lua",
+                     ROOT / "Spawning.lua"):
+            self.assertIn('HydraUI:GetModule("Unit Frames")', path.read_text())
         self.assertNotIn("UnitFrameElementInstallers", sources)
         self.assertNotIn("UnitFrameComponentFactory", coordinator + sources)
         for module in ("AuraSupport", "CastSupport", "TotemSupport", "Spawning"):

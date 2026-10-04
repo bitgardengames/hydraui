@@ -1,7 +1,7 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 
 local function Setting(key)
 	return key and Settings[key]

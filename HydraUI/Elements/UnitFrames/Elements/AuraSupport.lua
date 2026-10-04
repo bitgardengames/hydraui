@@ -1,7 +1,7 @@
 local addon, ns = ...
 local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 local Hider = assert(ns.UnitFrameHider, "unit-frame core must create the hider")
 local UnregisterAuraTimer = function(button)
 	HydraUI.DurationText:Unregister(button)

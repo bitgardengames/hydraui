@@ -67,7 +67,11 @@ end
 
 local OnEnable = function(self)
 	self:RegisterUnitEvent("HONOR_XP_UPDATE", "player")
-	self:RegisterEvent("HONOR_LEVEL_UPDATE")
+
+	if HydraUI.IsMainline and not HydraUI.IsForever then
+		self:RegisterEvent("HONOR_LEVEL_UPDATE")
+	end
+
 	self:SetScript("OnEvent", Update)
 	self:SetScript("OnMouseUp", OnMouseUp)
 	self:SetScript("OnEnter", OnEnter)
@@ -78,7 +82,11 @@ end
 
 local OnDisable = function(self)
 	self:UnregisterEvent("HONOR_XP_UPDATE")
-	self:UnregisterEvent("HONOR_LEVEL_UPDATE")
+
+	if HydraUI.IsMainline and not HydraUI.IsForever then
+		self:UnregisterEvent("HONOR_LEVEL_UPDATE")
+	end
+
 	self:SetScript("OnEvent", nil)
 	self:SetScript("OnMouseUp", nil)
 	self:SetScript("OnEnter", nil)

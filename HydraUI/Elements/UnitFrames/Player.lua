@@ -1,5 +1,48 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
+-- Player resources are driven directly by the native unit-frame core.  Only a
+-- descriptor actually instantiated by BuildPlayerComponents is touched.
+local function UpdatePlayerResources(frame, event, unit)
+	if unit and unit ~= "player" then
+		return
+	end
+	local resource = frame.ClassResource
+	if not resource or resource.Descriptor.totems then
+		return
+	end
+	local descriptor = resource.Descriptor
+	if descriptor.runes then
+		for i=1,descriptor.count do local start,duration,ready=GetRuneCooldown(i)
+	local bar=resource[i]
+	bar:SetMinMaxValues(0,duration or 1)
+	bar:SetValue(ready and (duration or 1) or math.max(0,GetTime()-(start or 0))) end
+	else
+		local powerType=Enum.PowerType[descriptor.alias or descriptor.field] or Enum.PowerType.ComboPoints
+		local current,maximum=UnitPower("player",powerType),UnitPowerMax("player",powerType)
+		for i=1,descriptor.count do resource[i]:SetMinMaxValues(0,1)
+	resource[i]:SetValue(i<=current and 1 or 0)
+	resource[i]:SetShown(i<=math.max(1,maximum)) end
+	end
+	if frame.Stagger then local amount,max=UnitStagger("player") or 0,UnitHealthMax("player")
+	frame.Stagger:SetMinMaxValues(0,max)
+	frame.Stagger:SetValue(amount)
+	frame.Stagger:SetShown(amount>0) end
+end
+local function EnablePlayerResources(frame)
+	if frame.unit~="player" or not frame.ClassResource then
+		return
+	end
+	for _,event in ipairs({"UNIT_POWER_UPDATE","UNIT_MAXPOWER","UNIT_DISPLAYPOWER","UNIT_HEALTH","UNIT_MAXHEALTH"}) do
+		frame:RegisterEvent(event,UpdatePlayerResources)
+	end
+	frame:RegisterEvent("RUNE_POWER_UPDATE",UpdatePlayerResources,true)
+	frame:RegisterEvent("RUNE_TYPE_UPDATE",UpdatePlayerResources,true)
+	frame.ClassResource.__owner=frame
+	frame.ClassResource.ForceUpdate=function() UpdatePlayerResources(frame,"ForceUpdate","player") end
+	return true
+end
+select(2,...).UnitFrameComponentHandlers.PlayerResources={update=UpdatePlayerResources,enable=EnablePlayerResources,disable=function() end}
+
 Defaults["unitframes-player-width"] = 240
 Defaults["unitframes-player-health-height"] = 32
 Defaults["unitframes-player-health-reverse"] = false
@@ -99,7 +142,8 @@ local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
 	end
 end
 
--- Resource descriptions are module constants;
+-- Resource descriptions are module constants
+
 -- spawning a frame only selects one.
 local PlayerResourceDescriptors = {
 	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},

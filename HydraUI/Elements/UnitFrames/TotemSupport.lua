@@ -66,6 +66,27 @@ UF.PostUpdateTotems = function(self, slot, havetotem, name, start, duration, ico
 	end
 end
 
+local function UpdateTotems(frame)
+	local totems=frame.Totems
+	if not totems then
+		return
+	end
+	for slot=1,#totems do local have,name,start,duration,icon=GetTotemInfo(slot)
+	if totems.PostUpdate then
+		totems:PostUpdate(slot,have,name,start,duration,icon) end
+	end
+end
+local function EnableTotems(frame)
+	if not frame.Totems then
+		return
+	end
+	frame.Totems.__owner=frame
+	frame.Totems.ForceUpdate=function() UpdateTotems(frame) end
+	frame:RegisterEvent("PLAYER_TOTEM_UPDATE",UpdateTotems,true)
+	return true
+end
+ns.UnitFrameComponentHandlers.Totems={update=UpdateTotems,enable=EnableTotems,disable=function(frame) for i=1,#frame.Totems do frame.Totems[i]:Hide() end end}
+
 end
 
 ns.UnitFrameTotemSupport = Install

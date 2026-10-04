@@ -1,6 +1,218 @@
 local addon, ns = ...
 local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
+local Handlers = ns.UnitFrameComponentHandlers or {}
+ns.UnitFrameComponentHandlers = Handlers
+
+local function Force(element, update)
+	return function() return update(element.__owner, "ForceUpdate", element.__owner.unit) end
+end
+
+local function HealthColor(frame, element, unit)
+	local color
+	if element.colorClass and UnitIsPlayer(unit) then
+		local _, class = UnitClass(unit)
+		color = frame.colors.class[class]
+	elseif element.colorSelection and UnitSelectionColor then
+		local r, g, b = UnitSelectionColor(unit)
+		color = {r, g, b}
+	elseif element.colorReaction then
+		color = frame.colors.reaction[UnitReaction(unit, "player") or 5]
+	elseif element.colorHealth then
+		color = frame.colors.health
+	end
+	if color then
+		element:SetStatusBarColor(color[1], color[2], color[3])
+		if element.bg then local m = element.bg.multiplier or 1
+		element.bg:SetVertexColor(color[1]*m, color[2]*m, color[3]*m) end
+	end
+end
+
+local function UpdateHealth(frame, event, unit)
+	if unit ~= frame.unit then
+		return
+	end
+	local bar, current, maximum = frame.Health, UnitHealth(unit), UnitHealthMax(unit)
+	if bar.PreUpdate then
+		bar:PreUpdate(unit)
+	end
+	bar:SetMinMaxValues(0, maximum)
+		bar:SetValue(UnitIsConnected(unit) and current or maximum)
+	bar.cur, bar.max = current, maximum
+	HealthColor(frame, bar, unit)
+	if bar.PostUpdate then
+		bar:PostUpdate(unit, current, maximum)
+	end
+end
+
+local function EnableHealth(frame)
+	local bar = frame.Health
+		if not bar then
+			return
+		end
+	bar.__owner, bar.ForceUpdate = frame, Force(bar, UpdateHealth)
+	for _, event in ipairs({"UNIT_HEALTH", "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH", "UNIT_CONNECTION", "UNIT_FACTION"}) do
+		frame:RegisterEvent(event, UpdateHealth)
+	end
+	return true
+end
+local function DisableHealth(frame) frame.Health:Hide() end
+Handlers.Health = {update=UpdateHealth, enable=EnableHealth, disable=DisableHealth}
+
+local function UpdatePower(frame, event, unit)
+	if unit ~= frame.unit then
+		return
+	end
+	local bar = frame.Power
+		local powerType, token = UnitPowerType(unit)
+	local current, maximum = UnitPower(unit, powerType), UnitPowerMax(unit, powerType)
+	if bar.PreUpdate then
+		bar:PreUpdate(unit)
+	end
+	bar:SetMinMaxValues(0, maximum)
+		bar:SetValue(current)
+		bar.cur, bar.max = current, maximum
+	local color
+	if bar.colorPower then color = frame.colors.power[token] or frame.colors.power[powerType]
+	elseif bar.colorClass and UnitIsPlayer(unit) then local _, class=UnitClass(unit)
+		color=frame.colors.class[class]
+	elseif bar.colorReaction then
+		color=frame.colors.reaction[UnitReaction(unit,"player") or 5]
+	end
+	if color then bar:SetStatusBarColor(color[1],color[2],color[3])
+		if bar.bg then
+			bar.bg:SetVertexColor(color[1],color[2],color[3]) end
+		end
+	if bar.PostUpdate then
+		bar:PostUpdate(unit,current,maximum)
+	end
+end
+local function EnablePower(frame)
+	local bar=frame.Power
+		if not bar then
+			return
+		end
+		bar.__owner,bar.ForceUpdate=frame,Force(bar,UpdatePower)
+	for _,event in ipairs({"UNIT_POWER_UPDATE","UNIT_POWER_FREQUENT","UNIT_MAXPOWER","UNIT_DISPLAYPOWER","UNIT_CONNECTION"}) do
+		frame:RegisterEvent(event,UpdatePower)
+	end
+	return true
+end
+Handlers.Power={update=UpdatePower,enable=EnablePower,disable=function(frame) frame.Power:Hide() end}
+
+local function UpdatePortrait(frame,event,unit)
+	if unit and unit ~= frame.unit then
+		return
+	end
+	local portrait=frame.Portrait
+		if portrait.PreUpdate then
+			portrait:PreUpdate(frame.unit)
+		end
+	if portrait:IsObjectType("PlayerModel") then portrait:ClearModel()
+		portrait:SetUnit(frame.unit) else SetPortraitTexture(portrait,frame.unit) end
+	if portrait.PostUpdate then
+		portrait:PostUpdate(frame.unit,true)
+	end
+end
+local function EnablePortrait(frame)
+	local p=frame.Portrait
+	if not p then
+		return
+	end
+	p.__owner,p.ForceUpdate=frame,Force(p,UpdatePortrait)
+	frame:RegisterEvent("UNIT_MODEL_CHANGED",UpdatePortrait)
+	frame:RegisterEvent("UNIT_PORTRAIT_UPDATE",UpdatePortrait)
+	frame:RegisterEvent("PORTRAITS_UPDATED",UpdatePortrait,true)
+	return true
+end
+Handlers.Portrait={update=UpdatePortrait,enable=EnablePortrait,disable=function(frame) frame.Portrait:Hide() end}
+
+local function UpdateThreat(frame,event,unit)
+	if unit and unit ~= frame.unit then
+		return
+	end
+		local e=frame.ThreatIndicator
+		local status=UnitThreatSituation(e.feedbackUnit or frame.unit, e.feedbackUnit and frame.unit or nil)
+	local color=status and frame.colors.threat[status]
+		if color then
+		if e.SetVertexColor then
+			e:SetVertexColor(unpack(color))
+		end
+		e:Show()
+	else
+		e:Hide()
+	end
+	if e.PostUpdate then
+		e:PostUpdate(frame.unit,status,color and color[1],color and color[2],color and color[3])
+	end
+end
+local function EnableThreat(frame) local e=frame.ThreatIndicator
+	if not e then
+		return
+	end
+	e.__owner,e.ForceUpdate=frame,Force(e,UpdateThreat)
+	frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE",UpdateThreat)
+	frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE",UpdateThreat)
+	return true end
+Handlers.ThreatIndicator={update=UpdateThreat,enable=EnableThreat,disable=function(frame) frame.ThreatIndicator:Hide() end}
+
+local function UpdateRaidTarget(frame) local e=frame.RaidTargetIndicator
+	local index=GetRaidTargetIndex(frame.unit)
+	if index then SetRaidTargetIconTexture(e,index)
+	e:Show() else e:Hide() end
+	if e.PostUpdate then
+		e:PostUpdate(index) end
+	end
+local function EnableRaidTarget(frame) local e=frame.RaidTargetIndicator
+	if not e then
+		return
+	end
+	e.__owner,e.ForceUpdate=frame,Force(e,UpdateRaidTarget)
+	frame:RegisterEvent("RAID_TARGET_UPDATE",UpdateRaidTarget,true)
+	return true end
+Handlers.RaidTargetIndicator={update=UpdateRaidTarget,enable=EnableRaidTarget,disable=function(frame) frame.RaidTargetIndicator:Hide() end}
+
+local function UpdatePrediction(frame,event,unit)
+	if unit and unit~=frame.unit then
+		return
+	end
+	local maximum=UnitHealthMax(frame.unit)
+	local incoming=UnitGetIncomingHeals and (UnitGetIncomingHeals(frame.unit) or 0) or 0
+	if frame.HealBar then frame.HealBar:SetMinMaxValues(0,maximum)
+	frame.HealBar:SetValue(incoming) end
+	if frame.AbsorbsBar then frame.AbsorbsBar:SetMinMaxValues(0,maximum)
+	frame.AbsorbsBar:SetValue(UnitGetTotalAbsorbs(frame.unit) or 0) end
+end
+local function EnablePrediction(frame) if not frame.HealBar then return end
+	frame.HealBar.__owner=frame
+	frame.HealBar.ForceUpdate=Force(frame.HealBar,UpdatePrediction)
+	frame:RegisterEvent("UNIT_HEAL_PREDICTION",UpdatePrediction)
+	frame:RegisterEvent("UNIT_ABSORB_AMOUNT_CHANGED",UpdatePrediction)
+	return true end
+Handlers.HealPrediction={update=UpdatePrediction,enable=EnablePrediction,disable=function(frame) frame.HealBar:Hide()
+	if frame.AbsorbsBar then frame.AbsorbsBar:Hide() end end}
+
+local RangeFrames, RangeDriver = {}, nil
+local function UpdateRange(frame) local e=frame.Range
+	local inRange,checked=UnitInRange(frame.unit)
+	local connected=UnitIsConnected(frame.unit)
+	frame:SetAlpha(connected and checked and not inRange and (e.outsideAlpha or .55) or (e.insideAlpha or 1))
+	if e.PostUpdate then
+		e:PostUpdate(frame,inRange,checked,connected) end
+	end
+local function EnableRange(frame) if not frame.Range then return end
+	RangeFrames[frame]=true
+	if not RangeDriver then RangeDriver=CreateFrame("Frame")
+	local elapsed=0
+	RangeDriver:SetScript("OnUpdate",function(_,dt) elapsed=elapsed+dt
+	if elapsed>=.2 then elapsed=0
+	for owner in pairs(RangeFrames) do
+		if owner:IsShown() then UpdateRange(owner) end end end end)
+	end
+	return true end
+Handlers.Range={update=UpdateRange,enable=EnableRange,disable=function(frame) RangeFrames[frame]=nil
+	frame:SetAlpha(1) end}
+
 local function Install(UF, Hider)
 function UF:SetHealthAttributes(health, value)
 	if value == "CLASS" then
@@ -181,7 +393,8 @@ local function FamilySetting(config, suffix)
 end
 
 -- Compose the pieces common to non-group unit frames.  Optional or unusual
--- pieces are functions on the descriptor; this keeps knowledge of targets,
+-- pieces are functions on the descriptor
+		this keeps knowledge of targets,
 -- bosses, etc. out of the factory.
 function UF:BuildSingleUnitFrame(frame, unit, config)
 	assert(type(config) == "table" and config.settingsPrefix, "single unit frame requires settingsPrefix")
@@ -598,7 +811,8 @@ function UF:SetAuraPosition(unit, value, element, growthX, companion, companionP
 end
 
 -- Setting callbacks are declared once, next to the widgets that use them.  The
--- operation receives an already resolved frame; this is important because a
+-- operation receives an already resolved frame
+		this is important because a
 -- slider can fire many times while it is being dragged.
 local UnitOperations = {}
 

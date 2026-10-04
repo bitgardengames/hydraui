@@ -1,7 +1,7 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 
 function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativePoint, x, y, texture, backgroundTexture, backgroundTopLeftX, backgroundTopLeftY, backgroundBottomRightX, backgroundBottomRightY, font, fontSize, fontFlags, timeX, textX, textWidth, iconSize, iconX, iconBackground, safeZoneEnabled, showTradeSkills, timeToHold, classColor, postCastStart, postCastStop, postCastFail, postCastInterruptible)
 	local castbar = CreateFrame("StatusBar", name, frame)

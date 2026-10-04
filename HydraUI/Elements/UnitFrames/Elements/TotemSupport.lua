@@ -3,7 +3,7 @@ local HydraUI, Language, Assets, Settings, Defaults = ns:get()
 
 local GetTime = GetTime
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 local activeTotemBars = {}
 local totemUpdater = CreateFrame("Frame")
 

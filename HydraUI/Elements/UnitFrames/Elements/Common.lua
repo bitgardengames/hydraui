@@ -1,7 +1,7 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 
 function UF:SetHealthAttributes(health, value)
 	if value == "CLASS" then

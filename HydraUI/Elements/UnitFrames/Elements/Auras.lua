@@ -1,7 +1,7 @@
 local _, ns = ...
 local HydraUI, Language, Assets, Settings = ns:get()
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before elements")
+local UF = HydraUI:GetModule("Unit Frames")
 
 function UF:CreateAuraContainer(frame, name, parent, width, height, point, relativeTo, relativePoint, x, y, iconSize, spacing, num, initialAnchor, tooltipAnchor, growthX, growthY, postCreateIcon, postUpdateIcon, customFilter, onlyShowPlayer, showStealableBuffs)
 	local auras = CreateFrame("Frame", name, parent or frame)

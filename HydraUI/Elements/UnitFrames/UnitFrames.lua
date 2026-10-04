@@ -14,7 +14,7 @@ Defaults["unitframes-font-size"] = 12
 Defaults["unitframes-font-flags"] = ""
 Defaults["unitframes-display-aura-timers"] = true
 
-local UF = assert(ns.UnitFrameModule, "unit-frame core must load before the coordinator")
+local UF = HydraUI:GetModule("Unit Frames")
 
 local function ForEachChild(operation, value, descriptor, child, ...)
 	if not child then

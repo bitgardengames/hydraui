@@ -2,7 +2,6 @@ local _, ns = ...
 local HydraUI = ns:get()
 
 local UF = HydraUI:NewModule("Unit Frames")
-ns.UnitFrameModule = UF
 
 local Hider = CreateFrame("Frame", nil, HydraUI.UIParent, "SecureHandlerStateTemplate")
 Hider:Hide()

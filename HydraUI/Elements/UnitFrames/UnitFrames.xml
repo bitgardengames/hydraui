@@ -2,12 +2,14 @@
 	<Script file="Core.lua"/>
 	<Script file="Elements/Health.lua"/>
 	<Script file="Elements/Power.lua"/>
+	<Script file="Elements/Smooth.lua"/>
 	<Script file="Elements/Portrait.lua"/>
 	<Script file="Elements/ThreatIndicator.lua"/>
 	<Script file="Elements/Indicators.lua"/>
 	<Script file="Elements/Dispel.lua"/>
 	<Script file="Elements/AuraWatch.lua"/>
 	<Script file="Elements/PowerTimers.lua"/>
+	<Script file="Elements/Extended.lua"/>
 	<Script file="Elements/RaidTargetIndicator.lua"/>
 	<Script file="Elements/HealthPrediction.lua"/>
 	<Script file="Elements/Range.lua"/>

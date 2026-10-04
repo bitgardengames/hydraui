@@ -1,4 +1,4 @@
-local HydraUI, Language, Assets, Settings = select(2, ...):get()
+local HydraUI, _, Assets, Settings = select(2, ...):get()
 local UF = HydraUI:GetModule("Unit Frames")
 
 local function Setting(descriptor, suffix)
@@ -268,11 +268,6 @@ function Operations.debuffs(frame, value)
 	UF:SetElementEnabled(frame, value, "Debuffs")
 end
 
-function Operations.role(frame, value)
-	UF:SetElementEnabled(frame, value, "GroupRoleIndicator")
-	frame:UpdateAllElements("ForceUpdate")
-end
-
 function Operations.highlight(frame, value)
 	if value then
 		frame.Highlight:Show()
@@ -328,5 +323,3 @@ function UF:ToggleGroupTest(descriptor)
 		end
 	end
 end
-
-UF.GroupFrameOperations = Operations

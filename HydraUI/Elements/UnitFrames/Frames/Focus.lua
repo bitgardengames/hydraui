@@ -44,7 +44,6 @@ local function BuildFocusComponents(factory, frame, unit)
 	frame.Debuffs = Debuffs
 end
 
-local SingleUnitRange = {insideAlpha = 1, outsideAlpha = 0.5}
 local FocusFrameConfig = {
 	settingsPrefix = "unitframes-focus",
 	healthTextureKey = "FocusHealthTexture",

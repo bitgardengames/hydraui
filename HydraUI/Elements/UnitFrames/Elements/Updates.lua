@@ -130,23 +130,6 @@ function UF:SetHealthTexture(unit, value)
 	end
 end
 
-local function SetHeaderHealthTexture(frame, resolvedTexture)
-	frame.Health:SetStatusBarTexture(resolvedTexture)
-	frame.Health.bg:SetTexture(resolvedTexture)
-	frame.HealBar:SetStatusBarTexture(resolvedTexture)
-	if frame.AbsorbsBar then
-		frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture)
-	end
-end
-
-function UF:SetHeaderHealthTexture(header, value)
-	if not header then
-		return
-	end
-	local texture = Assets:GetTexture(value)
-	self:ForEachHeaderChild(header, SetHeaderHealthTexture, texture)
-end
-
 function UF:SetPowerTexture(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
@@ -201,7 +184,9 @@ function UF:SetAuraPosition(unit, value, element, growthX, companion, companionP
 	auras["growth-x"] = growthX
 end
 
--- Setting callbacks are declared once, next to the widgets that use them.  The operation receives an already resolved frame this is important because aslider can fire many times while it is being dragged.
+-- Setting callbacks are declared once, next to the widgets that use them. The
+-- operation receives an already resolved frame because a slider can fire many
+-- times while it is being dragged.
 local UnitOperations = {}
 
 function UnitOperations.Width(UF, frame, value, options)

@@ -1,0 +1,670 @@
+HydraUI World of Warcraft Class Power Compatibility Reference
+Supported clients:
+- WoW Classic
+- TBC Classic
+- Wrath Classic
+- Mists of Pandaria Classic
+- Retail (Midnight)
+
+Purpose:
+Condensed reference for implementing and validating HydraUI class-power handling.
+
+GENERAL IMPLEMENTATION NOTE
+===========================
+For genuine UnitPower resources, prefer UnitPowerMax("player", powerType) rather than hard-coding the maximum where possible. This automatically reflects most talent-modified caps.
+
+Keep these categories separate:
+
+1. Native segmented UnitPower resources
+   - Combo Points
+   - Holy Power
+   - Soul Shards
+   - Chi
+   - Arcane Charges
+   - Essence
+
+2. Numeric/special bars
+   - MoP Eclipse
+   - MoP Demonic Fury
+   - Retail Astral Power
+   - Retail Insanity
+   - Elemental Maelstrom
+
+3. Custom/non-UnitPower resources
+   - Classic/TBC/Wrath Warlock Soul Shard inventory items
+   - Enhancement Maelstrom Weapon stacks
+   - Demon Hunter Soul Fragments
+   - MoP Rogue Anticipation
+
+4. Death Knight Runes
+   - Treat separately via rune API rather than as ordinary UnitPower pips.
+
+
+CLASS MATRIX
+============
+
+WARRIOR
+-------
+Classic: None — Rage only.
+TBC: None — Rage only.
+Wrath: None — Rage only.
+MoP: None — Rage only.
+Midnight: None — Rage only.
+
+
+PALADIN
+-------
+Classic:
+- No Holy Power.
+- Mana only.
+
+TBC:
+- No Holy Power.
+- Mana only.
+
+Wrath:
+- No Holy Power.
+- Mana only.
+
+MoP:
+- Resource: Holy Power
+- Unlock: Level 1
+- Baseline max: 3
+- Boundless Conviction, learned at level 85, raises maximum to 5.
+- All relevant Paladin specs can interact with Holy Power.
+
+Midnight:
+- Resource: Holy Power
+- Unlock: Level 1
+- Max: 5
+- Used by all three specs.
+- No current talent raises maximum beyond 5.
+
+HydraUI:
+- Native UnitPower segmented resource.
+- Prefer UnitPowerMax().
+
+
+HUNTER
+------
+Classic:
+- No secondary class-power pips.
+- Uses Mana.
+- Pet Happiness is a separate pet mechanic.
+
+TBC:
+- Same as Classic.
+
+Wrath:
+- Same as Classic.
+
+MoP:
+- Focus is the primary power.
+- No secondary class-power pip system.
+
+Midnight:
+- Focus is the primary power.
+- No secondary class-power pip system.
+
+
+ROGUE
+-----
+Classic:
+- Resource: Combo Points
+- Unlock: Level 1
+- Max: 5
+- Target-bound.
+
+TBC:
+- Resource: Combo Points
+- Unlock: Level 1
+- Max: 5
+- Target-bound.
+
+Wrath:
+- Resource: Combo Points
+- Unlock: Level 1
+- Max: 5
+- Target-bound.
+
+MoP:
+- Resource: Combo Points
+- Unlock: Level 1
+- Max: 5
+- Target-bound.
+- Anticipation does NOT raise the real combo-point cap.
+- Anticipation stores up to 5 overflow charges separately.
+- Do NOT display 10 combo points because of Anticipation.
+
+Midnight:
+- Resource: Combo Points
+- Unlock: Level 1
+- Baseline max: 5
+- Player-bound rather than target-bound.
+- Deeper Stratagem: +1
+- Assassination Sanguine Stratagem: +1
+- Outlaw Devious Stratagem: +1
+- Subtlety Secret Stratagem: +1
+- Practical maximum per spec: 7
+
+HydraUI:
+- Native UnitPower segmented resource.
+- Prefer UnitPowerMax() so 5/6/7 is automatic.
+- Classic through MoP target binding differs from Retail.
+
+
+PRIEST
+------
+Classic:
+- No secondary class resource.
+
+TBC:
+- No secondary class resource.
+
+Wrath:
+- No secondary class resource.
+
+MoP:
+- Shadow only
+- Resource: Shadow Orbs
+- Unlock: Level 10 / Shadow specialization
+- Max: 3
+
+Midnight:
+- Shadow only
+- Resource: Insanity
+- Numeric bar, normally 0-100.
+- Not a segmented pip resource.
+- Discipline/Holy have no equivalent secondary class-power pips.
+
+HydraUI:
+- MoP Shadow Orbs: segmented class power.
+- Retail Insanity: numeric bar, separate handler.
+
+
+DEATH KNIGHT
+------------
+Classic:
+- N/A
+
+TBC:
+- N/A
+
+Wrath:
+- Class starts at level 55.
+- Resource: Runes
+- Count: 6
+- Layout: 2 Blood / 2 Frost / 2 Unholy
+- Death Runes can replace/substitute rune types.
+- Runic Power is a separate numeric primary/secondary resource.
+
+MoP:
+- Resource: Runes
+- Count: 6
+- Still typed Blood/Frost/Unholy/Death.
+- Various mechanics can convert runes to Death Runes.
+
+Midnight:
+- Resource: Runes
+- Count: 6
+- Generic rune system; old rune-type distinctions are gone.
+- No talent adds a seventh rune.
+- Runic Power is separate.
+
+HydraUI:
+- Treat runes separately.
+- Use GetRuneCooldown(index), index 1-6.
+- Wrath/MoP can also use GetRuneType(index).
+- Do not treat runes as ordinary UnitPower pips.
+
+
+SHAMAN
+------
+Classic:
+- No secondary class resource.
+
+TBC:
+- No secondary class resource.
+
+Wrath:
+- Enhancement only
+- Resource-like mechanic: Maelstrom Weapon
+- Type: Aura/buff stacks, NOT UnitPower
+- Max: 5
+- Deep Enhancement talent.
+
+MoP:
+- Enhancement only
+- Maelstrom Weapon
+- Unlock: Level 50
+- Type: Aura/buff stacks
+- Max: 5
+
+Midnight:
+- Enhancement:
+  - Maelstrom Weapon
+  - Type: Aura/buff stacks, NOT Enum.PowerType.Maelstrom
+  - Baseline max: 5
+  - Overflowing Maelstrom: +5
+  - Maximum: 10
+
+- Elemental:
+  - Maelstrom is a numeric UnitPower resource.
+  - Treat as a numeric bar, not Maelstrom Weapon pips.
+
+HydraUI:
+- Enhancement Maelstrom Weapon must be aura-driven.
+- Do not confuse it with Enum.PowerType.Maelstrom.
+
+
+MAGE
+----
+Classic:
+- No Arcane Charges.
+
+TBC:
+- No Arcane Charges.
+
+Wrath:
+- No Arcane Charges.
+
+MoP:
+- Arcane only
+- Resource: Arcane Charges
+- Unlock: Level 10 / Arcane specialization
+- Max: 4
+- Early original MoP briefly had a different cap, but current MoP Classic behavior is 4.
+
+Midnight:
+- Arcane only
+- Resource: Arcane Charges
+- Unlock: Level 10
+- Max: 4
+- No current cap-increasing talent.
+
+HydraUI:
+- Native UnitPower segmented resource.
+- Prefer UnitPowerMax().
+- Do not rely on stale generic documentation claiming 5.
+
+
+WARLOCK
+-------
+Classic:
+- Soul Shards are inventory items.
+- First generated via Drain Soul around level 10.
+- Not UnitPower.
+- No fixed class-power maximum beyond practical bag space.
+
+TBC:
+- Same general inventory-item Soul Shard model.
+- Not UnitPower.
+
+Wrath:
+- Soul Shards remain inventory items.
+- Patch-era cap: 32 Soul Shards.
+- Not UnitPower.
+
+MoP:
+Affliction:
+- Resource: Soul Shards
+- Unlock: Level 10 / specialization
+- Max: 4
+
+Demonology:
+- Resource: Demonic Fury
+- Unlock: Level 10
+- Numeric range: 0-1000
+- Not a pip resource.
+
+Destruction:
+- Resource: Burning Embers
+- Unlock: Level 42
+- Max: 4 full embers
+- Each full ember contains 10 fractional units.
+- Numeric/fractional segmented behavior.
+
+Midnight:
+- All specs use Soul Shards.
+- Unlock: Level 3
+- Max: 5
+- Destruction uses fractional shard values internally.
+
+HydraUI:
+- Classic/TBC/Wrath: item counter only if intentionally supported.
+- MoP requires spec-specific resource handling.
+- Retail Soul Shards: native UnitPower segmented resource.
+- Retail Destruction benefits from high-precision UnitPower values for fractional shard filling.
+
+
+MONK
+----
+Classic:
+- N/A
+
+TBC:
+- N/A
+
+Wrath:
+- N/A
+
+MoP:
+- Resource: Chi
+- Unlock: Level 1
+- Used by all three specs.
+- Baseline max: 4
+- Ascension, level 45 talent: +1
+- Maximum: 5
+- Power Strikes generates Chi but does not raise cap.
+
+Midnight:
+- Windwalker only
+- Resource: Chi
+- Unlock: specialization / around level 10
+- Baseline max: 5
+- Ascension: +1
+- Maximum: 6
+- Brewmaster and Mistweaver do not use Chi.
+
+HydraUI:
+- Native UnitPower segmented resource.
+- MoP = all specs, 4/5.
+- Retail = Windwalker only, 5/6.
+
+
+DRUID
+-----
+Classic:
+- Cat Form Combo Points
+- Unlock: Cat Form at level 20
+- Max: 5
+- Target-bound.
+
+TBC:
+- Same
+- Cat Form at level 20
+- Max: 5
+
+Wrath:
+- Same
+- Cat Form at level 20
+- Max: 5
+
+MoP:
+Cat:
+- Combo Points
+- Unlock: Cat Form at level 6
+- Max: 5
+- Target-bound.
+
+Balance:
+- Eclipse
+- Unlock: around level 10 / Balance specialization
+- Bidirectional numeric bar
+- Roughly -100 to +100
+- Solar/Lunar state
+- Not a pip resource.
+
+Midnight:
+Cat:
+- Combo Points
+- Available from early Cat abilities, around level 5
+- Max: 5
+- No current max-increasing talent.
+
+Balance:
+- Astral Power
+- Numeric resource
+- Typically 0-100
+- Not a pip resource.
+
+HydraUI:
+- Cat Combo Points: native segmented power.
+- MoP Eclipse and Retail Astral Power: numeric/special bars.
+
+
+DEMON HUNTER
+------------
+Classic:
+- N/A
+
+TBC:
+- N/A
+
+Wrath:
+- N/A
+
+MoP:
+- N/A
+
+Midnight:
+
+Havoc:
+- Primarily Fury.
+- No normal secondary pip resource requiring standard class-power handling.
+
+Vengeance:
+- Soul Fragments
+- Unlock: Level 10
+- Custom mechanic, not ordinary UnitPower pips.
+- Up to 6 active Soul Fragments in Midnight.
+- Spirit Bomb normally consumes up to 5.
+- Midnight Vengeance Apex behavior can allow consumption of 6.
+
+Devourer:
+- Soul Fragments
+- Unlock: Level 10
+- Custom mechanic.
+- Void Metamorphosis normally requires 50 Soul Fragments.
+- Soul Glutton reduces requirement by 15.
+- Effective threshold with talent: 35.
+- This mechanic is fundamentally different from Vengeance's world-fragment pool.
+
+HydraUI:
+- Do not assume Vengeance and Devourer Soul Fragments are the same display system.
+- Both require custom/spec-specific handling rather than a generic UnitPower pip handler.
+
+
+EVOKER
+------
+Classic:
+- N/A
+
+TBC:
+- N/A
+
+Wrath:
+- N/A
+
+MoP:
+- N/A
+
+Midnight:
+- Resource: Essence
+- Used by all three specs.
+- Available from the class starting experience / around level 10.
+- Baseline max: 5
+- Power Nexus: +1
+- Maximum: 6
+
+HydraUI:
+- Native UnitPower segmented resource.
+- Prefer UnitPowerMax().
+
+
+HYDRAUI COMPATIBILITY SUMMARY
+=============================
+
+CLASSIC
+-------
+Segmented:
+- Rogue Combo Points: 5
+- Druid Combo Points: 5
+
+Custom/non-power:
+- Warlock Soul Shards: inventory items
+
+No segmented secondary power:
+- Warrior
+- Paladin
+- Hunter
+- Priest
+- Shaman
+- Mage
+
+
+TBC CLASSIC
+-----------
+Segmented:
+- Rogue Combo Points: 5
+- Druid Combo Points: 5
+
+Custom/non-power:
+- Warlock Soul Shards: inventory items
+
+No segmented secondary power:
+- Warrior
+- Paladin
+- Hunter
+- Priest
+- Shaman
+- Mage
+
+
+WRATH CLASSIC
+-------------
+Segmented:
+- Rogue Combo Points: 5
+- Druid Combo Points: 5
+- Death Knight Runes: 6
+
+Custom/non-power:
+- Warlock Soul Shards: inventory items, max 32
+- Enhancement Maelstrom Weapon: 5 aura stacks
+
+No segmented secondary power:
+- Warrior
+- Paladin
+- Hunter
+- Priest
+- Mage
+
+
+MISTS OF PANDARIA CLASSIC
+-------------------------
+Segmented:
+- Rogue Combo Points: 5
+- Druid Combo Points: 5
+- Death Knight Runes: 6
+- Paladin Holy Power: 3 baseline, 5 at level 85
+- Affliction Soul Shards: 4
+- Monk Chi: 4 baseline, 5 with Ascension
+- Arcane Charges: 4
+- Shadow Orbs: 3
+
+Numeric/special:
+- Balance Eclipse: -100 to +100 style bar
+- Demonology Demonic Fury: 0-1000
+- Destruction Burning Embers: 4 full / 40 fractional units
+
+Custom:
+- Enhancement Maelstrom Weapon: 5 aura stacks
+- Rogue Anticipation: overflow aura, NOT extra combo-point segments
+
+
+RETAIL — MIDNIGHT
+-----------------
+Segmented/native:
+- Rogue Combo Points: 5 baseline, up to 7
+- Druid Combo Points: 5
+- Death Knight Runes: 6
+- Paladin Holy Power: 5
+- Warlock Soul Shards: 5
+- Windwalker Chi: 5 baseline, 6 with Ascension
+- Arcane Charges: 4
+- Evoker Essence: 5 baseline, 6 with Power Nexus
+
+Numeric:
+- Shadow Priest Insanity
+- Balance Druid Astral Power
+- Elemental Shaman Maelstrom
+- Death Knight Runic Power
+- Warrior Rage
+- Hunter Focus
+- Demon Hunter Fury
+
+Custom/aura:
+- Enhancement Maelstrom Weapon: 5 baseline, 10 with Overflowing Maelstrom
+- Vengeance Soul Fragments: custom, up to 6 active
+- Devourer Soul Fragments: custom threshold mechanic
+
+
+RECOMMENDED HYDRAUI HANDLERS
+============================
+
+1. Generic Segmented UnitPower Handler
+--------------------------------------
+Use for:
+- Combo Points
+- Holy Power
+- Soul Shards
+- Chi
+- Arcane Charges
+- Essence
+
+Recommended:
+- Detect active power type.
+- Read maximum from UnitPowerMax("player", powerType).
+- Avoid hard-coding talent-modified maxima.
+
+
+2. Death Knight Rune Handler
+----------------------------
+Use:
+- GetRuneCooldown(1 through 6)
+- Wrath/MoP: GetRuneType(index)
+
+Always render 6 rune slots.
+
+
+3. Numeric Bar Handler
+----------------------
+Use for:
+- MoP Eclipse
+- MoP Demonic Fury
+- MoP Burning Embers if represented continuously
+- Retail Insanity
+- Retail Astral Power
+- Retail Elemental Maelstrom
+- Runic Power, Rage, Focus, Fury if desired
+
+
+4. Aura/Custom Handler
+----------------------
+Use for:
+- Wrath/MoP/Midnight Enhancement Maelstrom Weapon
+- MoP Rogue Anticipation
+- Demon Hunter Soul Fragments
+
+
+5. Inventory Counter Handler
+----------------------------
+Optional only:
+- Classic/TBC/Wrath Warlock Soul Shards
+
+
+IMPORTANT EDGE CASES
+====================
+- MoP Rogue Anticipation does not increase combo-point maximum.
+- Retail Rogue can reach 7 combo points.
+- MoP Paladin starts at 3 Holy Power and reaches 5 at level 85.
+- Retail Paladin is simply 5.
+- MoP Monk uses Chi on all specs; Retail only Windwalker does.
+- Classic/TBC/Wrath Soul Shards are items, not UnitPower.
+- MoP Warlock has three completely different spec resources.
+- Enhancement Maelstrom Weapon is an aura stack, not Enum.PowerType.Maelstrom.
+- DK runes need rune APIs.
+- MoP Druid Eclipse is a bidirectional special bar.
+- Demon Hunter Soul Fragments require custom/spec-specific handling.
+- Retail Destruction Soul Shards can be represented fractionally with high-precision UnitPower values.
+- UnitPowerMax() should generally be authoritative for modern/talent-modified segmented resources.

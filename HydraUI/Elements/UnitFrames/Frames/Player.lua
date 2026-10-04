@@ -72,6 +72,11 @@ local function UpdatePlayerResources(frame, event, unit)
 
 		for i = 1, descriptor.count do
 			local segment = resource[i]
+			if descriptor.colorSetting then
+				local r, g, b = HydraUI:HexToRGB(Settings[descriptor.colorSetting])
+				segment:SetStatusBarColor(r, g, b)
+				segment.bg:SetVertexColor(r, g, b)
+			end
 			segment:SetMinMaxValues(0, 1)
 			segment:SetValue(i <= current and 1 or 0)
 			segment:SetShown(i <= math.max(1, maximum))

@@ -63,6 +63,7 @@ elseif HydraUI.IsMists then
 	MicroButtons.Buttons = {
 		CharacterMicroButton,
 		SpellbookMicroButton,
+		TalentMicroButton,
 		AchievementMicroButton,
 		QuestLogMicroButton,
 		GuildMicroButton,

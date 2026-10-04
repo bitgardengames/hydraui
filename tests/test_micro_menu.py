@@ -7,6 +7,13 @@ SOURCE = (Path(__file__).parents[1] / "HydraUI/Elements/ActionBars/MicroMenu.lua
 
 
 class MicroMenuCoverage(unittest.TestCase):
+    def test_mists_micro_menu_includes_talent_button(self):
+        """Mists exposes talents through a dedicated micro menu button."""
+        mists_start = SOURCE.index("elseif HydraUI.IsMists then")
+        mists_buttons = SOURCE[mists_start:SOURCE.index("\nelse", mists_start)]
+
+        self.assertIn("TalentMicroButton", mists_buttons)
+
     def test_retail_micro_menu_remains_in_blizzard_container(self):
         """Edit Mode expects MicroMenu to retain its Blizzard-owned parent."""
         self.assertNotIn("MicroMenu:SetParent", SOURCE)

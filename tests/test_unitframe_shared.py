@@ -199,29 +199,21 @@ class SharedUnitFrameCoverage(unittest.TestCase):
 
     def test_live_health_texture_update_reaches_every_prediction_texture(self):
         shared = FACTORY
-        update = re.search(
-            r"local function SetHeaderHealthTexture\(frame, resolvedTexture\)(.*?)"
-            r"function UF:SetHeaderHealthTexture\(header, value\)(.*?)\nend",
-            shared,
-            re.S,
-        ).group(0)
+        update = re.search(r"function UF:SetHealthTexture\(.*?\nend", shared, re.S).group(0)
         for expression in (
-            "frame.Health:SetStatusBarTexture(resolvedTexture)",
-            "frame.Health.bg:SetTexture(resolvedTexture)",
-            "frame.HealBar:SetStatusBarTexture(resolvedTexture)",
-            "frame.AbsorbsBar:SetStatusBarTexture(resolvedTexture)",
+            "frame.Health:SetStatusBarTexture(texture)",
+            "frame.Health.bg:SetTexture(texture)",
+            "frame.HealBar:SetStatusBarTexture(texture)",
+            "frame.AbsorbsBar:SetStatusBarTexture(texture)",
         ):
             self.assertIn(expression, update)
-        self.assertIn("self:ForEachHeaderChild(header, SetHeaderHealthTexture, texture)", update)
-        self.assertNotIn("function(frame, resolvedTexture)", update)
-        for module, unit in (("PartyPets", "partypet"), ("RaidPets", "raidpet")):
+
+        # Pet-frame textures are fixed to ui-widget-texture and expose no live
+        # texture control, so their modules should not carry unreachable callbacks.
+        for module in ("PartyPets", "RaidPets"):
             source = (FRAMES / f"{module}.lua").read_text()
-            self.assertIn(
-                f'UF:SetHeaderHealthTexture(HydraUI.UnitFrames["{unit}"], value)',
-                source,
-            )
-        self.assertNotIn("GetTetxure", (FRAMES / "PartyPets.lua").read_text())
-        self.assertNotIn("Unit.Health.HealBar", (FRAMES / "PartyPets.lua").read_text())
+            self.assertNotIn("SetHeaderHealthTexture", source)
+            self.assertNotIn("UpdateHealthTexture", source)
 
 
 if __name__ == "__main__":

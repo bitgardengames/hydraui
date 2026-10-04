@@ -87,9 +87,6 @@ end
 local function UpdatePartyShowHighlight(value)
 	Update("highlight", value)
 end
-local function UpdatePartyShowRole(value)
-	Update("role", value)
-end
 local function UpdateHealthTexture(value)
 	Update("healthTexture", value)
 end
@@ -169,7 +166,6 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Party"], Lang
 
 	left:CreateHeader(Language["Styling"])
 	left:CreateSwitch("party-show-debuffs", Settings["party-show-debuffs"], Language["Enable Debuffs"], Language["Display debuffs on party members"], UpdatePartyShowDebuffs)
-	--left:CreateSwitch("party-show-role", Settings["party-show-role"], Language["Enable Role Icons"], Language["Display role icons on party members"], UpdatePartyShowRole)
 	left:CreateSwitch("party-show-role", Settings["party-show-role"], Language["Enable Role Icons"], Language["Display role icons on party members"], ReloadUI):RequiresReload(true)
 	left:CreateSwitch("PartyEnableMouseover", Settings.PartyEnableMouseover, Language["Enable Mouseover"], Language["Enable a mouseover highlight on party members"], UpdatePartyShowHighlight)
 

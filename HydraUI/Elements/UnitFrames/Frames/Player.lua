@@ -582,12 +582,6 @@ HydraUI.StyleFuncs["player"] = function(self, unit)
 	UF:BuildSingleUnitFrame(self, unit, PlayerFrameConfig)
 end
 
-local UpdateOnlyPlayerDebuffs = function(value)
-	if HydraUI.UnitFrames["target"] then
-		HydraUI.UnitFrames["target"].Debuffs.onlyShowPlayer = value
-	end
-end
-
 local UpdatePlayerWidth = function(value)
 	local Frame = HydraUI.UnitFrames["player"]
 	if not Frame then

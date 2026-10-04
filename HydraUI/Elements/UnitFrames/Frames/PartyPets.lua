@@ -1,4 +1,4 @@
-local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
+local HydraUI, Language, _, Settings, Defaults = select(2, ...):get()
 
 Defaults["party-pets-enable"] = true
 Defaults["party-pets-width"] = 78
@@ -7,7 +7,6 @@ Defaults["party-pets-health-reverse"] = false
 Defaults["party-pets-health-color"] = "CLASS"
 Defaults["party-pets-health-orientation"] = "HORIZONTAL"
 Defaults["party-pets-health-smooth"] = true
-Defaults["party-pets-power-height"] = 0 -- NYI
 
 local UF = HydraUI:GetModule("Unit Frames")
 
@@ -36,19 +35,6 @@ HydraUI.StyleFuncs["partypet"] = function(self, unit)
 	PartyPetsFrameConfig.range.outsideAlpha = Settings["party-out-of-range"] / 100
 
 	UF:BuildSingleUnitFrame(self, unit, PartyPetsFrameConfig)
-end
-
-local UpdateHealthTexture = function(value)
-	UF:SetHeaderHealthTexture(HydraUI.UnitFrames["partypet"], value)
-end
-
-local UpdatePowerTexture = function(value)
-	if HydraUI.UnitFrames["partypet"] then
-		UF:ForEachHeaderChild(HydraUI.UnitFrames["partypet"], function(Unit, value)
-			Unit.Power:SetStatusBarTexture(Assets:GetTexture(value))
-			Unit.Power.bg:SetTexture(Assets:GetTexture(value))
-		end, value)
-	end
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Party Pets"], Language["Unit Frames"], function(left, right)

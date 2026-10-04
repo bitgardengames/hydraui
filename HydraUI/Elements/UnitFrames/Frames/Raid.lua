@@ -159,9 +159,6 @@ end
 local function UpdateRaidColumnSpacing(value)
 	SetRaidAttribute("columnSpacing", value)
 end
-local function UpdateRaidColumnAnchor(value)
-	SetRaidAttribute("columnAnchorPoint", value)
-end
 local function UpdateRaidPoint(value)
 	SetRaidAttribute("point", value)
 end

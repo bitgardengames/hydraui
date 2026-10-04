@@ -1,4 +1,4 @@
-local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
+local HydraUI, Language, _, Settings, Defaults = select(2, ...):get()
 
 Defaults["raid-pets-enable"] = true
 Defaults["raid-pets-width"] = 78
@@ -7,7 +7,6 @@ Defaults["raid-pets-health-reverse"] = false
 Defaults["raid-pets-health-color"] = "CLASS"
 Defaults["raid-pets-health-orientation"] = "HORIZONTAL"
 Defaults["raid-pets-health-smooth"] = true
-Defaults["raid-pets-power-height"] = 0 -- NYI
 
 local UF = HydraUI:GetModule("Unit Frames")
 
@@ -36,10 +35,6 @@ HydraUI.StyleFuncs["raidpet"] = function(self, unit)
 	RaidPetsFrameConfig.range.outsideAlpha = Settings["raid-out-of-range"] / 100
 
 	UF:BuildSingleUnitFrame(self, unit, RaidPetsFrameConfig)
-end
-
-local UpdateHealthTexture = function(value)
-	UF:SetHeaderHealthTexture(HydraUI.UnitFrames["raidpet"], value)
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Raid Pets"], Language["Unit Frames"], function(left, right)

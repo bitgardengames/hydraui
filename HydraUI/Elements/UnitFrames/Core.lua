@@ -10,11 +10,12 @@ ns.UnitFrameHider = Hider
 local UnitFrames = HydraUI.UnitFrames or {}
 HydraUI.UnitFrames = UnitFrames
 
--- Components are deliberately owned by HydraUI rather than mirroring oUF's
--- global element registry.  Element modules register small lifecycle records
--- here and frames opt in when their style creates the matching widget.
-ns.UnitFrameComponentHandlers = ns.UnitFrameComponentHandlers or {}
-local componentHandlers = ns.UnitFrameComponentHandlers
+-- Elements belong to HydraUI's unit-frame runtime. Each element registers a
+-- small lifecycle record and is enabled only when a style creates its widget.
+-- Keep the old namespace key as a compatibility alias for third-party styles.
+ns.UnitFrameElementHandlers = ns.UnitFrameElementHandlers or ns.UnitFrameComponentHandlers or {}
+ns.UnitFrameComponentHandlers = ns.UnitFrameElementHandlers
+local elementHandlers = ns.UnitFrameElementHandlers
 local colors = ns.UnitFrameColors
 local tag, untag, updateTags = ns.UnitFrameTag, ns.UnitFrameUntag, ns.UnitFrameUpdateTags
 
@@ -30,11 +31,14 @@ local function IsEventless(unit)
 	return unit:match("%w+target") or eventlessUnits[unit]
 end
 
-function UnitFrames:RegisterComponent(name, lifecycle)
-	assert(type(name) == "string", "unit-frame component names must be strings")
-	assert(type(lifecycle) == "table" and type(lifecycle.enable) == "function", "invalid unit-frame component")
-	componentHandlers[name] = lifecycle
+function UnitFrames:RegisterElement(name, lifecycle)
+	assert(type(name) == "string", "unit-frame element names must be strings")
+	assert(type(lifecycle) == "table" and type(lifecycle.enable) == "function", "invalid unit-frame element")
+	elementHandlers[name] = lifecycle
 end
+
+-- Compatibility for extensions written during the native-runtime migration.
+UnitFrames.RegisterComponent = UnitFrames.RegisterElement
 
 local function DispatchEvent(self, event, ...)
 	if not self:IsVisible() then
@@ -148,7 +152,7 @@ local function PollEventless(self, elapsed)
 end
 
 local function EnableElement(self, name, unit)
-	local handler = componentHandlers[name]
+	local handler = elementHandlers[name]
 	if not handler or self._hydraEnabledComponents[name] then
 		return
 	end
@@ -164,7 +168,7 @@ local function DisableElement(self, name)
 	if not self._hydraEnabledComponents[name] then
 		return
 	end
-	local handler = componentHandlers[name]
+	local handler = elementHandlers[name]
 	for i = #self._hydraRefreshers, 1, -1 do
 		if self._hydraRefreshers[i] == handler.update then
 			table.remove(self._hydraRefreshers, i)
@@ -233,7 +237,7 @@ end
 
 local function BuildComponents(frame, unit, builder)
 	builder(frame, unit)
-	for name in next, componentHandlers do
+	for name in next, elementHandlers do
 		frame:EnableElement(name, unit)
 	end
 end

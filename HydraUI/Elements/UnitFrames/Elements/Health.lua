@@ -1,6 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
-local Handlers = ns.UnitFrameComponentHandlers
+local Handlers = ns.UnitFrameElementHandlers
 
 local function Force(element, update)
 	return function()
@@ -66,7 +66,7 @@ local function UpdateHealth(frame, event, unit)
 		bar:PreUpdate(unit)
 	end
 	bar:SetMinMaxValues(0, maximum)
-		bar:SetValue(UnitIsConnected(unit) and current or maximum)
+	bar:SetValue(UnitIsConnected(unit) and current or maximum)
 	bar.cur, bar.max = current, maximum
 	local inaccessible = HydraUI.IsMainline and issecretvalue(current) and not canaccessvalue(current)
 	if not inaccessible and current == 0 then
@@ -91,9 +91,9 @@ end
 
 local function EnableHealth(frame)
 	local bar = frame.Health
-		if not bar then
-			return
-		end
+	if not bar then
+		return
+	end
 	bar.__owner, bar.ForceUpdate = frame, Force(bar, HealthPath)
 	for _, event in ipairs({HydraUI.IsMainline and "UNIT_HEALTH" or "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH"}) do
 		frame:RegisterEvent(event, HealthPath)
@@ -109,4 +109,8 @@ local function DisableHealth(frame)
 	Unregister(frame, HealthPath, "UNIT_HEALTH", "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH")
 	Unregister(frame, HealthColor, "UNIT_CONNECTION", "PARTY_MEMBER_ENABLE", "PARTY_MEMBER_DISABLE", "UNIT_FACTION", "UNIT_FLAGS", "UNIT_THREAT_LIST_UPDATE")
 end
-Handlers.Health = {update=HealthPath, enable=EnableHealth, disable=DisableHealth}
+Handlers.Health = {
+	update = HealthPath,
+	enable = EnableHealth,
+	disable = DisableHealth,
+}

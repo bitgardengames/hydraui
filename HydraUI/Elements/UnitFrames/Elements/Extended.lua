@@ -13,7 +13,7 @@ local function Install(name, events, update, enable)
 		local element = frame[name]
 		return (element.Override or update)(frame, ...)
 	end
-	UnitFrames:RegisterComponent(name, {
+	UnitFrames:RegisterElement(name, {
 		update = Path,
 		enable = function(frame)
 			local element = frame[name]

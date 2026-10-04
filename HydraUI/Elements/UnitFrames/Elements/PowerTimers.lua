@@ -1,6 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
-local Handlers = ns.UnitFrameComponentHandlers
+local Handlers = ns.UnitFrameElementHandlers
 
 local function ManaOnUpdate(element, elapsed)
 	element.elapsed = element.elapsed + elapsed

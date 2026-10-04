@@ -575,7 +575,7 @@ local function DisableAuras(frame)
 	end
 end
 
-ns.UnitFrameComponentHandlers.Auras = {
+ns.UnitFrameElementHandlers.Auras = {
 	update = UpdateAuras,
 	enable = EnableAuras,
 	disable = DisableAuras,

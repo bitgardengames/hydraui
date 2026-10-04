@@ -118,7 +118,7 @@ local function DisablePlayerResources(frame)
 	end
 end
 
-select(2, ...).UnitFrameComponentHandlers.PlayerResources = {
+select(2, ...).UnitFrameElementHandlers.PlayerResources = {
 	update = UpdatePlayerResources,
 	enable = EnablePlayerResources,
 	disable = DisablePlayerResources,

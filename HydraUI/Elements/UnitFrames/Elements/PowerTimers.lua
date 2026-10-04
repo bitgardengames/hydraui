@@ -1,0 +1,137 @@
+local _, ns = ...
+local Handlers = ns.UnitFrameComponentHandlers
+
+local function ManaOnUpdate(element, elapsed)
+	element.elapsed = element.elapsed + elapsed
+	element:SetValue(element.elapsed)
+	if element.elapsed >= element.max then
+		element.LastPower = UnitPower("player")
+		element:Hide()
+		element:SetScript("OnUpdate", nil)
+	end
+end
+local function UpdateMana(frame, _, unit)
+	if unit and unit ~= "player" then
+		return
+	end
+	local element = frame.ManaTimer
+	local power = UnitPower("player")
+	if UnitPowerType("player") ~= Enum.PowerType.Mana or power == UnitPowerMax("player") then
+		element.LastPower = power
+	element:Hide()
+	element:SetScript("OnUpdate", nil)
+	return
+	end
+	if element.LastPower > power then element.max = 5.5
+	elseif power > element.LastPower then element.max = 2
+	else
+		return
+	end
+	element.elapsed = 0
+	element:SetMinMaxValues(0, element.max)
+	element:Show()
+	element:SetScript("OnUpdate", ManaOnUpdate)
+	element.LastPower = power
+end
+local function EnableMana(frame)
+	local element = frame.ManaTimer
+	if not element or not UnitIsUnit(frame.unit,"player") then
+		return
+	end
+	element.__owner=frame
+	element.LastPower=UnitPower("player")
+	element.ForceUpdate=function() UpdateMana(frame,"ForceUpdate","player") end
+	frame:RegisterEvent("UNIT_POWER_FREQUENT",UpdateMana)
+	element:Hide()
+	return true
+end
+local function DisableMana(frame)
+	frame:UnregisterEvent("UNIT_POWER_FREQUENT",UpdateMana)
+	frame.ManaTimer:Hide()
+	frame.ManaTimer:SetScript("OnUpdate",nil)
+end
+Handlers.ManaRegen={update=UpdateMana,enable=EnableMana,disable=DisableMana}
+
+local lastTick, lastPower = GetTime(), 0
+local function EnergyOnUpdate(element)
+	local power, now = UnitPower("player"), GetTime()
+	if power > lastPower or now-lastTick >= 2 then
+		lastTick=now
+	end
+	element:SetValue(now-lastTick)
+	lastPower=power
+end
+local function UpdateEnergy(frame)
+	EnergyOnUpdate(frame.EnergyTick)
+end
+local function EnableEnergy(frame)
+	local element=frame.EnergyTick
+	if not element or not UnitIsUnit(frame.unit,"player") then
+		return
+	end
+	local class=select(2,UnitClass("player"))
+	if class~="ROGUE" and class~="DRUID" then
+		return
+	end
+	element.__owner=frame
+	element.ForceUpdate=function() EnergyOnUpdate(element) end
+	element:SetMinMaxValues(0,2)
+	element:SetScript("OnUpdate",EnergyOnUpdate)
+	element:Show()
+	return true
+end
+local function DisableEnergy(frame) frame.EnergyTick:Hide()
+	frame.EnergyTick:SetScript("OnUpdate",nil) end
+Handlers.EnergyTick={update=UpdateEnergy,enable=EnableEnergy,disable=DisableEnergy}
+
+local function UpdatePrediction(frame, event, unit)
+	if unit and unit ~= frame.unit then
+		return
+	end
+	local element, cost = frame.PowerPrediction, 0
+	local _,_,_,startTime,endTime,_,_,_,spellID=UnitCastingInfo(frame.unit)
+	if event=="UNIT_SPELLCAST_START" and startTime~=endTime and spellID then
+		local costs=C_Spell.GetSpellPowerCost(spellID)
+		if costs then
+			local powerType=UnitPowerType(frame.unit)
+			for _,info in next,costs do
+				if info.type==powerType and (#costs==1 or info.hasRequiredAura) then
+					cost=info.cost
+					break
+				end
+			end
+		end
+		element.mainCost=cost
+	elseif spellID then
+		cost=element.mainCost or 0
+	else
+		element.mainCost=0
+	end
+	if element.mainBar then
+		element.mainBar:SetMinMaxValues(0,UnitPowerMax(frame.unit))
+		element.mainBar:SetValue(cost)
+		element.mainBar:Show()
+	end
+end
+local predictionEvents={"UNIT_SPELLCAST_START","UNIT_SPELLCAST_STOP","UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_SUCCEEDED","UNIT_DISPLAYPOWER"}
+local function EnablePrediction(frame,unit)
+	local element=frame.PowerPrediction
+	if not element or not C_Spell or not UnitIsUnit(unit,"player") then
+		return
+	end
+	element.__owner=frame
+	element.ForceUpdate=function() UpdatePrediction(frame,"ForceUpdate",frame.unit) end
+	for i=1,#predictionEvents do
+		frame:RegisterEvent(predictionEvents[i],UpdatePrediction)
+	end
+	return true
+end
+local function DisablePrediction(frame)
+	for i=1,#predictionEvents do
+		frame:UnregisterEvent(predictionEvents[i],UpdatePrediction)
+	end
+	if frame.PowerPrediction.mainBar then
+		frame.PowerPrediction.mainBar:Hide()
+	end
+end
+Handlers.PowerPrediction={update=UpdatePrediction,enable=EnablePrediction,disable=DisablePrediction}

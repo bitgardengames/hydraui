@@ -30,3 +30,14 @@ def test_native_element_modules_load_before_frames_are_spawned():
     coordinator = manifest.index('file="UnitFrames.lua"')
     for module in ("Indicators", "Dispel", "AuraWatch", "PowerTimers"):
         assert manifest.index(f'file="Elements/{module}.lua"') < coordinator
+
+
+def test_pvp_indicator_honor_level_event_is_retail_only():
+    source = (ROOT / "Elements/Indicators.lua").read_text()
+    retail_guard = "if HydraUI.IsMainline and not HydraUI.IsForever then"
+    event_registration = 'PvPIndicatorEvents[#PvPIndicatorEvents + 1] = {"HONOR_LEVEL_UPDATE", true}'
+
+    assert retail_guard in source
+    assert source.index(retail_guard) < source.index(event_registration) < source.index(
+        "\nend", source.index(retail_guard)
+    )

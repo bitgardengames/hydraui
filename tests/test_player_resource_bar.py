@@ -24,13 +24,14 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         ):
             self.assertRegex(SOURCE, rf'{class_name} = {{ field = "{field}".*count = .*{count}')
 
-        # Version-gated combinations: warlock mainline/cata/mists, mage
-        # mainline, paladin mainline/cata/mists, and shaman non-mainline.
+        # Version-gated combinations follow the class-power reference. Numeric
+        # resources continue to use the ordinary player Power bar.
         for expression in (
             'WARLOCK = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
-            'MAGE = HydraUI.IsMainline',
+            'MAGE = (HydraUI.IsMainline or HydraUI.IsMists)',
             'PALADIN = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
-            'SHAMAN = not HydraUI.IsMainline',
+            'PRIEST = HydraUI.IsMists',
+            'SHAMAN = (HydraUI.IsWrath or HydraUI.IsMists or HydraUI.IsMainline)',
         ):
             self.assertIn(expression, SOURCE)
         self.assertLess(SOURCE.index("local PlayerResourceDescriptors"),
@@ -40,11 +41,23 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         for token in ('field = "ComboPoints"', 'field = "Runes"', 'field = "Totems"',
                       'alias = "SoulShards"', 'alias = "ArcaneCharges"',
                       'alias = "Chi"', 'alias = "HolyPower"', 'alias = "Essence"',
+                      'alias = "ShadowOrbs"', 'alias = "MaelstromWeapon"',
                       "countProvider = function()", "color = function(i)",
                       "postUpdate = UF.PostUpdateTotems", "charged = HydraUI.IsMainline",
                       "runes = true", "stagger = true", "totems = true"):
             self.assertIn(token, SOURCE)
         self.assertNotIn("ArcanePower", SOURCE)
+
+    def test_resource_visibility_and_values_follow_runtime_state(self):
+        for token in (
+            '"PLAYER_SPECIALIZATION_CHANGED"', '"PLAYER_TALENT_UPDATE"',
+            '"UNIT_AURA"', "descriptor.active()", "resource:SetShown(active)",
+            "descriptor.currentProvider", "descriptor.maximumProvider",
+            "UnitPowerDisplayMod", "current - i + 1",
+        ):
+            self.assertIn(token, SOURCE)
+        self.assertIn("PlayerAuraStacks({[53817] = true, [344179] = true})", SOURCE)
+        self.assertIn("PlayerSpecializationIs(263, 2)", SOURCE)
 
     def test_component_has_stable_update_interface(self):
         for method in ("SetWidth", "SetHeight", "SetTexture", "SetDetached"):

@@ -3,10 +3,44 @@ local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 -- Player resources are driven directly by the native unit-frame core.  Only a
 -- descriptor actually instantiated by BuildPlayerComponents is touched.
 local PlayerResourceEvents = {
+	"PLAYER_SPECIALIZATION_CHANGED",
+	"PLAYER_TALENT_UPDATE",
+	"UNIT_AURA",
 	"UNIT_DISPLAYPOWER",
 	"UNIT_MAXPOWER",
 	"UNIT_POWER_UPDATE",
 }
+
+local function PlayerSpecializationIs(specializationID, classicTalentTab)
+	if GetSpecialization and GetSpecializationInfo then
+		local specialization = GetSpecialization()
+		return specialization and GetSpecializationInfo(specialization) == specializationID
+	end
+	if classicTalentTab and GetTalentTabInfo then
+		local selected, mostPoints = 1, -1
+		for index = 1, GetNumTalentTabs() do
+			local _, _, points = GetTalentTabInfo(index)
+			if (points or 0) > mostPoints then
+				selected, mostPoints = index, points or 0
+			end
+		end
+		return selected == classicTalentTab
+	end
+	return false
+end
+
+local function PlayerAuraStacks(spellIDs)
+	for index = 1, 40 do
+		local name, _, count, _, _, _, _, _, _, spellID = UnitAura("player", index, "HELPFUL")
+		if not name then
+			break
+		end
+		if spellIDs[spellID] then
+			return count or 0
+		end
+	end
+	return 0
+end
 
 local RuneColors = {
 	{1, 0, 0}, -- Blood
@@ -60,14 +94,31 @@ local function UpdatePlayerResources(frame, event, unit)
 	end
 
 	local descriptor = resource.Descriptor
+	local active = not descriptor.active or descriptor.active()
+	resource:SetShown(active)
+	if not active then
+		return
+	end
 	if descriptor.runes then
 		for i = 1, descriptor.count do
 			UpdateRune(resource[i])
 		end
 	else
 		local powerType = Enum.PowerType[descriptor.alias or descriptor.field] or Enum.PowerType.ComboPoints
-		local current = UnitPower("player", powerType)
-		local maximum = UnitPowerMax("player", powerType)
+		local current = descriptor.currentProvider and descriptor.currentProvider() or UnitPower("player", powerType, descriptor.unmodified)
+		local maximum = descriptor.maximumProvider and descriptor.maximumProvider() or UnitPowerMax("player", powerType)
+		if not maximum or maximum <= 0 then
+			resource:Hide()
+			return
+		end
+		if descriptor.displayMod then
+			local displayMod = UnitPowerDisplayMod and UnitPowerDisplayMod(powerType) or 1
+			current = current / math.max(1, displayMod)
+		end
+		local visibleCount = math.max(1, math.min(maximum or descriptor.count, descriptor.count))
+		if resource.layoutCount ~= visibleCount then
+			resource:SetWidth(resource:GetWidth())
+		end
 		local charged = descriptor.charged and ChargedPoints() or {}
 
 		for i = 1, descriptor.count do
@@ -78,8 +129,8 @@ local function UpdatePlayerResources(frame, event, unit)
 				segment.bg:SetVertexColor(r, g, b)
 			end
 			segment:SetMinMaxValues(0, 1)
-			segment:SetValue(i <= current and 1 or 0)
-			segment:SetShown(i <= math.max(1, maximum))
+			segment:SetValue(math.max(0, math.min(1, current - i + 1)))
+			segment:SetShown(i <= maximum)
 			if segment.Charged then
 				segment.Charged:SetShown(charged[i] == true)
 			end
@@ -230,12 +281,13 @@ local PlayerResourceDescriptors = {
 	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
 	DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
 	DEATHKNIGHT = { field = "Runes", count = 6, colorSetting = "color-runes", runes = true},
-	MONK = { field = "ClassPower", alias = "Chi", count = 6, colorSetting = "color-chi", stagger = true},
-	EVOKER = { field = "ClassPower", alias = "Essence", count = 6, colorSetting = "color-essence"},
-	WARLOCK = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "SoulShards", count = HydraUI.IsMainline and 5 or (HydraUI.IsMists and 4 or 3), colorSetting = "color-soul-shards"} or nil,
-	MAGE = HydraUI.IsMainline and {field = "ClassPower", alias = "ArcaneCharges", count = 4, colorSetting = "color-arcane-charges"} or nil,
-	PALADIN = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "HolyPower", count = 5, colorSetting = "color-holy-power"} or nil,
-	SHAMAN = not HydraUI.IsMainline and {field = "Totems", count = 4, color = function(i) return unpack(HydraUI.TotemColors[i]) end, postUpdate = UF.PostUpdateTotems, totems = true} or nil,
+	MONK = { field = "ClassPower", alias = "Chi", count = 6, countProvider = function() return UnitPowerMax("player", Enum.PowerType.Chi) end, colorSetting = "color-chi", stagger = true, active = function() return HydraUI.IsMists or PlayerSpecializationIs(269) end},
+	EVOKER = { field = "ClassPower", alias = "Essence", count = 6, countProvider = function() return UnitPowerMax("player", Enum.PowerType.Essence) end, colorSetting = "color-essence"},
+	WARLOCK = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "SoulShards", count = HydraUI.IsMainline and 5 or (HydraUI.IsMists and 4 or 3), countProvider = function() return UnitPowerMax("player", Enum.PowerType.SoulShards) end, colorSetting = "color-soul-shards", unmodified = HydraUI.IsMainline, displayMod = HydraUI.IsMainline, active = function() return not HydraUI.IsMists or PlayerSpecializationIs(265) end} or nil,
+	MAGE = (HydraUI.IsMainline or HydraUI.IsMists) and {field = "ClassPower", alias = "ArcaneCharges", count = 4, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ArcaneCharges) end, colorSetting = "color-arcane-charges", active = function() return PlayerSpecializationIs(62) end} or nil,
+	PALADIN = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "HolyPower", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.HolyPower) end, colorSetting = "color-holy-power"} or nil,
+	PRIEST = HydraUI.IsMists and {field = "ClassPower", alias = "ShadowOrbs", count = 3, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ShadowOrbs or 13) end, colorSetting = "color-soul-shards", active = function() return PlayerSpecializationIs(258) end} or nil,
+	SHAMAN = (HydraUI.IsWrath or HydraUI.IsMists or HydraUI.IsMainline) and {field = "ClassPower", alias = "MaelstromWeapon", count = HydraUI.IsMainline and 10 or 5, countProvider = function() return HydraUI.IsMainline and IsPlayerSpell(384149) and 10 or 5 end, maximumProvider = function() return HydraUI.IsMainline and IsPlayerSpell(384149) and 10 or 5 end, currentProvider = function() return PlayerAuraStacks({[53817] = true, [344179] = true}) end, colorSetting = "color-maelstrom", active = function() return PlayerSpecializationIs(263, 2) end} or {field = "Totems", count = 4, color = function(i) return unpack(HydraUI.TotemColors[i]) end, postUpdate = UF.PostUpdateTotems, totems = true},
 }
 
 local function BuildPlayerComponents(factory, self, unit)
@@ -413,6 +465,7 @@ local function BuildPlayerComponents(factory, self, unit)
 			function resource:SetWidth(width)
 				NativeSetWidth(self, width)
 				local count = Count(self)
+				self.layoutCount = count
 				local segmentWidth = (width / count) - 1
 				for i = 1, descriptor.count do
 					Segment(self, i):SetWidth(i == 1 and segmentWidth - 1 or segmentWidth)

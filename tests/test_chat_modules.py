@@ -56,6 +56,20 @@ def test_data_text_module_is_cached_when_chat_frames_are_initialized():
     assert "HydraUI:GetModule" not in focus_hooks
 
 
+def test_right_window_uses_one_background_opacity_setting():
+    window = source("Window.lua")
+    coordinator = (ROOT / "Chat.lua").read_text()
+
+    assert window.count('CreateSlider("right-window-fill"') == 1
+    assert "right-window-left-fill" not in window
+    assert "right-window-right-fill" not in window
+    assert "right-window-left-fill" not in coordinator
+    assert "right-window-right-fill" not in coordinator
+    assert "Window.Middle.Outside:SetBackdropColor" in window
+    assert "Window.Left.Outside:SetBackdropColor" in window
+    assert "Window.Right.Outside:SetBackdropColor" in window
+
+
 def test_chat_install_uses_compatible_channel_api():
     coordinator = (ROOT / "Chat.lua").read_text()
     adapter = coordinator[coordinator.index("local AddChannelToFrame"):coordinator.index("function Chat:Install()")]

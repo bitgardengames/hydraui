@@ -20,3 +20,19 @@ def test_secret_cast_times_are_filtered_only_on_mainline():
     assert retail_adapter.count("issecretvalue(endTime)") == 2
     assert "issecretvalue" not in classic_adapter
     assert "canaccessvalue" not in classic_adapter
+
+
+def test_castbar_refreshes_channels_and_tracks_empowered_casts():
+    assert 'event=="ForceUpdate" and not name' in SOURCE
+    assert 'ChannelInfo(unit)' in SOURCE
+    for event in (
+        "UNIT_SPELLCAST_EMPOWER_START",
+        "UNIT_SPELLCAST_EMPOWER_UPDATE",
+        "UNIT_SPELLCAST_EMPOWER_STOP",
+    ):
+        assert event in SOURCE
+
+
+def test_player_castbar_replaces_the_blizzard_castbar():
+    assert "CastingBarFrame_SetUnit(CastingBarFrame,nil)" in SOURCE
+    assert "PlayerCastingBarFrame:SetUnit(nil)" in SOURCE

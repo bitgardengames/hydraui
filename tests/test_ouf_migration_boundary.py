@@ -38,8 +38,9 @@ def references_in(path):
     return references
 
 
-def test_bundled_runtime_was_removed():
-    assert not BUNDLED_REFERENCE.exists()
+def test_bundled_ouf_reference_is_retained():
+    assert BUNDLED_REFERENCE.is_dir()
+    assert (BUNDLED_REFERENCE / "LICENSE").is_file()
 
 
 def test_no_runtime_ouf_references_remain():

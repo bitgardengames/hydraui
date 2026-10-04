@@ -203,6 +203,19 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
             self.assertIn(f'"{attribute}"', attrs)
         self.assertGreaterEqual(source.count("self:GetGrowthOffsets("), 2)
 
+    def test_spawners_hide_the_corresponding_blizzard_frames(self):
+        source = (ROOT / "Spawning.lua").read_text()
+        self.assertIn("function UF:DisableBlizzardUnitFrame(unit)", source)
+        for frame in ("PlayerFrame", "TargetFrame", "FocusFrame", "PetFrame"):
+            self.assertIn(f"_G.{frame}", source)
+        self.assertIn('self:DisableBlizzardUnitFrame("party")', source)
+        self.assertIn('self:DisableBlizzardUnitFrame("boss")', source)
+
+    def test_native_unit_events_do_not_register_an_empty_unit_token(self):
+        source = (ROOT / "Core.lua").read_text()
+        self.assertNotIn('otherUnit or ""', source)
+        self.assertIn("self:UpdateTags(event)", source)
+
 
 class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
     def test_pet_range_settings_are_read_when_frames_are_built(self):

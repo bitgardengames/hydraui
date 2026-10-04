@@ -92,8 +92,12 @@ class SharedUnitFrameCoverage(unittest.TestCase):
                 self.assertNotIn("UF:CreatePowerBar(", source)
 
     def test_single_unit_builder_resolves_family_settings_and_optional_hooks(self):
+        single_unit = (ELEMENTS / "SingleUnit.lua").read_text()
         source = FACTORY
         build = source[source.index("function UF:BuildSingleUnitFrame"):source.index("function UF:CreatePortrait")]
+        self.assertLess(single_unit.index("local SingleUnitText"),
+                        single_unit.index("function UF:BuildSingleUnitFrame"))
+        self.assertNotIn("SingleUnitText", (ELEMENTS / "Common.lua").read_text())
         self.assertIn('config.settingsPrefix .. suffix', source)
         for hook in ("portrait", "cast", "auras", "postBuild"):
             self.assertIn(f"config.{hook}", build)

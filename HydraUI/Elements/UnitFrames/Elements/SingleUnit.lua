@@ -13,6 +13,14 @@ local function FamilySetting(config, suffix)
 	return Setting(config.settingsPrefix .. suffix)
 end
 
+-- These descriptions are shared by every singleton style.  Keep them in this
+-- file's installer scope so every BuildSingleUnitFrame invocation can access
+-- them without recreating the tables for each frame.
+local SingleUnitText = {
+	left = {point = "LEFT", x = 3, justify = "LEFT"},
+	right = {point = "RIGHT", x = -3, justify = "RIGHT"},
+}
+
 -- Compose the pieces common to non-group unit frames.  Optional or unusual
 -- pieces are functions on the descriptor; this keeps knowledge of targets,
 -- bosses, etc. out of the factory.

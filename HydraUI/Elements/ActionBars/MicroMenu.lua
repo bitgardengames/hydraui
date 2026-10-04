@@ -156,8 +156,18 @@ function MicroButtons:UpdateVisibility()
 end
 
 function MicroButtons:UpdateMicroButtonsParent()
-	for i = 1, #MicroButtons.Buttons do
-		MicroButtons.Buttons[i]:SetParent(MicroButtons.Panel)
+	if MicroMenu then
+		-- The shared MicroMenu layout finds its edge buttons by enumerating its
+		-- children. Keep the buttons owned by MicroMenu so Edit Mode can never
+		-- run its layout while they are parented elsewhere. Blizzard supports
+		-- moving the MicroMenu itself for override layouts.
+		MicroMenu:SetParent(MicroButtons.Panel)
+		MicroMenu:ClearAllPoints()
+		MicroMenu:SetAllPoints(MicroButtons.Panel)
+	else
+		for i = 1, #MicroButtons.Buttons do
+			MicroButtons.Buttons[i]:SetParent(MicroButtons.Panel)
+		end
 	end
 end
 
@@ -216,8 +226,6 @@ function MicroButtons:Load()
 		return
 	end
 
-	-- Keep the retail MicroMenu parented to Blizzard's MicroMenuContainer. Edit Mode
-	-- still lays out that frame and requires its buttons to have resolved positions.
 	self.Panel = CreateFrame("Frame", "HydraUI Micro Buttons", HydraUI.UIParent, "BackdropTemplate")
 	self.Panel:SetBackdrop(HydraUI.BackdropAndBorder)
 	self.Panel:SetBackdropColor(HydraUI:HexToRGB(Settings["ui-window-bg-color"]))
@@ -237,9 +245,9 @@ function MicroButtons:Load()
 	end
 
 	HydraUI:CreateMover(self.Panel)
+	self:UpdateMicroButtonsParent()
 
 	for i = 1, #self.Buttons do
-		self.Buttons[i]:SetParent(self.Panel)
 		self.Buttons[i]:SetHitRectInsets(0, 0, 0, 0)
 
 		if not HydraUI.IsMainline then

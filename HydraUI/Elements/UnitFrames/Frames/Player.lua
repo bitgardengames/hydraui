@@ -284,7 +284,7 @@ local function BuildPlayerComponents(factory, self, unit)
 		UpdatePlayerPowerLayout(self)
 		factory:CreateBackdrop(Power, "Blank", "BACKGROUND")
 		-- Mana regen
-		if Settings["unitframes-show-mana-timer"] and not HydraUI.IsMainline then
+		if Settings["unitframes-show-mana-timer"] and not (HydraUI.IsMists or HydraUI.IsMainline) then
 			local ManaTimer = CreateFrame("StatusBar", nil, Power)
 			ManaTimer:SetAllPoints(Power)
 			ManaTimer:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerPowerTexture))

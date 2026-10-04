@@ -25,6 +25,19 @@ def test_classic_power_timers_are_driven_without_the_reference_runtime():
     assert 'Handlers.EnergyTick = {' in source
 
 
+def test_power_timers_are_limited_to_supported_clients():
+    elements = (ROOT / "Elements/PowerTimers.lua").read_text()
+    player = (ROOT / "Frames/Player.lua").read_text()
+
+    mana_guard = "HydraUI.IsMists or HydraUI.IsMainline"
+    energy_guard = "HydraUI.IsVanilla or HydraUI.IsTBC"
+
+    assert mana_guard in elements
+    assert f"not ({mana_guard})" in player
+    assert energy_guard in elements
+    assert energy_guard in player
+
+
 def test_player_resources_preserve_dynamic_ouf_behavior():
     source = (ROOT / "Frames/Player.lua").read_text()
 

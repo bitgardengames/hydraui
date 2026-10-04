@@ -14,6 +14,19 @@ def body(name):
 
 
 class ComponentConstructorCoverage(unittest.TestCase):
+    def test_portrait_matches_ouf_availability_and_class_defaults(self):
+        source = SHARED[SHARED.index("local function UpdatePortrait"):SHARED.index("local function UpdateThreat")]
+        for behavior in (
+            "UnitIsConnected(unit) and UnitIsVisible(unit)",
+            "TalkToMeQuestionMark.m2",
+            "portrait:SetCamDistanceScale(0.25)",
+            "portrait:SetPortraitZoom(1)",
+            'portrait:SetAtlas("classicon-" .. class)',
+            "portrait:PostUpdate(unit, hasStateChanged)",
+            'frame:RegisterEvent("PARTY_MEMBER_ENABLE",UpdatePortrait)',
+        ):
+            self.assertIn(behavior, source)
+
     def test_updater_resolves_each_singleton_once(self):
         source = SHARED[SHARED.index("function UF:CreateUnitUpdater"):]
         self.assertIn("local frame = HydraUI.UnitFrames[unit]", source)

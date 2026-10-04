@@ -136,7 +136,7 @@ local function TestRaid()
 	UF:ToggleGroupTest(RaidGroup)
 end
 local function UpdateShowSolo(value)
-	_G["HydraUI Raid"]:SetAttribute("showSolo", value)
+	HydraUI.UnitFrames["raid"]:SetAttribute("showSolo", value)
 end
 
 local function SetRaidAttribute(attribute, value)

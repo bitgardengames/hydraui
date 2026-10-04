@@ -11,5 +11,4 @@ function UF:CreateRaidTargetIndicator(health, size, layer, point, relativePoint,
 	return indicator
 end
 
--- Shared update callbacks operate on existing frames and values so settings
--- changes do not need to allocate per-frame closures or temporary tables.
+-- Shared update callbacks operate on existing frames and values so settings changes do not need to allocate per-frame closures or temporary tables.

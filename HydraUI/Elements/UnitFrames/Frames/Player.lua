@@ -1,7 +1,6 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
--- Player resources are driven directly by the native unit-frame core.  Only a
--- descriptor actually instantiated by BuildPlayerComponents is touched.
+-- Player resources are driven directly by the native unit-frame core.  Only a descriptor actually instantiated by BuildPlayerComponents is touched.
 local PlayerResourceEvents = {
 	-- This event also replaces the removed legacy talent event on Mists Classic.
 	"PLAYER_SPECIALIZATION_CHANGED",
@@ -274,9 +273,7 @@ local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
 	end
 end
 
--- Resource descriptions are module constants
-
--- spawning a frame only selects one.
+-- Resource descriptions are module constants, so spawning a frame only selects one.
 local PlayerResourceDescriptors = {
 	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
 	DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
@@ -517,8 +514,7 @@ local function BuildPlayerComponents(factory, self, unit)
 				else
 					resource[i] = segment
 				end
-				-- Logical expressions collapse multiple return values to one in Lua.
-				-- Resolve each branch directly so all three color channels survive.
+				-- Logical expressions collapse multiple return values to one in Lua. Resolve each branch directly so all three color channels survive.
 				local r, g, b = GetSegmentColor(i)
 				segment:SetStatusBarColor(r, g, b)
 				segment.bg = resource:CreateTexture(nil, "BORDER")

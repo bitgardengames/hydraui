@@ -2,8 +2,7 @@ local _, ns = ...
 local HydraUI = ns:get()
 
 if HydraUI.IsMainline then
-	-- Retail's aura table API is selected once while files load.  Shared aura
-	-- layout code therefore never branches on the client for each icon.
+	-- Retail's aura table API is selected once while files load.  Shared aura layout code therefore never branches on the client for each icon.
 	function ns.UnitFrameEnumerateAuras(unit, filter, visitor)
 		for index = 1, 255 do
 			local aura = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)

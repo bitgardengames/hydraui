@@ -26,9 +26,7 @@ local function ForEachChild(operation, value, descriptor, child, ...)
 	return ForEachChild(operation, value, descriptor, ...)
 end
 
--- Secure group headers return their children as multiple values. Pass those
--- values through the iterator so each invocation uses the header's current
--- children without allocating a temporary table.
+-- Secure group headers return their children as multiple values. Pass those values through the iterator so each invocation uses the header's current children without allocating a temporary table.
 function UF:ForEachHeaderChild(header, operation, value, descriptor)
 	if not header then
 		return

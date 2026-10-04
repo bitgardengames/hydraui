@@ -97,7 +97,7 @@ local function TestParty()
 	UF:ToggleGroupTest(PartyGroup)
 end
 local function UpdateShowSolo(value)
-	_G["HydraUI Party"]:SetAttribute("showSolo", value)
+	HydraUI.UnitFrames["party"]:SetAttribute("showSolo", value)
 end
 
 local function SetSpacing(header, value, point)

@@ -31,12 +31,13 @@ class MicroMenuCoverage(unittest.TestCase):
         self.assertGreater(clear, positioning)
         self.assertNotIn("self.Buttons[i]:ClearAllPoints()", SOURCE)
 
-    def test_retail_panel_is_not_hidden(self):
-        """Hidden retail buttons need coordinates during Blizzard OnHide callbacks."""
+    def test_shared_micro_menu_panel_is_not_hidden(self):
+        """Shared-layout clients need button coordinates during layout callbacks."""
         visibility = SOURCE[SOURCE.index("function MicroButtons:UpdateVisibility()"):
                             SOURCE.index("function MicroButtons:UpdateMicroButtonsParent()")]
 
-        self.assertIn("if HydraUI.IsMainline then", visibility)
+        self.assertIn("if MicroMenu then", visibility)
+        self.assertIn("self.Panel:Show()", visibility)
         self.assertIn("self.Buttons[i]:EnableMouse(false)", visibility)
         self.assertNotIn('Settings["micro-buttons-show"]', SOURCE)
 

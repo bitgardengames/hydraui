@@ -1,5 +1,6 @@
 local addon, ns = ...
 local HydraUI, Language = ns:get()
+local UF = HydraUI:GetModule("Unit Frames")
 
 -- Tags belong to HydraUI.  Keeping these registries local is important: unit buttons created by the native core must not silently depend on a third-party tag element being enabled (or even loaded).
 local Events, Methods = {}, {}
@@ -785,7 +786,7 @@ local function TagEvent(frame, event, unit)
 	end
 end
 
-function ns.UnitFrameTag(frame, fontString, tagString)
+function UF.Tag(frame, fontString, tagString)
 	frame.__tags = frame.__tags or {}
 	local parts, subscriptions = Compile(tagString or "")
 	local binding = {fontString = fontString, tagString = tagString, parts = parts, subscriptions = subscriptions}
@@ -798,7 +799,7 @@ function ns.UnitFrameTag(frame, fontString, tagString)
 	UpdateBinding(frame, binding)
 end
 
-function ns.UnitFrameUntag(frame, fontString)
+function UF.Untag(frame, fontString)
 	if not frame.__tags then
 		return
 	end
@@ -810,7 +811,7 @@ function ns.UnitFrameUntag(frame, fontString)
 	fontString.__owner, fontString.__tagBinding = nil, nil
 end
 
-function ns.UnitFrameUpdateTags(frame, event)
+function UF.UpdateTags(frame, event)
 	if not frame.__tags then
 		return
 	end
@@ -819,5 +820,5 @@ function ns.UnitFrameUpdateTags(frame, event)
 	end
 end
 
-ns.UnitFrameTagEvents = Events
-ns.UnitFrameTagMethods = Methods
+UF.TagEvents = Events
+UF.TagMethods = Methods

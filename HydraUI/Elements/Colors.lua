@@ -2,9 +2,9 @@ local AddonName, Namespace = ...
 local HydraUI, Language, Assets, Settings, Defaults = Namespace:get()
 local R, G, B
 
--- Shared unit-frame palette.  It is created here (before the unit-frame core
--- is loaded) so native buttons can all retain the same table reference.
-Namespace.UnitFrameColors = Namespace.UnitFrameColors or {
+-- Shared unit-frame palette remains private to HydraUI rather than using the
+-- addon namespace as a library-style data registry.
+local UnitFrameColors = {
 	class = {}, reaction = {}, power = {}, debuff = {},
 	threat = {}, smooth = {{1, 0, 0}, {1, 1, 0}, {0, 1, 0}},
 }
@@ -257,8 +257,12 @@ function HydraUI:UpdateColors()
 	end
 end
 
+function HydraUI:GetUnitFrameColors()
+	return UnitFrameColors
+end
+
 function HydraUI:UpdateUnitFrameColors()
-	local Colors = Namespace.UnitFrameColors
+	local Colors = UnitFrameColors
 
 	Colors.class = HydraUI.ClassColors
 	Colors.reaction = HydraUI.ReactionColors

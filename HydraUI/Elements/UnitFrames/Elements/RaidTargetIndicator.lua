@@ -1,5 +1,7 @@
 local _, ns = ...
-local Handlers = ns.UnitFrameElementHandlers
+local HydraUI = ns:get()
+local UF = HydraUI:GetModule("Unit Frames")
+local Handlers = UF.ElementHandlers
 
 local function Force(element, update)
 	return function()

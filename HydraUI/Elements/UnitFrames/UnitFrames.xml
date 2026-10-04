@@ -1,5 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="Core.lua"/>
+	<Script file="Tags.lua"/>
 	<Script file="Elements/Health.lua"/>
 	<Script file="Elements/Power.lua"/>
 	<Script file="Elements/Smooth.lua"/>

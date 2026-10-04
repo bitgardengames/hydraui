@@ -64,7 +64,6 @@ Elements\ActionBars\Buttons.lua
 Elements\ActionBars\Bars.lua
 Elements\ActionBars\TotemBar.lua
 Elements\ActionBars\KeyBinding.lua
-Elements\UnitFrames\Tags.lua
 Elements\UnitFrames\UnitFrames.xml
 Elements\UnitFrames\Frames\Player.lua
 Elements\UnitFrames\Frames\Target.lua

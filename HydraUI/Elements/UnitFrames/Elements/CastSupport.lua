@@ -1,5 +1,6 @@
 local addon, ns = ...
 local HydraUI, _, _, Settings = ns:get()
+local UF = HydraUI:GetModule("Unit Frames")
 
 local UnitClass = UnitClass
 local UnitIsPlayer = UnitIsPlayer
@@ -375,7 +376,7 @@ local function DisableCast(frame)
 		end
 	end
 end
-ns.UnitFrameElementHandlers.Castbar = {
+UF.ElementHandlers.Castbar = {
 	-- Cast events drive this element directly; full frame refreshes need no work.
 	update = function()
 	end,

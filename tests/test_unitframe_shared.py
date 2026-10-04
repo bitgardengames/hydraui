@@ -364,3 +364,18 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
         self.assertNotIn("UnitFrameComponentFactory", coordinator + sources)
         for module in ("AuraSupport", "CastSupport", "TotemSupport", "Spawning"):
             self.assertNotIn(f"ns.UnitFrame{module}(UF, Hider)", coordinator)
+
+class UnitFrameNamespaceBoundaryCoverage(unittest.TestCase):
+    def test_native_runtime_does_not_use_addon_namespace_for_storage(self):
+        sources = "\n".join(path.read_text() for path in ROOT.rglob("*.lua"))
+        self.assertNotRegex(sources, r"\bns\.UnitFrame[A-Za-z0-9_]*\s*=")
+        self.assertNotRegex(sources, r"\bNamespace\.UnitFrame[A-Za-z0-9_]*\s*=")
+
+    def test_runtime_state_is_owned_by_unit_frame_module(self):
+        core = (ROOT / "Core.lua").read_text()
+        tags = (ROOT / "Tags.lua").read_text()
+        self.assertIn('local UF = HydraUI:NewModule("Unit Frames")', core)
+        self.assertIn("UF.ElementHandlers = {}", core)
+        self.assertIn("UF.Hider = Hider", core)
+        self.assertIn("function UF.Tag(", tags)
+        self.assertIn("UF.TagEvents = Events", tags)

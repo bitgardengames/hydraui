@@ -167,12 +167,4 @@ function UF:CreateFontString(parent, font, size, flags, point, relativePoint, x,
 	return text
 end
 
--- These descriptions are shared by every singleton style.  They are deliberately
--- kept outside BuildSingleUnitFrame: spawning several boss frames must not create
--- a new set of anchor/font descriptions for every frame.
-local SingleUnitText = {
-	left = {point = "LEFT", x = 3, justify = "LEFT"},
-	right = {point = "RIGHT", x = -3, justify = "RIGHT"},
-}
-
 end

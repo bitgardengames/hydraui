@@ -393,8 +393,7 @@ local function FamilySetting(config, suffix)
 end
 
 -- Compose the pieces common to non-group unit frames.  Optional or unusual
--- pieces are functions on the descriptor
-		this keeps knowledge of targets,
+-- pieces are functions on the descriptor; this keeps knowledge of targets,
 -- bosses, etc. out of the factory.
 function UF:BuildSingleUnitFrame(frame, unit, config)
 	assert(type(config) == "table" and config.settingsPrefix, "single unit frame requires settingsPrefix")

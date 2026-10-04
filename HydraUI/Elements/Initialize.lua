@@ -106,7 +106,7 @@ end
 
 -- Modules and plugins
 function HydraUI:NewModule(name)
-	local Module = self:GetModule(name)
+	local Module = Modules[name]
 
 	--print("NewModule:", name)
 
@@ -126,22 +126,22 @@ function HydraUI:NewModule(name)
 end
 
 function HydraUI:GetModule(name)
-	if Modules[name] then
-		return Modules[name]
-	end
+	return Modules[name]
 end
 
 function HydraUI:LoadModules()
 	for i = 1, #ModuleQueue do
-		if ModuleQueue[i].Load and not ModuleQueue[i].Loaded then
-			ModuleQueue[i]:Load()
-			ModuleQueue[i].Loaded = true
+		local Module = ModuleQueue[i]
+
+		if Module.Load and not Module.Loaded then
+			Module:Load()
+			Module.Loaded = true
 		end
 	end
 end
 
 function HydraUI:NewPlugin(name)
-	local Plugin = self:GetPlugin(name)
+	local Plugin = Plugins[name]
 
 	if Plugin then
 		return
@@ -165,9 +165,7 @@ function HydraUI:NewPlugin(name)
 end
 
 function HydraUI:GetPlugin(name)
-	if Plugins[name] then
-		return Plugins[name]
-	end
+	return Plugins[name]
 end
 
 function HydraUI:LoadPlugins()
@@ -176,8 +174,10 @@ function HydraUI:LoadPlugins()
 	end
 
 	for i = 1, #PluginQueue do
-		if PluginQueue[i].Load then
-			PluginQueue[i]:Load()
+		local Plugin = PluginQueue[i]
+
+		if Plugin.Load then
+			Plugin:Load()
 		end
 	end
 
@@ -185,16 +185,18 @@ function HydraUI:LoadPlugins()
 		local Anchor
 
 		for i = 1, #PluginQueue do
+			local Plugin = PluginQueue[i]
+
 			if (i % 2) == 0 then
 				Anchor = right
 			else
 				Anchor = left
 			end
 
-			Anchor:CreateHeader(PluginQueue[i].Title)
-			Anchor:CreateDoubleLine("", Language["Author"], PluginQueue[i].Author)
-			Anchor:CreateDoubleLine("", Language["Version"], PluginQueue[i].Version)
-			Anchor:CreateMessage("", PluginQueue[i].Notes)
+			Anchor:CreateHeader(Plugin.Title)
+			Anchor:CreateDoubleLine("", Language["Author"], Plugin.Author)
+			Anchor:CreateDoubleLine("", Language["Version"], Plugin.Version)
+			Anchor:CreateMessage("", Plugin.Notes)
 		end
 	end)
 end

@@ -50,6 +50,13 @@ def constructor_block(source: str, constructor: str) -> str:
 
 
 class SharedUnitFrameCoverage(unittest.TestCase):
+    def test_health_path_calls_color_update_without_ambiguous_syntax(self):
+        shared = (ROOT / "ComponentFactory.lua").read_text()
+        health_path = shared[shared.index("local function HealthPath"):shared.index("local function EnableHealth")]
+        self.assertIn("local updateColor = bar.UpdateColor or HealthColor", health_path)
+        self.assertIn("updateColor(frame, event, unit)", health_path)
+        self.assertNotRegex(health_path, r"(?m)^\s*\(")
+
     def test_singleton_settings_use_shared_update_factory(self):
         shared = (ROOT / "ComponentFactory.lua").read_text()
         self.assertIn("function UF:CreateUnitUpdater(unit, operation, options)", shared)

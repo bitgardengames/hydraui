@@ -86,8 +86,9 @@ end
 
 local function HealthPath(frame, event, unit, ...)
 	local bar = frame.Health
+	local updateColor = bar.UpdateColor or HealthColor
 	Run(bar, UpdateHealth, frame, event, unit, ...)
-	(bar.UpdateColor or HealthColor)(frame, event, unit)
+	updateColor(frame, event, unit)
 end
 
 local function EnableHealth(frame)

@@ -64,6 +64,10 @@ Elements\ChatBubbles.lua
 Elements\Experience.lua
 Elements\Reputation.lua
 Elements\ActionBars\ActionBars.lua
+Elements\ActionBars\Buttons.lua
+Elements\ActionBars\Bars.lua
+Elements\ActionBars\TotemBar.lua
+Elements\ActionBars\Settings.lua
 Elements\ActionBars\KeyBinding.lua
 Elements\UnitFrames\Tags.lua
 Elements\UnitFrames\UnitFrames.xml

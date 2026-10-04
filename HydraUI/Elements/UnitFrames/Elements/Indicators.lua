@@ -138,7 +138,14 @@ local function UpdatePvP(frame, _, unit)
 		element.Badge:Hide()
 	end
 end
-Install("PvPIndicator", UpdatePvP, function() return true end, {{"UNIT_FACTION"}, {"HONOR_LEVEL_UPDATE", true}})
+
+local PvPIndicatorEvents = {{"UNIT_FACTION"}}
+
+if HydraUI.IsMainline and not HydraUI.IsForever then
+	PvPIndicatorEvents[#PvPIndicatorEvents + 1] = {"HONOR_LEVEL_UPDATE", true}
+end
+
+Install("PvPIndicator", UpdatePvP, function() return true end, PvPIndicatorEvents)
 
 local function ReadyFinished(animation)
 	animation:GetParent():Hide()

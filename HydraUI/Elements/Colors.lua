@@ -272,6 +272,15 @@ function HydraUI:UpdateUnitFrameColors()
 	end
 end
 
+local function UpdatePowerColor()
+	HydraUI:UpdatePowerColors()
+
+	local player = HydraUI.UnitFrames and HydraUI.UnitFrames.player
+	if player and player.ClassResource and player.ClassResource.SetColor then
+		player.ClassResource:SetColor()
+	end
+end
+
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Colors"], function(left, right)
 	left:CreateHeader(Language["Class Colors"])
 	left:CreateColorSelection("color-death-knight", Settings["color-death-knight"], Language["Death Knight"], "")
@@ -295,7 +304,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Colors"], fun
 	right:CreateColorSelection("color-essence", Settings["color-essence"], Language["Essence"], "")
 	right:CreateColorSelection("color-focus", Settings["color-focus"], Language["Focus"], "")
 	--right:CreateColorSelection("color-combo-points", Settings["color-combo-points"], Language["Combo Points"], "")
-	right:CreateColorSelection("color-soul-shards", Settings["color-soul-shards"], Language["Soul Shards"], "")
+	right:CreateColorSelection("color-soul-shards", Settings["color-soul-shards"], Language["Soul Shards"], "", UpdatePowerColor)
 	right:CreateColorSelection("color-insanity", Settings["color-insanity"], Language["Insanity"], "")
 	right:CreateColorSelection("color-fury", Settings["color-fury"], Language["Fury"], "")
 	right:CreateColorSelection("color-chi", Settings["color-chi"], Language["Chi"], "")

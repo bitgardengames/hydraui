@@ -58,6 +58,18 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         self.assertIn("local r, g, b = GetSegmentColor(i)", SOURCE)
         self.assertNotIn("descriptor.color and descriptor.color(i) or", SOURCE)
 
+    def test_resource_color_can_be_refreshed_after_a_setting_change(self):
+        self.assertIn("function resource:SetColor()", SOURCE)
+        color_body = SOURCE[SOURCE.index("function resource:SetColor()"):
+                            SOURCE.index("function resource:SetDetached", SOURCE.index("function resource:SetColor()"))]
+        self.assertIn("local r, g, b = GetSegmentColor(i)", color_body)
+        self.assertIn("segment:SetStatusBarColor(r, g, b)", color_body)
+        self.assertIn("segment.bg:SetVertexColor(r, g, b)", color_body)
+
+        colors = (Path(__file__).parents[1] / "HydraUI/Elements/Colors.lua").read_text()
+        self.assertIn('Language["Soul Shards"], "", UpdatePowerColor)', colors)
+        self.assertIn("player.ClassResource:SetColor()", colors)
+
     def test_settings_updates_only_use_canonical_component(self):
         for name, call in (
             ("UpdatePlayerWidth", "Frame.ClassResource:SetWidth(value)"),

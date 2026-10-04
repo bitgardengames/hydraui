@@ -440,6 +440,14 @@ local function BuildPlayerComponents(factory, self, unit)
 					self.Stagger.bg:SetTexture(texture)
 				end
 			end
+			function resource:SetColor()
+				for i = 1, descriptor.count do
+					local segment = Segment(self, i)
+					local r, g, b = GetSegmentColor(i)
+					segment:SetStatusBarColor(r, g, b)
+					segment.bg:SetVertexColor(r, g, b)
+				end
+			end
 			function resource:SetDetached(detached)
 				Anchor(self, detached)
 			end
@@ -515,6 +523,7 @@ local function BuildPlayerComponents(factory, self, unit)
 			resource:SetWidth(Settings["unitframes-player-width"])
 			resource:SetHeight(Settings["player-resource-height"])
 			resource:SetTexture(Settings.PlayerResourceTexture)
+			resource:SetColor()
 			resource:SetDetached(Settings["player-move-resource"])
 			frame[descriptor.field] = resource
 			if descriptor.alias then

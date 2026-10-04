@@ -4,12 +4,17 @@ local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 -- descriptor actually instantiated by BuildPlayerComponents is touched.
 local PlayerResourceEvents = {
 	"PLAYER_SPECIALIZATION_CHANGED",
-	"PLAYER_TALENT_UPDATE",
 	"UNIT_AURA",
 	"UNIT_DISPLAYPOWER",
 	"UNIT_MAXPOWER",
 	"UNIT_POWER_UPDATE",
 }
+
+-- Mists Classic removed PLAYER_TALENT_UPDATE. Specialization changes are
+-- already covered above, so only register the legacy talent event elsewhere.
+if not HydraUI.IsMists then
+	table.insert(PlayerResourceEvents, "PLAYER_TALENT_UPDATE")
+end
 
 local function PlayerSpecializationIs(specializationID, classicTalentTab)
 	if GetSpecialization and GetSpecializationInfo then

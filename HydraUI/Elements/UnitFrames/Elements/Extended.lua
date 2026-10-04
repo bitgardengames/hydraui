@@ -50,7 +50,7 @@ local function TextureIndicator(name, predicate, texture)
 		else
 			element:Hide()
 		end
-	end, function(_, element)
+	end, function(frame, element)
 		if texture and element:IsObjectType("Texture") and not element:GetTexture() then
 			element:SetTexture(texture)
 		end
@@ -130,7 +130,14 @@ local function Points(name, powerType)
 		frame.__pointsName = name
 		UpdatePoints(frame, ...)
 		frame.__pointsName = nil
-	end, function(_, element)
+	end, function(frame, element)
+		-- Player.lua owns its canonical resource container because it also
+		-- handles rune cooldowns, charged points, and client-specific layouts.
+		-- Alias fields remain available to callers without installing a second
+		-- updater over the same status bars.
+		if frame.ClassResource == element then
+			return false
+		end
 		element.powerType = element.powerType or powerType
 	end)
 end

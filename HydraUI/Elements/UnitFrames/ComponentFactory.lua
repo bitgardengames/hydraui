@@ -809,10 +809,7 @@ function UF:SetAuraPosition(unit, value, element, growthX, companion, companionP
 	auras["growth-x"] = growthX
 end
 
--- Setting callbacks are declared once, next to the widgets that use them.  The
--- operation receives an already resolved frame
-		this is important because a
--- slider can fire many times while it is being dragged.
+-- Setting callbacks are declared once, next to the widgets that use them.  The operation receives an already resolved frame this is important because aslider can fire many times while it is being dragged.
 local UnitOperations = {}
 
 function UnitOperations.Width(UF, frame, value, options)

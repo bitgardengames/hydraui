@@ -14,13 +14,18 @@ class MicroMenuCoverage(unittest.TestCase):
 
         self.assertIn("TalentMicroButton", mists_buttons)
 
-    def test_retail_micro_menu_remains_in_blizzard_container(self):
-        """Edit Mode expects MicroMenu to retain its Blizzard-owned parent."""
-        self.assertNotIn("MicroMenu:SetParent", SOURCE)
+    def test_shared_micro_menu_moves_as_one_frame(self):
+        """Edit Mode expects the layout buttons to remain children of MicroMenu."""
+        parenting = SOURCE[SOURCE.index("function MicroButtons:UpdateMicroButtonsParent()"):
+                           SOURCE.index("function MicroButtons:PositionButtons()")]
 
-    def test_buttons_are_still_moved_to_the_custom_panel(self):
-        self.assertIn("self.Buttons[i]:SetParent(self.Panel)", SOURCE)
+        self.assertIn("MicroMenu:SetParent(MicroButtons.Panel)", parenting)
+        self.assertIn("MicroMenu:SetAllPoints(MicroButtons.Panel)", parenting)
+        self.assertIn("else", parenting)
+
+    def test_legacy_buttons_are_still_moved_to_the_custom_panel(self):
         self.assertIn("MicroButtons.Buttons[i]:SetParent(MicroButtons.Panel)", SOURCE)
+        self.assertNotIn("self.Buttons[i]:SetParent(self.Panel)", SOURCE)
 
     def test_visible_buttons_are_never_cleared_as_a_batch(self):
         """Blizzard may run GetEdgeButton synchronously after an anchor changes."""

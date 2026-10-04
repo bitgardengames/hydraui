@@ -39,7 +39,7 @@ function UF:ForEachHeaderChild(header, operation, value, descriptor)
 	ForEachChild(operation, value, descriptor, header:GetChildren())
 end
 
-HydraUI.UnitFrames = {}
+HydraUI.UnitFrames = HydraUI.UnitFrames or {}
 HydraUI.StyleFuncs = {}
 
 local Hider = CreateFrame("Frame", nil, HydraUI.UIParent, "SecureHandlerStateTemplate")

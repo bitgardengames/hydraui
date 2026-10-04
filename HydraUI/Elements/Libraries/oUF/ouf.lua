@@ -20,6 +20,12 @@ local callback, objects, headers = {}, {}, {}
 local elements = {}
 local activeElements = {}
 
+-- HydraUI's singleton-frame runtime consumes the already loaded component
+-- handlers while group frames and nameplates still use this oUF runtime.
+-- This is intentionally a namespace-private migration bridge, not a public
+-- element registration API.
+ns.UnitFrameComponentHandlers = elements
+
 local PetBattleFrameHider = CreateFrame('Frame', (global or parent) .. '_PetBattleFrameHider', UIParent, 'SecureHandlerStateTemplate')
 PetBattleFrameHider:SetAllPoints()
 PetBattleFrameHider:SetFrameStrata('LOW')

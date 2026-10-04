@@ -993,3 +993,8 @@ oUF.Tags = {
 oUF:RegisterMetaFunction('Tag', Tag)
 oUF:RegisterMetaFunction('Untag', Untag)
 oUF:RegisterMetaFunction('UpdateTags', Update)
+
+-- Private bridge used by HydraUI-owned singleton frames during migration.
+ns.UnitFrameTag = Tag
+ns.UnitFrameUntag = Untag
+ns.UnitFrameUpdateTags = Update

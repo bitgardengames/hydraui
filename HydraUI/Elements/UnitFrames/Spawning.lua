@@ -42,7 +42,7 @@ function UF:SpawnSingletonFrames()
 	for _, descriptor in ipairs(SingletonUnits) do
 		if Settings[descriptor.enabled] then
 			local dimensions = descriptor.dimensions
-			local frame = oUF:Spawn(descriptor.unit, descriptor.globalName)
+			local frame = HydraUI.UnitFrames:CreateUnitButton(descriptor.unit, descriptor.globalName, HydraUI.StyleFuncs[descriptor.unit])
 			frame:SetSize(Settings[dimensions.width], Settings[dimensions.health] + Settings[dimensions.power] + 3)
 			frame:SetPoint(descriptor.defaultAnchor[1], HydraUI.UIParent, descriptor.defaultAnchor[2], descriptor.defaultAnchor[3], descriptor.defaultAnchor[4])
 			frame:SetParent(HydraUI.UIParent)
@@ -182,7 +182,7 @@ end
 function UF:SpawnBossFrames()
 	if Settings["unitframes-boss-enable"] then
 		for i = 1, 8 do
-			local Boss = oUF:Spawn("boss" .. i, "HydraUI Boss " .. i)
+			local Boss = HydraUI.UnitFrames:CreateUnitButton("boss" .. i, "HydraUI Boss " .. i, HydraUI.StyleFuncs["boss"])
 			Boss:SetSize(Settings["unitframes-boss-width"], Settings["unitframes-boss-health-height"] + Settings["unitframes-boss-power-height"] + 3)
 			Boss:SetParent(HydraUI.UIParent)
 

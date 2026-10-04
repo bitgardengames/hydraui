@@ -69,6 +69,15 @@ def test_native_element_modules_load_before_frames_are_spawned():
         assert manifest.index(f'file="Elements/{module}.lua"') < coordinator
 
 
+def test_power_color_supports_pet_alternative_power_colors():
+    source = (ROOT / "Elements/Power.lua").read_text()
+
+    assert "local powerType, token, altR, altG, altB = UnitPowerType(unit)" in source
+    assert "bar:GetAlternativeColor(unit, powerType, token, altR, altG, altB)" in source
+    assert "r, g, b = altR, altG, altB" in source
+    assert "color = frame.colors.power.MANA" in source
+
+
 def test_pvp_indicator_honor_level_event_is_retail_only():
     source = (ROOT / "Elements/Indicators.lua").read_text()
     retail_guard = "if HydraUI.IsMainline and not HydraUI.IsForever then"

@@ -120,11 +120,14 @@ function MicroButtons:UpdateVisibility()
 		self.Panel:SetScript("OnLeave", nil)
 		self.Panel:SetAlpha(0)
 
-		if HydraUI.IsMainline then
-			-- Hiding the parent invalidates every button's coordinates before
-			-- Blizzard's OnHide layout callbacks have finished running. Keep the
-			-- retail panel shown but transparent so GetEdgeButton can compare
-			-- resolved positions, and disable the invisible buttons' mouse input.
+		if MicroMenu then
+			-- Clients that use Blizzard's shared MicroMenu layout can temporarily
+			-- reparent these buttons while updating Edit Mode. Hiding our panel
+			-- makes their coordinates nil during that update, so GetEdgeButton
+			-- attempts to compare nil values. Keep the panel shown but transparent
+			-- and disable the invisible buttons' mouse input instead.
+			self.Panel:Show()
+
 			for i = 1, #self.Buttons do
 				self.Buttons[i]:EnableMouse(false)
 			end

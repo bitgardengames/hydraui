@@ -20,6 +20,14 @@ def body(name):
 
 
 class ComponentConstructorCoverage(unittest.TestCase):
+    def test_range_driver_state_is_local_to_the_range_element(self):
+        range_source = (ELEMENTS / "Range.lua").read_text()
+        prediction_source = (ELEMENTS / "HealthPrediction.lua").read_text()
+
+        self.assertIn("local RangeFrames, RangeDriver = {}, nil", range_source)
+        self.assertNotIn("RangeFrames", prediction_source)
+        self.assertNotIn("RangeDriver", prediction_source)
+
     def test_portrait_matches_ouf_availability_and_class_defaults(self):
         source = (ELEMENTS / "Portrait.lua").read_text()
         for behavior in (

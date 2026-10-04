@@ -1,6 +1,7 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local Handlers = ns.UnitFrameComponentHandlers
+local RangeFrames, RangeDriver = {}, nil
 
 local function UpdateRange(frame) local e=frame.Range
 	if e.PreUpdate then

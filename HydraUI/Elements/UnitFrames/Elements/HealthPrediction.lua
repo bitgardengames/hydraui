@@ -50,5 +50,3 @@ Handlers.HealPrediction={update=UpdatePrediction,enable=EnablePrediction,disable
 		frame.AbsorbsBar:Hide()
 	end
 	Unregister(frame,UpdatePrediction,"UNIT_HEAL_PREDICTION","UNIT_MAXHEALTH","UNIT_HEALTH","UNIT_ABSORB_AMOUNT_CHANGED","UNIT_HEAL_ABSORB_AMOUNT_CHANGED") end}
-
-local RangeFrames, RangeDriver = {}, nil

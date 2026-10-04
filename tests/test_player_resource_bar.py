@@ -51,12 +51,13 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
     def test_resource_visibility_and_values_follow_runtime_state(self):
         for token in (
             '"PLAYER_SPECIALIZATION_CHANGED"',
-            'HydraUI.IsMists and "ACTIVE_TALENT_GROUP_CHANGED" or "PLAYER_TALENT_UPDATE"',
+            '"PLAYER_TALENT_UPDATE"',
             '"UNIT_AURA"', "descriptor.active()", "resource:SetShown(active)",
             "descriptor.currentProvider", "descriptor.maximumProvider",
             "UnitPowerDisplayMod", "current - i + 1",
         ):
             self.assertIn(token, SOURCE)
+        self.assertNotIn('"ACTIVE_TALENT_GROUP_CHANGED"', SOURCE)
         self.assertIn("PlayerAuraStacks({[53817] = true, [344179] = true})", SOURCE)
         self.assertIn("PlayerSpecializationIs(263, 2)", SOURCE)
 

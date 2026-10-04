@@ -21,6 +21,7 @@ local UnitPowerType = UnitPowerType
 
 local ManaBar = HydraUI:NewModule("Mana Bar")
 local ManaID = Enum.PowerType.Mana
+local TalentGroupEvent = HydraUI.IsMists and "PLAYER_SPECIALIZATION_CHANGED" or "ACTIVE_TALENT_GROUP_CHANGED"
 
 function ManaBar:UNIT_POWER_UPDATE()
 	local Mana = UnitPower("player", ManaID)
@@ -60,6 +61,8 @@ function ManaBar:ACTIVE_TALENT_GROUP_CHANGED()
 		self:Hide()
 	end
 end
+
+ManaBar.PLAYER_SPECIALIZATION_CHANGED = ManaBar.ACTIVE_TALENT_GROUP_CHANGED
 
 function ManaBar:CreateBar()
 	self:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-power-height"] + 2)
@@ -115,7 +118,7 @@ function ManaBar:Enable()
 	self:RegisterEvent("UNIT_POWER_UPDATE")
 	self:RegisterEvent("UNIT_POWER_FREQUENT")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
-	self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+	self:RegisterEvent(TalentGroupEvent)
 	self:SetScript("OnEvent", self.OnEvent)
 
 	self:UNIT_POWER_UPDATE()

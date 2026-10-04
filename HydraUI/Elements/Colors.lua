@@ -1,7 +1,31 @@
 local AddonName, Namespace = ...
 local HydraUI, Language, Assets, Settings, Defaults = Namespace:get()
-local oUF = Namespace.oUF
 local R, G, B
+
+-- Shared unit-frame palette.  It is created here (before the unit-frame core
+-- is loaded) so native buttons can all retain the same table reference.
+Namespace.UnitFrameColors = Namespace.UnitFrameColors or {
+	class = {}, reaction = {}, power = {}, debuff = {},
+	threat = {}, smooth = {{1, 0, 0}, {1, 1, 0}, {0, 1, 0}},
+}
+
+function HydraUI:ColorGradient(current, maximum, ...)
+	if maximum == 0 then
+		return 0, 0, 0
+	end
+	local percentage = current / maximum
+	if percentage >= 1 then
+		local count = select("#", ...)
+		return select(count - 2, ...)
+	elseif percentage <= 0 then
+		return ...
+	end
+	local count = select("#", ...) / 3
+	local segment, relative = math.modf(percentage * (count - 1))
+	local index = segment * 3 + 1
+	local r1, g1, b1, r2, g2, b2 = select(index, ...)
+	return r1 + (r2-r1)*relative, g1 + (g2-g1)*relative, b1 + (b2-b1)*relative
+end
 
 -- Class Colors
 Defaults["color-death-knight"] = "C41E3A"
@@ -233,8 +257,8 @@ function HydraUI:UpdateColors()
 	end
 end
 
-function HydraUI:UpdateoUFColors()
-	local Colors = Namespace.oUF.colors
+function HydraUI:UpdateUnitFrameColors()
+	local Colors = Namespace.UnitFrameColors
 
 	Colors.class = HydraUI.ClassColors
 	Colors.reaction = HydraUI.ReactionColors
@@ -243,6 +267,9 @@ function HydraUI:UpdateoUFColors()
 	Colors.tapped = {HydraUI:HexToRGB(Settings["color-tapped"])}
 	Colors.disconnected = {HydraUI:HexToRGB(Settings["color-disconnected"])}
 	Colors.health = {HydraUI:HexToRGB(Settings["ui-header-texture-color"])}
+	for status = 0, 3 do
+		Colors.threat[status] = {GetThreatStatusColor(status)}
+	end
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Colors"], function(left, right)

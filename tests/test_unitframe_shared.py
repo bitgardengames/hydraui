@@ -216,7 +216,7 @@ class UnitFrameModuleBoundaryCoverage(unittest.TestCase):
 
     def test_style_dispatch_only_calls_registered_handlers(self):
         source = (ROOT / "UnitFrames.lua").read_text()
-        style = source[source.index("local Style = function"):source.index("oUF:RegisterStyle")]
+        style = source[source.index("local Style = function"):source.index("UF.Style = Style")]
         self.assertIn("if StyleFunc then", style)
         self.assertIn("StyleFunc(self, unit)", style)
         self.assertLess(style.index('find(unit, "raidpet")'), style.index('find(unit, "raid")'))

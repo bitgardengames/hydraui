@@ -27,7 +27,7 @@ GUI:AddWidgets(Language["Info"], Language["Credits"], function(left, right)
 	left:CreateHeader(Language["Scripting Help & Inspiration"])
 	left:CreateMessage("", "Tukz, Foof, Eclipse, nightcracker, Elv, Smelly, Azilroka, AlleyKat, Zork, Simpy, Safturento, Dandruff")
 
-	left:CreateHeader("oUF")
+	left:CreateHeader("Unit Frame Foundations")
 	left:CreateLine("", "haste, lightspark, p3lim, Rainrider")
 
 	left:CreateHeader("AceSerializer")

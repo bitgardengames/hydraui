@@ -32,7 +32,6 @@ Defaults["nameplates-debuffs-direction"] = "RTL"
 Defaults.NPHealthTexture = "HydraUI 4"
 Defaults.NPCastTexture = "HydraUI 4"
 
-local oUF = ns.oUF or oUF
 local UF = HydraUI:GetModule("Unit Frames")
 
 local GetNamePlates = C_NamePlate.GetNamePlates
@@ -320,6 +319,72 @@ UF.NamePlateCVars = {
 	nameplateSelfScale = 1,
 }
 
+function UF:CreateNamePlateDriver()
+	if self.NamePlateDriver then
+		return
+	end
+	local driver = CreateFrame("Frame", "HydraUINamePlateDriver")
+	self.NamePlateDriver = driver
+	self.NamePlatesByUnit = {}
+
+	local function DisableBlizzardPlate(base)
+		local blizzard = base and (base.UnitFrame or base.unitFrame)
+		if blizzard and blizzard ~= base.HydraUIUnitFrame then
+			blizzard:UnregisterAllEvents()
+			blizzard:Hide()
+			blizzard:SetAlpha(0)
+		end
+	end
+
+	local function Added(unit)
+		local base = C_NamePlate.GetNamePlateForUnit(unit)
+		if not base then
+			return
+		end
+		DisableBlizzardPlate(base)
+		local plate = base.HydraUIUnitFrame
+		if not plate then
+			plate = HydraUI.UnitFrames:CreateNamePlateButton(base, unit, HydraUI.StyleFuncs.nameplate)
+			base.HydraUIUnitFrame = plate
+		end
+		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)
+		self.NamePlatesByUnit[unit] = plate
+		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_ADDED", unit)
+		plate:UpdateAllElements("NAME_PLATE_UNIT_ADDED")
+	end
+
+	local function Removed(unit)
+		local plate = self.NamePlatesByUnit[unit]
+		if not plate then
+			return
+		end
+		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_REMOVED", unit)
+		HydraUI.UnitFrames:SetNamePlateUnit(plate, nil)
+		self.NamePlatesByUnit[unit] = nil
+	end
+
+	for cvar, value in next, self.NamePlateCVars do
+		C_CVar.SetCVar(cvar, value)
+	end
+	driver:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+	driver:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+	driver:RegisterEvent("PLAYER_TARGET_CHANGED")
+	driver:SetScript("OnEvent", function(_, event, unit)
+		if event == "NAME_PLATE_UNIT_ADDED" then
+			Added(unit)
+		elseif event == "NAME_PLATE_UNIT_REMOVED" then
+			Removed(unit)
+		else
+			local plate = C_NamePlate.GetNamePlateForUnit("target")
+			plate = plate and plate.HydraUIUnitFrame
+			UF.NamePlateCallback(plate, event, "target")
+			if plate then
+				plate:UpdateAllElements(event)
+			end
+		end
+	end)
+end
+
 UF.NamePlateCallback = function(plate)
 	if not plate then
 		return
@@ -411,7 +476,9 @@ local RunForAllNamePlates = function(func, value)
 
 	if NamePlates then
 		for i = 1, #NamePlates do
-			func(NamePlates[i].unitFrame, value)
+			if NamePlates[i].HydraUIUnitFrame then
+				func(NamePlates[i].HydraUIUnitFrame, value)
+			end
 		end
 	end
 end

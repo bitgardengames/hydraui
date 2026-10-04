@@ -57,6 +57,21 @@ def constructor_block(source: str, constructor: str) -> str:
 
 
 class SharedUnitFrameCoverage(unittest.TestCase):
+    def test_nameplates_keep_ouf_parent_and_local_scale(self):
+        source = (FRAMES / "NamePlates.lua").read_text()
+        core = (ROOT / "Core.lua").read_text()
+        constructor = core[
+            core.index("function UnitFrames:CreateNamePlateButton"):
+            core.index("function UnitFrames:SetNamePlateUnit")
+        ]
+
+        self.assertIn('self:SetScale(UIParent:GetScale())', source)
+        self.assertIn(
+            "CreateNamePlateButton(base, unit, HydraUI.StyleFuncs.nameplate)",
+            source,
+        )
+        self.assertIn('CreateFrame("Button", nil, parent)', constructor)
+
     def test_nameplate_scale_cvars_are_applied_after_login(self):
         source = (FRAMES / "NamePlates.lua").read_text()
         driver = source[source.index("function UF:CreateNamePlateDriver"):source.index("UF.NamePlateCallback =")]

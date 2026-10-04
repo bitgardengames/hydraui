@@ -37,6 +37,9 @@ local UF = HydraUI:GetModule("Unit Frames")
 local GetNamePlates = C_NamePlate.GetNamePlates
 
 HydraUI.StyleFuncs["nameplate"] = function(self, unit)
+	-- Nameplate frames are children of Blizzard's world-space nameplate.  Match
+	-- the former oUF layout's local scale so their configured pixel dimensions
+	-- are rendered at the same UI scale as the rest of HydraUI.
 	self:SetScale(UIParent:GetScale())
 	self:SetSize(Settings["nameplates-width"], Settings["nameplates-height"])
 	self:SetPoint("CENTER", 0, 0)
@@ -349,6 +352,8 @@ function UF:CreateNamePlateDriver()
 		DisableBlizzardPlate(base)
 		local plate = base.HydraUIUnitFrame
 		if not plate then
+			-- Keep the Blizzard nameplate as the parent, just as oUF did.  Reparenting
+			-- this frame to HydraUIParent would detach it from the world-space plate.
 			plate = HydraUI.UnitFrames:CreateNamePlateButton(base, unit, HydraUI.StyleFuncs.nameplate)
 			base.HydraUIUnitFrame = plate
 		end

@@ -52,6 +52,7 @@ local OnEnter = function(self)
 	end
 
 	local Header
+	local HasQuest
 
 	for Index = 1, GetNumQuests() do
 		local Info = GetQuestInfo(Index)
@@ -60,6 +61,10 @@ local OnEnter = function(self)
 			Header = Info.title
 		elseif Info then
 			if Header then
+				if HasQuest then
+					GameTooltip:AddLine(" ")
+				end
+
 				GameTooltip:AddLine(Header, 0.6, 0.6, 0.6)
 				Header = nil
 			end
@@ -85,6 +90,8 @@ local OnEnter = function(self)
 			else
 				GameTooltip:AddLine(QuestText, Color.r, Color.g, Color.b)
 			end
+
+			HasQuest = true
 		end
 	end
 

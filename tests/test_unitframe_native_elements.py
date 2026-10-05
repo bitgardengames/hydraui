@@ -112,11 +112,12 @@ def test_range_fader_does_not_inspect_inaccessible_secret_results():
 def test_range_driver_only_runs_while_enabled_frames_are_visible():
     source = (ROOT / "Elements/Range.lua").read_text()
 
-    assert 'RangeDriver:SetScript("OnUpdate", RangeOnUpdate)' in source
+    assert "C_Timer.NewTicker(0.2, UpdateRanges)" in source
     assert 'frame:HookScript("OnShow", RangeOnShow)' in source
     assert 'frame:HookScript("OnHide", RangeOnHide)' in source
-    assert "if RangeDriver and not next(RangeFrames) then" in source
-    assert 'RangeDriver:SetScript("OnUpdate", nil)' in source
+    assert "if RangeTicker and not next(RangeFrames) then" in source
+    assert "RangeTicker:Cancel()" in source
+    assert "RangeTicker = nil" in source
     assert "if RangeEnabledFrames[frame] then" in source
 
 

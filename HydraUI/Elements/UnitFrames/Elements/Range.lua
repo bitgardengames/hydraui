@@ -1,7 +1,7 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local RangeEnabledFrames, RangeFrames, RangeDriver = {}, {}, nil
+local RangeEnabledFrames, RangeFrames, RangeTicker = {}, {}, nil
 
 local function IsInaccessible(value)
 	return HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)
@@ -43,41 +43,22 @@ local function UpdateRange(frame)
 	end
 end
 
-local function RangeOnUpdate(driver, delta)
-	driver.Elapsed = driver.Elapsed + delta
-
-	if driver.Elapsed < 0.2 then
-		return
-	end
-
-	driver.Elapsed = 0
-
+local function UpdateRanges()
 	for frame in pairs(RangeFrames) do
 		UpdateRange(frame)
 	end
 end
 
-local function CreateRangeDriver()
-	local driver = CreateFrame("Frame")
-
-	driver.Elapsed = 0
-
-	return driver
-end
-
 local function StartRangeDriver()
-	RangeDriver = RangeDriver or CreateRangeDriver()
-
-	if not RangeDriver:GetScript("OnUpdate") then
-		RangeDriver.Elapsed = 0
-		RangeDriver:SetScript("OnUpdate", RangeOnUpdate)
+	if not RangeTicker then
+		RangeTicker = C_Timer.NewTicker(0.2, UpdateRanges)
 	end
 end
 
 local function StopRangeDriver()
-	if RangeDriver and not next(RangeFrames) then
-		RangeDriver:SetScript("OnUpdate", nil)
-		RangeDriver.Elapsed = 0
+	if RangeTicker and not next(RangeFrames) then
+		RangeTicker:Cancel()
+		RangeTicker = nil
 	end
 end
 

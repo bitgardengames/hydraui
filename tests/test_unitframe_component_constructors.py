@@ -25,11 +25,11 @@ class ComponentConstructorCoverage(unittest.TestCase):
         prediction_source = (ELEMENTS / "HealthPrediction.lua").read_text()
 
         self.assertIn(
-            "local RangeEnabledFrames, RangeFrames, RangeDriver = {}, {}, nil",
+            "local RangeEnabledFrames, RangeFrames, RangeTicker = {}, {}, nil",
             range_source,
         )
         self.assertNotIn("RangeFrames", prediction_source)
-        self.assertNotIn("RangeDriver", prediction_source)
+        self.assertNotIn("RangeTicker", prediction_source)
 
     def test_portrait_matches_ouf_availability_and_class_defaults(self):
         source = (ELEMENTS / "Portrait.lua").read_text()

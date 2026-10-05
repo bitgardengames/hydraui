@@ -19,13 +19,10 @@ local StatusLabels = {
 	[2] = "|cFFFF6666" .. CHAT_FLAG_DND .. "|r",
 }
 
-local OnUpdate = function(self, elapsed)
-	self.Elapsed = self.Elapsed + elapsed
-
-	if self.Elapsed > 10 then
-		GuildRoster()
-
-		self.Elapsed = 0
+local function StopRosterTicker(self)
+	if self.RosterTicker then
+		self.RosterTicker:Cancel()
+		self.RosterTicker = nil
 	end
 end
 
@@ -113,9 +110,8 @@ local OnEnter = function(self)
 
 	self.TooltipShown = true
 
-	if not self:GetScript("OnUpdate") then
-		self.Elapsed = 0
-		self:SetScript("OnUpdate", OnUpdate)
+	if not self.RosterTicker then
+		self.RosterTicker = C_Timer.NewTicker(10, GuildRoster)
 	end
 
 	GameTooltip:Show()
@@ -126,9 +122,7 @@ local OnLeave = function(self)
 	self:UnregisterEvent("MODIFIER_STATE_CHANGED")
 	self.TooltipShown = false
 
-	if self:GetScript("OnUpdate") then
-		self:SetScript("OnUpdate", nil)
-	end
+	StopRosterTicker(self)
 end
 
 local Update = function(self, event)
@@ -199,11 +193,7 @@ local OnDisable = function(self)
 	self:SetScript("OnEnter", nil)
 	self:SetScript("OnLeave", nil)
 	self:SetScript("OnMouseUp", nil)
-	self:SetScript("OnUpdate", nil)
-
-	if self.Elapsed then
-		self.Elapsed = 0
-	end
+	StopRosterTicker(self)
 
 	self.Text:SetText("")
 end

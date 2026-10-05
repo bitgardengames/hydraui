@@ -21,11 +21,21 @@ def test_formatter_pipeline_order_and_existing_link_protection():
     assert "return protectedLinks[tonumber(index)]" in links
 
 
-def test_history_is_a_bounded_circular_buffer():
+def test_history_is_a_bounded_circular_buffer_per_frame():
     history = source("History.lua")
-    assert "MaxHistoryMessages = 50" in history
-    assert "History.Count < MaxHistoryMessages" in history
-    assert "History.Start = (History.Start % MaxHistoryMessages) + 1" in history
+    assert "MaxMessagesPerFrame = 25" in history
+    assert "History.Count < MaxMessagesPerFrame" in history
+    assert "History.Start = (History.Start % MaxMessagesPerFrame) + 1" in history
+    assert "History.Frames[FrameName]" in history
+    assert 'FrameName == "ChatFrame2"' in history
+
+
+def test_global_history_is_migrated_into_per_frame_buffers():
+    history = source("History.lua")
+    assert "LegacyMaxHistoryMessages = 50" in history
+    assert "local MigrateHistory" in history
+    assert "AddToFrameHistory(FrameHistory, Entry)" in history
+    assert "HydraUIData.ChatHistory[ProfileKey] = History" in history
 
 
 def test_settings_callbacks_use_explicit_styled_frame_registry():

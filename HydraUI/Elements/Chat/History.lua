@@ -1,7 +1,59 @@
 local HydraUI, Language, Assets, Settings = select(2, ...):get()
 local Chat = HydraUI:GetModule("Chat")
-local MaxHistoryMessages = 50
+local MaxMessagesPerFrame = 25
+local LegacyMaxHistoryMessages = 50
 local MessageTuplePool, MessageListPool = {}, {}
+
+local NewFrameHistory = function()
+	return {
+		Start = 1,
+		Count = 0,
+		Records = {},
+	}
+end
+
+local AddToFrameHistory = function(History, Entry)
+	local Index
+
+	if History.Count < MaxMessagesPerFrame then
+		Index = ((History.Start + History.Count - 1) % MaxMessagesPerFrame) + 1
+		History.Count = History.Count + 1
+	else
+		Index = History.Start
+		History.Start = (History.Start % MaxMessagesPerFrame) + 1
+	end
+
+	History.Records[Index] = Entry
+end
+
+local MigrateHistory = function(History)
+	local Frames = {}
+	local Count = History.Count or #History
+	local Start = History.Start or 1
+	local Records = History.Records or History
+
+	for Offset = 1, Count do
+		local Index = History.Records and (((Start + Offset - 2) % LegacyMaxHistoryMessages) + 1) or Offset
+		local Entry = Records[Index]
+		local FrameName = Entry and Entry.Frame
+
+		if FrameName and FrameName ~= "ChatFrame2" then
+			local FrameHistory = Frames[FrameName]
+
+			if not FrameHistory then
+				FrameHistory = NewFrameHistory()
+				Frames[FrameName] = FrameHistory
+			end
+
+			AddToFrameHistory(FrameHistory, Entry)
+		end
+	end
+
+	return {
+		Version = 2,
+		Frames = Frames,
+	}
+end
 
 function Chat:GetHistory()
 	if not HydraUIData then
@@ -14,36 +66,28 @@ function Chat:GetHistory()
 
 	if not History then
 		History = {
-			Start = 1,
-			Count = 0,
-			Records = {},
+			Version = 2,
+			Frames = {},
 		}
 		HydraUIData.ChatHistory[ProfileKey] = History
-	elseif not History.Records then
-		-- Older versions stored history as an array. Keep the newest entries and
-		-- retain their record tables while converting it to a circular buffer.
-		local LegacyCount = #History
-		local First = 1
-		local Records = {}
-
-		if LegacyCount > MaxHistoryMessages then
-			First = LegacyCount - MaxHistoryMessages + 1
-		end
-
-		for i = First, LegacyCount do
-			Records[#Records + 1] = History[i]
-		end
-
-		for i = 1, LegacyCount do
-			History[i] = nil
-		end
-
-		History.Start = 1
-		History.Count = #Records
-		History.Records = Records
+	elseif not History.Frames then
+		History = MigrateHistory(History)
+		HydraUIData.ChatHistory[ProfileKey] = History
 	end
 
 	return History
+end
+
+function Chat:GetFrameHistory(FrameName)
+	local History = self:GetHistory()
+	local FrameHistory = History.Frames[FrameName]
+
+	if not FrameHistory then
+		FrameHistory = NewFrameHistory()
+		History.Frames[FrameName] = FrameHistory
+	end
+
+	return FrameHistory
 end
 
 function Chat:IterateHistory(History)
@@ -53,41 +97,37 @@ function Chat:IterateHistory(History)
 		Offset = Offset + 1
 
 		if Offset <= History.Count then
-			local Index = ((History.Start + Offset - 2) % MaxHistoryMessages) + 1
+			local Index = ((History.Start + Offset - 2) % MaxMessagesPerFrame) + 1
 
 			return Offset, History.Records[Index]
 		end
 	end
 end
 
+
 function Chat:SaveMessage(frame, message, r, g, b)
 	if (not Settings["chat-enable-history"]) or self.RestoringHistory or (type(message) ~= "string") then
 		return
 	end
 
-	local History = self:GetHistory()
-	local Index
+	local FrameName = frame:GetName()
 
-	if History.Count < MaxHistoryMessages then
-		Index = ((History.Start + History.Count - 1) % MaxHistoryMessages) + 1
-		History.Count = History.Count + 1
-	else
-		Index = History.Start
-		History.Start = (History.Start % MaxHistoryMessages) + 1
+	-- Combat messages are intentionally excluded: they are too frequent and are
+	-- already managed by Blizzard's combat log.
+	if (not FrameName) or FrameName == "ChatFrame2" then
+		return
 	end
 
-	local Entry = History.Records[Index]
+	local History = self:GetFrameHistory(FrameName)
+	local Entry = {}
 
-	if not Entry then
-		Entry = {}
-		History.Records[Index] = Entry
-	end
-
-	Entry.Frame = frame:GetName()
+	Entry.Frame = FrameName
 	Entry.Message = message
 	Entry.R = r
 	Entry.G = g
 	Entry.B = b
+
+	AddToFrameHistory(History, Entry)
 end
 
 function Chat:RestoreHistory()
@@ -99,10 +139,10 @@ function Chat:RestoreHistory()
 	local CurrentMessages = {}
 
 	-- Chat is initialized after Blizzard has already printed login messages (such as the guild MOTD). Save and remove those messages so restored history can be inserted before them, then put the login messages back in their original order.
-	for _, Entry in self:IterateHistory(History) do
-		local Frame = Entry.Frame and _G[Entry.Frame]
+	for FrameName, FrameHistory in pairs(History.Frames) do
+		local Frame = FrameName ~= "ChatFrame2" and _G[FrameName]
 
-		if Frame and not CurrentMessages[Frame] and Frame.GetNumMessages and Frame.GetMessageInfo and Frame.Clear then
+		if Frame and Frame.GetNumMessages and Frame.GetMessageInfo and Frame.Clear then
 			local Messages = MessageListPool[#MessageListPool]
 
 			if Messages then
@@ -136,11 +176,13 @@ function Chat:RestoreHistory()
 
 	self.RestoringHistory = true
 
-	for _, Entry in self:IterateHistory(History) do
-		local Frame = Entry.Frame and _G[Entry.Frame]
+	for FrameName, FrameHistory in pairs(History.Frames) do
+		local Frame = FrameName ~= "ChatFrame2" and _G[FrameName]
 
 		if Frame and Frame.AddMessage then
-			Frame:AddMessage(Entry.Message, Entry.R, Entry.G, Entry.B)
+			for _, Entry in self:IterateHistory(FrameHistory) do
+				Frame:AddMessage(Entry.Message, Entry.R, Entry.G, Entry.B)
+			end
 		end
 	end
 

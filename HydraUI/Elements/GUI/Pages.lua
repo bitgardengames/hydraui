@@ -7,7 +7,7 @@ function GUI:GetCategoryDescriptor(name)
 	local Category = self.Categories[name]
 
 	if not Category then
-		Category = {Name = name, Pages = {}, PageLookup = {}}
+		Category = {Name = name, Pages = {}, PageLookup = {}, Expanded = true}
 		self.Categories[name] = Category
 		tinsert(self.CategoryOrder, Category)
 		self.Pages[name] = Category.PageLookup

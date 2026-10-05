@@ -20,8 +20,8 @@ def test_quest_tooltip_lists_only_quests_with_difficulty_colors():
 
 def test_quest_tooltip_marks_completed_quests():
     assert "Info.isComplete == true or Info.isComplete == 1" in SOURCE
-    assert 'format("%s, %s", DungeonLabel, COMPLETE)' in SOURCE
-    assert "GameTooltip:AddDoubleLine(QuestText, Status" in SOURCE
+    assert 'format("|cFF00FF00%s|r", COMPLETE)' in SOURCE
+    assert 'GameTooltip:AddDoubleLine(QuestText, table.concat(Status, ", ")' in SOURCE
 
 
 def test_quest_tooltip_uses_zone_headers_instead_of_a_generic_title():
@@ -40,7 +40,15 @@ def test_quest_tooltip_marks_dungeon_quests():
     assert 'TRACKER_HEADER_DUNGEON or "Dungeon"' in SOURCE
     assert "C_QuestLog.GetQuestTagInfo" in SOURCE
     assert "TagInfo.tagID == DungeonQuestTagID" in SOURCE
-    assert "IsDungeonQuest(Info.questID)" in SOURCE
+    assert "GetQuestTags(Info.questID)" in SOURCE
+    assert 'format("|cFF%s%s|r", DifficultyColor, DungeonLabel)' in SOURCE
+
+
+def test_quest_tooltip_marks_elite_quests_when_tag_data_is_available():
+    assert 'ELITE or "Elite"' in SOURCE
+    assert "Enum.QuestTag.Elite or 1" in SOURCE
+    assert "TagInfo.isElite or TagInfo.tagID == EliteQuestTagID" in SOURCE
+    assert 'format("|cFF%s%s|r", DifficultyColor, EliteLabel)' in SOURCE
 
 
 def test_quest_tooltip_hover_handlers_are_cleaned_up():

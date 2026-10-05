@@ -18,7 +18,6 @@ def test_guild_name_is_only_added_on_vanilla():
     assert "if HydraUI.IsVanilla and Guild then" in TOOLTIPS_SOURCE
 
 
-def test_vanilla_guild_line_is_anchored_between_name_and_details():
-    assert 'GuildLine:SetPoint("TOPLEFT", NameLine, "BOTTOMLEFT", 0, -2)' in TOOLTIPS_SOURCE
-    assert 'DetailsLine:SetPoint("TOPLEFT", GuildLine, "BOTTOMLEFT", 0, -2)' in TOOLTIPS_SOURCE
-    assert "AddVanillaGuildLine(self, FormatGuild(Guild, Rank))" in TOOLTIPS_SOURCE
+def test_vanilla_guild_line_is_appended_with_guild_formatting():
+    assert "self:AddLine(FormatGuild(Guild, Rank))" in TOOLTIPS_SOURCE
+    assert "AddVanillaGuildLine" not in TOOLTIPS_SOURCE

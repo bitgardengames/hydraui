@@ -252,27 +252,6 @@ local FormatGuild = function(guild, rank)
 	return format("|cFF%s<%s>|r", Color, guild)
 end
 
--- AddLine is still useful here because it lets the tooltip account for the extra
--- height. Reanchoring only the new line and the details line puts the guild in
--- the native position without copying or shifting any of the existing text.
-local AddVanillaGuildLine = function(tooltip, guild)
-	tooltip:AddLine(guild)
-
-	local Name = tooltip:GetName()
-	local GuildLine = Name and _G[Name .. "TextLeft" .. tooltip:NumLines()]
-	local NameLine = Name and _G[Name .. "TextLeft1"]
-	local DetailsLine = Name and _G[Name .. "TextLeft2"]
-
-	if not (GuildLine and NameLine and DetailsLine) then
-		return
-	end
-
-	GuildLine:ClearAllPoints()
-	GuildLine:SetPoint("TOPLEFT", NameLine, "BOTTOMLEFT", 0, -2)
-	DetailsLine:ClearAllPoints()
-	DetailsLine:SetPoint("TOPLEFT", GuildLine, "BOTTOMLEFT", 0, -2)
-end
-
 local OnTooltipSetUnit = function(self)
 	if (Settings["tooltips-hide-on-unit"] == "NO_COMBAT" and InCombatLockdown()) or Settings["tooltips-hide-on-unit"] == "ALWAYS" then
 		self:Hide()
@@ -386,7 +365,7 @@ local OnTooltipSetUnit = function(self)
 
 		-- Vanilla does not add the guild name to unit tooltips natively
 		if HydraUI.IsVanilla and Guild then
-			AddVanillaGuildLine(self, FormatGuild(Guild, Rank))
+			self:AddLine(FormatGuild(Guild, Rank))
 		end
 
 		if Settings["tooltips-show-target"] and (UnitID ~= "player" and UnitExists(UnitID .. "target")) then

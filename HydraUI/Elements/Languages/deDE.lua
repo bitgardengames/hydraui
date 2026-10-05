@@ -177,7 +177,7 @@ L["Loot Left to Right"] = "Beute Links zu Rechts"
 L["When looting, new items will be placed in the leftmost bag"] = "wenn looting, neu Gegenstände will be placed in die leftmost Tasche"
 
 L["Enable Chat History"] = "Enable Chat History"
-L["Restore the last 50 chat messages when logging in"] = "Restore the last 50 chat messages when logging in"
+L["Restore the last 25 messages in each chat frame when logging in"] = "Restore the last 25 messages in each chat frame when logging in"
 
 -- Chat
 L["Discord"] = "Discord"

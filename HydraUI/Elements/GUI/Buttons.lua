@@ -7,7 +7,6 @@ local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
 local RegisterWidget, SetVariable = Core.RegisterWidget, Core.SetVariable
 local Round, TrimHex = Core.Round, Core.TrimHex
-local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
 local tinsert, tremove, tsort = table.insert, table.remove, table.sort
 local match, upper, lower, sub, gsub, find = string.match, string.upper, string.lower, string.sub, string.gsub, string.find
@@ -387,16 +386,10 @@ local ButtonDisable = function(self)
 end
 
 GUI.Widgets.CreateButton = function(self, id, value, label, tooltip, hook)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
+	local Anchor = Core.CreateWidgetAnchor(self, id, label, tooltip)
 	Anchor.Enable = ButtonEnable
 	Anchor.Disable = ButtonDisable
 	Anchor.RequiresReload = ButtonRequiresReload
-
-	Anchor:SetScript("OnEnter", AnchorOnEnter)
-	Anchor:SetScript("OnLeave", AnchorOnLeave)
 
 	local Button = CreateFrame("Frame", nil, Anchor, "BackdropTemplate")
 	Button:SetSize(BUTTON_WIDTH, WIDGET_HEIGHT)
@@ -453,13 +446,7 @@ end
 local STATUSBAR_WIDTH = 100
 
 GUI.Widgets.CreateStatusBar = function(self, id, value, minvalue, maxvalue, label, tooltip, hook)
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
-
-	Anchor:SetScript("OnEnter", AnchorOnEnter)
-	Anchor:SetScript("OnLeave", AnchorOnLeave)
+	local Anchor = Core.CreateWidgetAnchor(self, id, label, tooltip)
 
 	local Backdrop = CreateFrame("Frame", nil, Anchor, "BackdropTemplate")
 	Backdrop:SetSize(STATUSBAR_WIDTH, WIDGET_HEIGHT)

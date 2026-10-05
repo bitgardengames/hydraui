@@ -7,7 +7,7 @@ local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
 local RegisterWidget, CommitValue = Core.RegisterWidget, Core.CommitValue
 local Round, TrimHex = Core.Round, Core.TrimHex
-local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
+local FadeOnFinished = Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
 local tinsert, tremove, tsort = table.insert, table.remove, table.sort
 local match, upper, lower, sub, gsub, find = string.match, string.upper, string.lower, string.sub, string.gsub, string.find
@@ -472,16 +472,9 @@ end
 GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, hook, specific)
 	value = Core.GetInitialValue(id, value)
 
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.ID = id
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
+	local Anchor = Core.CreateWidgetAnchor(self, id, label, tooltip)
 	Anchor.Enable = DropdownEnable
 	Anchor.Disable = DropdownDisable
-
-	Anchor:SetScript("OnEnter", AnchorOnEnter)
-	Anchor:SetScript("OnLeave", AnchorOnLeave)
 
 	local Dropdown = CreateFrame("Frame", nil, Anchor, "BackdropTemplate")
 	Dropdown:SetSize(DROPDOWN_WIDTH, WIDGET_HEIGHT)

@@ -62,7 +62,8 @@ def test_slider_values_are_clamped_and_step_normalized():
 
 
 def test_slider_anchor_uses_shared_widget_height():
-    assert "Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)" in SLIDERS
+    assert "Core.CreateWidgetAnchor(self, id, label, tooltip)" in SLIDERS
+    assert "Anchor:SetSize(Core.GROUP_WIDTH, Core.WIDGET_HEIGHT)" in CORE
     assert "DROPDOWN_HEIGHT" not in SLIDERS
 
 
@@ -195,3 +196,17 @@ def test_scroll_arrow_colors_are_updated_by_shared_function():
     assert "local UpdateScrollArrowColors = function(Owner, Offset, MaxOffset)" in FRAME
     assert "UpdateScrollArrowColors(Owner, Offset, Owner.MaxScroll)" in FRAME
     assert "UpdateScrollArrowColors(Owner, Offset, MaxOffset)" in FRAME
+
+
+def test_interactive_widgets_share_anchor_creation_and_id_registration():
+    assert "function Core.CreateWidgetAnchor(owner, id, label, tooltip)" in CORE
+    assert 'Anchor:SetSize(Core.GROUP_WIDTH, Core.WIDGET_HEIGHT)' in CORE
+    assert 'Anchor:SetScript("OnEnter", Core.AnchorOnEnter)' in CORE
+    assert 'Anchor:SetScript("OnLeave", Core.AnchorOnLeave)' in CORE
+
+    for name, source in VALUE_WIDGETS.items():
+        assert "Core.CreateWidgetAnchor(self, id, label, tooltip)" in source, name
+
+    # Compound controls used to opt out of the registry despite having stable IDs.
+    assert "RegisterWidget(self, Anchor2, id)" in VALUE_WIDGETS["Inputs"]
+    assert "RegisterWidget(self, Anchor, id)" in VALUE_WIDGETS["ColorPicker"]

@@ -1,18 +1,11 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 
 local ThreatEvents = {
 	"UNIT_THREAT_SITUATION_UPDATE",
 	"UNIT_THREAT_LIST_UPDATE",
 }
-
-local function Force(element, update)
-	return function()
-		return update(element.__owner, "ForceUpdate", element.__owner.unit)
-	end
-end
 
 local function UpdateThreat(frame, _, unit)
 	if unit and unit ~= frame.unit then
@@ -57,7 +50,7 @@ local function EnableThreat(frame)
 	end
 
 	indicator.__owner = frame
-	indicator.ForceUpdate = Force(indicator, UpdateThreat)
+	indicator.ForceUpdate = UF:CreateForceUpdate(indicator, UpdateThreat)
 
 	for _, event in ipairs(ThreatEvents) do
 		frame:RegisterEvent(event, UpdateThreat)
@@ -74,8 +67,8 @@ local function DisableThreat(frame)
 	end
 end
 
-Handlers.ThreatIndicator = {
+UF:RegisterElement("ThreatIndicator", {
 	update = UpdateThreat,
 	enable = EnableThreat,
 	disable = DisableThreat,
-}
+})

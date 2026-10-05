@@ -112,8 +112,8 @@ local function DisableTotems(frame)
 	end
 end
 
-UF.ElementHandlers.Totems = {
+UF:RegisterElement("Totems", {
 	update = UpdateTotems,
 	enable = EnableTotems,
 	disable = DisableTotems,
-}
+})

@@ -1,13 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
-
-local function Force(element, update)
-	return function()
-		return update(element.__owner, "ForceUpdate", element.__owner.unit)
-	end
-end
 
 local function UpdateRaidTarget(frame)
 	local indicator = frame.RaidTargetIndicator
@@ -38,7 +31,7 @@ local function EnableRaidTarget(frame)
 	end
 
 	indicator.__owner = frame
-	indicator.ForceUpdate = Force(indicator, UpdateRaidTarget)
+	indicator.ForceUpdate = UF:CreateForceUpdate(indicator, UpdateRaidTarget)
 	frame:RegisterEvent("RAID_TARGET_UPDATE", UpdateRaidTarget, true)
 
 	return true
@@ -49,8 +42,8 @@ local function DisableRaidTarget(frame)
 	frame:UnregisterEvent("RAID_TARGET_UPDATE", UpdateRaidTarget)
 end
 
-Handlers.RaidTargetIndicator = {
+UF:RegisterElement("RaidTargetIndicator", {
 	update = UpdateRaidTarget,
 	enable = EnableRaidTarget,
 	disable = DisableRaidTarget,
-}
+})

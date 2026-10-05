@@ -1,7 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 
 local function ManaOnUpdate(element, elapsed)
 	element.elapsed = element.elapsed + elapsed
@@ -70,11 +69,11 @@ local function DisableMana(frame)
 	frame.ManaTimer:SetScript("OnUpdate", nil)
 end
 
-Handlers.ManaRegen = {
+UF:RegisterElement("ManaRegen", {
 	update = UpdateMana,
 	enable = EnableMana,
 	disable = DisableMana,
-}
+})
 
 local lastEnergyTick = GetTime()
 local lastEnergy = 0
@@ -124,11 +123,11 @@ local function DisableEnergy(frame)
 	frame.EnergyTick:SetScript("OnUpdate", nil)
 end
 
-Handlers.EnergyTick = {
+UF:RegisterElement("EnergyTick", {
 	update = UpdateEnergy,
 	enable = EnableEnergy,
 	disable = DisableEnergy,
-}
+})
 
 local function FindSpellCost(unit, spellID)
 	local costs = C_Spell.GetSpellPowerCost(spellID)
@@ -210,8 +209,8 @@ local function DisablePrediction(frame)
 	end
 end
 
-Handlers.PowerPrediction = {
+UF:RegisterElement("PowerPrediction", {
 	update = UpdatePrediction,
 	enable = EnablePrediction,
 	disable = DisablePrediction,
-}
+})

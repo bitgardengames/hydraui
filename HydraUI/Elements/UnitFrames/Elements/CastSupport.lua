@@ -443,10 +443,10 @@ local function DisableCast(frame)
 	end
 end
 
-UF.ElementHandlers.Castbar = {
+UF:RegisterElement("Castbar", {
 	-- Cast events drive this element directly; full frame refreshes need no work.
 	update = function()
 	end,
 	enable = EnableCast,
 	disable = DisableCast,
-}
+})

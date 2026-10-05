@@ -1,13 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
-
-local function Force(element, update, withUnit)
-	return function()
-		return update(element.__owner, "ForceUpdate", withUnit and element.__owner.unit or nil)
-	end
-end
 
 local function Install(name, update, enable, events)
 	local function Path(frame, ...)
@@ -16,7 +9,7 @@ local function Install(name, update, enable, events)
 		return (element.Override or update)(frame, ...)
 	end
 
-	Handlers[name] = {
+	UF:RegisterElement(name, {
 		update = Path,
 		enable = function(frame, unit)
 			local element = frame[name]
@@ -26,7 +19,7 @@ local function Install(name, update, enable, events)
 			end
 
 			element.__owner = frame
-			element.ForceUpdate = Force(element, Path, true)
+			element.ForceUpdate = UF:CreateForceUpdate(element, Path)
 
 			for i = 1, #events do
 				frame:RegisterEvent(events[i][1], Path, events[i][2])
@@ -42,7 +35,7 @@ local function Install(name, update, enable, events)
 				frame:UnregisterEvent(events[i][1], Path)
 			end
 		end,
-	}
+	})
 end
 
 Install("CombatIndicator", function(frame)

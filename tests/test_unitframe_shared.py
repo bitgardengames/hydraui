@@ -384,7 +384,16 @@ class UnitFrameNamespaceBoundaryCoverage(unittest.TestCase):
         core = (ROOT / "Core.lua").read_text()
         tags = (ROOT / "Tags.lua").read_text()
         self.assertIn('local UF = HydraUI:NewModule("Unit Frames")', core)
-        self.assertIn("UF.ElementHandlers = {}", core)
+        self.assertIn("local elementHandlers, elementNames = {}, {}", core)
+        self.assertIn("function UF:RegisterElement(name, lifecycle)", core)
         self.assertIn("UF.Hider = Hider", core)
         self.assertIn("function UF.Tag(", tags)
         self.assertIn("UF.TagEvents = Events", tags)
+
+    def test_element_lifecycle_helpers_are_centralized(self):
+        core = (ROOT / "Core.lua").read_text()
+        sources = "\n".join(path.read_text() for path in ROOT.rglob("*.lua"))
+
+        self.assertIn("function UF:CreateForceUpdate(element, update)", core)
+        self.assertNotIn("local function Force(element, update)", sources)
+        self.assertNotIn("ElementHandlers", sources)

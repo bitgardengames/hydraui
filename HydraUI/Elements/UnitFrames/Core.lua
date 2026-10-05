@@ -12,8 +12,7 @@ HydraUI.UnitFrames = UnitFrames
 
 -- Element lifecycle state is private to HydraUI's unit-frame module. The addon
 -- namespace is only used to obtain HydraUI and is not a library registry.
-UF.ElementHandlers = {}
-local elementHandlers = UF.ElementHandlers
+local elementHandlers, elementNames = {}, {}
 local colors = HydraUI:GetUnitFrameColors()
 
 local secondaryUnits = {
@@ -28,11 +27,25 @@ local function IsEventless(unit)
 	return unit:match("%w+target") or eventlessUnits[unit]
 end
 
-function UnitFrames:RegisterElement(name, lifecycle)
+function UF:RegisterElement(name, lifecycle)
 	assert(type(name) == "string", "unit-frame element names must be strings")
 	assert(type(lifecycle) == "table" and type(lifecycle.enable) == "function", "invalid unit-frame element")
 
+	if not elementHandlers[name] then
+		elementNames[#elementNames + 1] = name
+	end
+
 	elementHandlers[name] = lifecycle
+end
+
+-- Elements expose ForceUpdate on their widget. Keep the small adapter here so
+-- every element uses the same owner, event, and unit calling convention.
+function UF:CreateForceUpdate(element, update)
+	return function()
+		local frame = element.__owner
+
+		return update(frame, "ForceUpdate", frame.unit)
+	end
 end
 
 local function DispatchEvent(self, event, ...)
@@ -279,8 +292,8 @@ end
 local function BuildElements(frame, unit, builder)
 	builder(frame, unit)
 
-	for name in next, elementHandlers do
-		frame:EnableElement(name, unit)
+	for i = 1, #elementNames do
+		frame:EnableElement(elementNames[i], unit)
 	end
 end
 

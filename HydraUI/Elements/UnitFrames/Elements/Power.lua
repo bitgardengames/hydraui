@@ -1,7 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 
 local PowerEvents = {
 	"UNIT_MAXPOWER",
@@ -13,12 +12,6 @@ local PowerEvents = {
 	"UNIT_FLAGS",
 	"UNIT_THREAT_LIST_UPDATE",
 }
-
-local function Force(element, update)
-	return function()
-		return update(element.__owner, "ForceUpdate", element.__owner.unit)
-	end
-end
 
 local function SetPowerColor(frame, bar, unit, powerType, token, altR, altG, altB)
 	local color, r, g, b
@@ -104,7 +97,7 @@ local function EnablePower(frame)
 	end
 
 	bar.__owner = frame
-	bar.ForceUpdate = Force(bar, UpdatePower)
+	bar.ForceUpdate = UF:CreateForceUpdate(bar, UpdatePower)
 	frame:RegisterEvent(bar.frequentUpdates and "UNIT_POWER_FREQUENT" or "UNIT_POWER_UPDATE", UpdatePower)
 
 	for _, event in ipairs(PowerEvents) do
@@ -126,8 +119,8 @@ local function DisablePower(frame)
 	end
 end
 
-Handlers.Power = {
+UF:RegisterElement("Power", {
 	update = UpdatePower,
 	enable = EnablePower,
 	disable = DisablePower,
-}
+})

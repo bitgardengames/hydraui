@@ -1,7 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 local PlayerClass = select(2, UnitClass("player"))
 
 local DispelTypesByClass = {
@@ -92,8 +91,8 @@ local function DisableDispel(frame)
 	frame.Dispel:Hide()
 end
 
-Handlers.Dispel = {
+UF:RegisterElement("Dispel", {
 	update = UpdateDispel,
 	enable = EnableDispel,
 	disable = DisableDispel,
-}
+})

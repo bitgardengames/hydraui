@@ -21,7 +21,7 @@ def test_native_runtime_exposes_every_bundled_element_family():
 
     for name in expected:
         assert any(token in sources for token in (
-            f"Handlers.{name}", f'Handlers["{name}"]', f'Install("{name}"',
+            f'RegisterElement("{name}"', f'Install("{name}"',
             f'Resource("{name}"', f'Points("{name}"',
             f'TextureIndicator("{name}"',
         )), name

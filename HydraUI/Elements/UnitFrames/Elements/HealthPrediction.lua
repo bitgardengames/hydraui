@@ -89,12 +89,12 @@ local function EnablePrediction(frame)
 
 	if HealComm then
 		frame:RegisterEvent("PLAYER_TARGET_CHANGED", UpdatePrediction, true)
-		HealComm.RegisterCallback(frame, "HealComm_HealStarted", HealUpdated)
-		HealComm.RegisterCallback(frame, "HealComm_HealUpdated", HealUpdated)
-		HealComm.RegisterCallback(frame, "HealComm_HealDelayed", HealUpdated)
-		HealComm.RegisterCallback(frame, "HealComm_HealStopped", HealUpdated)
-		HealComm.RegisterCallback(frame, "HealComm_ModifierChanged", HealModifierChanged)
-		HealComm.RegisterCallback(frame, "HealComm_GUIDDisappeared", HealModifierChanged)
+		HealComm.RegisterCallback(frame, "HealComm_HealStarted", HealUpdated, frame)
+		HealComm.RegisterCallback(frame, "HealComm_HealUpdated", HealUpdated, frame)
+		HealComm.RegisterCallback(frame, "HealComm_HealDelayed", HealUpdated, frame)
+		HealComm.RegisterCallback(frame, "HealComm_HealStopped", HealUpdated, frame)
+		HealComm.RegisterCallback(frame, "HealComm_ModifierChanged", HealModifierChanged, frame)
+		HealComm.RegisterCallback(frame, "HealComm_GUIDDisappeared", HealModifierChanged, frame)
 	end
 
 	heal:SetMinMaxValues(0, 1)

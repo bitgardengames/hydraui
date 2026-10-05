@@ -70,8 +70,13 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         anchors_body = SOURCE[anchors_start:anchors_end]
 
         self.assertGreaterEqual(update_body.count("UpdatePlayerResourceAnchors(frame)"), 3)
-        self.assertIn("frame.ClassResource:IsShown()", anchors_body)
-        self.assertIn("resourceAttached and frame.ClassResource or frame", anchors_body)
+        helper_start = SOURCE.index("local function GetPlayerResourceAnchor")
+        helper_end = SOURCE.index("\nlocal function UpdatePlayerAuraAnchors", helper_start)
+        helper_body = SOURCE[helper_start:helper_end]
+        self.assertIn("resource:IsShown()", helper_body)
+        self.assertIn("not resourceDetached and resource or frame", helper_body)
+        # The helper declaration plus the aura and threat call sites.
+        self.assertEqual(SOURCE.count("GetPlayerResourceAnchor(frame, resourceDetached)"), 3)
         self.assertIn("UpdatePlayerAuraAnchors(frame, resourceDetached)", anchors_body)
 
         # Visibility is not exclusively controlled by resource power events:

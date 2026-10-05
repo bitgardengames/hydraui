@@ -61,6 +61,19 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         self.assertIn("PlayerAuraStacks({[53817] = true, [344179] = true})", SOURCE)
         self.assertIn("PlayerSpecializationIs(263, 2)", SOURCE)
 
+    def test_hidden_resources_do_not_leave_an_aura_gap(self):
+        update_start = SOURCE.index("local function UpdatePlayerResources")
+        update_end = SOURCE.index("\nlocal function EnablePlayerResources", update_start)
+        update_body = SOURCE[update_start:update_end]
+        anchors_start = SOURCE.index("UpdatePlayerResourceAnchors = function")
+        anchors_end = SOURCE.index("\nlocal function UpdatePlayerPowerLayout", anchors_start)
+        anchors_body = SOURCE[anchors_start:anchors_end]
+
+        self.assertGreaterEqual(update_body.count("UpdatePlayerResourceAnchors(frame)"), 3)
+        self.assertIn("frame.ClassResource:IsShown()", anchors_body)
+        self.assertIn("resourceAttached and frame.ClassResource or frame", anchors_body)
+        self.assertIn("UpdatePlayerAuraAnchors(frame, resourceDetached)", anchors_body)
+
     def test_component_has_stable_update_interface(self):
         for method in ("SetWidth", "SetHeight", "SetTexture", "SetDetached"):
             self.assertIn(f"function resource:{method}", SOURCE)

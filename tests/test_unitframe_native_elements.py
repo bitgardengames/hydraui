@@ -107,3 +107,24 @@ def test_range_fader_does_not_inspect_inaccessible_secret_results():
     assert source.index("if IsInaccessible(checked) then") < source.index(
         "local outsideRange = connected and checked and not inRange"
     )
+
+
+def test_vanilla_health_predictions_are_driven_by_libhealcomm():
+    source = (ROOT / "Elements/HealthPrediction.lua").read_text()
+
+    assert 'HydraUI.IsVanilla and LibStub and LibStub("LibHealComm-4.0", true)' in source
+    assert "HealComm:GetHealAmount(guid, HealComm.ALL_HEALS)" in source
+    assert "HealComm:GetHealModifier(guid)" in source
+    for callback in (
+        "HealComm_HealStarted",
+        "HealComm_HealUpdated",
+        "HealComm_HealDelayed",
+        "HealComm_HealStopped",
+        "HealComm_ModifierChanged",
+        "HealComm_GUIDDisappeared",
+    ):
+        assert f'HealComm.RegisterCallback(frame, "{callback}"' in source
+        assert f'HealComm.UnregisterCallback(frame, "{callback}")' in source
+
+    assert 'frame:RegisterEvent("PLAYER_TARGET_CHANGED", UpdatePrediction, true)' in source
+    assert '"UNIT_HEALTH_FREQUENT"' in source

@@ -92,6 +92,8 @@ class ActionBarDescriptorCoverage(unittest.TestCase):
 
         self.assertIn("local Icon = button.Icon or button.icon", block)
         self.assertNotIn("Icon:Show()", block)
+        self.assertIn("if button.action and not HasAction(button.action) then", block)
+        self.assertIn("Icon:Hide()", block)
 
 
 if __name__ == "__main__":

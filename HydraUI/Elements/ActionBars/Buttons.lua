@@ -4,6 +4,7 @@ local AB = HydraUI:GetModule("Action Bars")
 local GUI = HydraUI:GetModule("GUI")
 
 local IsUsableAction = IsUsableAction
+local HasAction = HasAction
 local NUM_PET_ACTION_SLOTS = NUM_PET_ACTION_SLOTS
 
 local NumPad = KEY_NUMPAD1:gsub("%s%S$", "")
@@ -59,9 +60,14 @@ function AB:StyleActionButton(button)
 		Icon:SetPoint("BOTTOMRIGHT", button, -1, 1)
 		Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
 		Icon:SetAlpha(1)
-		-- The action-button mixin owns icon visibility. Showing it here can
-		-- reveal the texture left over from a previous action in an empty slot
-		-- until Blizzard next updates the button (for example, on hover).
+
+		-- Blizzard normally owns icon visibility, but the texture can still be
+		-- visible when an empty button is first styled. Clear that stale state
+		-- now instead of waiting for the next action-button update (such as the
+		-- update triggered by hovering over the button).
+		if button.action and not HasAction(button.action) then
+			Icon:Hide()
+		end
 	end
 
 	if _G[button:GetName() .. "FloatingBG"] then

@@ -7,7 +7,7 @@ local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
 local RegisterWidget, CommitValue = Core.RegisterWidget, Core.CommitValue
 local Round, TrimHex = Core.Round, Core.TrimHex
-local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
+local FadeOnFinished = Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
 local tinsert, tremove, tsort = table.insert, table.remove, table.sort
 local match, upper, lower, sub, gsub, find = string.match, string.upper, string.lower, string.sub, string.gsub, string.find
@@ -238,14 +238,7 @@ end
 GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
 	value = Core.GetInitialValue(id, value)
 
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.ID = id
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
-
-	Anchor:SetScript("OnEnter", AnchorOnEnter)
-	Anchor:SetScript("OnLeave", AnchorOnLeave)
+	local Anchor = Core.CreateWidgetAnchor(self, id, label, tooltip)
 
 	local Input = CreateInputControl(Anchor, INPUT_WIDTH, id, value, tooltip, hook, false)
 
@@ -274,13 +267,7 @@ local INPUT_BUTTON_WIDTH = (GROUP_WIDTH / 2) - (SPACING / 2)
 GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, tooltip, hook)
 	value = Core.GetInitialValue(id, value)
 
-	local Anchor = CreateFrame("Frame", nil, self)
-	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
-	Anchor.Text = label
-	Anchor.Tooltip = tooltip
-
-	Anchor:SetScript("OnEnter", AnchorOnEnter)
-	Anchor:SetScript("OnLeave", AnchorOnLeave)
+	local Anchor = Core.CreateWidgetAnchor(self, id, label, tooltip)
 
 	local Text = Anchor:CreateFontString(nil, "OVERLAY")
 	Text:SetPoint("LEFT", Anchor, LABEL_SPACING, 0)
@@ -333,7 +320,7 @@ GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, too
 	Button.Input = Input.Box
 
 	RegisterWidget(self, Anchor, "")
-	RegisterWidget(self, Anchor2, "")
+	RegisterWidget(self, Anchor2, id)
 
 	Anchor.Input = Input
 

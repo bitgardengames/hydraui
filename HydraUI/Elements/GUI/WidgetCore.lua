@@ -19,6 +19,20 @@ local Core = {
 Core.GROUP_WIDTH = 279 - (Core.SPACING * 2)
 GUI.WidgetCore = Core
 
+-- All interactive widgets use the same lightweight container. Keeping the
+-- metadata and tooltip wiring here prevents constructors from drifting apart.
+function Core.CreateWidgetAnchor(owner, id, label, tooltip)
+	local Anchor = CreateFrame("Frame", nil, owner)
+	Anchor:SetSize(Core.GROUP_WIDTH, Core.WIDGET_HEIGHT)
+	Anchor.ID = id
+	Anchor.Text = label
+	Anchor.Tooltip = tooltip
+	Anchor:SetScript("OnEnter", Core.AnchorOnEnter)
+	Anchor:SetScript("OnLeave", Core.AnchorOnLeave)
+
+	return Anchor
+end
+
 function Core.RegisterWidget(owner, anchor, id)
 	table.insert(owner.Widgets, anchor)
 	if id and id ~= "" then

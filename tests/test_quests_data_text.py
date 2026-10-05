@@ -30,6 +30,12 @@ def test_quest_tooltip_uses_zone_headers_instead_of_a_generic_title():
     assert "GameTooltip:AddLine(Header, 0.6, 0.6, 0.6)" in SOURCE
 
 
+def test_quest_tooltip_separates_zone_groups_with_a_blank_line():
+    assert "if HasQuest then" in SOURCE
+    assert 'GameTooltip:AddLine(" ")' in SOURCE
+    assert "HasQuest = true" in SOURCE
+
+
 def test_quest_tooltip_marks_dungeon_quests():
     assert 'TRACKER_HEADER_DUNGEON or "Dungeon"' in SOURCE
     assert "C_QuestLog.GetQuestTagInfo" in SOURCE

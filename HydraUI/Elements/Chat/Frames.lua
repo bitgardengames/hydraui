@@ -5,9 +5,9 @@ local NoCall = function() end
 local CHAT_LABEL = CHAT_LABEL
 local DT
 
--- The base-name event argument is available on current clients.  Keep a
--- localized fallback for older game clients which only provide the stable
--- zone channel ID and the decorated channel name.
+-- Zone channel IDs are stable, while Blizzard's channelBaseName can include
+-- a location suffix (for example, "General - Stormwind City"). Use localized
+-- globals for built-in channels and retain channelBaseName for custom ones.
 local ZoneChannelBaseNames = {
 	[1] = GENERAL,
 	[2] = TRADE,
@@ -237,12 +237,10 @@ local OnHyperlinkLeave = function(self)
 end
 
 local ShortenChannelNames = function(self, event, msg, sender, languageName, channelName, target, flags, zoneChannelID, channelIndex, channelBaseName, ...)
-	-- Blizzard supplies the locale-correct base name separately from the decorated
-	-- channel name (for example, "Trade" rather than "Trade - City"). Using that
-	-- event field avoids making assumptions about words or separators in a locale.
-	-- Older clients do not supply that field, so use the localized global selected
-	-- by their stable zone channel ID instead of parsing locale-dependent text.
-	local baseName = channelBaseName or ZoneChannelBaseNames[zoneChannelID]
+	-- Prefer the localized name selected by the stable zone channel ID because
+	-- channelBaseName still contains the location suffix on current clients.
+	-- Fall back to the event value so custom channels continue to be shortened.
+	local baseName = ZoneChannelBaseNames[zoneChannelID] or channelBaseName
 
 	if Settings["chat-shorten-channels"] and channelIndex and baseName and (baseName ~= "") then
 		channelName = format("%s. %s", channelIndex, baseName)

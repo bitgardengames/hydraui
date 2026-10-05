@@ -597,8 +597,8 @@ local function DisableAuras(frame)
 	end
 end
 
-UF.ElementHandlers.Auras = {
+UF:RegisterElement("Auras", {
 	update = UpdateAuras,
 	enable = EnableAuras,
 	disable = DisableAuras,
-}
+})

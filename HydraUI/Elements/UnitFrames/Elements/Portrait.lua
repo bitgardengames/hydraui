@@ -1,13 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
-
-local function Force(element, update)
-	return function()
-		return update(element.__owner, "ForceUpdate", element.__owner.unit)
-	end
-end
 
 local function Unregister(frame, handler, ...)
 	for i = 1, select("#", ...) do
@@ -69,7 +62,7 @@ local function EnablePortrait(frame)
 		return
 	end
 
-	p.__owner,p.ForceUpdate=frame,Force(p,UpdatePortrait)
+	p.__owner,p.ForceUpdate=frame,UF:CreateForceUpdate(p,UpdatePortrait)
 	frame:RegisterEvent("UNIT_MODEL_CHANGED",UpdatePortrait)
 	frame:RegisterEvent("UNIT_PORTRAIT_UPDATE",UpdatePortrait)
 	frame:RegisterEvent("PORTRAITS_UPDATED",UpdatePortrait,true)
@@ -89,4 +82,4 @@ local function DisablePortrait(frame)
 	Unregister(frame, UpdatePortrait, "UNIT_MODEL_CHANGED", "UNIT_PORTRAIT_UPDATE", "PORTRAITS_UPDATED", "PARTY_MEMBER_ENABLE", "UNIT_CONNECTION")
 end
 
-Handlers.Portrait={update=UpdatePortrait,enable=EnablePortrait,disable=DisablePortrait}
+UF:RegisterElement("Portrait", {update=UpdatePortrait,enable=EnablePortrait,disable=DisablePortrait})

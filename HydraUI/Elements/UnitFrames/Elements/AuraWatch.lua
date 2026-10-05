@@ -1,7 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 
 local function SetMissing(watch, icon)
 	if icon.onlyShowPresent then
@@ -97,4 +96,4 @@ local function Disable(frame)
 	frame.AuraWatch:Hide()
 end
 
-Handlers.AuraWatch = {update=Update, enable=Enable, disable=Disable}
+UF:RegisterElement("AuraWatch", {update=Update, enable=Enable, disable=Disable})

@@ -1,7 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 
 local PredictionEvents = {
 	"UNIT_HEAL_PREDICTION",
@@ -10,12 +9,6 @@ local PredictionEvents = {
 	"UNIT_ABSORB_AMOUNT_CHANGED",
 	"UNIT_HEAL_ABSORB_AMOUNT_CHANGED",
 }
-
-local function Force(element, update)
-	return function()
-		return update(element.__owner, "ForceUpdate", element.__owner.unit)
-	end
-end
 
 local function IsInaccessible(value)
 	return HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)
@@ -51,7 +44,7 @@ local function EnablePrediction(frame)
 	end
 
 	heal.__owner = frame
-	heal.ForceUpdate = Force(heal, UpdatePrediction)
+	heal.ForceUpdate = UF:CreateForceUpdate(heal, UpdatePrediction)
 
 	for _, event in ipairs(PredictionEvents) do
 		frame:RegisterEvent(event, UpdatePrediction)
@@ -82,8 +75,8 @@ local function DisablePrediction(frame)
 	end
 end
 
-Handlers.HealPrediction = {
+UF:RegisterElement("HealPrediction", {
 	update = UpdatePrediction,
 	enable = EnablePrediction,
 	disable = DisablePrediction,
-}
+})

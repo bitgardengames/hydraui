@@ -168,11 +168,11 @@ local function DisablePlayerResources(frame)
 	end
 end
 
-UF.ElementHandlers.PlayerResources = {
+UF:RegisterElement("PlayerResources", {
 	update = UpdatePlayerResources,
 	enable = EnablePlayerResources,
 	disable = DisablePlayerResources,
-}
+})
 
 Defaults["unitframes-player-width"] = 240
 Defaults["unitframes-player-health-height"] = 32

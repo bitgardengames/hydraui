@@ -14,15 +14,15 @@ def test_every_layout_element_has_a_native_handler():
         "ReadyCheckIndicator", "ResurrectIndicator", "TargetIndicator",
     }
     for name in expected:
-        assert re.search(rf"(?:Handlers\.|Install\(\")({name})(?:\s*=|\")", sources)
+        assert re.search(rf'(?:RegisterElement|Install)\("{name}"', sources)
 
 
 def test_classic_power_timers_are_driven_without_the_reference_runtime():
     source = (ROOT / "Elements/PowerTimers.lua").read_text()
-    assert 'Handlers.ManaRegen = {' in source
+    assert 'UF:RegisterElement("ManaRegen", {' in source
     assert 'frame:RegisterEvent("UNIT_POWER_FREQUENT", UpdateMana)' in source
     assert 'element:SetScript("OnUpdate", ManaOnUpdate)' in source
-    assert 'Handlers.EnergyTick = {' in source
+    assert 'UF:RegisterElement("EnergyTick", {' in source
 
 
 def test_power_timers_are_limited_to_supported_clients():

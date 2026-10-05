@@ -1,12 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
-local UnitFrames = HydraUI.UnitFrames
-
-local function Force(element, update)
-	return function()
-		update(element.__owner, "ForceUpdate", element.__owner.unit)
-	end
-end
+local UF = HydraUI:GetModule("Unit Frames")
 
 local function Install(name, events, update, enable)
 	local function Path(frame, ...)
@@ -14,7 +8,7 @@ local function Install(name, events, update, enable)
 
 		return (element.Override or update)(frame, ...)
 	end
-	UnitFrames:RegisterElement(name, {
+	UF:RegisterElement(name, {
 		update = Path,
 
 		enable = function(frame)
@@ -24,7 +18,7 @@ local function Install(name, events, update, enable)
 				return
 			end
 
-			element.__owner, element.ForceUpdate = frame, Force(element, Path)
+			element.__owner, element.ForceUpdate = frame, UF:CreateForceUpdate(element, Path)
 
 			for i = 1, #events do
 				frame:RegisterEvent(events[i][1], Path, events[i][2])

@@ -1,7 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 local RangeFrames, RangeDriver = {}, nil
 
 local function IsInaccessible(value)
@@ -88,7 +87,7 @@ local function DisableRange(frame)
 	frame:SetAlpha(frame.Range.insideAlpha)
 end
 
-Handlers.Range = {
+UF:RegisterElement("Range", {
 	enable = EnableRange,
 	disable = DisableRange,
-}
+})

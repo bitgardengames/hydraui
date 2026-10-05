@@ -1,13 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
-
-local function Force(element, update)
-	return function()
-		return update(element.__owner, "ForceUpdate", element.__owner.unit)
-	end
-end
 
 local function Run(element, fallback, frame, ...)
 	return (element.Override or fallback)(frame, ...)
@@ -112,7 +105,7 @@ local function EnableHealth(frame)
 		return
 	end
 
-	bar.__owner, bar.ForceUpdate = frame, Force(bar, HealthPath)
+	bar.__owner, bar.ForceUpdate = frame, UF:CreateForceUpdate(bar, HealthPath)
 
 	for _, event in ipairs({HydraUI.IsMainline and "UNIT_HEALTH" or "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH"}) do
 		frame:RegisterEvent(event, HealthPath)
@@ -133,8 +126,8 @@ local function DisableHealth(frame)
 	Unregister(frame, HealthColor, "UNIT_CONNECTION", "PARTY_MEMBER_ENABLE", "PARTY_MEMBER_DISABLE", "UNIT_FACTION", "UNIT_FLAGS", "UNIT_THREAT_LIST_UPDATE")
 end
 
-Handlers.Health = {
+UF:RegisterElement("Health", {
 	update = HealthPath,
 	enable = EnableHealth,
 	disable = DisableHealth,
-}
+})

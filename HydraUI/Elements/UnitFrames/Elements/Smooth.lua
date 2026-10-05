@@ -1,7 +1,6 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
-local Handlers = UF.ElementHandlers
 
 local active = {}
 local driver = CreateFrame("Frame")
@@ -86,7 +85,7 @@ local function Restore(bar)
 	end
 end
 
-Handlers.Smooth = {
+UF:RegisterElement("Smooth", {
 	update = function() end,
 	enable = Enable,
 	disable = function(frame)
@@ -97,4 +96,4 @@ Handlers.Smooth = {
 			driver:SetScript("OnUpdate", nil)
 		end
 	end,
-}
+})

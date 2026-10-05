@@ -204,7 +204,7 @@ local function DisablePrediction(frame)
 	for i = 1, #PredictionEvents do
 		frame:UnregisterEvent(PredictionEvents[i], UpdatePrediction)
 	end
-	
+
 	if frame.PowerPrediction.mainBar then
 		frame.PowerPrediction.mainBar:Hide()
 	end

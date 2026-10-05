@@ -27,32 +27,32 @@ end
 -- Mirror the stock-frame suppression performed by oUF without making the native unit-frame runtime depend on the bundled oUF reference copy.
 function UF:DisableBlizzardUnitFrame(unit)
 	if unit == "player" then
-		HideBlizzardFrame(PlayerFrame)
+		HideBlizzardFrame(_G.PlayerFrame)
 		-- Blizzard still needs these events to switch the vehicle unit safely.
-		if PlayerFrame then
+		if _G.PlayerFrame then
 			for _, event in ipairs({"PLAYER_ENTERING_WORLD", "UNIT_ENTERING_VEHICLE", "UNIT_ENTERED_VEHICLE", "UNIT_EXITING_VEHICLE", "UNIT_EXITED_VEHICLE"}) do
-				PlayerFrame:RegisterEvent(event)
+				_G.PlayerFrame:RegisterEvent(event)
 			end
 
-			PlayerFrame:SetUserPlaced(true)
-			PlayerFrame:SetDontSavePosition(true)
+			_G.PlayerFrame:SetUserPlaced(true)
+			_G.PlayerFrame:SetDontSavePosition(true)
 		end
 	elseif unit == "pet" then
-		HideBlizzardFrame(PetFrame)
+		HideBlizzardFrame(_G.PetFrame)
 	elseif unit == "target" then
-		HideBlizzardFrame(TargetFrame)
-		HideBlizzardFrame(ComboFrame)
+		HideBlizzardFrame(_G.TargetFrame)
+		HideBlizzardFrame(_G.ComboFrame)
 	elseif unit == "focus" then
-		HideBlizzardFrame(FocusFrame)
-		HideBlizzardFrame(TargetofFocusFrame)
+		HideBlizzardFrame(_G.FocusFrame)
+		HideBlizzardFrame(_G.TargetofFocusFrame)
 	elseif unit == "targettarget" then
-		HideBlizzardFrame(TargetFrameToT)
+		HideBlizzardFrame(_G.TargetFrameToT)
 	elseif unit == "boss" then
 		for index = 1, (MAX_BOSS_FRAMES or 5) do
 			HideBlizzardFrame(_G["Boss" .. index .. "TargetFrame"])
 		end
 	elseif unit == "party" then
-		HideBlizzardFrame(PartyFrame)
+		HideBlizzardFrame(_G.PartyFrame)
 
 		for index = 1, (MAX_PARTY_MEMBERS or 4) do
 			HideBlizzardFrame(_G["PartyMemberFrame" .. index])

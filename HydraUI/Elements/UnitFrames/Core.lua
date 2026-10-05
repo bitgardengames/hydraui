@@ -51,6 +51,7 @@ end
 
 local function Subscribe(self, event, handler, global)
 	local handlers = self._events[event]
+	local firstHandler = not handlers
 
 	if not handlers then
 		handlers = {}
@@ -66,9 +67,20 @@ local function Subscribe(self, event, handler, global)
 	handlers[#handlers + 1] = handler
 
 	if global or self._pollsUnit then
+		-- An event only needs one native registration, regardless of how many
+		-- elements listen for it. Promote an existing unit event when a later
+		-- subscriber needs the global form.
+		if not firstHandler and not self._unitEvents[event] then
+			return
+		end
+
 		self._unitEvents[event] = nil
 		self._registerEvent(self, event)
 	else
+		if not firstHandler then
+			return
+		end
+
 		self._unitEvents[event] = true
 
 		local otherUnit = secondaryUnits[event] and secondaryUnits[event][self.unit]
@@ -277,34 +289,44 @@ local function EnableClickCasting(frame)
 	_G.ClickCastFrames[frame] = true
 end
 
-function UnitFrames:CreateUnitButton(unit, globalName, builder)
-	assert(not InCombatLockdown(), "secure unit frames cannot be created during combat")
+local function InitializeUnitButton(frame, unit, builder, pollsUnit)
+	PrepareFrame(frame, unit, pollsUnit)
 
-	local frame = CreateFrame("Button", globalName, HydraUI.UIParent, "SecureUnitButtonTemplate")
-
-	PrepareFrame(frame, unit, IsEventless(unit))
 	frame.Enable = Enable
 	frame.Disable = Disable
 	frame.IsEnabled = UnitWatchRegistered
-	frame:SetAttribute("*type1", "target")
-	frame:SetAttribute("*type2", "togglemenu")
-	frame:SetAttribute("toggleForVehicle", true)
-	frame:SetAttribute("unit", unit)
 
 	BuildElements(frame, unit, builder)
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD", UpdateUnit, true)
 
-	if not frame._pollsUnit then
+	if pollsUnit then
+		frame:SetScript("OnUpdate", PollEventless)
+	else
 		frame:RegisterEvent("UNIT_ENTERED_VEHICLE", UpdateUnit)
 		frame:RegisterEvent("UNIT_EXITED_VEHICLE", UpdateUnit)
 
 		if unit ~= "player" then
 			frame:RegisterEvent("UNIT_PET", UpdatePet)
 		end
-	else
-		frame:SetScript("OnUpdate", PollEventless)
 	end
+
+	frame:SetScript("OnShow", UpdateUnit)
+	frame:HookScript("OnAttributeChanged", UnitAttributeChanged)
+	EnableClickCasting(frame)
+end
+
+function UnitFrames:CreateUnitButton(unit, globalName, builder)
+	assert(not InCombatLockdown(), "secure unit frames cannot be created during combat")
+
+	local frame = CreateFrame("Button", globalName, HydraUI.UIParent, "SecureUnitButtonTemplate")
+
+	frame:SetAttribute("*type1", "target")
+	frame:SetAttribute("*type2", "togglemenu")
+	frame:SetAttribute("toggleForVehicle", true)
+	frame:SetAttribute("unit", unit)
+
+	InitializeUnitButton(frame, unit, builder, IsEventless(unit))
 
 	if unit == "target" then
 		frame:RegisterEvent("PLAYER_TARGET_CHANGED", Refresh, true)
@@ -315,10 +337,7 @@ function UnitFrames:CreateUnitButton(unit, globalName, builder)
 		frame:RegisterEvent("UNIT_TARGETABLE_CHANGED", Refresh)
 	end
 
-	frame:SetScript("OnShow", UpdateUnit)
-	frame:HookScript("OnAttributeChanged", UnitAttributeChanged)
 	RegisterUnitWatch(frame)
-	EnableClickCasting(frame)
 
 	return frame
 end
@@ -331,22 +350,7 @@ function UnitFrames:InitializeHeaderChild(frame, unit, builder)
 
 	frame._unitFrameInitialized = true
 
-	PrepareFrame(frame, unit, false)
-
-	frame.Enable = Enable
-	frame.Disable = Disable
-	frame.IsEnabled = UnitWatchRegistered
-
-	BuildElements(frame, unit, builder)
-
-	frame:RegisterEvent("PLAYER_ENTERING_WORLD", UpdateUnit, true)
-	frame:RegisterEvent("UNIT_ENTERED_VEHICLE", UpdateUnit)
-	frame:RegisterEvent("UNIT_EXITED_VEHICLE", UpdateUnit)
-	frame:RegisterEvent("UNIT_PET", UpdatePet)
-	frame:SetScript("OnShow", UpdateUnit)
-	frame:HookScript("OnAttributeChanged", UnitAttributeChanged)
-
-	EnableClickCasting(frame)
+	InitializeUnitButton(frame, unit, builder, false)
 end
 
 function UnitFrames:CreateNamePlateButton(parent, unit, builder)

@@ -11,6 +11,11 @@ local PlayerResourceEvents = {
 	"UNIT_POWER_UPDATE",
 }
 
+-- Defined with the player layout helpers below. Resource events can change a
+-- class bar's visibility at runtime, so they also need to refresh everything
+-- that is anchored above that bar.
+local UpdatePlayerResourceAnchors
+
 local function PlayerSpecializationIs(specializationID, classicTalentTab)
 	if GetSpecialization and GetSpecializationInfo then
 		local specialization = GetSpecialization()
@@ -97,6 +102,7 @@ local function UpdatePlayerResources(frame, event, unit)
 	local active = not descriptor.active or descriptor.active()
 	resource:SetShown(active)
 	if not active then
+		UpdatePlayerResourceAnchors(frame)
 		return
 	end
 	if descriptor.runes then
@@ -109,6 +115,7 @@ local function UpdatePlayerResources(frame, event, unit)
 		local maximum = descriptor.maximumProvider and descriptor.maximumProvider() or UnitPowerMax("player", powerType)
 		if not maximum or maximum <= 0 then
 			resource:Hide()
+			UpdatePlayerResourceAnchors(frame)
 			return
 		end
 		if descriptor.displayMod then
@@ -136,6 +143,7 @@ local function UpdatePlayerResources(frame, event, unit)
 			end
 		end
 	end
+	UpdatePlayerResourceAnchors(frame)
 end
 
 local function EnablePlayerResources(frame)
@@ -221,7 +229,8 @@ local function UpdatePlayerAuraAnchors(frame, resourceDetached)
 	if resourceDetached == nil then
 		resourceDetached = Settings["player-move-resource"]
 	end
-	local anchor = resourceDetached and frame or frame.AuraParent
+	local resourceAttached = frame.ClassResource and frame.ClassResource:IsShown() and not resourceDetached
+	local anchor = resourceAttached and frame.ClassResource or frame
 	frame.Buffs:ClearAllPoints()
 	frame.Debuffs:ClearAllPoints()
 	if Settings["unitframes-show-player-buffs"] then
@@ -229,6 +238,20 @@ local function UpdatePlayerAuraAnchors(frame, resourceDetached)
 		frame.Debuffs:SetPoint("BOTTOM", frame.Buffs, "TOP", 0, 2)
 	else
 		frame.Debuffs:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 2)
+	end
+end
+
+UpdatePlayerResourceAnchors = function(frame, resourceDetached)
+	if resourceDetached == nil then
+		resourceDetached = Settings["player-move-resource"]
+	end
+	UpdatePlayerAuraAnchors(frame, resourceDetached)
+	if frame.ThreatIndicator then
+		frame.ThreatIndicator:ClearAllPoints()
+		local resourceAttached = frame.ClassResource and frame.ClassResource:IsShown() and not resourceDetached
+		local anchor = resourceAttached and frame.ClassResource or frame
+		frame.ThreatIndicator:SetPoint("TOPLEFT", anchor, -1, 1)
+		frame.ThreatIndicator:SetPoint("BOTTOMRIGHT", frame, 1, -1)
 	end
 end
 
@@ -263,13 +286,7 @@ local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
 		frame.ClassResource:SetHeight(resourceHeight)
 		frame.ClassResource:SetDetached(detached)
 	end
-	UpdatePlayerAuraAnchors(frame, detached)
-	if frame.ThreatIndicator then
-		frame.ThreatIndicator:ClearAllPoints()
-		local anchor = detached and frame or frame.AuraParent
-		frame.ThreatIndicator:SetPoint("TOPLEFT", anchor, -1, 1)
-		frame.ThreatIndicator:SetPoint("BOTTOMRIGHT", frame, 1, -1)
-	end
+	UpdatePlayerResourceAnchors(frame, detached)
 end
 
 -- Resource descriptions are module constants, so spawning a frame only selects one.

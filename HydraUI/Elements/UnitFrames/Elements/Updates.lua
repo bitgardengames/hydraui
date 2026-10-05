@@ -337,22 +337,22 @@ UF.UnitOperations = UnitOperations
 
 function UF:CreateUnitUpdater(unit, operation, options)
 	local update = assert(UnitOperations[operation], "unknown unit-frame update operation: " .. tostring(operation))
-	
+
 	if options and options.count then
 		return function(value)
 			for i = 1, options.count do
 				local frame = HydraUI.UnitFrames[unit .. i]
-				
+
 				if frame then
 					update(self, frame, value, options)
 				end
 			end
 		end
 	end
-	
+
 	return function(value)
 		local frame = HydraUI.UnitFrames[unit]
-		
+
 		if frame then
 			update(self, frame, value, options)
 		end

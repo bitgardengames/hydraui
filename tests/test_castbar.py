@@ -36,7 +36,7 @@ def test_castbar_refreshes_channels_and_tracks_empowered_casts():
 
 def test_castbar_updates_delays_and_hides_at_completion():
     assert "local function UpdateCast" in SOURCE
-    assert "bar.delay=(bar.delay or 0)+math.max(0,delta)" in SOURCE
+    assert "bar.delay = (bar.delay or 0) + math.max(0, delta)" in SOURCE
     assert "bar.duration >= bar.max" in SOURCE
     assert "bar.duration <= 0" in SOURCE
     assert "bar:Hide()" in SOURCE

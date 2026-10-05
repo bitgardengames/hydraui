@@ -231,11 +231,20 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
         for state in ("_events", "_unitEvents", "_refreshers",
                       "_enabledElements"):
             self.assertIn(state, initializer)
-        for constructor in ("CreateUnitButton", "InitializeHeaderChild",
-                            "CreateNamePlateButton"):
+        unit_initializer = source[
+            source.index("local function InitializeUnitButton"):
+            source.index("function UnitFrames:CreateUnitButton")
+        ]
+        self.assertIn("PrepareFrame(frame, unit, pollsUnit)", unit_initializer)
+
+        for constructor in ("CreateUnitButton", "InitializeHeaderChild"):
             body = source[source.index(f"function UnitFrames:{constructor}"):]
             body = body[:body.index("\nend")]
-            self.assertIn("PrepareFrame(frame, unit,", body)
+            self.assertIn("InitializeUnitButton(frame, unit, builder,", body)
+
+        nameplate = source[source.index("function UnitFrames:CreateNamePlateButton"):]
+        nameplate = nameplate[:nameplate.index("\nend")]
+        self.assertIn("PrepareFrame(frame, unit, false)", nameplate)
 
         self.assertNotIn("frame.__elements", source)
         self.assertIn("frame.Refresh = Refresh", initializer)

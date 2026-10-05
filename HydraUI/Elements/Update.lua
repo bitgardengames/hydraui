@@ -20,7 +20,8 @@ local Prefix = "HydraUI-Version"
 local Update = HydraUI:NewModule("Update")
 Update.SentHome = false
 Update.SentInst = false
-Update.Timer = 5
+
+local SendInterval = 5
 
 local Tables = {}
 local Queue = {}
@@ -28,6 +29,17 @@ local QueueHead = 1
 local QueueTail = 0
 
 local Throttle = HydraUI:GetModule("Throttle")
+
+function Update:ScheduleSend()
+	if self.SendTimer or QueueTail == 0 then
+		return
+	end
+
+	self.SendTimer = C_Timer.NewTimer(SendInterval, function()
+		self.SendTimer = nil
+		self:SendNext()
+	end)
+end
 
 function Update:QueueChannel(channel, target)
 	if not channel then
@@ -56,47 +68,34 @@ function Update:QueueChannel(channel, target)
 
 	QueueTail = QueueTail + 1
 	Queue[QueueTail] = Data
-
-	if not self:GetScript("OnUpdate") then
-		self:SetScript("OnUpdate", self.OnUpdate)
-	end
+	self:ScheduleSend()
 end
 
-function Update:OnUpdate(elapsed)
-	self.Timer = self.Timer - elapsed
+function Update:SendNext()
+	local Data = Queue[QueueHead]
 
-	if self.Timer <= 0 then
-		local Data = Queue[QueueHead]
+	if not Data then
+		QueueHead = 1
+		QueueTail = 0
 
-		if not Data then
-			QueueHead = 1
-			QueueTail = 0
-			self:SetScript("OnUpdate", nil)
-			self.Timer = 5
-
-			return
-		end
-
-		Queue[QueueHead] = nil
-		QueueHead = QueueHead + 1
-
-		if QueueHead > QueueTail then
-			QueueHead = 1
-			QueueTail = 0
-		end
-
-		CT:SendAddonMessage("NORMAL", Prefix, AddOnVersion, Data[1], Data[2])
-
-		Data[1] = nil
-		Data[2] = nil
-		Tables[#Tables + 1] = Data
-
-		self.Timer = 5
-
-		if QueueTail == 0 then
-			self:SetScript("OnUpdate", nil)
-		end
+		return
 	end
+
+	Queue[QueueHead] = nil
+	QueueHead = QueueHead + 1
+
+	if QueueHead > QueueTail then
+		QueueHead = 1
+		QueueTail = 0
+	end
+
+	CT:SendAddonMessage("NORMAL", Prefix, AddOnVersion, Data[1], Data[2])
+
+	Data[1] = nil
+	Data[2] = nil
+	Tables[#Tables + 1] = Data
+
+	self:ScheduleSend()
 end
 
 function Update:PLAYER_ENTERING_WORLD()

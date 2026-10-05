@@ -58,44 +58,42 @@ local OnLeave = function(self)
 	self.TooltipShown = false
 end
 
-local Update = function(self, elapsed)
-	self.Elapsed = self.Elapsed + elapsed
+local Update = function(self)
+	local MapID = GetBestMapForUnit("player")
+	local Position = MapID and GetPlayerMapPosition(MapID, "player")
 
-	if self.Elapsed > 0.5 then
-		local MapID = GetBestMapForUnit("player")
-		local Position = MapID and GetPlayerMapPosition(MapID, "player")
+	if Position then
+		local X, Y = Position:GetXY()
 
-		if Position then
-			local X, Y = Position:GetXY()
+		self.Text:SetFormattedText("|cFF%s%.2f|r, |cFF%s%.2f|r", HydraUI.ValueColor, X * 100, HydraUI.ValueColor, Y * 100)
+	else
+		self.Text:SetText("--, --")
+	end
 
-			self.Text:SetFormattedText("|cFF%s%.2f|r, |cFF%s%.2f|r", HydraUI.ValueColor, X * 100, HydraUI.ValueColor, Y * 100)
-		else
-			self.Text:SetText("--, --")
-		end
-
-		if self.TooltipShown then
-			GameTooltip:ClearLines()
-			OnEnter(self)
-		end
-
-		self.Elapsed = 0
+	if self.TooltipShown then
+		GameTooltip:ClearLines()
+		OnEnter(self)
 	end
 end
 
 local OnEnable = function(self)
-	self.Elapsed = 0
-	self:SetScript("OnUpdate", Update)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", OnLeave)
+	self.Ticker = C_Timer.NewTicker(0.5, function()
+		Update(self)
+	end)
 
-	self:Update(1)
+	Update(self)
 end
 
 local OnDisable = function(self)
-	self:SetScript("OnUpdate", nil)
+	if self.Ticker then
+		self.Ticker:Cancel()
+		self.Ticker = nil
+	end
+
 	self:SetScript("OnEnter", nil)
 	self:SetScript("OnLeave", nil)
-	self.Elapsed = 0
 
 	self.Text:SetText("")
 end

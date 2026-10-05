@@ -66,6 +66,22 @@ def test_data_text_module_is_cached_when_chat_frames_are_initialized():
     assert "HydraUI:GetModule" not in focus_hooks
 
 
+def test_chat_mouse_wheel_is_explicitly_enabled_and_restored_during_layout():
+    frames = source("Frames.lua")
+    helper = frames[
+        frames.index("local EnableMouseWheel"):frames.index("local UpdateHeader")
+    ]
+    layout = frames[
+        frames.index("function Chat:MoveChatFrames()"):frames.index(
+            "function Chat:StyleChatFrames()"
+        )
+    ]
+
+    assert "frame:EnableMouseWheel(true)" in helper
+    assert 'frame:SetScript("OnMouseWheel", OnMouseWheel)' in helper
+    assert "EnableMouseWheel(Frame)" in layout
+
+
 def test_chat_message_customization_does_not_replace_blizzard_add_message():
     frames = source("Frames.lua")
 

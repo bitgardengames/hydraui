@@ -90,6 +90,14 @@ local OnMouseWheel = function(self, delta)
 	end
 end
 
+local EnableMouseWheel = function(frame)
+	-- Blizzard can reset mouse-wheel input while restoring chat windows or
+	-- applying chat CVars. Styling only runs once, so restore both pieces of
+	-- state whenever the frames are laid out again.
+	frame:EnableMouseWheel(true)
+	frame:SetScript("OnMouseWheel", OnMouseWheel)
+end
+
 local UpdateHeader = function(editbox)
 	local ChatType = editbox:GetAttribute("chatType")
 
@@ -327,7 +335,7 @@ function Chat:StyleChatFrame(frame)
 	frame:SetClampedToScreen(false)
 	frame:SetFading(false)
 	frame:EnableMouse(true)
-	frame:SetScript("OnMouseWheel", OnMouseWheel)
+	EnableMouseWheel(frame)
 	frame:SetSize(self:GetWidth() - 8, self:GetHeight() - 8)
 	frame:SetFrameLevel(self:GetFrameLevel() + 1)
 	frame:SetFrameStrata("MEDIUM")
@@ -451,6 +459,7 @@ function Chat:MoveChatFrames()
 	}
 
 	for Frame in pairs(self.StyledFrames) do
+		EnableMouseWheel(Frame)
 
 		Frame:SetFrameLevel(self.Middle:GetFrameLevel() + 1)
 		Frame:SetFrameStrata("MEDIUM")

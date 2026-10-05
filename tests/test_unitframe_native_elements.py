@@ -134,7 +134,14 @@ def test_vanilla_health_predictions_are_driven_by_libhealcomm():
         "HealComm_ModifierChanged",
         "HealComm_GUIDDisappeared",
     ):
-        assert f'HealComm.RegisterCallback(frame, "{callback}"' in source
+        handler = "HealModifierChanged" if callback in (
+            "HealComm_ModifierChanged",
+            "HealComm_GUIDDisappeared",
+        ) else "HealUpdated"
+        assert (
+            f'HealComm.RegisterCallback(frame, "{callback}", {handler}, frame)'
+            in source
+        )
         assert f'HealComm.UnregisterCallback(frame, "{callback}")' in source
 
     assert 'frame:RegisterEvent("PLAYER_TARGET_CHANGED", UpdatePrediction, true)' in source

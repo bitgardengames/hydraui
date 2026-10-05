@@ -182,12 +182,24 @@ local function UnitAttributeChanged(self, name, value)
 	end
 end
 
-local function PollEventless(self, elapsed)
-	self._pollElapsed = (self._pollElapsed or 0) + elapsed
+local function PollEventless(self)
+	self:Refresh("PollEventless")
+end
 
-	if self._pollElapsed >= 0.5 then
-		self._pollElapsed = 0
-		self:Refresh("OnUpdate")
+local function StartEventlessPolling(self)
+	UpdateUnit(self, "OnShow")
+
+	if not self._pollTicker then
+		self._pollTicker = C_Timer.NewTicker(0.5, function()
+			PollEventless(self)
+		end)
+	end
+end
+
+local function StopEventlessPolling(self)
+	if self._pollTicker then
+		self._pollTicker:Cancel()
+		self._pollTicker = nil
 	end
 end
 
@@ -254,6 +266,7 @@ end
 
 local function Disable(self)
 	UnregisterUnitWatch(self)
+	StopEventlessPolling(self)
 	self:Hide()
 end
 
@@ -314,7 +327,8 @@ local function InitializeUnitButton(frame, unit, builder, pollsUnit)
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD", UpdateUnit, true)
 
 	if pollsUnit then
-		frame:SetScript("OnUpdate", PollEventless)
+		frame:SetScript("OnShow", StartEventlessPolling)
+		frame:SetScript("OnHide", StopEventlessPolling)
 	else
 		frame:RegisterEvent("UNIT_ENTERED_VEHICLE", UpdateUnit)
 		frame:RegisterEvent("UNIT_EXITED_VEHICLE", UpdateUnit)
@@ -324,7 +338,9 @@ local function InitializeUnitButton(frame, unit, builder, pollsUnit)
 		end
 	end
 
-	frame:SetScript("OnShow", UpdateUnit)
+	if not pollsUnit then
+		frame:SetScript("OnShow", UpdateUnit)
+	end
 	frame:HookScript("OnAttributeChanged", UnitAttributeChanged)
 	EnableClickCasting(frame)
 end
@@ -351,6 +367,12 @@ function UnitFrames:CreateUnitButton(unit, globalName, builder)
 	end
 
 	RegisterUnitWatch(frame)
+
+	-- A newly-created frame can already be visible, in which case installing an
+	-- OnShow handler does not invoke it retroactively.
+	if frame._pollsUnit and frame:IsShown() then
+		StartEventlessPolling(frame)
+	end
 
 	return frame
 end

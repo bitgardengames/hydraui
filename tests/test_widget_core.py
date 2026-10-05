@@ -229,15 +229,18 @@ def test_page_callbacks_are_released_after_widget_creation():
     assert "page.Callbacks = nil" in creation
 
 
-def test_navigation_categories_are_collapsible_and_lazy_rows_follow_state():
-    assert "PageLookup = {}, Expanded = true" in PAGES
-    assert "function GUI:SetCategoryExpanded(category, expanded)" in NAVIGATION
-    assert "function GUI:ToggleCategory(category)" in NAVIGATION
-    assert 'Category:SetScript("OnMouseUp", CategoryOnMouseUp)' in NAVIGATION
-    assert "GUI:ToggleCategory(self.Descriptor)" in NAVIGATION
+def test_navigation_headers_are_static_and_parent_pages_control_children():
+    assert "PageLookup = {}}" in PAGES
+    assert "function GUI:SetPageExpanded(page, expanded)" in NAVIGATION
+    assert "function GUI:TogglePage(page)" in NAVIGATION
+    assert 'Category:SetScript("OnEnter"' not in NAVIGATION
+    assert 'Category:SetScript("OnLeave"' not in NAVIGATION
+    assert 'Category:SetScript("OnMouseUp"' not in NAVIGATION
+    assert "Category.Arrow" not in NAVIGATION
+    assert "self:TogglePage(Page)" in NAVIGATION
 
     row_builder = NAVIGATION[NAVIGATION.index("function GUI:ScrollSelections()") :]
-    assert "if Category.Expanded then" in row_builder
+    assert "if Category.Expanded then" not in row_builder
     assert "if Page.Expanded then" in row_builder
 
 
@@ -247,6 +250,5 @@ def test_programmatic_child_navigation_reveals_its_ancestors():
             "local WindowButtonOnEnter"
         )
     ]
-    assert "if not Page.Category.Expanded then" in show_window
     assert "if not ParentPage.Expanded then" in show_window
-    assert show_window.count("self.SelectionRowsDirty = true") >= 3
+    assert "self:SetPageExpanded(ParentPage, true)" in show_window

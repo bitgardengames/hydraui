@@ -13,31 +13,19 @@ local SetArrowDirection = function(arrow, expanded)
 	arrow:SetTexture(Assets:GetTexture(expanded and "Arrow Up" or "Arrow Down"))
 end
 
-function GUI:SetCategoryExpanded(category, expanded)
-	if category.Expanded == expanded then
+function GUI:SetPageExpanded(page, expanded)
+	if page.Parent or #page.Children == 0 or page.Expanded == expanded then
 		return
 	end
 
-	category.Expanded = expanded
-	SetArrowDirection(category.Frame.Arrow, expanded)
+	page.Expanded = expanded
+	SetArrowDirection(page.Button.Arrow, expanded)
 	self.SelectionRowsDirty = true
 	self:ScrollSelections()
 end
 
-function GUI:ToggleCategory(category)
-	self:SetCategoryExpanded(category, not category.Expanded)
-end
-
-local CategoryOnEnter = function(self)
-	self.Highlight:SetAlpha(MOUSEOVER_HIGHLIGHT_ALPHA)
-end
-
-local CategoryOnLeave = function(self)
-	self.Highlight:SetAlpha(0)
-end
-
-local CategoryOnMouseUp = function(self)
-	GUI:ToggleCategory(self.Descriptor)
+function GUI:TogglePage(page)
+	self:SetPageExpanded(page, not page.Expanded)
 end
 
 function GUI:SortMenuButtons()
@@ -89,13 +77,10 @@ function GUI:CreateCategory(name)
 	Category:SetSize(MENU_BUTTON_WIDTH, WIDGET_HEIGHT)
 	Category:SetFrameLevel(self:GetFrameLevel() + 2)
 	Category.Descriptor = Descriptor
-	Category:SetScript("OnEnter", CategoryOnEnter)
-	Category:SetScript("OnLeave", CategoryOnLeave)
-	Category:SetScript("OnMouseUp", CategoryOnMouseUp)
 
 	local Text = Category:CreateFontString(nil, "OVERLAY")
 	Text:SetPoint("LEFT", Category, 5, 0)
-	Text:SetSize(MENU_BUTTON_WIDTH - 24, WIDGET_HEIGHT)
+	Text:SetSize(MENU_BUTTON_WIDTH - 10, WIDGET_HEIGHT)
 	HydraUI:SetFontInfo(Text, Settings["ui-widget-font"], Settings["ui-font-size"])
 	Text:SetJustifyH("LEFT")
 	Text:SetText(format("|cFF%s%s|r", Settings["ui-header-font-color"], name))
@@ -110,23 +95,8 @@ function GUI:CreateCategory(name)
 	Texture:SetTexture(Assets:GetTexture("Blank"))
 	Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-header-texture-color"]))
 
-	local Highlight = Category:CreateTexture(nil, "OVERLAY")
-	Highlight:SetPoint("TOPLEFT", Category, 1, -1)
-	Highlight:SetPoint("BOTTOMRIGHT", Category, -1, 1)
-	Highlight:SetTexture(Assets:GetTexture("Blank"))
-	Highlight:SetVertexColor(1, 1, 1, 0.4)
-	Highlight:SetAlpha(0)
-
-	local Arrow = Category:CreateTexture(nil, "OVERLAY")
-	Arrow:SetPoint("RIGHT", Category, -3, -1)
-	Arrow:SetSize(16, 16)
-	Arrow:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-color"]))
-	SetArrowDirection(Arrow, Descriptor.Expanded)
-
 	Category.Text = Text
 	Category.Texture = Texture
-	Category.Highlight = Highlight
-	Category.Arrow = Arrow
 	Descriptor.Frame = Category
 
 	self.TotalSelections = (self.TotalSelections or 0) + 1
@@ -161,19 +131,11 @@ function GUI:ShowWindow(category, name, parent)
 		Page.Window = self:CreateWidgetWindow(Page)
 	end
 
-	if not Page.Category.Expanded then
-		Page.Category.Expanded = true
-		SetArrowDirection(Page.Category.Frame.Arrow, true)
-		self.SelectionRowsDirty = true
-	end
-
 	if Page.Parent then
 		local ParentPage = Page.Parent
 
 		if not ParentPage.Expanded then
-			ParentPage.Expanded = true
-			SetArrowDirection(ParentPage.Button.Arrow, true)
-			self.SelectionRowsDirty = true
+			self:SetPageExpanded(ParentPage, true)
 		end
 
 		if ParentPage.Window then
@@ -184,25 +146,7 @@ function GUI:ShowWindow(category, name, parent)
 			ParentPage.Button.Selected:SetAlpha(0)
 		end
 	elseif #Page.Children > 0 then
-		Page.Expanded = not Page.Expanded
-		SetArrowDirection(Button.Arrow, Page.Expanded)
-
-		for i = 1, #Page.Children do
-			local ChildPage = Page.Children[i]
-			local ChildButton = ChildPage.Button
-
-			if ChildPage.Window then
-				ChildPage.Window:Hide()
-
-				if ChildButton.Selected:GetAlpha() > 0 then
-					ChildButton.Selected:SetAlpha(0)
-				end
-			end
-
-			ChildButton:Hide()
-		end
-
-		self.SelectionRowsDirty = true
+		self:TogglePage(Page)
 	end
 
 	Button.Selected:SetAlpha(SELECTED_HIGHLIGHT_ALPHA)
@@ -328,16 +272,14 @@ function GUI:ScrollSelections()
 			local Category = Categories[i]
 			tinsert(Rows, Category.Frame)
 
-			if Category.Expanded then
-				for j = 1, #Category.Pages do
-					local Page = Category.Pages[j]
+			for j = 1, #Category.Pages do
+				local Page = Category.Pages[j]
 
-					tinsert(Rows, Page.Button)
+				tinsert(Rows, Page.Button)
 
-					if Page.Expanded then
-						for o = 1, #Page.Children do
-							tinsert(Rows, Page.Children[o].Button)
-						end
+				if Page.Expanded then
+					for o = 1, #Page.Children do
+						tinsert(Rows, Page.Children[o].Button)
 					end
 				end
 			end

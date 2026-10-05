@@ -1,6 +1,6 @@
 local HydraUI, Language, Assets, Settings = select(2, ...):get()
 local Chat = HydraUI:GetModule("Chat")
-local select, match, gsub = select, string.match, string.gsub
+local select, match, format = select, string.match, string.format
 local NoCall = function() end
 local CHAT_LABEL = CHAT_LABEL
 local DT
@@ -223,12 +223,15 @@ local OnHyperlinkLeave = function(self)
 	GameTooltip:Hide()
 end
 
-local ShortenChannelNames = function(self, event, msg, ...)
-	if Settings["chat-shorten-channels"] and (type(msg) == "string") then
-		msg = gsub(msg, "|h%[(%d+)%.%s.-%]|h", "|h[%1]|h")
+local ShortenChannelNames = function(self, event, msg, sender, languageName, channelName, target, flags, zoneChannelID, channelIndex, channelBaseName, ...)
+	-- Blizzard supplies the locale-correct base name separately from the decorated
+	-- channel name (for example, "Trade" rather than "Trade - City"). Using that
+	-- event field avoids making assumptions about words or separators in a locale.
+	if Settings["chat-shorten-channels"] and channelIndex and channelBaseName and (channelBaseName ~= "") then
+		channelName = format("%s. %s", channelIndex, channelBaseName)
 	end
 
-	return false, msg, ...
+	return false, msg, sender, languageName, channelName, target, flags, zoneChannelID, channelIndex, channelBaseName, ...
 end
 
 ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", ShortenChannelNames)

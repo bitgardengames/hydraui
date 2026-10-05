@@ -194,12 +194,6 @@ local DropdownDisable = function(self)
 	self.Dropdown.Button.Arrow:SetVertexColor(HydraUI:HexToRGB("A5A5A5"))
 end
 
-local DropdownRequiresReload = function(self, flag)
-	self.ReloadFlag = flag
-
-	return self
-end
-
 local NormalizeDropdownOffset = function(self, offset)
 	return Core.NormalizeDropdownOffset(offset, #self, DROPDOWN_MAX_SHOWN)
 end
@@ -540,9 +534,7 @@ local DropdownRemoveSelection = function(self, key)
 end
 
 GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, hook, specific)
-	if Settings[id] ~= nil then
-		value = Settings[id]
-	end
+	value = Core.GetInitialValue(id, value)
 
 	local Anchor = CreateFrame("Frame", nil, self)
 	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
@@ -568,7 +560,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Hook = hook
 	Dropdown.Tooltip = tooltip
 	Dropdown.SpecificType = specific
-	Dropdown.RequiresReload = DropdownRequiresReload
+	Dropdown.RequiresReload = Core.SetRequiresReload
 	Dropdown.DisableSaving = DropdownDisableSaving
 
 	Dropdown.Sort = DropdownSort

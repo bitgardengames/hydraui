@@ -5,7 +5,7 @@ local SPACING, HEADER_HEIGHT, HEADER_SPACING = Core.SPACING, Core.HEADER_HEIGHT,
 local GROUP_HEIGHT, GROUP_WIDTH, WIDGET_HEIGHT = Core.GROUP_HEIGHT, Core.GROUP_WIDTH, Core.WIDGET_HEIGHT
 local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
-local RegisterWidget, SetVariable = Core.RegisterWidget, Core.SetVariable
+local RegisterWidget, CommitValue = Core.RegisterWidget, Core.CommitValue
 local Round, TrimHex = Core.Round, Core.TrimHex
 local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
@@ -49,13 +49,7 @@ local ColorPickerAccept = function(self)
 		Active.MiddleText:SetText("#"..upper(GUI.ColorPicker.Selected))
 		Active.Value = GUI.ColorPicker.Selected
 
-		SetVariable(Active.ID, Active.Value)
-
-		if Active.ReloadFlag then
-			HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, Active.Hook, CANCEL, nil, Active.Value, Active.ID)
-		elseif Active.Hook then
-			Active.Hook(Active.Value, Active.ID)
-		end
+		CommitValue(Active, Active.Value)
 	end
 
 	GUI.ColorPicker.FadeOut:Play()
@@ -587,16 +581,8 @@ local ColorSelectionOnMouseDown = function(self)
 	self.MiddleText:SetPoint("CENTER", self, 1, -1)
 end
 
-local ColorRequiresReload = function(self, flag)
-	self.ReloadFlag = flag
-
-	return self
-end
-
 GUI.Widgets.CreateColorSelection = function(self, id, value, label, tooltip, hook)
-	if Settings[id] ~= nil then
-		value = Settings[id]
-	end
+	value = Core.GetInitialValue(id, value)
 	value = Core.NormalizeColor(value)
 
 	local Anchor = CreateFrame("Frame", nil, self)
@@ -636,7 +622,7 @@ GUI.Widgets.CreateColorSelection = function(self, id, value, label, tooltip, hoo
 	Button.Value = value
 	Button.Tooltip = tooltip
 	Button.Swatch = Swatch
-	Button.RequiresReload = ColorRequiresReload
+	Button.RequiresReload = Core.SetRequiresReload
 
 	Button.Highlight = Button:CreateTexture(nil, "OVERLAY")
 	Button.Highlight:SetPoint("TOPLEFT", Button, 1, -1)

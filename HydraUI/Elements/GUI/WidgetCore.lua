@@ -21,11 +21,26 @@ GUI.WidgetCore = Core
 
 function Core.RegisterWidget(owner, anchor, id)
 	table.insert(owner.Widgets, anchor)
-	if id ~= "" then
+	if id and id ~= "" then
 		GUI.WidgetID[id] = anchor
 	end
 
 	return anchor
+end
+
+-- Constructors receive defaults, but a saved setting always takes priority.
+function Core.GetInitialValue(id, default)
+	if Settings[id] ~= nil then
+		return Settings[id]
+	end
+
+	return default
+end
+
+function Core.SetRequiresReload(self, flag)
+	self.ReloadFlag = flag
+
+	return self
 end
 
 local PersistenceOptOut = {
@@ -51,6 +66,21 @@ function Core.SetVariable(id, value, widget)
 	Settings[id] = value
 
 	return true
+end
+
+function Core.NotifyValueChanged(widget, value)
+	if widget.ReloadFlag then
+		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, widget.Hook, CANCEL, nil, value, widget.ID)
+	elseif widget.Hook then
+		widget.Hook(value, widget.ID)
+	end
+end
+
+-- Every value control finishes an interaction the same way: save once, then
+-- notify once. SetVariable handles controls which explicitly opt out of saving.
+function Core.CommitValue(widget, value)
+	Core.SetVariable(widget.ID, value, widget)
+	Core.NotifyValueChanged(widget, value)
 end
 
 function Core.Round(num, dec)

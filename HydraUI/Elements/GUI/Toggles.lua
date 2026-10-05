@@ -5,7 +5,7 @@ local SPACING, HEADER_HEIGHT, HEADER_SPACING = Core.SPACING, Core.HEADER_HEIGHT,
 local GROUP_HEIGHT, GROUP_WIDTH, WIDGET_HEIGHT = Core.GROUP_HEIGHT, Core.GROUP_WIDTH, Core.WIDGET_HEIGHT
 local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
-local RegisterWidget, SetVariable = Core.RegisterWidget, Core.SetVariable
+local RegisterWidget, CommitValue = Core.RegisterWidget, Core.CommitValue
 local Round, TrimHex = Core.Round, Core.TrimHex
 local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
@@ -26,13 +26,7 @@ local CheckboxOnMouseUp = function(self)
 		self.Value = true
 	end
 
-	SetVariable(self.ID, self.Value)
-
-	if self.ReloadFlag then
-		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, self.Value, self.ID)
-	elseif self.Hook then
-		self.Hook(self.Value, self.ID)
-	end
+	CommitValue(self, self.Value)
 end
 
 local CheckboxOnEnter = function(self)
@@ -43,16 +37,8 @@ local CheckboxOnLeave = function(self)
 	self.Highlight:SetAlpha(0)
 end
 
-local CheckboxRequiresReload = function(self, flag)
-	self.ReloadFlag = flag
-
-	return self
-end
-
 GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
-	if Settings[id] ~= nil then
-		value = Settings[id]
-	end
+	value = Core.GetInitialValue(id, value)
 
 	local Anchor = CreateFrame("Frame", nil, self)
 	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
@@ -76,7 +62,7 @@ GUI.Widgets.CreateCheckbox = function(self, id, value, label, tooltip, hook)
 	Checkbox.Hook = hook
 	Checkbox.Tooltip = tooltip
 	Checkbox.ID = id
-	Checkbox.RequiresReload = CheckboxRequiresReload
+	Checkbox.RequiresReload = Core.SetRequiresReload
 
 	local BG = Checkbox:CreateTexture(nil, "ARTWORK")
 	BG:SetPoint("TOPLEFT", Checkbox, 1, -1)
@@ -162,13 +148,7 @@ local SwitchOnMouseUp = function(self)
 
 	self.Move:Play()
 
-	SetVariable(self.ID, self.Value)
-
-	if self.ReloadFlag then
-		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, self.Value, self.ID)
-	elseif self.Hook then
-		self.Hook(self.Value, self.ID)
-	end
+	CommitValue(self, self.Value)
 end
 
 local SwitchOnMouseWheel = function(self, delta)
@@ -220,16 +200,8 @@ local SwitchDisable = function(self)
 	self.Switch.Flavor:SetVertexColor(HydraUI:HexToRGB("A5A5A5"))
 end
 
-local SwitchRequiresReload = function(self, flag)
-	self.ReloadFlag = flag
-
-	return self
-end
-
 GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
-	if Settings[id] ~= nil then
-		value = Settings[id]
-	end
+	value = Core.GetInitialValue(id, value)
 
 	local Anchor = CreateFrame("Frame", nil, self)
 	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
@@ -255,7 +227,7 @@ GUI.Widgets.CreateSwitch = function(self, id, value, label, tooltip, hook)
 	Switch.Hook = hook
 	Switch.Tooltip = tooltip
 	Switch.ID = id
-	Switch.RequiresReload = SwitchRequiresReload
+	Switch.RequiresReload = Core.SetRequiresReload
 	Switch.OnMouseWheel = SwitchOnMouseWheel
 
 	local BG = Switch:CreateTexture(nil, "ARTWORK")

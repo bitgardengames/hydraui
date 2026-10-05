@@ -5,7 +5,7 @@ local SPACING, HEADER_HEIGHT, HEADER_SPACING = Core.SPACING, Core.HEADER_HEIGHT,
 local GROUP_HEIGHT, GROUP_WIDTH, WIDGET_HEIGHT = Core.GROUP_HEIGHT, Core.GROUP_WIDTH, Core.WIDGET_HEIGHT
 local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
-local RegisterWidget, SetVariable = Core.RegisterWidget, Core.SetVariable
+local RegisterWidget, CommitValue = Core.RegisterWidget, Core.CommitValue
 local Round, TrimHex = Core.Round, Core.TrimHex
 local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
@@ -34,13 +34,7 @@ local SliderOnValueChanged = function(self)
 	self.EditBox.Value = Value
 	self.EditBox:SetText(self.Prefix..Value..self.Postfix)
 
-	SetVariable(self.ID, Value)
-
-	if self.ReloadFlag then
-		HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.Hook, CANCEL, nil, Value, self.ID)
-	elseif self.Hook then
-		self.Hook(Value, self.ID)
-	end
+	CommitValue(self, Value)
 end
 
 local SliderOnMouseWheel = function(self, delta)
@@ -195,16 +189,8 @@ local SliderDisable = function(self)
 	self.Slider.Progress:SetVertexColor(HydraUI:HexToRGB("A5A5A5"))
 end
 
-local SliderRequiresReload = function(self, flag)
-	self.ReloadFlag = flag
-
-	return self
-end
-
 GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, label, tooltip, hook, prefix, postfix)
-	if Settings[id] ~= nil then
-		value = Settings[id]
-	end
+	value = Core.GetInitialValue(id, value)
 
 	local Anchor = CreateFrame("Frame", nil, self)
 	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
@@ -295,7 +281,7 @@ GUI.Widgets.CreateSlider = function(self, id, value, minvalue, maxvalue, step, l
 	Slider.Hook = hook
 	Slider.ID = id
 	Slider.AppliedValue = NormalizeSliderValue(Slider, Slider:GetValue())
-	Slider.RequiresReload = SliderRequiresReload
+	Slider.RequiresReload = Core.SetRequiresReload
 	Slider.OnMouseWheel = SliderOnMouseWheel
 
 	Slider.Text = Slider:CreateFontString(nil, "OVERLAY")

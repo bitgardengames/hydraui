@@ -5,6 +5,19 @@ local NoCall = function() end
 local CHAT_LABEL = CHAT_LABEL
 local DT
 
+-- The base-name event argument is available on current clients.  Keep a
+-- localized fallback for older game clients which only provide the stable
+-- zone channel ID and the decorated channel name.
+local ZoneChannelBaseNames = {
+	[1] = GENERAL,
+	[2] = TRADE,
+	[22] = LOCAL_DEFENSE,
+	[23] = WORLD_DEFENSE,
+	[25] = GUILD_RECRUITMENT,
+	[26] = LOOKING_FOR_GROUP,
+	[42] = SERVICES,
+}
+
 Chat.StyledFrames = Chat.StyledFrames or {}
 Chat.TemporaryWindowHooks = Chat.TemporaryWindowHooks or {}
 function Chat:ForEachStyledFrame(callback)
@@ -227,8 +240,12 @@ local ShortenChannelNames = function(self, event, msg, sender, languageName, cha
 	-- Blizzard supplies the locale-correct base name separately from the decorated
 	-- channel name (for example, "Trade" rather than "Trade - City"). Using that
 	-- event field avoids making assumptions about words or separators in a locale.
-	if Settings["chat-shorten-channels"] and channelIndex and channelBaseName and (channelBaseName ~= "") then
-		channelName = format("%s. %s", channelIndex, channelBaseName)
+	-- Older clients do not supply that field, so use the localized global selected
+	-- by their stable zone channel ID instead of parsing locale-dependent text.
+	local baseName = channelBaseName or ZoneChannelBaseNames[zoneChannelID]
+
+	if Settings["chat-shorten-channels"] and channelIndex and baseName and (baseName ~= "") then
+		channelName = format("%s. %s", channelIndex, baseName)
 	end
 
 	return false, msg, sender, languageName, channelName, target, flags, zoneChannelID, channelIndex, channelBaseName, ...

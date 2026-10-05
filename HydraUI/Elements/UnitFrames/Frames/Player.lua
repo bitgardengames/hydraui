@@ -222,15 +222,19 @@ Defaults.PlayerResourceTexture = "HydraUI 4"
 
 -- Can do textures for health/power/castbar/player resources. That's only 4 settings, and only player needs the resources setting
 
+local function GetPlayerResourceAnchor(frame, resourceDetached)
+	if resourceDetached == nil then
+		resourceDetached = Settings["player-move-resource"]
+	end
+	local resource = frame.ClassResource
+	return resource and resource:IsShown() and not resourceDetached and resource or frame
+end
+
 local function UpdatePlayerAuraAnchors(frame, resourceDetached)
 	if not frame.Buffs or not frame.Debuffs then
 		return
 	end
-	if resourceDetached == nil then
-		resourceDetached = Settings["player-move-resource"]
-	end
-	local resourceAttached = frame.ClassResource and frame.ClassResource:IsShown() and not resourceDetached
-	local anchor = resourceAttached and frame.ClassResource or frame
+	local anchor = GetPlayerResourceAnchor(frame, resourceDetached)
 	frame.Buffs:ClearAllPoints()
 	frame.Debuffs:ClearAllPoints()
 	if Settings["unitframes-show-player-buffs"] then
@@ -248,8 +252,7 @@ UpdatePlayerResourceAnchors = function(frame, resourceDetached)
 	UpdatePlayerAuraAnchors(frame, resourceDetached)
 	if frame.ThreatIndicator then
 		frame.ThreatIndicator:ClearAllPoints()
-		local resourceAttached = frame.ClassResource and frame.ClassResource:IsShown() and not resourceDetached
-		local anchor = resourceAttached and frame.ClassResource or frame
+		local anchor = GetPlayerResourceAnchor(frame, resourceDetached)
 		frame.ThreatIndicator:SetPoint("TOPLEFT", anchor, -1, 1)
 		frame.ThreatIndicator:SetPoint("BOTTOMRIGHT", frame, 1, -1)
 	end

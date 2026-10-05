@@ -5,7 +5,9 @@ local GetMaxNumQuestsCanAccept = C_QuestLog.GetMaxNumQuestsCanAccept
 local GetQuestDifficultyColor = GetQuestDifficultyColor
 local Label = QUESTS_LABEL
 local DungeonLabel = TRACKER_HEADER_DUNGEON or "Dungeon"
+local EliteLabel = ELITE or "Elite"
 local DungeonQuestTagID = Enum and Enum.QuestTag and Enum.QuestTag.Dungeon or 81
+local EliteQuestTagID = Enum and Enum.QuestTag and Enum.QuestTag.Elite or 1
 local GetQuestTagInfo = C_QuestLog.GetQuestTagInfo or GetQuestTagInfo
 
 local GetNumQuests, GetQuestInfo
@@ -28,18 +30,18 @@ else
 	end
 end
 
-local IsDungeonQuest = function(QuestID)
+local GetQuestTags = function(QuestID)
 	if not GetQuestTagInfo or not QuestID then
-		return false
+		return false, false
 	end
 
 	local TagInfo = GetQuestTagInfo(QuestID)
 
 	if type(TagInfo) == "table" then
-		return TagInfo.tagID == DungeonQuestTagID
+		return TagInfo.tagID == DungeonQuestTagID, TagInfo.isElite or TagInfo.tagID == EliteQuestTagID
 	end
 
-	return TagInfo == DungeonQuestTagID
+	return TagInfo == DungeonQuestTagID, TagInfo == EliteQuestTagID
 end
 
 local OnMouseUp = function()
@@ -72,21 +74,24 @@ local OnEnter = function(self)
 			local Color = GetQuestDifficultyColor(Info.level)
 			local QuestText = format("[%s] %s", Info.level, Info.title)
 			local IsComplete = Info.isComplete == true or Info.isComplete == 1
-			local IsDungeon = IsDungeonQuest(Info.questID)
-			local Status
+			local IsDungeon, IsElite = GetQuestTags(Info.questID)
+			local Status = {}
+			local DifficultyColor = HydraUI:RGBToHex(Color.r, Color.g, Color.b)
 
-			if IsComplete then
-				Status = IsDungeon and format("%s, %s", DungeonLabel, COMPLETE) or COMPLETE
-			elseif IsDungeon then
-				Status = DungeonLabel
+			if IsDungeon then
+				Status[#Status + 1] = format("|cFF%s%s|r", DifficultyColor, DungeonLabel)
 			end
 
-			if Status then
-				local StatusRed = IsComplete and 0 or 0.6
-				local StatusGreen = IsComplete and 1 or 0.6
-				local StatusBlue = IsComplete and 0 or 0.6
+			if IsElite then
+				Status[#Status + 1] = format("|cFF%s%s|r", DifficultyColor, EliteLabel)
+			end
 
-				GameTooltip:AddDoubleLine(QuestText, Status, Color.r, Color.g, Color.b, StatusRed, StatusGreen, StatusBlue)
+			if IsComplete then
+				Status[#Status + 1] = format("|cFF00FF00%s|r", COMPLETE)
+			end
+
+			if #Status > 0 then
+				GameTooltip:AddDoubleLine(QuestText, table.concat(Status, ", "), Color.r, Color.g, Color.b, 1, 1, 1)
 			else
 				GameTooltip:AddLine(QuestText, Color.r, Color.g, Color.b)
 			end

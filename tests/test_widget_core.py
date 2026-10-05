@@ -89,6 +89,17 @@ def test_value_widgets_share_initialization_and_reload_lifecycle():
         assert "RequiresReload = Core.SetRequiresReload" in source
 
 
+def test_opt_out_and_value_commit_lifecycle_is_shared():
+    assert "function Core.DisableSaving" in CORE
+    assert "CommitValue(Dropdown, Value)" in VALUE_WIDGETS["Dropdowns"]
+    assert "CommitValue(Input, Text)" in VALUE_WIDGETS["Inputs"]
+    assert "DisableSaving = Core.DisableSaving" in VALUE_WIDGETS["Dropdowns"]
+    assert "DisableSaving = Core.DisableSaving" in VALUE_WIDGETS["Inputs"]
+
+    assert "DropdownDisableSaving" not in VALUE_WIDGETS["Dropdowns"]
+    assert "InputDisableSaving" not in VALUE_WIDGETS["Inputs"]
+
+
 def test_standard_value_changes_use_one_persistence_and_notification_path():
     assert "function Core.CommitValue(widget, value)" in CORE
     assert "Core.SetVariable(widget.ID, value, widget)" in CORE
@@ -133,6 +144,14 @@ def test_lua_viewport_owns_rendering_scrollbar_and_mousewheel_contracts():
     assert "RenderRow = options.RenderRow" in GUI
     assert "SetSelectionOffset" not in NAVIGATION
     assert "WindowScrollBarOnValueChanged" not in FRAME
+
+
+def test_dropdown_scrolling_delegates_to_shared_viewport():
+    dropdowns = VALUE_WIDGETS["Dropdowns"]
+    assert "self.RowViewport:ScrollBy(delta)" in dropdowns
+    assert "Viewport:SetOffset(1)" in dropdowns
+    assert "DropdownScrollBarOnValueChanged" not in dropdowns
+    assert "SetDropdownOffsetByDelta" not in dropdowns
 
 
 def test_lua_viewport_hides_rows_outside_a_replaced_collection_on_first_render():

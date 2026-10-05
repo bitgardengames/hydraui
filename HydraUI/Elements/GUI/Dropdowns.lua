@@ -5,7 +5,7 @@ local SPACING, HEADER_HEIGHT, HEADER_SPACING = Core.SPACING, Core.HEADER_HEIGHT,
 local GROUP_HEIGHT, GROUP_WIDTH, WIDGET_HEIGHT = Core.GROUP_HEIGHT, Core.GROUP_WIDTH, Core.WIDGET_HEIGHT
 local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
-local RegisterWidget, SetVariable = Core.RegisterWidget, Core.SetVariable
+local RegisterWidget, CommitValue = Core.RegisterWidget, Core.CommitValue
 local Round, TrimHex = Core.Round, Core.TrimHex
 local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
@@ -29,12 +29,6 @@ local CloseLastDropdown = function(compare)
 			Controller.Active.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 		end
 	end
-end
-
-local DropdownDisableSaving = function(self)
-	self.IsSavingDisabled = true
-
-	return self
 end
 
 local InitializeDropdown
@@ -105,8 +99,11 @@ local DropdownButtonOnMouseDown = function(self)
 end
 
 local MenuItemOnMouseUp = function(self)
+	local Dropdown = self.GrandParent
+	local Value = GetDropdownSelectionValue(Dropdown, self)
+
 	self.Parent.FadeOut:Play()
-	self.GrandParent.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
+	Dropdown.Button.Arrow:SetTexture(Assets:GetTexture("Arrow Down"))
 
 	if self.Parent.SelectedItem and self.Parent.SelectedItem ~= self then
 		self.Parent.SelectedItem.Selected:Hide()
@@ -114,44 +111,21 @@ local MenuItemOnMouseUp = function(self)
 
 	self.Selected:Show()
 	self.Parent.SelectedItem = self
-	self.Parent.SynchronizedValue = GetDropdownSelectionValue(self.GrandParent, self)
+	self.Parent.SynchronizedValue = Value
 
 	self.Highlight:SetAlpha(0)
 	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-widget-bright-color"]))
 
-	if self.GrandParent.SpecificType then
-		if not self.GrandParent.IsSavingDisabled then
-			SetVariable(self.ID, self.Key)
-		end
+	Dropdown.Value = Value
+	CommitValue(Dropdown, Value)
 
-		self.GrandParent.Value = self.Key
-
-		if self.GrandParent.ReloadFlag then
-			HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.GrandParent.Hook, CANCEL, nil, self.Key, self.ID)
-		elseif self.GrandParent.Hook then
-			self.GrandParent.Hook(self.Key, self.ID)
-		end
-	else
-		if not self.GrandParent.IsSavingDisabled then
-			SetVariable(self.ID, self.Value)
-		end
-
-		self.GrandParent.Value = self.Value
-
-		if self.GrandParent.ReloadFlag then
-			HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, self.GrandParent.Hook, CANCEL, nil, self.Value, self.ID)
-		elseif self.GrandParent.Hook then
-			self.GrandParent.Hook(self.Value, self.ID)
-		end
+	if Dropdown.SpecificType == "Texture" then
+		Dropdown.Texture:SetTexture(Assets:GetTexture(self.Key))
+	elseif Dropdown.SpecificType == "Font" then
+		HydraUI:SetFontInfo(Dropdown.Current, self.Key, Settings["ui-font-size"])
 	end
 
-	if self.GrandParent.SpecificType == "Texture" then
-		self.GrandParent.Texture:SetTexture(Assets:GetTexture(self.Key))
-	elseif self.GrandParent.SpecificType == "Font" then
-		HydraUI:SetFontInfo(self.GrandParent.Current, self.Key, Settings["ui-font-size"])
-	end
-
-	self.GrandParent.Current:SetText(self.Key)
+	Dropdown.Current:SetText(self.Key)
 end
 
 local MenuItemOnMouseDown = function(self)
@@ -216,41 +190,9 @@ local AnchorDropdownRows = function(self, first, last)
 	end
 end
 
-local SyncDropdownScrollBar = function(self)
-	if self.RowViewport then
-		self.RowViewport:SyncScrollBar()
-	end
-end
-
-local ScrollMenu = function(self)
-	self.RowViewport:SetOffset(self.Offset)
-	self.LastRenderedOffset = self.RowViewport.LastRenderedOffset
-end
-
-local SetDropdownOffsetByDelta = function(self, delta)
-	self.RowViewport:SetOffsetByDelta(delta)
-end
-
 local DropdownOnMouseWheel = function(self, delta)
-	self:SetDropdownOffsetByDelta(delta)
-	self:SetDropdownOffset(self.Offset)
-end
-
-local SetDropdownOffset = function(self, offset)
-	self.RowViewport:SetOffset(offset)
+	self.RowViewport:ScrollBy(delta)
 	self.LastRenderedOffset = self.RowViewport.LastRenderedOffset
-end
-
-local DropdownScrollBarOnValueChanged = function(self)
-	local Parent = self:GetParent()
-
-	if not Parent.RowViewport.Synchronizing then
-		Parent:SetDropdownOffset(self:GetValue())
-	end
-end
-
-local DropdownScrollBarOnMouseWheel = function(self, delta)
-	DropdownOnMouseWheel(self:GetParent(), delta)
 end
 
 local AddDropdownScrollBar = function(self)
@@ -263,16 +205,10 @@ local AddDropdownScrollBar = function(self)
 	GUI:StyleVerticalSlider(ScrollBar, {Width = ScrollWidth, ProgressTexture = Settings["ui-widget-texture"], ProgressColor = "ui-widget-color"})
 	ScrollBar:SetMinMaxValues(1, (#self - (DROPDOWN_MAX_SHOWN - 1)))
 	ScrollBar:SetValue(1)
-	ScrollBar:EnableMouseWheel(true)
-	ScrollBar:SetScript("OnMouseWheel", DropdownScrollBarOnMouseWheel)
-	ScrollBar:SetScript("OnValueChanged", DropdownScrollBarOnValueChanged)
 
 	self:EnableMouseWheel(true)
 	self:SetScript("OnMouseWheel", DropdownOnMouseWheel)
 
-	self.ScrollMenu = ScrollMenu
-	self.SetDropdownOffset = SetDropdownOffset
-	self.SetDropdownOffsetByDelta = SetDropdownOffsetByDelta
 	self.ScrollBar = ScrollBar
 	local Viewport = GUI:CreateRowViewport(self, {
 		Rows = self,
@@ -307,7 +243,7 @@ local AddDropdownScrollBar = function(self)
 	})
 	Viewport:SetScrollBar(ScrollBar)
 
-	self:SetDropdownOffset(1)
+	Viewport:SetOffset(1)
 
 	ScrollBar:Show()
 
@@ -561,7 +497,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Tooltip = tooltip
 	Dropdown.SpecificType = specific
 	Dropdown.RequiresReload = Core.SetRequiresReload
-	Dropdown.DisableSaving = DropdownDisableSaving
+	Dropdown.DisableSaving = Core.DisableSaving
 
 	Dropdown.Sort = DropdownSort
 	Dropdown.CreateSelection = DropdownCreateSelection

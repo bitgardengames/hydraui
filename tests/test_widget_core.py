@@ -7,6 +7,7 @@ SLIDERS = Path("HydraUI/Elements/GUI/Sliders.lua").read_text()
 GUI = Path("HydraUI/Elements/GUI/GUI.lua").read_text()
 NAVIGATION = Path("HydraUI/Elements/GUI/Navigation.lua").read_text()
 FRAME = Path("HydraUI/Elements/GUI/Frame.lua").read_text()
+PAGES = Path("HydraUI/Elements/GUI/Pages.lua").read_text()
 VALUE_WIDGETS = {
     name: Path(f"HydraUI/Elements/GUI/{name}.lua").read_text()
     for name in ("ColorPicker", "Dropdowns", "Inputs", "Sliders", "Toggles")
@@ -210,3 +211,19 @@ def test_interactive_widgets_share_anchor_creation_and_id_registration():
     # Compound controls used to opt out of the registry despite having stable IDs.
     assert "RegisterWidget(self, Anchor2, id)" in VALUE_WIDGETS["Inputs"]
     assert "RegisterWidget(self, Anchor, id)" in VALUE_WIDGETS["ColorPicker"]
+
+
+def test_page_descriptors_are_the_single_registration_source():
+    assert "GUI.ButtonQueue" not in GUI
+    assert "function GUI:QueuePage" not in PAGES
+    assert "page.Queued" not in PAGES
+    assert "function GUI:CreatePageButtons()" in PAGES
+    assert "self:CreateWindow(Page)" in PAGES
+    assert "self:CreateWindow(Page.Children[k])" in PAGES
+    assert "self:CreatePageButtons()" in FRAME
+
+
+def test_page_callbacks_are_released_after_widget_creation():
+    creation = FRAME[FRAME.index("local Calls = page.Callbacks"):]
+    assert "Calls[i](Window.LeftWidgetsBG, Window.RightWidgetsBG)" in creation
+    assert "page.Callbacks = nil" in creation

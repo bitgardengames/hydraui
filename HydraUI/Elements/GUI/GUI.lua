@@ -239,7 +239,6 @@ GUI.Categories = {}
 GUI.Pages = {}
 GUI.Widgets = {}
 GUI.WidgetID = {}
-GUI.ButtonQueue = {}
 GUI.ScrollButtons = {}
 
 function GUI:GetWidget(id)

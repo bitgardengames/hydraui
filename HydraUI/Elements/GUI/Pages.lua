@@ -72,16 +72,6 @@ function GUI:GetOrCreatePage(categoryName, name, parentName)
 	return Page
 end
 
-function GUI:QueuePage(page)
-	local self = self
-	if page.Queued then
-		return
-	end
-
-	page.Queued = true
-	tinsert(self.ButtonQueue, page)
-end
-
 function GUI:ValidatePages()
 	local self = self
 	for i = 1, #self.CategoryOrder do
@@ -92,6 +82,24 @@ function GUI:ValidatePages()
 				error(format("GUI category '%s' references missing parent page '%s'", Category.Name, Page.Name), 3)
 			elseif Page.Parent and Page.Parent.Parent then
 				error(format("GUI page '%s/%s' has nested parent '%s'; only one child level is supported", Category.Name, Page.Name, Page.Parent.Name), 3)
+			end
+		end
+	end
+end
+
+-- Page descriptors are the source of truth for both lookup and construction.
+-- Walking them directly avoids maintaining a second registration queue and its
+-- associated per-page state.
+function GUI:CreatePageButtons()
+	for i = 1, #self.CategoryOrder do
+		local Category = self.CategoryOrder[i]
+
+		for j = 1, #Category.Pages do
+			local Page = Category.Pages[j]
+			self:CreateWindow(Page)
+
+			for k = 1, #Page.Children do
+				self:CreateWindow(Page.Children[k])
 			end
 		end
 	end
@@ -113,11 +121,9 @@ function GUI:AddWidgets(category, name, arg1, arg2)
 		local Page = self:GetOrCreatePage(category, name)
 
 		tinsert(Page.Callbacks, arg1)
-		self:QueuePage(Page)
 	else -- string
 		local Page = self:GetOrCreatePage(category, name, arg1)
 
 		tinsert(Page.Callbacks, arg2)
-		self:QueuePage(Page)
 	end
 end

@@ -227,3 +227,26 @@ def test_page_callbacks_are_released_after_widget_creation():
     creation = FRAME[FRAME.index("local Calls = page.Callbacks"):]
     assert "Calls[i](Window.LeftWidgetsBG, Window.RightWidgetsBG)" in creation
     assert "page.Callbacks = nil" in creation
+
+
+def test_navigation_categories_are_collapsible_and_lazy_rows_follow_state():
+    assert "PageLookup = {}, Expanded = true" in PAGES
+    assert "function GUI:SetCategoryExpanded(category, expanded)" in NAVIGATION
+    assert "function GUI:ToggleCategory(category)" in NAVIGATION
+    assert 'Category:SetScript("OnMouseUp", CategoryOnMouseUp)' in NAVIGATION
+    assert "GUI:ToggleCategory(self.Descriptor)" in NAVIGATION
+
+    row_builder = NAVIGATION[NAVIGATION.index("function GUI:ScrollSelections()") :]
+    assert "if Category.Expanded then" in row_builder
+    assert "if Page.Expanded then" in row_builder
+
+
+def test_programmatic_child_navigation_reveals_its_ancestors():
+    show_window = NAVIGATION[
+        NAVIGATION.index("function GUI:ShowWindow") : NAVIGATION.index(
+            "local WindowButtonOnEnter"
+        )
+    ]
+    assert "if not Page.Category.Expanded then" in show_window
+    assert "if not ParentPage.Expanded then" in show_window
+    assert show_window.count("self.SelectionRowsDirty = true") >= 3

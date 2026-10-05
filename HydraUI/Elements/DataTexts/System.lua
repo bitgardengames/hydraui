@@ -25,32 +25,28 @@ local OnLeave = function()
 	GameTooltip:Hide()
 end
 
-local Update = function(self, elapsed)
-	self.Elapsed = self.Elapsed + elapsed
-
-	if self.Elapsed > 1 then
-		self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r |cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], FPSLabel, HydraUI.ValueColor, floor(GetFramerate()), Settings["data-text-label-color"], MSLabel, HydraUI.ValueColor, select(4, GetNetStats()))
-
-		self.Elapsed = 0
-	end
+local Update = function(self)
+	self.Text:SetFormattedText("|cFF%s%s:|r |cFF%s%s|r |cFF%s%s:|r |cFF%s%s|r", Settings["data-text-label-color"], FPSLabel, HydraUI.ValueColor, floor(GetFramerate()), Settings["data-text-label-color"], MSLabel, HydraUI.ValueColor, select(4, GetNetStats()))
 end
 
 local OnEnable = function(self)
-	self:SetScript("OnUpdate", Update)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", OnLeave)
+	self.Ticker = C_Timer.NewTicker(1, function()
+		Update(self)
+	end)
 
-	self.Elapsed = 0
-
-	self:Update(2)
+	Update(self)
 end
 
 local OnDisable = function(self)
-	self:SetScript("OnUpdate", nil)
+	if self.Ticker then
+		self.Ticker:Cancel()
+		self.Ticker = nil
+	end
+
 	self:SetScript("OnEnter", nil)
 	self:SetScript("OnLeave", nil)
-
-	self.Elapsed = 0
 
 	self.Text:SetText("")
 end

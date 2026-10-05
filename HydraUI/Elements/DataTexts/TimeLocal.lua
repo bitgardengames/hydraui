@@ -42,37 +42,34 @@ local OnLeave = function()
 	GameTooltip:Hide()
 end
 
-local Update = function(self, elapsed)
-	self.Elapsed = self.Elapsed + elapsed
+local Update = function(self)
+	local Time = GameTime_GetLocalTime(true)
 
-	if self.Elapsed > 10 then
-		local Time = GameTime_GetLocalTime(true)
+	Time = gsub(Time, "%a+", format("|cFF%s%s|r", HydraUI.ValueColor, "%1"))
 
-		Time = gsub(Time, "%a+", format("|cFF%s%s|r", HydraUI.ValueColor, "%1"))
-
-		self.Text:SetText(Time)
-
-		self.Elapsed = 0
-	end
+	self.Text:SetText(Time)
 end
 
 local OnEnable = function(self)
-	self.Elapsed = 0
-	self:SetScript("OnUpdate", Update)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", OnLeave)
 	self:SetScript("OnMouseUp", OnMouseUp)
+	self.Ticker = C_Timer.NewTicker(10, function()
+		Update(self)
+	end)
 
-	self:Update(11)
+	Update(self)
 end
 
 local OnDisable = function(self)
-	self:SetScript("OnUpdate", nil)
+	if self.Ticker then
+		self.Ticker:Cancel()
+		self.Ticker = nil
+	end
+
 	self:SetScript("OnEnter", nil)
 	self:SetScript("OnLeave", nil)
 	self:SetScript("OnMouseUp", nil)
-	self.Elapsed = 0
-
 	self.Text:SetText("")
 end
 

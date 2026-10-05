@@ -16,18 +16,21 @@ local ValidDispelTypes = DispelTypesByClass[PlayerClass]
 
 local function FindHighestPriorityDebuff(unit)
 	local bestName, bestPriority
+
 	for index = 1, 40 do
 		local name, _, _, debuffType = UnitAura(unit, index, "HARMFUL")
+
 		if not name then
 			break
 		end
 
-		local priority = debuffType and ValidDispelTypes[debuffType]
-			and DispelPriority[debuffType]
+		local priority = debuffType and ValidDispelTypes[debuffType] and DispelPriority[debuffType]
+
 		if priority and (not bestPriority or priority > bestPriority) then
 			bestName, bestPriority = name, priority
 		end
 	end
+
 	return bestName
 end
 
@@ -38,15 +41,18 @@ local function UpdateDispel(frame, _, unit)
 
 	local element = frame.Dispel
 	local name = FindHighestPriorityDebuff(frame.unit)
+
 	if not name then
 		element:Hide()
+
 		return
 	end
 
-	local _, icon, count, debuffType, duration, expiration, _, _, _, spellID =
-		AuraUtil.FindAuraByName(name, frame.unit, "HARMFUL")
+	local _, icon, count, debuffType, duration, expiration, _, _, _, spellID = AuraUtil.FindAuraByName(name, frame.unit, "HARMFUL")
+
 	if not expiration then
 		element:Hide()
+
 		return
 	end
 
@@ -54,6 +60,7 @@ local function UpdateDispel(frame, _, unit)
 	element.icon:SetTexture(icon)
 	element.cd:SetCooldown(expiration - duration, duration)
 	element.count:SetText(count and count > 1 and count or "")
+
 	local color = DebuffTypeColor[debuffType]
 	element:SetBackdropBorderColor(color.r, color.g, color.b)
 	element:Show()
@@ -61,10 +68,12 @@ end
 
 local function EnableDispel(frame)
 	local element = frame.Dispel
+
 	if not element or not ValidDispelTypes then
 		if element then
 			element:Hide()
 		end
+
 		return
 	end
 
@@ -74,6 +83,7 @@ local function EnableDispel(frame)
 	end
 	frame:RegisterEvent("UNIT_AURA", UpdateDispel)
 	element:Hide()
+
 	return true
 end
 

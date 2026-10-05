@@ -12,25 +12,32 @@ end
 local function Install(name, update, enable, events)
 	local function Path(frame, ...)
 		local element = frame[name]
+
 		return (element.Override or update)(frame, ...)
 	end
+
 	Handlers[name] = {
 		update = Path,
 		enable = function(frame, unit)
 			local element = frame[name]
+
 			if not element or (enable and not enable(frame, element, unit)) then
 				return
 			end
+
 			element.__owner = frame
 			element.ForceUpdate = Force(element, Path, true)
+
 			for i = 1, #events do
 				frame:RegisterEvent(events[i][1], Path, events[i][2])
 			end
+
 			return true
 		end,
 		disable = function(frame)
 			local element = frame[name]
 			element:Hide()
+
 			for i = 1, #events do
 				frame:UnregisterEvent(events[i][1], Path)
 			end
@@ -127,8 +134,10 @@ local function UpdatePvP(frame, _, unit)
 	if unit and unit ~= frame.unit then
 		return
 	end
+
 	local element, faction = frame.PvPIndicator, UnitFactionGroup(frame.unit)
 	local status = UnitIsPVPFreeForAll(frame.unit) and "FFA" or (faction and UnitIsPVP(frame.unit) and faction)
+
 	if status then
 		element:SetTexture([[Interface\TargetingFrame\UI-PVP-]] .. status)
 		element:SetTexCoord(0, .65625, 0, .65625)
@@ -136,6 +145,7 @@ local function UpdatePvP(frame, _, unit)
 	else
 		element:Hide()
 	end
+
 	if element.Badge then
 		element.Badge:Hide()
 	end
@@ -158,6 +168,7 @@ end
 Install("ReadyCheckIndicator", function(frame, event)
 	local element = frame.ReadyCheckIndicator
 	local status = GetReadyCheckStatus(frame.unit)
+	
 	if status then
 		element:SetTexture(status == "ready" and element.readyTexture or status == "notready" and element.notReadyTexture or element.waitingTexture)
 		element.status = status
@@ -166,6 +177,7 @@ Install("ReadyCheckIndicator", function(frame, event)
 		element.status = nil
 		element:Hide()
 	end
+	
 	if event == "READY_CHECK_FINISHED" then
 		if element.status == "waiting" then
 			element:SetTexture(element.notReadyTexture)
@@ -174,19 +186,24 @@ Install("ReadyCheckIndicator", function(frame, event)
 	end
 end, function(_, element, unit)
 	unit = unit and unit:match("(%a+)%d*$")
+	
 	if unit ~= "party" and unit ~= "raid" then
 		return false
 	end
+	
 	element.readyTexture = element.readyTexture or READY_CHECK_READY_TEXTURE
 	element.notReadyTexture = element.notReadyTexture or READY_CHECK_NOT_READY_TEXTURE
 	element.waitingTexture = element.waitingTexture or READY_CHECK_WAITING_TEXTURE
+	
 	local group = element:CreateAnimationGroup()
 	group:HookScript("OnFinished", ReadyFinished)
 	element.Animation = group
+	
 	local fade = group:CreateAnimation("Alpha")
 	fade:SetFromAlpha(1)
 	fade:SetToAlpha(0)
 	fade:SetDuration(element.fadeTime or 1.5)
 	fade:SetStartDelay(element.finishedTime or 10)
+	
 	return true
 end, {{"READY_CHECK", true}, {"READY_CHECK_CONFIRM", true}, {"READY_CHECK_FINISHED", true}})

@@ -27,31 +27,33 @@ end
 -- Mirror the stock-frame suppression performed by oUF without making the native unit-frame runtime depend on the bundled oUF reference copy.
 function UF:DisableBlizzardUnitFrame(unit)
 	if unit == "player" then
-		HideBlizzardFrame(_G.PlayerFrame)
+		HideBlizzardFrame(PlayerFrame)
 		-- Blizzard still needs these events to switch the vehicle unit safely.
-		if _G.PlayerFrame then
+		if PlayerFrame then
 			for _, event in ipairs({"PLAYER_ENTERING_WORLD", "UNIT_ENTERING_VEHICLE", "UNIT_ENTERED_VEHICLE", "UNIT_EXITING_VEHICLE", "UNIT_EXITED_VEHICLE"}) do
-				_G.PlayerFrame:RegisterEvent(event)
+				PlayerFrame:RegisterEvent(event)
 			end
-			_G.PlayerFrame:SetUserPlaced(true)
-			_G.PlayerFrame:SetDontSavePosition(true)
+
+			PlayerFrame:SetUserPlaced(true)
+			PlayerFrame:SetDontSavePosition(true)
 		end
 	elseif unit == "pet" then
-		HideBlizzardFrame(_G.PetFrame)
+		HideBlizzardFrame(PetFrame)
 	elseif unit == "target" then
-		HideBlizzardFrame(_G.TargetFrame)
-		HideBlizzardFrame(_G.ComboFrame)
+		HideBlizzardFrame(TargetFrame)
+		HideBlizzardFrame(ComboFrame)
 	elseif unit == "focus" then
-		HideBlizzardFrame(_G.FocusFrame)
-		HideBlizzardFrame(_G.TargetofFocusFrame)
+		HideBlizzardFrame(FocusFrame)
+		HideBlizzardFrame(TargetofFocusFrame)
 	elseif unit == "targettarget" then
-		HideBlizzardFrame(_G.TargetFrameToT)
+		HideBlizzardFrame(TargetFrameToT)
 	elseif unit == "boss" then
 		for index = 1, (MAX_BOSS_FRAMES or 5) do
 			HideBlizzardFrame(_G["Boss" .. index .. "TargetFrame"])
 		end
 	elseif unit == "party" then
-		HideBlizzardFrame(_G.PartyFrame)
+		HideBlizzardFrame(PartyFrame)
+
 		for index = 1, (MAX_PARTY_MEMBERS or 4) do
 			HideBlizzardFrame(_G["PartyMemberFrame" .. index])
 		end
@@ -96,11 +98,14 @@ function UF:SpawnSingletonFrames()
 	for _, descriptor in ipairs(SingletonUnits) do
 		if Settings[descriptor.enabled] then
 			UF:DisableBlizzardUnitFrame(descriptor.unit)
+
 			local dimensions = descriptor.dimensions
 			local frame = HydraUI.UnitFrames:CreateUnitButton(descriptor.unit, descriptor.globalName, HydraUI.StyleFuncs[descriptor.unit])
+
 			frame:SetSize(Settings[dimensions.width], Settings[dimensions.health] + Settings[dimensions.power] + 3)
 			frame:SetPoint(descriptor.defaultAnchor[1], HydraUI.UIParent, descriptor.defaultAnchor[2], descriptor.defaultAnchor[3], descriptor.defaultAnchor[4])
 			frame:SetParent(HydraUI.UIParent)
+
 			HydraUI.UnitFrames[descriptor.unit] = frame
 		end
 	end
@@ -339,12 +344,15 @@ end
 
 local function HeaderAttributes(values)
 	local attributes = {}
+
 	for index = 1, #values do
 		attributes[index] = values[index]
 	end
+
 	attributes.showSoloIndex = #attributes + 1
 	attributes[attributes.showSoloIndex] = "showSolo"
 	attributes[attributes.showSoloIndex + 1] = values.showSolo
+
 	return attributes
 end
 
@@ -352,33 +360,37 @@ function UF:SpawnPartyHeaders()
 	if Settings["party-enable"] then
 		self:DisableBlizzardUnitFrame("party")
 	end
+
 	if not Settings["party-enable"] then
 		return
 	end
+
 	local xOffset, yOffset = self:GetGrowthOffsets(Settings["party-point"], Settings["party-spacing"])
-	local base = {"initial-width", Settings["party-width"], "initial-height", Settings["party-health-height"] + Settings["party-power-height"] + 3,
-		"isTesting", false, "showPlayer", true, "showParty", true, "showRaid", false,
-		"xOffset", xOffset, "yOffset", yOffset, "point", Settings["party-point"]}
+	local base = {"initial-width", Settings["party-width"], "initial-height", Settings["party-health-height"] + Settings["party-power-height"] + 3, "isTesting", false, "showPlayer", true, "showParty", true, "showRaid", false, "xOffset", xOffset, "yOffset", yOffset, "point", Settings["party-point"]}
+
 	base.showSolo = Settings["party-show-solo"]
+
 	local Party = self:CreateGroupHeader("HydraUI Party", false, "party", HeaderAttributes(base))
 	self.PartyAnchor = CreateFrame("Frame", "HydraUI Party Anchor", HydraUI.UIParent)
 	self.PartyAnchor:SetSize(5 * Settings["party-width"] + 4 * Settings["party-spacing"], Settings["party-health-height"] + Settings["party-power-height"] + 3)
 	self.PartyAnchor:SetPoint("BOTTOMLEFT", HydraUIChatFrameTop, "TOPLEFT", -3, 5)
 	Party:SetPoint("BOTTOMLEFT", self.PartyAnchor)
+
 	HydraUI.UnitFrames["party"] = Party
 	HydraUI:CreateMover(self.PartyAnchor)
 
 	if Settings["party-pets-enable"] then
 		local petXOffset, petYOffset = self:GetGrowthOffsets(Settings["party-point"], Settings["party-spacing"])
-		local pet = {"initial-width", Settings["party-pets-width"], "initial-height", Settings["party-pets-health-height"] + 2,
-			"isTesting", false, "showPlayer", false, "showParty", true, "showRaid", false,
-			"xOffset", petXOffset, "yOffset", petYOffset, "point", Settings["party-point"]}
+		local pet = {"initial-width", Settings["party-pets-width"], "initial-height", Settings["party-pets-health-height"] + 2, "isTesting", false, "showPlayer", false, "showParty", true, "showRaid", false, "xOffset", petXOffset, "yOffset", petYOffset, "point", Settings["party-point"]}
+
 		pet.showSolo = Settings["party-show-solo"]
+
 		local PartyPet = self:CreateGroupHeader("HydraUI Party Pets", true, "party", HeaderAttributes(pet))
 		self.PartyPetAnchor = CreateFrame("Frame", "HydraUI Party Pet Anchor", HydraUI.UIParent)
 		self.PartyPetAnchor:SetSize(5 * Settings["party-width"] + 4 * Settings["party-spacing"], Settings["party-pets-health-height"] + 2)
 		self.PartyPetAnchor:SetPoint("TOPLEFT", self.PartyAnchor, "BOTTOMLEFT", 0, -2)
 		PartyPet:SetPoint("TOPLEFT", self.PartyPetAnchor)
+
 		HydraUI:CreateMover(self.PartyPetAnchor)
 		HydraUI.UnitFrames["party-pets"] = PartyPet
 	end
@@ -389,14 +401,13 @@ function UF:SpawnRaidHeaders()
 		return
 	end
 
-	local common = {"initial-width", Settings["raid-width"], "initial-height", Settings["raid-health-height"] + Settings["raid-power-height"] + 3,
-		"isTesting", false, "showPlayer", true, "showParty", false, "showRaid", true,
-		"point", Settings["raid-point"], "xOffset", Settings["raid-x-offset"], "yOffset", Settings["raid-y-offset"],
-		"maxColumns", Settings["raid-max-columns"], "unitsPerColumn", Settings["raid-units-per-column"],
-		"columnSpacing", Settings["raid-column-spacing"], "columnAnchorPoint", Settings["raid-column-anchor"]}
+	local common = {"initial-width", Settings["raid-width"], "initial-height", Settings["raid-health-height"] + Settings["raid-power-height"] + 3, "isTesting", false, "showPlayer", true, "showParty", false, "showRaid", true, "point", Settings["raid-point"], "xOffset", Settings["raid-x-offset"], "yOffset", Settings["raid-y-offset"], "maxColumns", Settings["raid-max-columns"], "unitsPerColumn", Settings["raid-units-per-column"], "columnSpacing", Settings["raid-column-spacing"], "columnAnchorPoint", Settings["raid-column-anchor"]}
+
 	common.showSolo = Settings["raid-show-solo"]
+
 	local Raid = self:CreateGroupHeader("HydraUI Raid", false, "raid", HeaderAttributes(common))
 	local unitHeight, maxSize = Settings["raid-health-height"] + Settings["raid-power-height"] + 1, floor(40 / Settings["raid-max-columns"])
+
 	self.RaidAnchor = CreateFrame("Frame", "HydraUI Raid Anchor", HydraUI.UIParent)
 	self.RaidAnchor:SetSize(maxSize * Settings["raid-width"] + maxSize * Settings["raid-x-offset"] - 2,
 		unitHeight * (Settings["raid-max-columns"] + 1) + Settings["raid-y-offset"] * (Settings["raid-max-columns"] - 1))
@@ -415,13 +426,12 @@ function UF:SpawnRaidHeaders()
 	UpdateRaidSortingMethod(Settings["raid-sorting-method"])
 
 	if Settings["raid-pets-enable"] then
-		local pet = {"initial-width", Settings["raid-pets-width"], "initial-height", Settings["raid-pets-health-height"] + 2,
-			"isTesting", false, "showPlayer", true, "showParty", false, "showRaid", true,
-			"point", Settings["raid-point"], "xOffset", Settings["raid-x-offset"], "yOffset", Settings["raid-y-offset"],
-			"maxColumns", Settings["raid-max-columns"], "unitsPerColumn", Settings["raid-units-per-column"],
-			"columnSpacing", Settings["raid-column-spacing"], "columnAnchorPoint", Settings["raid-column-anchor"]}
+		local pet = {"initial-width", Settings["raid-pets-width"], "initial-height", Settings["raid-pets-health-height"] + 2, "isTesting", false, "showPlayer", true, "showParty", false, "showRaid", true, "point", Settings["raid-point"], "xOffset", Settings["raid-x-offset"], "yOffset", Settings["raid-y-offset"], "maxColumns", Settings["raid-max-columns"], "unitsPerColumn", Settings["raid-units-per-column"], "columnSpacing", Settings["raid-column-spacing"], "columnAnchorPoint", Settings["raid-column-anchor"]}
+
 		pet.showSolo = Settings["raid-show-solo"]
+
 		local RaidPet = self:CreateGroupHeader("HydraUI Raid Pets", true, "raid", HeaderAttributes(pet))
+
 		self.RaidPetAnchor = CreateFrame("Frame", "HydraUI Raid Pet Anchor", HydraUI.UIParent)
 		self.RaidPetAnchor:SetSize(maxSize * Settings["raid-width"] + maxSize * Settings["raid-x-offset"] - 2,
 			Settings["raid-pets-health-height"] * (Settings["raid-max-columns"] + Settings["raid-y-offset"]) - 1)

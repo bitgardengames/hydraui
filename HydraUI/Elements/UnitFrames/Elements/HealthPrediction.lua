@@ -30,6 +30,7 @@ local function UpdatePrediction(frame, _, unit)
 	local maximum = UnitHealthMax(frame.unit)
 	local incoming = UnitGetIncomingHeals and (UnitGetIncomingHeals(frame.unit) or 0) or 0
 	local inaccessible = IsInaccessible(health) or IsInaccessible(maximum) or IsInaccessible(incoming)
+
 	if frame.HealBar then
 		frame.HealBar:SetMinMaxValues(0, maximum)
 		frame.HealBar:SetValue(not inaccessible and health > 0 and math.min(incoming, maximum - health) or 0)
@@ -44,12 +45,14 @@ end
 
 local function EnablePrediction(frame)
 	local heal = frame.HealBar
+
 	if not heal then
 		return
 	end
 
 	heal.__owner = frame
 	heal.ForceUpdate = Force(heal, UpdatePrediction)
+
 	for _, event in ipairs(PredictionEvents) do
 		frame:RegisterEvent(event, UpdatePrediction)
 	end
@@ -57,19 +60,23 @@ local function EnablePrediction(frame)
 	heal:SetMinMaxValues(0, 1)
 	heal:SetValue(0)
 	heal:Show()
+
 	if frame.AbsorbsBar then
 		frame.AbsorbsBar:SetMinMaxValues(0, 1)
 		frame.AbsorbsBar:SetValue(0)
 		frame.AbsorbsBar:Show()
 	end
+
 	return true
 end
 
 local function DisablePrediction(frame)
 	frame.HealBar:Hide()
+
 	if frame.AbsorbsBar then
 		frame.AbsorbsBar:Hide()
 	end
+
 	for _, event in ipairs(PredictionEvents) do
 		frame:UnregisterEvent(event, UpdatePrediction)
 	end

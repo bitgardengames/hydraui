@@ -11,11 +11,13 @@ end
 
 local function UpdateRaidTarget(frame)
 	local indicator = frame.RaidTargetIndicator
+
 	if indicator.PreUpdate then
 		indicator:PreUpdate()
 	end
 
 	local index = GetRaidTargetIndex(frame.unit)
+
 	if index then
 		SetRaidTargetIconTexture(indicator, index)
 		indicator:Show()
@@ -30,6 +32,7 @@ end
 
 local function EnableRaidTarget(frame)
 	local indicator = frame.RaidTargetIndicator
+
 	if not indicator then
 		return
 	end
@@ -37,6 +40,7 @@ local function EnableRaidTarget(frame)
 	indicator.__owner = frame
 	indicator.ForceUpdate = Force(indicator, UpdateRaidTarget)
 	frame:RegisterEvent("RAID_TARGET_UPDATE", UpdateRaidTarget, true)
+
 	return true
 end
 

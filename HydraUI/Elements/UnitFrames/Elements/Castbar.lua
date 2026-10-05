@@ -28,6 +28,7 @@ function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativ
 	icon:SetSize(iconSize, iconSize)
 	icon:SetPoint("TOPRIGHT", castbar, "TOPLEFT", iconX or -1, 0)
 	icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+
 	if iconBackground then
 		local iconBG = castbar:CreateTexture(nil, "BACKGROUND")
 		iconBG:SetPoint("TOPLEFT", icon, -1, 1)
@@ -56,5 +57,6 @@ function UF:CreateCastbar(frame, name, width, height, point, relativeTo, relativ
 	castbar.PostCastFail = postCastFail
 	castbar.PostCastInterruptible = postCastInterruptible
 	frame.Castbar = castbar
+
 	return castbar
 end

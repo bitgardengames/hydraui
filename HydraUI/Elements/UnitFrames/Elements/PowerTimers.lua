@@ -6,6 +6,7 @@ local Handlers = UF.ElementHandlers
 local function ManaOnUpdate(element, elapsed)
 	element.elapsed = element.elapsed + elapsed
 	element:SetValue(element.elapsed)
+
 	if element.elapsed >= element.max then
 		element.LastPower = UnitPower("player")
 		element:Hide()
@@ -20,10 +21,12 @@ local function UpdateMana(frame, _, unit)
 
 	local element = frame.ManaTimer
 	local power = UnitPower("player")
+
 	if UnitPowerType("player") ~= Enum.PowerType.Mana or power == UnitPowerMax("player") then
 		element.LastPower = power
 		element:Hide()
 		element:SetScript("OnUpdate", nil)
+
 		return
 	end
 
@@ -44,6 +47,7 @@ end
 
 local function EnableMana(frame)
 	local element = frame.ManaTimer
+
 	if HydraUI.IsMists or HydraUI.IsMainline or not element or not UnitIsUnit(frame.unit, "player") then
 		return
 	end
@@ -53,8 +57,10 @@ local function EnableMana(frame)
 	element.ForceUpdate = function()
 		UpdateMana(frame, "ForceUpdate", "player")
 	end
+
 	frame:RegisterEvent("UNIT_POWER_FREQUENT", UpdateMana)
 	element:Hide()
+
 	return true
 end
 
@@ -76,9 +82,11 @@ local lastEnergy = 0
 local function EnergyOnUpdate(element)
 	local power = UnitPower("player")
 	local currentTime = GetTime()
+
 	if power > lastEnergy or currentTime - lastEnergyTick >= 2 then
 		lastEnergyTick = currentTime
 	end
+
 	element:SetValue(currentTime - lastEnergyTick)
 	lastEnergy = power
 end
@@ -89,11 +97,13 @@ end
 
 local function EnableEnergy(frame)
 	local element = frame.EnergyTick
+
 	if not (HydraUI.IsVanilla or HydraUI.IsTBC) or not element or not UnitIsUnit(frame.unit, "player") then
 		return
 	end
 
 	local class = select(2, UnitClass("player"))
+
 	if class ~= "ROGUE" and class ~= "DRUID" then
 		return
 	end
@@ -105,6 +115,7 @@ local function EnableEnergy(frame)
 	element:SetMinMaxValues(0, 2)
 	element:SetScript("OnUpdate", EnergyOnUpdate)
 	element:Show()
+
 	return true
 end
 
@@ -121,16 +132,19 @@ Handlers.EnergyTick = {
 
 local function FindSpellCost(unit, spellID)
 	local costs = C_Spell.GetSpellPowerCost(spellID)
+
 	if not costs then
 		return 0
 	end
 
 	local powerType = UnitPowerType(unit)
+
 	for _, costInfo in next, costs do
 		if costInfo.type == powerType and (#costs == 1 or costInfo.hasRequiredAura) then
 			return costInfo.cost
 		end
 	end
+
 	return 0
 end
 
@@ -142,6 +156,7 @@ local function UpdatePrediction(frame, event, unit)
 	local element = frame.PowerPrediction
 	local _, _, _, startTime, endTime, _, _, _, spellID = UnitCastingInfo(frame.unit)
 	local cost = 0
+
 	if event == "UNIT_SPELLCAST_START" and startTime ~= endTime and spellID then
 		cost = FindSpellCost(frame.unit, spellID)
 		element.mainCost = cost
@@ -168,6 +183,7 @@ local PredictionEvents = {
 
 local function EnablePrediction(frame, unit)
 	local element = frame.PowerPrediction
+
 	if not element or not C_Spell or not UnitIsUnit(unit, "player") then
 		return
 	end
@@ -176,9 +192,11 @@ local function EnablePrediction(frame, unit)
 	element.ForceUpdate = function()
 		UpdatePrediction(frame, "ForceUpdate", frame.unit)
 	end
+
 	for i = 1, #PredictionEvents do
 		frame:RegisterEvent(PredictionEvents[i], UpdatePrediction)
 	end
+
 	return true
 end
 
@@ -186,6 +204,7 @@ local function DisablePrediction(frame)
 	for i = 1, #PredictionEvents do
 		frame:UnregisterEvent(PredictionEvents[i], UpdatePrediction)
 	end
+	
 	if frame.PowerPrediction.mainBar then
 		frame.PowerPrediction.mainBar:Hide()
 	end

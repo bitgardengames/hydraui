@@ -20,21 +20,25 @@ local function UpdateThreat(frame, _, unit)
 	end
 
 	local indicator = frame.ThreatIndicator
+
 	if indicator.PreUpdate then
 		indicator:PreUpdate(frame.unit)
 	end
 
 	local feedbackUnit = indicator.feedbackUnit
 	local status
+
 	if not feedbackUnit or feedbackUnit == frame.unit or UnitExists(feedbackUnit) then
 		status = UnitThreatSituation(feedbackUnit or frame.unit, feedbackUnit and frame.unit or nil)
 	end
 
 	local color = status and frame.colors.threat[status]
+
 	if color then
 		if indicator.SetVertexColor then
 			indicator:SetVertexColor(unpack(color))
 		end
+
 		indicator:Show()
 	else
 		indicator:Hide()
@@ -47,20 +51,24 @@ end
 
 local function EnableThreat(frame)
 	local indicator = frame.ThreatIndicator
+
 	if not indicator then
 		return
 	end
 
 	indicator.__owner = frame
 	indicator.ForceUpdate = Force(indicator, UpdateThreat)
+
 	for _, event in ipairs(ThreatEvents) do
 		frame:RegisterEvent(event, UpdateThreat)
 	end
+
 	return true
 end
 
 local function DisableThreat(frame)
 	frame.ThreatIndicator:Hide()
+
 	for _, event in ipairs(ThreatEvents) do
 		frame:UnregisterEvent(event, UpdateThreat)
 	end

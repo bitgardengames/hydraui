@@ -189,9 +189,11 @@ local UnitOperations = {}
 
 function UnitOperations.Width(UF, frame, value, options)
 	frame:SetWidth(value)
+
 	if options and options.widthElements then
 		for i = 1, #options.widthElements do
 			local element = frame[options.widthElements[i]]
+
 			if element then
 				element:SetWidth(value)
 			end
@@ -222,14 +224,19 @@ end
 function UnitOperations.HealthReverse(UF, frame, value)
 	local health = frame.Health
 	local point, relativePoint = value and "RIGHT" or "LEFT", value and "LEFT" or "RIGHT"
+
 	health:SetReverseFill(value)
+
 	local healBar = frame.HealBar
+
 	if healBar then
 		healBar:SetReverseFill(value)
 		healBar:ClearAllPoints()
 		healBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
 	end
+
 	local absorbsBar = frame.AbsorbsBar
+
 	if absorbsBar then
 		absorbsBar:SetReverseFill(value)
 		absorbsBar:ClearAllPoints()
@@ -245,9 +252,11 @@ function UnitOperations.HealthTexture(UF, frame, value)
 	local texture = Assets:GetTexture(value)
 	frame.Health:SetStatusBarTexture(texture)
 	frame.Health.bg:SetTexture(texture)
+
 	if frame.HealBar then
 		frame.HealBar:SetStatusBarTexture(texture)
 	end
+
 	if frame.AbsorbsBar then
 		frame.AbsorbsBar:SetStatusBarTexture(texture)
 	end
@@ -261,9 +270,11 @@ end
 
 function UnitOperations.AuraSize(UF, frame, value, options)
 	local auras = frame[options.element]
+
 	if not auras then
 		return
 	end
+
 	auras.size = value
 	auras:SetSize(Settings[options.width], value)
 	auras:ForceUpdate()
@@ -271,9 +282,11 @@ end
 
 function UnitOperations.AuraSpacing(UF, frame, value, options)
 	local auras = frame[options.element]
+
 	if not auras then
 		return
 	end
+
 	auras.spacing = value
 	auras:ForceUpdate()
 end
@@ -282,11 +295,13 @@ function UnitOperations.ElementEnabled(UF, frame, value, options)
 	if not frame[options.component or options.element] then
 		return
 	end
+
 	if value then
 		frame:EnableElement(options.element)
 	else
 		frame:DisableElement(options.element)
 	end
+
 	if options.forceUpdate then
 		frame:UpdateAllElements("ForceUpdate")
 	end
@@ -294,14 +309,19 @@ end
 
 function UnitOperations.AuraPosition(UF, frame, value, options)
 	local auras = frame[options.element]
+
 	if not auras then
 		return
 	end
+
 	local relativeTo = frame
+
 	if options.companion and Settings[options.companionPosition] == value and frame[options.companion] then
 		relativeTo = frame[options.companion]
 	end
+
 	auras:ClearAllPoints()
+
 	if value == "TOP" then
 		auras:SetPoint("BOTTOM", relativeTo, "TOP", 0, 2)
 		auras["growth-y"] = "UP"
@@ -309,6 +329,7 @@ function UnitOperations.AuraPosition(UF, frame, value, options)
 		auras:SetPoint("TOP", relativeTo, "BOTTOM", 0, -2)
 		auras["growth-y"] = "DOWN"
 	end
+
 	auras["growth-x"] = options.growthX
 end
 
@@ -316,18 +337,22 @@ UF.UnitOperations = UnitOperations
 
 function UF:CreateUnitUpdater(unit, operation, options)
 	local update = assert(UnitOperations[operation], "unknown unit-frame update operation: " .. tostring(operation))
+	
 	if options and options.count then
 		return function(value)
 			for i = 1, options.count do
 				local frame = HydraUI.UnitFrames[unit .. i]
+				
 				if frame then
 					update(self, frame, value, options)
 				end
 			end
 		end
 	end
+	
 	return function(value)
 		local frame = HydraUI.UnitFrames[unit]
+		
 		if frame then
 			update(self, frame, value, options)
 		end

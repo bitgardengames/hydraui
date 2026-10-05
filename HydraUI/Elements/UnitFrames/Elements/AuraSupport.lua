@@ -3,6 +3,7 @@ local HydraUI, _, _, Settings = ns:get()
 
 local UF = HydraUI:GetModule("Unit Frames")
 local Hider = assert(UF.Hider, "unit-frame core must create the hider")
+
 local UnregisterAuraTimer = function(button)
 	HydraUI.DurationText:Unregister(button)
 	button.LastAuraTime = nil
@@ -10,7 +11,6 @@ local UnregisterAuraTimer = function(button)
 	if button.Time then
 		button.Time:Hide()
 	end
-
 end
 
 local function GetAuraRemaining(button, now)
@@ -456,6 +456,7 @@ UF.PostCreateAuraWatchIcon = function(auras, icon)
 end
 
 local EnumerateAuras = UF.EnumerateAuras
+
 local function AuraTooltipEnter(button)
 	GameTooltip:SetOwner(button, button.__container.tooltipAnchor or "ANCHOR_BOTTOMRIGHT")
 	GameTooltip:SetUnitAura(button.__owner.unit, button.__index, button.filter)
@@ -466,9 +467,11 @@ end
 
 local function AcquireAuraButton(container, position)
 	local button = container[position]
+
 	if button then
 		return button
 	end
+
 	button = CreateFrame("Button", (container:GetName() or "HydraUIAura") .. position, container)
 	button:SetSize(container.size, container.size)
 	button.icon = button:CreateTexture(nil, "ARTWORK")
@@ -480,9 +483,11 @@ local function AcquireAuraButton(container, position)
 	button:SetScript("OnEnter", AuraTooltipEnter)
 	button:SetScript("OnLeave", AuraTooltipLeave)
 	container[position] = button
+
 	if container.PostCreateIcon then
 		container:PostCreateIcon(button)
 	end
+
 	return button
 end
 
@@ -491,17 +496,21 @@ local function LayoutAura(container, button, position)
 	local column, row = (position - 1) % columns, math.floor((position - 1) / columns)
 	local x = column * (container.size + spacing) * (container["growth-x"] == "LEFT" and -1 or 1)
 	local y = row * (container.size + spacing) * (container["growth-y"] == "UP" and 1 or -1)
+
 	button:ClearAllPoints()
 	button:SetPoint(container.initialAnchor or "TOPLEFT", container, container.initialAnchor or "TOPLEFT", x, y)
 end
 
 local function UpdateAuraContainer(frame, container, filter)
 	local position, limit = 0, container.num or 32
+
 	EnumerateAuras(frame.unit, filter, function(index, name, icon, count, debuffType, duration, expiration, caster, stealable, spellID, auraData)
 		local isPlayer = caster == "player" or caster == "pet" or caster == "vehicle"
+
 		if container.onlyShowPlayer and not isPlayer then
 			return
 		end
+
 		if container.CustomFilter then
 			local aura = {
 				name = name,
@@ -509,14 +518,18 @@ local function UpdateAuraContainer(frame, container, filter)
 				sourceUnit = caster,
 				isFromPlayerOrPlayerPet = isPlayer,
 			}
+
 			if not container:CustomFilter(frame.unit, aura, frame) then
 				return
 			end
 		end
+
 		position = position + 1
+
 		if position > limit then
 			return false
 		end
+
 		local button = AcquireAuraButton(container, position)
 		button.__index, button.filter, button.isPlayer = index, filter, isPlayer
 		button.icon:SetTexture(icon)
@@ -524,14 +537,17 @@ local function UpdateAuraContainer(frame, container, filter)
 		button:SetSize(container.size, container.size)
 		LayoutAura(container, button, position)
 		button:Show()
+
 		if container.showStealableBuffs and stealable then
 			button.DebuffType:SetBackdropBorderColor(0.2, 0.6, 1)
 			button.DebuffType:Show()
 		end
+
 		if container.PostUpdateIcon then
 			container:PostUpdateIcon(frame.unit, button, index, position, duration, expiration, debuffType, stealable)
 		end
 	end)
+
 	for index = position + 1, #container do
 		container[index]:Hide()
 		UnregisterAuraTimer(container[index])
@@ -542,9 +558,11 @@ local function UpdateAuras(frame, _, unit)
 	if unit and unit ~= frame.unit then
 		return
 	end
+
 	if frame.Buffs then
 		UpdateAuraContainer(frame, frame.Buffs, "HELPFUL")
 	end
+
 	if frame.Debuffs then
 		UpdateAuraContainer(frame, frame.Debuffs, "HARMFUL")
 	end
@@ -554,6 +572,7 @@ local function EnableAuras(frame)
 	if not frame.Buffs and not frame.Debuffs then
 		return
 	end
+
 	for _, container in ipairs({frame.Buffs, frame.Debuffs}) do
 		if container then
 			container.__owner = frame
@@ -562,7 +581,9 @@ local function EnableAuras(frame)
 			end
 		end
 	end
+
 	frame:RegisterEvent("UNIT_AURA", UpdateAuras)
+
 	return true
 end
 
@@ -570,6 +591,7 @@ local function DisableAuras(frame)
 	if frame.Buffs then
 		frame.Buffs:Hide()
 	end
+
 	if frame.Debuffs then
 		frame.Debuffs:Hide()
 	end

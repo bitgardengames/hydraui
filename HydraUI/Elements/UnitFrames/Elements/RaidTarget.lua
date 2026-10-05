@@ -5,9 +5,11 @@ local UF = HydraUI:GetModule("Unit Frames")
 
 function UF:CreateRaidTargetIndicator(health, size, layer, point, relativePoint, x, y)
 	size = size or 16
+
 	local indicator = health:CreateTexture(nil, layer or "OVERLAY")
 	indicator:SetSize(size, size)
 	indicator:SetPoint(point or "CENTER", health, relativePoint or "TOP", x or 0, y or 0)
+
 	return indicator
 end
 

@@ -217,13 +217,10 @@ function GUI:CreateWidgetWindow(page)
 
 	local Calls = page.Callbacks
 
-	-- Read the queue in place instead of repeatedly removing its first item. Aside
-	-- from shifting the whole table for every callback, table.remove also made a
-	-- widget-heavy window unnecessarily expensive to initialize.
 	for i = 1, #Calls do
 		Calls[i](Window.LeftWidgetsBG, Window.RightWidgetsBG)
-		Calls[i] = nil
 	end
+	page.Callbacks = nil
 
 	if #Window.LeftWidgetsBG.Widgets > 0 then
 		Window.LeftWidgetsBG:CreateFooter()
@@ -429,15 +426,8 @@ function GUI:CreateGUI()
 	CreateNavigationRegion(self)
 	CreateCloseControl(self)
 
-	-- Consuming this queue from the front shifts every remaining entry on each
-	-- iteration. Iterate it directly so GUI initialization remains linear as
-	-- more configuration pages are registered.
 	self:ValidatePages()
-
-	for i = 1, #self.ButtonQueue do
-		self:CreateWindow(self.ButtonQueue[i])
-		self.ButtonQueue[i] = nil
-	end
+	self:CreatePageButtons()
 
 	self:SortMenuButtons()
 

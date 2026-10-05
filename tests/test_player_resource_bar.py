@@ -74,6 +74,16 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         self.assertIn("resourceAttached and frame.ClassResource or frame", anchors_body)
         self.assertIn("UpdatePlayerAuraAnchors(frame, resourceDetached)", anchors_body)
 
+        # Visibility is not exclusively controlled by resource power events:
+        # disabling an element and native providers may show/hide it directly.
+        # Both transitions must therefore refresh the aura anchors as well.
+        self.assertIn('resource:HookScript("OnShow"', SOURCE)
+        self.assertIn('resource:HookScript("OnHide"', SOURCE)
+        hooks_start = SOURCE.index('resource:HookScript("OnShow"')
+        hooks_end = SOURCE.index("return resource", hooks_start)
+        visibility_hooks = SOURCE[hooks_start:hooks_end]
+        self.assertEqual(visibility_hooks.count("UpdatePlayerResourceAnchors(frame)"), 2)
+
     def test_component_has_stable_update_interface(self):
         for method in ("SetWidth", "SetHeight", "SetTexture", "SetDetached"):
             self.assertIn(f"function resource:{method}", SOURCE)

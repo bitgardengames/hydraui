@@ -43,6 +43,12 @@ function Core.SetRequiresReload(self, flag)
 	return self
 end
 
+function Core.DisableSaving(self)
+	self.IsSavingDisabled = true
+
+	return self
+end
+
 local PersistenceOptOut = {
 	["ui-profile"] = true,
 	["profile-copy"] = true,

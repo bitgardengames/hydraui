@@ -5,7 +5,7 @@ local SPACING, HEADER_HEIGHT, HEADER_SPACING = Core.SPACING, Core.HEADER_HEIGHT,
 local GROUP_HEIGHT, GROUP_WIDTH, WIDGET_HEIGHT = Core.GROUP_HEIGHT, Core.GROUP_WIDTH, Core.WIDGET_HEIGHT
 local LABEL_SPACING = Core.LABEL_SPACING
 local SELECTED_HIGHLIGHT_ALPHA, MOUSEOVER_HIGHLIGHT_ALPHA = Core.SELECTED_HIGHLIGHT_ALPHA, Core.MOUSEOVER_HIGHLIGHT_ALPHA
-local RegisterWidget, SetVariable = Core.RegisterWidget, Core.SetVariable
+local RegisterWidget, CommitValue = Core.RegisterWidget, Core.CommitValue
 local Round, TrimHex = Core.Round, Core.TrimHex
 local AnchorOnEnter, AnchorOnLeave, FadeOnFinished = Core.AnchorOnEnter, Core.AnchorOnLeave, Core.FadeOnFinished
 local type, next, tonumber = type, next, tonumber
@@ -57,15 +57,10 @@ local InputWindowOnEnterPressed = function(self)
 		if Input.IsSavingDisabled then
 			Input.ButtonText:SetText("")
 		else
-			SetVariable(Input.ID, Text)
 			Input.ButtonText:SetText(Text)
 		end
 
-		if Input.ReloadFlag then
-			HydraUI:DisplayPopup(Language["Attention"], Language["You have changed a setting that requires a UI reload. Would you like to reload the UI now?"], ACCEPT, Input.Hook, CANCEL, nil, Text, Input.ID)
-		elseif Input.Hook then
-			Input.Hook(Text, Input.ID)
-		end
+		CommitValue(Input, Text)
 
 		GUI:ToggleInputWindow(Input)
 	end
@@ -148,12 +143,6 @@ local InputOnLeave = function(self)
 	self.Parent.Highlight:SetAlpha(0)
 end
 
-local InputDisableSaving = function(self)
-	self.IsSavingDisabled = true
-
-	return self
-end
-
 local CreateInputControl = function(parent, width, id, value, tooltip, hook, isCombined)
 	local Input = CreateFrame("Frame", nil, parent, "BackdropTemplate")
 	Input:SetSize(width, WIDGET_HEIGHT)
@@ -230,7 +219,7 @@ local CreateInputControl = function(parent, width, id, value, tooltip, hook, isC
 	Control.Parent = Input
 	Control.Tooltip = tooltip
 	Control.RequiresReload = Core.SetRequiresReload
-	Control.DisableSaving = InputDisableSaving
+	Control.DisableSaving = Core.DisableSaving
 
 	Input.FadeIn = LibMotion:CreateAnimation(Input.Flash, "Fade")
 	Input.FadeIn:SetEasing("in")

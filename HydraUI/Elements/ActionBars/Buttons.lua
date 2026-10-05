@@ -59,7 +59,9 @@ function AB:StyleActionButton(button)
 		Icon:SetPoint("BOTTOMRIGHT", button, -1, 1)
 		Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
 		Icon:SetAlpha(1)
-		Icon:Show()
+		-- The action-button mixin owns icon visibility. Showing it here can
+		-- reveal the texture left over from a previous action in an empty slot
+		-- until Blizzard next updates the button (for example, on hover).
 	end
 
 	if _G[button:GetName() .. "FloatingBG"] then

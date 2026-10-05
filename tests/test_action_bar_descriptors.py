@@ -85,6 +85,14 @@ class ActionBarDescriptorCoverage(unittest.TestCase):
         self.assertIn("local region = bar[i][regionName]", SOURCE)
         self.assertIn("region:SetAlpha(alpha)", SOURCE)
 
+    def test_styling_does_not_show_stale_action_icons(self):
+        source = (ACTION_BAR_DIR / "Buttons.lua").read_text()
+        start = source.index("function AB:StyleActionButton")
+        block = source[start:source.index("function AB:StylePetActionButton", start)]
+
+        self.assertIn("local Icon = button.Icon or button.icon", block)
+        self.assertNotIn("Icon:Show()", block)
+
 
 if __name__ == "__main__":
     unittest.main()

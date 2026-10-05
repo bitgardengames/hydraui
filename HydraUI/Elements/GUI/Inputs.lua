@@ -148,12 +148,6 @@ local InputOnLeave = function(self)
 	self.Parent.Highlight:SetAlpha(0)
 end
 
-local InputRequiresReload = function(self, flag)
-	self.ReloadFlag = flag
-
-	return self
-end
-
 local InputDisableSaving = function(self)
 	self.IsSavingDisabled = true
 
@@ -235,7 +229,7 @@ local CreateInputControl = function(parent, width, id, value, tooltip, hook, isC
 	Control.Hook = hook
 	Control.Parent = Input
 	Control.Tooltip = tooltip
-	Control.RequiresReload = InputRequiresReload
+	Control.RequiresReload = Core.SetRequiresReload
 	Control.DisableSaving = InputDisableSaving
 
 	Input.FadeIn = LibMotion:CreateAnimation(Input.Flash, "Fade")
@@ -253,9 +247,7 @@ local CreateInputControl = function(parent, width, id, value, tooltip, hook, isC
 end
 
 GUI.Widgets.CreateInput = function(self, id, value, label, tooltip, hook)
-	if Settings[id] ~= nil then
-		value = Settings[id]
-	end
+	value = Core.GetInitialValue(id, value)
 
 	local Anchor = CreateFrame("Frame", nil, self)
 	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)
@@ -291,9 +283,7 @@ end
 local INPUT_BUTTON_WIDTH = (GROUP_WIDTH / 2) - (SPACING / 2)
 
 GUI.Widgets.CreateInputWithButton = function(self, id, value, button, label, tooltip, hook)
-	if Settings[id] ~= nil then
-		value = Settings[id]
-	end
+	value = Core.GetInitialValue(id, value)
 
 	local Anchor = CreateFrame("Frame", nil, self)
 	Anchor:SetSize(GROUP_WIDTH, WIDGET_HEIGHT)

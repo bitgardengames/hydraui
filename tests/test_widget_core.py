@@ -7,6 +7,10 @@ SLIDERS = Path("HydraUI/Elements/GUI/Sliders.lua").read_text()
 GUI = Path("HydraUI/Elements/GUI/GUI.lua").read_text()
 NAVIGATION = Path("HydraUI/Elements/GUI/Navigation.lua").read_text()
 FRAME = Path("HydraUI/Elements/GUI/Frame.lua").read_text()
+VALUE_WIDGETS = {
+    name: Path(f"HydraUI/Elements/GUI/{name}.lua").read_text()
+    for name in ("ColorPicker", "Dropdowns", "Inputs", "Sliders", "Toggles")
+}
 
 
 class Viewport:
@@ -74,6 +78,24 @@ def test_persistence_has_id_and_widget_opt_outs():
     assert "widget and widget.IsSavingDisabled" in CORE
     assert "if not Core.ShouldPersist(id, widget) then" in CORE
     assert "\t\treturn false\n\tend" in CORE
+
+
+def test_value_widgets_share_initialization_and_reload_lifecycle():
+    assert "function Core.GetInitialValue" in CORE
+    assert "function Core.SetRequiresReload" in CORE
+
+    for source in VALUE_WIDGETS.values():
+        assert "Core.GetInitialValue(id, value)" in source
+        assert "RequiresReload = Core.SetRequiresReload" in source
+
+
+def test_standard_value_changes_use_one_persistence_and_notification_path():
+    assert "function Core.CommitValue(widget, value)" in CORE
+    assert "Core.SetVariable(widget.ID, value, widget)" in CORE
+    assert "Core.NotifyValueChanged(widget, value)" in CORE
+    assert "CommitValue(self, self.Value)" in VALUE_WIDGETS["Toggles"]
+    assert "CommitValue(self, Value)" in VALUE_WIDGETS["Sliders"]
+    assert "CommitValue(Active, Active.Value)" in VALUE_WIDGETS["ColorPicker"]
 
 
 def test_shared_viewport_supports_widget_and_navigation_sources():

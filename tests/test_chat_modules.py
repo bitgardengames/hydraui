@@ -65,7 +65,7 @@ def test_chat_message_customization_does_not_replace_blizzard_add_message():
     assert "frame.OldAddMessage" not in frames
 
 
-def test_channel_shortening_uses_locale_independent_event_metadata():
+def test_channel_shortening_prefers_localized_zone_name_over_decorated_event_name():
     frames = source("Frames.lua")
     channel_filter = frames[
         frames.index("local ShortenChannelNames"):frames.index(
@@ -74,7 +74,7 @@ def test_channel_shortening_uses_locale_independent_event_metadata():
     ]
 
     assert "channelIndex, channelBaseName" in channel_filter
-    assert "local baseName = channelBaseName or ZoneChannelBaseNames[zoneChannelID]" in channel_filter
+    assert "local baseName = ZoneChannelBaseNames[zoneChannelID] or channelBaseName" in channel_filter
     assert 'format("%s. %s", channelIndex, baseName)' in channel_filter
     assert "gsub" not in channel_filter
 

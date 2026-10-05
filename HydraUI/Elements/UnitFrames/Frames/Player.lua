@@ -1,4 +1,5 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
+local UF = HydraUI:GetModule("Unit Frames")
 
 -- Player resources are driven directly by the native unit-frame core.  Only a descriptor actually instantiated by BuildPlayerComponents is touched.
 local PlayerResourceEvents = {
@@ -212,8 +213,6 @@ Defaults.PlayerPowerTexture = "HydraUI 4"
 Defaults.PlayerResourceTexture = "HydraUI 4"
 
 -- Can do textures for health/power/castbar/player resources. That's only 4 settings, and only player needs the resources setting
-
-local UF = HydraUI:GetModule("Unit Frames")
 
 local function UpdatePlayerAuraAnchors(frame, resourceDetached)
 	if not frame.Buffs or not frame.Debuffs then

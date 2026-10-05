@@ -24,7 +24,10 @@ class ComponentConstructorCoverage(unittest.TestCase):
         range_source = (ELEMENTS / "Range.lua").read_text()
         prediction_source = (ELEMENTS / "HealthPrediction.lua").read_text()
 
-        self.assertIn("local RangeFrames, RangeDriver = {}, nil", range_source)
+        self.assertIn(
+            "local RangeEnabledFrames, RangeFrames, RangeDriver = {}, {}, nil",
+            range_source,
+        )
         self.assertNotIn("RangeFrames", prediction_source)
         self.assertNotIn("RangeDriver", prediction_source)
 

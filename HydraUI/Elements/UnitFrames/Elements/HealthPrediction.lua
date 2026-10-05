@@ -2,7 +2,11 @@ local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
 
-local PredictionEvents = {
+local HealComm = HydraUI.IsVanilla and LibStub and LibStub("LibHealComm-4.0", true)
+local PredictionEvents = HealComm and {
+	"UNIT_HEALTH_FREQUENT",
+	"UNIT_MAXHEALTH",
+} or {
 	"UNIT_HEAL_PREDICTION",
 	"UNIT_MAXHEALTH",
 	"UNIT_HEALTH",
@@ -14,6 +18,20 @@ local function IsInaccessible(value)
 	return HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)
 end
 
+local function GetIncomingHeals(unit)
+	if HealComm then
+		local guid = UnitGUID(unit)
+
+		if not guid then
+			return 0
+		end
+
+		return (HealComm:GetHealAmount(guid, HealComm.ALL_HEALS) or 0) * (HealComm:GetHealModifier(guid) or 1)
+	end
+
+	return UnitGetIncomingHeals and (UnitGetIncomingHeals(unit) or 0) or 0
+end
+
 local function UpdatePrediction(frame, _, unit)
 	if unit and unit ~= frame.unit then
 		return
@@ -21,7 +39,7 @@ local function UpdatePrediction(frame, _, unit)
 
 	local health = UnitHealth(frame.unit)
 	local maximum = UnitHealthMax(frame.unit)
-	local incoming = UnitGetIncomingHeals and (UnitGetIncomingHeals(frame.unit) or 0) or 0
+	local incoming = GetIncomingHeals(frame.unit)
 	local inaccessible = IsInaccessible(health) or IsInaccessible(maximum) or IsInaccessible(incoming)
 
 	if frame.HealBar then
@@ -36,6 +54,25 @@ local function UpdatePrediction(frame, _, unit)
 	end
 end
 
+local function UpdateHealCommUnit(frame, ...)
+	local guid = UnitGUID(frame.unit)
+
+	for i = 1, select("#", ...) do
+		if select(i, ...) == guid then
+			UpdatePrediction(frame, "HealComm", frame.unit)
+			return
+		end
+	end
+end
+
+local function HealUpdated(frame, _, _, _, _, _, ...)
+	UpdateHealCommUnit(frame, ...)
+end
+
+local function HealModifierChanged(frame, _, guid)
+	UpdateHealCommUnit(frame, guid)
+end
+
 local function EnablePrediction(frame)
 	local heal = frame.HealBar
 
@@ -48,6 +85,16 @@ local function EnablePrediction(frame)
 
 	for _, event in ipairs(PredictionEvents) do
 		frame:RegisterEvent(event, UpdatePrediction)
+	end
+
+	if HealComm then
+		frame:RegisterEvent("PLAYER_TARGET_CHANGED", UpdatePrediction, true)
+		HealComm.RegisterCallback(frame, "HealComm_HealStarted", HealUpdated)
+		HealComm.RegisterCallback(frame, "HealComm_HealUpdated", HealUpdated)
+		HealComm.RegisterCallback(frame, "HealComm_HealDelayed", HealUpdated)
+		HealComm.RegisterCallback(frame, "HealComm_HealStopped", HealUpdated)
+		HealComm.RegisterCallback(frame, "HealComm_ModifierChanged", HealModifierChanged)
+		HealComm.RegisterCallback(frame, "HealComm_GUIDDisappeared", HealModifierChanged)
 	end
 
 	heal:SetMinMaxValues(0, 1)
@@ -72,6 +119,16 @@ local function DisablePrediction(frame)
 
 	for _, event in ipairs(PredictionEvents) do
 		frame:UnregisterEvent(event, UpdatePrediction)
+	end
+
+	if HealComm then
+		frame:UnregisterEvent("PLAYER_TARGET_CHANGED", UpdatePrediction)
+		HealComm.UnregisterCallback(frame, "HealComm_HealStarted")
+		HealComm.UnregisterCallback(frame, "HealComm_HealUpdated")
+		HealComm.UnregisterCallback(frame, "HealComm_HealDelayed")
+		HealComm.UnregisterCallback(frame, "HealComm_HealStopped")
+		HealComm.UnregisterCallback(frame, "HealComm_ModifierChanged")
+		HealComm.UnregisterCallback(frame, "HealComm_GUIDDisappeared")
 	end
 end
 

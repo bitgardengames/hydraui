@@ -591,6 +591,16 @@ local function BuildPlayerComponents(factory, self, unit)
 				frame[descriptor.alias] = resource
 			end
 			frame.ClassResource, frame.AuraParent = resource, resource
+			-- Visibility can also be changed outside UpdatePlayerResources (for
+			-- example when the element is disabled, or by a native resource
+			-- provider). Keep auras flush with the unit frame for every such
+			-- transition, rather than reserving space for a hidden bar.
+			resource:HookScript("OnShow", function()
+				UpdatePlayerResourceAnchors(frame)
+			end)
+			resource:HookScript("OnHide", function()
+				UpdatePlayerResourceAnchors(frame)
+			end)
 			return resource
 		end
 

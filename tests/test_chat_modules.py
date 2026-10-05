@@ -74,8 +74,27 @@ def test_channel_shortening_uses_locale_independent_event_metadata():
     ]
 
     assert "channelIndex, channelBaseName" in channel_filter
-    assert 'format("%s. %s", channelIndex, channelBaseName)' in channel_filter
+    assert "local baseName = channelBaseName or ZoneChannelBaseNames[zoneChannelID]" in channel_filter
+    assert 'format("%s. %s", channelIndex, baseName)' in channel_filter
     assert "gsub" not in channel_filter
+
+
+def test_channel_shortening_has_localized_legacy_client_fallbacks():
+    frames = source("Frames.lua")
+    fallbacks = frames[
+        frames.index("local ZoneChannelBaseNames"):frames.index("Chat.StyledFrames")
+    ]
+
+    for zone_id, localized_global in {
+        1: "GENERAL",
+        2: "TRADE",
+        22: "LOCAL_DEFENSE",
+        23: "WORLD_DEFENSE",
+        25: "GUILD_RECRUITMENT",
+        26: "LOOKING_FOR_GROUP",
+        42: "SERVICES",
+    }.items():
+        assert f"[{zone_id}] = {localized_global}" in fallbacks
 
 
 def test_right_window_uses_one_background_opacity_setting():

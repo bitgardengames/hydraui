@@ -54,6 +54,14 @@ def test_player_resources_preserve_dynamic_ouf_behavior():
     assert "if frame.ClassResource == element then" in extended
 
 
+def test_player_resources_resolve_unit_frame_module_before_registration():
+    source = (ROOT / "Frames/Player.lua").read_text()
+
+    assert source.index('local UF = HydraUI:GetModule("Unit Frames")') < source.index(
+        'UF:RegisterElement("PlayerResources", {'
+    )
+
+
 def test_totems_stop_timers_and_events_when_disabled():
     source = (ROOT / "Elements/TotemSupport.lua").read_text()
 

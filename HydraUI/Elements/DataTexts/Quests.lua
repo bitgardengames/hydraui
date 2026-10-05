@@ -4,6 +4,9 @@ local select = select
 local GetMaxNumQuestsCanAccept = C_QuestLog.GetMaxNumQuestsCanAccept
 local GetQuestDifficultyColor = GetQuestDifficultyColor
 local Label = QUESTS_LABEL
+local DungeonLabel = TRACKER_HEADER_DUNGEON or "Dungeon"
+local DungeonQuestTagID = Enum and Enum.QuestTag and Enum.QuestTag.Dungeon or 81
+local GetQuestTagInfo = C_QuestLog.GetQuestTagInfo or GetQuestTagInfo
 
 local GetNumQuests, GetQuestInfo
 
@@ -13,15 +16,30 @@ if HydraUI.IsMainline then
 else
 	GetNumQuests = GetNumQuestLogEntries
 	GetQuestInfo = function(Index)
-		local Title, Level, _, IsHeader, _, IsComplete = GetQuestLogTitle(Index)
+		local Title, Level, _, IsHeader, _, IsComplete, _, QuestID = GetQuestLogTitle(Index)
 
 		return {
 			title = Title,
 			level = Level,
 			isHeader = IsHeader,
 			isComplete = IsComplete,
+			questID = QuestID,
 		}
 	end
+end
+
+local IsDungeonQuest = function(QuestID)
+	if not GetQuestTagInfo or not QuestID then
+		return false
+	end
+
+	local TagInfo = GetQuestTagInfo(QuestID)
+
+	if type(TagInfo) == "table" then
+		return TagInfo.tagID == DungeonQuestTagID
+	end
+
+	return TagInfo == DungeonQuestTagID
 end
 
 local OnMouseUp = function()
@@ -33,18 +51,37 @@ local OnEnter = function(self)
 		return
 	end
 
-	GameTooltip:AddLine(Label)
+	local Header
 
 	for Index = 1, GetNumQuests() do
 		local Info = GetQuestInfo(Index)
 
-		if Info and not Info.isHeader then
+		if Info and Info.isHeader then
+			Header = Info.title
+		elseif Info then
+			if Header then
+				GameTooltip:AddLine(Header, 0.6, 0.6, 0.6)
+				Header = nil
+			end
+
 			local Color = GetQuestDifficultyColor(Info.level)
 			local QuestText = format("[%s] %s", Info.level, Info.title)
 			local IsComplete = Info.isComplete == true or Info.isComplete == 1
+			local IsDungeon = IsDungeonQuest(Info.questID)
+			local Status
 
 			if IsComplete then
-				GameTooltip:AddDoubleLine(QuestText, COMPLETE, Color.r, Color.g, Color.b, 0, 1, 0)
+				Status = IsDungeon and format("%s, %s", DungeonLabel, COMPLETE) or COMPLETE
+			elseif IsDungeon then
+				Status = DungeonLabel
+			end
+
+			if Status then
+				local StatusRed = IsComplete and 0 or 0.6
+				local StatusGreen = IsComplete and 1 or 0.6
+				local StatusBlue = IsComplete and 0 or 0.6
+
+				GameTooltip:AddDoubleLine(QuestText, Status, Color.r, Color.g, Color.b, StatusRed, StatusGreen, StatusBlue)
 			else
 				GameTooltip:AddLine(QuestText, Color.r, Color.g, Color.b)
 			end

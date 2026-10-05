@@ -13,14 +13,28 @@ def test_quest_tooltip_supports_modern_and_legacy_log_apis():
 
 
 def test_quest_tooltip_lists_only_quests_with_difficulty_colors():
-    assert "if Info and not Info.isHeader then" in SOURCE
+    assert "elseif Info then" in SOURCE
     assert "GetQuestDifficultyColor(Info.level)" in SOURCE
     assert 'format("[%s] %s", Info.level, Info.title)' in SOURCE
 
 
 def test_quest_tooltip_marks_completed_quests():
     assert "Info.isComplete == true or Info.isComplete == 1" in SOURCE
-    assert "GameTooltip:AddDoubleLine(QuestText, COMPLETE" in SOURCE
+    assert 'format("%s, %s", DungeonLabel, COMPLETE)' in SOURCE
+    assert "GameTooltip:AddDoubleLine(QuestText, Status" in SOURCE
+
+
+def test_quest_tooltip_uses_zone_headers_instead_of_a_generic_title():
+    assert "GameTooltip:AddLine(Label)" not in SOURCE
+    assert "if Info and Info.isHeader then" in SOURCE
+    assert "GameTooltip:AddLine(Header, 0.6, 0.6, 0.6)" in SOURCE
+
+
+def test_quest_tooltip_marks_dungeon_quests():
+    assert 'TRACKER_HEADER_DUNGEON or "Dungeon"' in SOURCE
+    assert "C_QuestLog.GetQuestTagInfo" in SOURCE
+    assert "TagInfo.tagID == DungeonQuestTagID" in SOURCE
+    assert "IsDungeonQuest(Info.questID)" in SOURCE
 
 
 def test_quest_tooltip_hover_handlers_are_cleaned_up():

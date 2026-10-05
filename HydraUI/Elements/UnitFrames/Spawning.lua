@@ -24,7 +24,7 @@ local function HideBlizzardFrame(frame, keepParent)
 	end
 end
 
--- Mirror the stock-frame suppression performed by oUF without making the native unit-frame runtime depend on the bundled oUF reference copy.
+-- Suppress stock frames before creating HydraUI's native unit frames.
 function UF:DisableBlizzardUnitFrame(unit)
 	if unit == "player" then
 		HideBlizzardFrame(_G.PlayerFrame)

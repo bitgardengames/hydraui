@@ -5,7 +5,7 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = REPOSITORY_ROOT / "HydraUI"
-BUNDLED_REFERENCE = SOURCE_ROOT / "Elements" / "Libraries" / "oUF"
+BUNDLED_OUF = SOURCE_ROOT / "Elements" / "Libraries" / "oUF"
 RUNTIME_SUFFIXES = {".lua", ".xml", ".toc"}
 REFERENCE_PATTERN = re.compile(
     r"(?:ns|Namespace)\.oUF|oUF-|(?<![\w.])oUF\b"
@@ -19,7 +19,6 @@ def runtime_files():
         if (
             path.is_file()
             and path.suffix.lower() in RUNTIME_SUFFIXES
-            and BUNDLED_REFERENCE not in path.parents
         ):
             yield path
 
@@ -38,9 +37,8 @@ def references_in(path):
     return references
 
 
-def test_bundled_ouf_reference_is_retained():
-    assert BUNDLED_REFERENCE.is_dir()
-    assert (BUNDLED_REFERENCE / "LICENSE").is_file()
+def test_bundled_ouf_runtime_is_removed():
+    assert not BUNDLED_OUF.exists()
 
 
 def test_no_runtime_ouf_references_remain():

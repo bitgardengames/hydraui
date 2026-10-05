@@ -350,7 +350,7 @@ function UF:CreateNamePlateDriver()
 		DisableBlizzardPlate(base)
 		local plate = base._unitFrame
 		if not plate then
-			-- Keep the Blizzard nameplate as the parent, just as oUF did.  Reparenting this frame to HydraUIParent would detach it from the world-space plate.
+			-- Keep the Blizzard nameplate as the parent. Reparenting this frame to HydraUIParent would detach it from the world-space plate.
 			plate = HydraUI.UnitFrames:CreateNamePlateButton(base, unit, HydraUI.StyleFuncs.nameplate)
 			base._unitFrame = plate
 		end
@@ -370,7 +370,7 @@ function UF:CreateNamePlateDriver()
 		self.NamePlatesByUnit[unit] = nil
 	end
 
-	-- Blizzard initializes its nameplate CVars during login. Match oUF's timing so those defaults cannot overwrite HydraUI's 1:1 nameplate scale afterwards.
+	-- Blizzard initializes its nameplate CVars during login. Apply ours at the same point so those defaults cannot overwrite HydraUI's 1:1 nameplate scale afterwards.
 	if IsLoggedIn() then
 		ApplyCVars()
 	else

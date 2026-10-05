@@ -242,6 +242,37 @@ local FilterUnit = function(unit)
 	end
 end
 
+local FormatGuild = function(guild, rank)
+	local Color = guild == MyGuild and "5DADE2" or "66BB6A"
+
+	if Settings["tooltips-display-rank"] then
+		return format("|cFF%s<%s>|r (%s)", Color, guild, rank)
+	end
+
+	return format("|cFF%s<%s>|r", Color, guild)
+end
+
+-- AddLine is still useful here because it lets the tooltip account for the extra
+-- height. Reanchoring only the new line and the details line puts the guild in
+-- the native position without copying or shifting any of the existing text.
+local AddVanillaGuildLine = function(tooltip, guild)
+	tooltip:AddLine(guild)
+
+	local Name = tooltip:GetName()
+	local GuildLine = Name and _G[Name .. "TextLeft" .. tooltip:NumLines()]
+	local NameLine = Name and _G[Name .. "TextLeft1"]
+	local DetailsLine = Name and _G[Name .. "TextLeft2"]
+
+	if not (GuildLine and NameLine and DetailsLine) then
+		return
+	end
+
+	GuildLine:ClearAllPoints()
+	GuildLine:SetPoint("TOPLEFT", NameLine, "BOTTOMLEFT", 0, -2)
+	DetailsLine:ClearAllPoints()
+	DetailsLine:SetPoint("TOPLEFT", GuildLine, "BOTTOMLEFT", 0, -2)
+end
+
 local OnTooltipSetUnit = function(self)
 	if (Settings["tooltips-hide-on-unit"] == "NO_COMBAT" and InCombatLockdown()) or Settings["tooltips-hide-on-unit"] == "ALWAYS" then
 		self:Hide()
@@ -349,27 +380,13 @@ local OnTooltipSetUnit = function(self)
 			elseif Line and Line.GetText and Line:GetText() and find(Line:GetText(), PVP) then
 				Line:SetText(format("|cFFEE4D4D%s|r", PVP))
 			elseif Line and Guild and find(Line:GetText(), Guild) then
-				if Guild == MyGuild then
-					if Settings["tooltips-display-rank"] then
-						Guild = format("|cFF5DADE2<%s>|r (%s)", Guild, Rank)
-					else
-						Guild = format("|cFF5DADE2<%s>|r", Guild)
-					end
-				else
-					if Settings["tooltips-display-rank"] then
-						Guild = format("|cFF66BB6A<%s>|r (%s)", Guild, Rank)
-					else
-						Guild = format("|cFF66BB6A<%s>|r", Guild)
-					end
-				end
-
-				Line:SetText(Guild)
+				Line:SetText(FormatGuild(Guild, Rank))
 			end
 		end
 
 		-- Vanilla does not add the guild name to unit tooltips natively
 		if HydraUI.IsVanilla and Guild then
-			self:AddLine("<" .. Guild .. ">", 1, 1, 1)
+			AddVanillaGuildLine(self, FormatGuild(Guild, Rank))
 		end
 
 		if Settings["tooltips-show-target"] and (UnitID ~= "player" and UnitExists(UnitID .. "target")) then

@@ -250,6 +250,12 @@ class SharedUnitFrameCoverage(unittest.TestCase):
         self.assertIn("container.__owner = frame", enable)
         self.assertNotIn("ipairs({frame.Buffs, frame.Debuffs})", enable)
 
+    def test_aura_count_uses_the_timer_text_draw_layer(self):
+        source = (ELEMENTS / "AuraSupport.lua").read_text()
+
+        self.assertIn('button.count = button.cd:CreateFontString(nil, "OVERLAY")', source)
+        self.assertIn('button.Time = button.cd:CreateFontString(nil, "OVERLAY")', source)
+
 
 if __name__ == "__main__":
     unittest.main()

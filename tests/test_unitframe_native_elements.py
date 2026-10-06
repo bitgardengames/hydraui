@@ -29,13 +29,20 @@ def test_power_timers_are_limited_to_supported_clients():
     elements = (ROOT / "Elements/PowerTimers.lua").read_text()
     player = (ROOT / "Frames/Player.lua").read_text()
 
-    mana_guard = "HydraUI.IsMists or HydraUI.IsMainline"
-    energy_guard = "HydraUI.IsVanilla or HydraUI.IsTBC"
+    mana_guard = "HydraUI.IsMists or (HydraUI.IsMainline and not HydraUI.IsForever)"
+    energy_guard = "HydraUI.IsVanilla or HydraUI.IsTBC or HydraUI.IsForever"
 
     assert mana_guard in elements
     assert f"not ({mana_guard})" in player
     assert energy_guard in elements
     assert energy_guard in player
+
+
+def test_forever_manifest_loads_the_classic_druid_mana_bar():
+    manifest = (ROOT.parents[1] / "HydraUI_Camelot.toc").read_text()
+
+    assert "Elements\\DruidMana.lua" in manifest
+    assert "Elements\\ManaBar.lua" not in manifest
 
 
 def test_player_resources_preserve_dynamic_ouf_behavior():

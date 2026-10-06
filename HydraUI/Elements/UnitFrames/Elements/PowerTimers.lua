@@ -47,7 +47,7 @@ end
 local function EnableMana(frame)
 	local element = frame.ManaTimer
 
-	if HydraUI.IsMists or HydraUI.IsMainline or not element or not UnitIsUnit(frame.unit, "player") then
+	if HydraUI.IsMists or (HydraUI.IsMainline and not HydraUI.IsForever) or not element or not UnitIsUnit(frame.unit, "player") then
 		return
 	end
 
@@ -97,7 +97,7 @@ end
 local function EnableEnergy(frame)
 	local element = frame.EnergyTick
 
-	if not (HydraUI.IsVanilla or HydraUI.IsTBC) or not element or not UnitIsUnit(frame.unit, "player") then
+	if not (HydraUI.IsVanilla or HydraUI.IsTBC or HydraUI.IsForever) or not element or not UnitIsUnit(frame.unit, "player") then
 		return
 	end
 

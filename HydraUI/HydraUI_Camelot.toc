@@ -117,7 +117,7 @@ Elements\ActionBars\BagSlots.lua
 Elements\Scale.lua
 Elements\ObjectiveTracker.lua
 Elements\Loot.lua
-Elements\ManaBar.lua
+Elements\DruidMana.lua
 Elements\MirrorTimers.lua
 Elements\ToastFrame.lua
 Elements\Vehicle.lua

@@ -14,24 +14,24 @@ def function_body(name):
 
 class PlayerResourceDescriptorCoverage(unittest.TestCase):
     def test_descriptor_matrix_covers_supported_class_clients(self):
-        # Unconditional descriptors cover every client on which the class exists.
+        # Descriptors cover every client on which the class resource is readable.
         for class_name, field, count in (
-            ("ROGUE", "ComboPoints", 7),
-            ("DRUID", "ComboPoints", 5),
             ("DEATHKNIGHT", "Runes", 6),
             ("MONK", "ClassPower", 6),
             ("EVOKER", "ClassPower", 6),
         ):
             self.assertRegex(SOURCE, rf'{class_name} = {{ field = "{field}".*count = .*{count}')
+        self.assertRegex(SOURCE, r'ROGUE = \(not HydraUI.IsForever\) and { field = "ComboPoints".*count = .*7')
+        self.assertRegex(SOURCE, r'DRUID = \(not HydraUI.IsForever\) and { field = "ComboPoints".*count = .*5')
 
         # Version-gated combinations follow the class-power reference. Numeric
         # resources continue to use the ordinary player Power bar.
         for expression in (
-            'WARLOCK = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
-            'MAGE = (HydraUI.IsMainline or HydraUI.IsMists)',
-            'PALADIN = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists)',
+            'WARLOCK = (HasModernClassResources or HydraUI.IsCata or HydraUI.IsMists)',
+            'MAGE = (HasModernClassResources or HydraUI.IsMists)',
+            'PALADIN = (HasModernClassResources or HydraUI.IsCata or HydraUI.IsMists)',
             'PRIEST = HydraUI.IsMists',
-            'SHAMAN = (HydraUI.IsWrath or HydraUI.IsMists or HydraUI.IsMainline)',
+            'SHAMAN = (HydraUI.IsWrath or HydraUI.IsMists or HasModernClassResources)',
         ):
             self.assertIn(expression, SOURCE)
         self.assertLess(SOURCE.index("local PlayerResourceDescriptors"),
@@ -43,7 +43,7 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
                       'alias = "Chi"', 'alias = "HolyPower"', 'alias = "Essence"',
                       'alias = "ShadowOrbs"', 'alias = "MaelstromWeapon"',
                       "countProvider = function()", "color = function(i)",
-                      "postUpdate = UF.PostUpdateTotems", "charged = HydraUI.IsMainline",
+                      "postUpdate = UF.PostUpdateTotems", "charged = HasModernClassResources",
                       "runes = true", "stagger = true", "totems = true"):
             self.assertIn(token, SOURCE)
         self.assertNotIn("ArcanePower", SOURCE)
@@ -60,6 +60,11 @@ class PlayerResourceDescriptorCoverage(unittest.TestCase):
         self.assertNotIn('"PLAYER_TALENT_UPDATE"', SOURCE)
         self.assertIn("PlayerAuraStacks({[53817] = true, [344179] = true})", SOURCE)
         self.assertIn("PlayerSpecializationIs(263, 2)", SOURCE)
+
+    def test_forever_uses_classic_resources_without_reading_secret_combo_points(self):
+        self.assertIn("local HasModernClassResources = HydraUI.IsMainline and not HydraUI.IsForever", SOURCE)
+        self.assertEqual(SOURCE.count("(not HydraUI.IsForever) and"), 2)
+        self.assertIn('or {field = "Totems", count = 4', SOURCE)
 
     def test_hidden_resources_do_not_leave_an_aura_gap(self):
         update_start = SOURCE.index("local function UpdatePlayerResources")

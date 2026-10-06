@@ -293,17 +293,23 @@ local function UpdatePlayerResourceLayout(frame, resourceHeight, detached)
 end
 
 -- Resource descriptions are module constants, so spawning a frame only selects one.
+-- Forever runs on the Mainline project/API, but retains Classic class design.
+-- Do not infer its class resources from IsMainline: most of the modern resources
+-- do not exist there, and its target-bound combo points are secret values that
+-- cannot be split into individual status-bar segments by add-ons.
+local HasModernClassResources = HydraUI.IsMainline and not HydraUI.IsForever
+
 local PlayerResourceDescriptors = {
-	ROGUE = { field = "ComboPoints", count = HydraUI.IsMainline and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
-	DRUID = { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HydraUI.IsMainline},
+	ROGUE = (not HydraUI.IsForever) and { field = "ComboPoints", count = HasModernClassResources and 7 or 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HasModernClassResources} or nil,
+	DRUID = (not HydraUI.IsForever) and { field = "ComboPoints", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ComboPoints) end, color = function(i) return unpack(HydraUI.ComboPoints[i]) end, charged = HasModernClassResources} or nil,
 	DEATHKNIGHT = { field = "Runes", count = 6, colorSetting = "color-runes", runes = true},
 	MONK = { field = "ClassPower", alias = "Chi", count = 6, countProvider = function() return UnitPowerMax("player", Enum.PowerType.Chi) end, colorSetting = "color-chi", stagger = true, active = function() return HydraUI.IsMists or PlayerSpecializationIs(269) end},
 	EVOKER = { field = "ClassPower", alias = "Essence", count = 6, countProvider = function() return UnitPowerMax("player", Enum.PowerType.Essence) end, colorSetting = "color-essence"},
-	WARLOCK = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "SoulShards", count = HydraUI.IsMainline and 5 or (HydraUI.IsMists and 4 or 3), countProvider = function() return UnitPowerMax("player", Enum.PowerType.SoulShards) end, colorSetting = "color-soul-shards", unmodified = HydraUI.IsMainline, displayMod = HydraUI.IsMainline, active = function() return not HydraUI.IsMists or PlayerSpecializationIs(265) end} or nil,
-	MAGE = (HydraUI.IsMainline or HydraUI.IsMists) and {field = "ClassPower", alias = "ArcaneCharges", count = 4, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ArcaneCharges) end, colorSetting = "color-arcane-charges", active = function() return PlayerSpecializationIs(62) end} or nil,
-	PALADIN = (HydraUI.IsMainline or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "HolyPower", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.HolyPower) end, colorSetting = "color-holy-power"} or nil,
+	WARLOCK = (HasModernClassResources or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "SoulShards", count = HasModernClassResources and 5 or (HydraUI.IsMists and 4 or 3), countProvider = function() return UnitPowerMax("player", Enum.PowerType.SoulShards) end, colorSetting = "color-soul-shards", unmodified = HasModernClassResources, displayMod = HasModernClassResources, active = function() return not HydraUI.IsMists or PlayerSpecializationIs(265) end} or nil,
+	MAGE = (HasModernClassResources or HydraUI.IsMists) and {field = "ClassPower", alias = "ArcaneCharges", count = 4, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ArcaneCharges) end, colorSetting = "color-arcane-charges", active = function() return PlayerSpecializationIs(62) end} or nil,
+	PALADIN = (HasModernClassResources or HydraUI.IsCata or HydraUI.IsMists) and {field = "ClassPower", alias = "HolyPower", count = 5, countProvider = function() return UnitPowerMax("player", Enum.PowerType.HolyPower) end, colorSetting = "color-holy-power"} or nil,
 	PRIEST = HydraUI.IsMists and {field = "ClassPower", alias = "ShadowOrbs", count = 3, countProvider = function() return UnitPowerMax("player", Enum.PowerType.ShadowOrbs or 13) end, colorSetting = "color-soul-shards", active = function() return PlayerSpecializationIs(258) end} or nil,
-	SHAMAN = (HydraUI.IsWrath or HydraUI.IsMists or HydraUI.IsMainline) and {field = "ClassPower", alias = "MaelstromWeapon", count = HydraUI.IsMainline and 10 or 5, countProvider = function() return HydraUI.IsMainline and IsPlayerSpell(384149) and 10 or 5 end, maximumProvider = function() return HydraUI.IsMainline and IsPlayerSpell(384149) and 10 or 5 end, currentProvider = function() return PlayerAuraStacks({[53817] = true, [344179] = true}) end, colorSetting = "color-maelstrom", active = function() return PlayerSpecializationIs(263, 2) end} or {field = "Totems", count = 4, color = function(i) return unpack(HydraUI.TotemColors[i]) end, postUpdate = UF.PostUpdateTotems, totems = true},
+	SHAMAN = (HydraUI.IsWrath or HydraUI.IsMists or HasModernClassResources) and {field = "ClassPower", alias = "MaelstromWeapon", count = HasModernClassResources and 10 or 5, countProvider = function() return HasModernClassResources and IsPlayerSpell(384149) and 10 or 5 end, maximumProvider = function() return HasModernClassResources and IsPlayerSpell(384149) and 10 or 5 end, currentProvider = function() return PlayerAuraStacks({[53817] = true, [344179] = true}) end, colorSetting = "color-maelstrom", active = function() return PlayerSpecializationIs(263, 2) end} or {field = "Totems", count = 4, color = function(i) return unpack(HydraUI.TotemColors[i]) end, postUpdate = UF.PostUpdateTotems, totems = true},
 }
 
 local function BuildPlayerComponents(factory, self, unit)
@@ -357,7 +363,7 @@ local function BuildPlayerComponents(factory, self, unit)
 		UpdatePlayerPowerLayout(self)
 		factory:CreateBackdrop(Power, "Blank", "BACKGROUND")
 		-- Mana regen
-		if Settings["unitframes-show-mana-timer"] and not (HydraUI.IsMists or HydraUI.IsMainline) then
+		if Settings["unitframes-show-mana-timer"] and not (HydraUI.IsMists or (HydraUI.IsMainline and not HydraUI.IsForever)) then
 			local ManaTimer = CreateFrame("StatusBar", nil, Power)
 			ManaTimer:SetAllPoints(Power)
 			ManaTimer:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerPowerTexture))
@@ -380,7 +386,7 @@ local function BuildPlayerComponents(factory, self, unit)
 		end
 
 		-- Energy ticks
-		if Settings["unitframes-show-energy-timer"] and (HydraUI.IsVanilla or HydraUI.IsTBC) then
+		if Settings["unitframes-show-energy-timer"] and (HydraUI.IsVanilla or HydraUI.IsTBC or HydraUI.IsForever) then
 			local EnergyTick = CreateFrame("StatusBar", nil, Power)
 			EnergyTick:SetAllPoints(Power)
 			EnergyTick:SetStatusBarTexture(Assets:GetTexture(Settings.PlayerPowerTexture))
@@ -836,7 +842,7 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Player"], Lan
 	left:CreateSlider("unitframes-player-width", Settings["unitframes-player-width"], 120, 320, 1, Language["Width"], Language["Set the width of the player unit frame"], UpdatePlayerWidth)
 	left:CreateSwitch("player-enable-pvp", Settings["player-enable-pvp"], Language["Enable PVP Indicator"], Language["Display the PvP indicator"], UpdatePlayerEnablePVPIndicator)
 
-	if HydraUI.IsVanilla or HydraUI.IsTBC then
+	if HydraUI.IsVanilla or HydraUI.IsTBC or HydraUI.IsForever then
 		left:CreateSwitch("unitframes-show-mana-timer", Settings["unitframes-show-mana-timer"], Language["Enable Mana Regen Timer"], Language["Display the time until your full mana regeneration is active"], ReloadUI):RequiresReload(true)
 		left:CreateSwitch("unitframes-show-energy-timer", Settings["unitframes-show-energy-timer"], Language["Enable Energy Timer"], Language["Display the time until your next energy tick on the power bar"], ReloadUI):RequiresReload(true)
 	end

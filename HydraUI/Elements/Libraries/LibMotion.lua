@@ -68,6 +68,19 @@ end
 
 local Prototype = {}
 
+local function RemoveFromUpdater(animation)
+	for i = #Updater, 1, -1 do
+		if Updater[i] == animation then
+			Updater[i] = Updater[#Updater]
+			Updater[#Updater] = nil
+		end
+	end
+
+	if #Updater == 0 then
+		Updater:SetScript("OnUpdate", nil)
+	end
+end
+
 function Prototype:Play()
 	if self.Paused then
 		self:FireEvent("onresume")
@@ -81,6 +94,10 @@ function Prototype:Play()
 	self.Stopped = false
 	self.Finished = false
 
+	-- Playing an animation again restarts it. Remove its previous updater entry
+	-- first so frequent state changes cannot retain duplicate references and
+	-- update the same animation several times per frame.
+	RemoveFromUpdater(self)
 	Updater[#Updater + 1] = self
 
 	if (not Updater:GetScript("OnUpdate")) then
@@ -93,13 +110,7 @@ function Prototype:IsPlaying()
 end
 
 function Prototype:Pause()
-	for i = 1, #Updater do
-		if (Updater[i] == self) then
-			tremove(Updater, i)
-
-			break
-		end
-	end
+	RemoveFromUpdater(self)
 
 	self.Playing = false
 	self.Paused = true
@@ -114,13 +125,7 @@ function Prototype:IsPaused()
 end
 
 function Prototype:Stop(reset)
-	for i = 1, #Updater do
-		if (Updater[i] == self) then
-			tremove(Updater, i)
-
-			break
-		end
-	end
+	RemoveFromUpdater(self)
 
 	self.Playing = false
 	self.Paused = false
@@ -219,7 +224,9 @@ function Prototype:SetGroup(group)
 	elseif self.Group then
 		for i = 1, #self.Group.Animations do
 			if (self.Group.Animations[i] == self) then
-				tremove(self.Group, i)
+				tremove(self.Group.Animations, i)
+
+				break
 			end
 		end
 

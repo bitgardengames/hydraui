@@ -8,17 +8,31 @@ local BUTTON_WIDTH = ((POPUP_WIDTH - 6) / 2) - 1
 
 -- IsSevere flag, where you need to hold accept for 1 sec to apply the click. place a statusbar in the button. For things like deleting profiles/saved data
 
+local ReleasePopup = function(PopupFrame)
+	PopupFrame.FadeIn:Stop()
+	PopupFrame.FadeOut:Stop()
+	PopupFrame.Button1.Callback = nil
+	PopupFrame.Button1.Arg1 = nil
+	PopupFrame.Button1.Arg2 = nil
+	PopupFrame.Button2.Callback = nil
+	PopupFrame.Button2.Arg1 = nil
+	PopupFrame.Button2.Arg2 = nil
+	PopupFrame:Hide()
+end
+
 local ButtonOnMouseUp = function(self)
 	self.Texture:SetVertexColor(HydraUI:HexToRGB(Settings["ui-button-texture-color"]))
 
-	if self.Callback then
-		self.Callback(self.Arg1, self.Arg2)
-	end
+	local Callback, Arg1, Arg2 = self.Callback, self.Arg1, self.Arg2
 
 	self.Text:ClearAllPoints()
 	self.Text:SetPoint("CENTER", self, 0, 0)
 
-	self:GetParent():Hide()
+	ReleasePopup(self:GetParent())
+
+	if Callback then
+		Callback(Arg1, Arg2)
+	end
 end
 
 local ButtonOnMouseDown = function(self)
@@ -39,7 +53,7 @@ local ButtonOnLeave = function(self)
 end
 
 local FadeOnFinished = function(self)
-	self.Parent:Hide()
+	ReleasePopup(self.Parent)
 end
 
 Popup.CreatePopupFrame = function(self)
@@ -209,7 +223,9 @@ Popup.Display = function(self, header, body, accept, acceptfunc, cancel, cancelf
 end
 
 function HydraUI:ClearPopup()
-	Popup.FadeOut:Play()
+	if Popup.Created then
+		Popup.FadeOut:Play()
+	end
 end
 
 function HydraUI:DisplayPopup(...)

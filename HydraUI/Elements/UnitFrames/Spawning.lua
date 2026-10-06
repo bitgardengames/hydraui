@@ -297,6 +297,7 @@ local HEADER_INITIAL_CONFIG = [[
 	self:SetHeight(Header:GetAttribute("initial-height"))
 	self:SetAttribute("*type1", "target")
 	self:SetAttribute("*type2", "togglemenu")
+	RegisterUnitWatch(self)
 	Header:CallMethod("InitializeChild", self:GetName())
 ]]
 
@@ -305,7 +306,10 @@ function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
 
 	local template = petHeader and "SecureGroupPetHeaderTemplate" or "SecureGroupHeaderTemplate"
 	local header = CreateFrame("Frame", name, HydraUI.UIParent, template)
-	header:SetAttribute("template", "SecureUnitButtonTemplate")
+	-- Header children need their own secure handlers. This matches oUF's group
+	-- button template and, together with RegisterUnitWatch in the initializer,
+	-- lets Blizzard show a child when its assigned unit exists.
+	header:SetAttribute("template", "SecureUnitButtonTemplate, SecureHandlerStateTemplate, SecureHandlerEnterLeaveTemplate")
 
 	header.InitializeChild = function(_, childName)
 		local child = _G[childName]
@@ -341,7 +345,10 @@ function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
 		condition = attributes[attributes.showSoloIndex + 1] and "[group:raid] show; [nogroup] show; hide" or "[group:raid] show; hide"
 	end
 
-	RegisterStateDriver(header, "visibility", condition)
+	-- SecureGroupHeaderTemplate consumes state-visibility itself. Driving that
+	-- attribute (rather than only the frame's generic visibility state) keeps
+	-- roster-driven child creation and the header's secure state in sync.
+	RegisterAttributeDriver(header, "state-visibility", condition)
 
 	return header
 end

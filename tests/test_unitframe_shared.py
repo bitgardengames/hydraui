@@ -215,6 +215,15 @@ class SharedUnitFrameCoverage(unittest.TestCase):
             self.assertNotIn("SetHeaderHealthTexture", source)
             self.assertNotIn("UpdateHealthTexture", source)
 
+    def test_debuff_only_frames_initialize_their_aura_container(self):
+        source = (ELEMENTS / "AuraSupport.lua").read_text()
+        enable = source[source.index("local function EnableAuras"):source.index("local function DisableAuras")]
+
+        self.assertIn("EnableContainer(frame.Buffs)", enable)
+        self.assertIn("EnableContainer(frame.Debuffs)", enable)
+        self.assertIn("container.__owner = frame", enable)
+        self.assertNotIn("ipairs({frame.Buffs, frame.Debuffs})", enable)
+
 
 if __name__ == "__main__":
     unittest.main()

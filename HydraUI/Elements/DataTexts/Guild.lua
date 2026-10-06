@@ -176,10 +176,12 @@ local OnDisable = function(self)
 	self:UnregisterEvent("GUILD_RANKS_UPDATE")
 	self:UnregisterEvent("PLAYER_GUILD_UPDATE")
 	self:UnregisterEvent("GUILD_MOTD")
+	self:UnregisterEvent("MODIFIER_STATE_CHANGED")
 	self:SetScript("OnEvent", nil)
 	self:SetScript("OnEnter", nil)
 	self:SetScript("OnLeave", nil)
 	self:SetScript("OnMouseUp", nil)
+	self.TooltipShown = false
 
 	self.Text:SetText("")
 end

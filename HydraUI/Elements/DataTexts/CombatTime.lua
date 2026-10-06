@@ -14,6 +14,10 @@ end
 
 local Update = function(self, event)
 	if event == "PLAYER_REGEN_DISABLED" then
+		if self.Ticker then
+			self.Ticker:Cancel()
+		end
+
 		self.CombatStart = GetTime()
 		self.Ticker = C_Timer.NewTicker(1, function()
 			UpdateElapsed(self)

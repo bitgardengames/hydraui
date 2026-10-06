@@ -32,6 +32,11 @@ end
 local OnEnable = function(self)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", OnLeave)
+
+	if self.Ticker then
+		self.Ticker:Cancel()
+	end
+
 	self.Ticker = C_Timer.NewTicker(1, function()
 		Update(self)
 	end)

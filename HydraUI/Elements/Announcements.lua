@@ -120,9 +120,9 @@ function Announcements:OnEvent(event, arg)
 end
 
 function Announcements:Load()
-	-- WoW Forever uses the Mainline/Midnight combat API restrictions.
-	-- Registering COMBAT_LOG_EVENT_UNFILTERED is forbidden for addons there.
-	if HydraUI.IsForever then
+	-- Forever and Midnight restrict addons from registering for the combat log.
+	-- Do not attempt the protected registration, which taints the rest of startup.
+	if HydraUI.IsForever or HydraUI.IsMidnight then
 		return
 	end
 

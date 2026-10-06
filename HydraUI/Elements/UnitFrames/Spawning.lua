@@ -293,12 +293,24 @@ end
 
 local HEADER_INITIAL_CONFIG = [[
 	local Header = self:GetParent()
+	local unit
+
+	if Header:GetAttribute("showRaid") then
+		unit = "raid"
+	elseif Header:GetAttribute("showParty") then
+		unit = "party"
+	end
+
+	if unit and Header:GetAttribute("HydraUI-headerType") == "pet" then
+		unit = unit .. "pet"
+	end
+
 	self:SetWidth(Header:GetAttribute("initial-width"))
 	self:SetHeight(Header:GetAttribute("initial-height"))
 	self:SetAttribute("*type1", "target")
 	self:SetAttribute("*type2", "togglemenu")
 	RegisterUnitWatch(self)
-	Header:CallMethod("InitializeChild", self:GetName())
+	Header:CallMethod("InitializeChild", self:GetName(), unit)
 ]]
 
 function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
@@ -310,15 +322,21 @@ function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
 	-- button template and, together with RegisterUnitWatch in the initializer,
 	-- lets Blizzard show a child when its assigned unit exists.
 	header:SetAttribute("template", "SecureUnitButtonTemplate, SecureHandlerStateTemplate, SecureHandlerEnterLeaveTemplate")
+	header:SetAttribute("HydraUI-headerType", petHeader and "pet" or "group")
 
-	header.InitializeChild = function(_, childName)
+	header.InitializeChild = function(_, childName, guessedUnit)
 		local child = _G[childName]
 
 		if not child or child._unitFrameInitialized then
 			return
 		end
 
-		local unit = child:GetAttribute("unit")
+		-- SecureGroupHeaderTemplate does not guarantee that the child's concrete
+		-- unit attribute is assigned before initialConfigFunction runs.  oUF
+		-- handles the same ordering by passing a family-level guessed unit to its
+		-- style function; use the concrete unit when available and otherwise do
+		-- the same so every party/raid (and pet) child is styled exactly once.
+		local unit = child:GetAttribute("unit") or guessedUnit
 
 		if not unit then
 			return

@@ -185,8 +185,14 @@ class SharedUnitFrameCoverage(unittest.TestCase):
         ]
 
         self.assertIn("RegisterUnitWatch(self)", initializer)
+        self.assertIn('Header:GetAttribute("showRaid")', initializer)
+        self.assertIn('Header:GetAttribute("showParty")', initializer)
+        self.assertIn('Header:GetAttribute("HydraUI-headerType") == "pet"', initializer)
+        self.assertIn('Header:CallMethod("InitializeChild", self:GetName(), unit)', initializer)
         self.assertIn("SecureHandlerStateTemplate", creator)
         self.assertIn("SecureHandlerEnterLeaveTemplate", creator)
+        self.assertIn('header:SetAttribute("HydraUI-headerType", petHeader and "pet" or "group")', creator)
+        self.assertIn('child:GetAttribute("unit") or guessedUnit', creator)
         self.assertIn(
             'RegisterAttributeDriver(header, "state-visibility", condition)',
             creator,

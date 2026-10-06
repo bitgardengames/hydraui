@@ -19,6 +19,9 @@ def runtime_files():
         if (
             path.is_file()
             and path.suffix.lower() in RUNTIME_SUFFIXES
+            # The bundled oUF tree is retained as implementation reference
+            # material, but is deliberately absent from every addon manifest.
+            and BUNDLED_OUF not in path.parents
         ):
             yield path
 
@@ -37,11 +40,13 @@ def references_in(path):
     return references
 
 
-def test_bundled_ouf_runtime_is_removed():
-    assert not BUNDLED_OUF.exists()
+def test_bundled_ouf_source_is_retained_as_a_reference():
+    assert BUNDLED_OUF.is_dir()
+    assert (BUNDLED_OUF / "ouf.lua").is_file()
+    assert (BUNDLED_OUF / "LICENSE").is_file()
 
 
-def test_no_runtime_ouf_references_remain():
+def test_no_active_runtime_ouf_references_remain():
     actual = {}
 
     for path in runtime_files():

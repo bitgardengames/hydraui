@@ -15,6 +15,8 @@ local UnusedAlerts = {}
 local tinsert = table.insert
 local tremove = table.remove
 
+local RecycleAlert
+
 local SortAlerts = function()
 	for i = 1, #ActiveAlerts do
 		ActiveAlerts[i]:ClearAllPoints()
@@ -28,24 +30,22 @@ local SortAlerts = function()
 end
 
 local OnEnter = function(self)
-	if self.Hold:IsPlaying() then
-		self.Hold:Stop()
+	if self.FadeIn:IsPlaying() then
+		self.FadeIn:Pause()
 	end
 
 	if self.FadeOut:IsPlaying() then
 		self.FadeOut:Stop()
-		self.FadeIn:Play()
+		self:SetAlpha(1)
 	end
 end
 
 local OnLeave = function(self)
-	if not self.Hold:IsPlaying() then
-		self.Hold:Play()
+	if self.FadeIn:IsPaused() then
+		self.FadeIn:Play()
+	elseif not self.FadeIn:IsPlaying() and not self.FadeOut:IsPlaying() then
+		self.FadeOut:Play()
 	end
-end
-
-local HoldOnFinished = function(self)
-	self:GetParent().FadeOut:Play()
 end
 
 local FadeInOnPlay = function(self)
@@ -53,37 +53,37 @@ local FadeInOnPlay = function(self)
 end
 
 local FadeInOnFinished = function(self)
-	self:GetParent().Hold:Play()
+	self:GetParent().FadeOut:Play()
 end
 
 local FadeOutOnFinished = function(self)
-	local Alert = self:GetParent()
-
-	for i = 1, #ActiveAlerts do
-		if ActiveAlerts[i] == Alert then
-			tinsert(UnusedAlerts, tremove(ActiveAlerts, i))
-
-			break
-		end
-	end
-
-	SortAlerts()
-	Alert:Hide()
+	RecycleAlert(self:GetParent())
 end
 
 local CloseOnMouseUp = function(self)
-	local Alert = self.Parent
+	RecycleAlert(self.Parent)
+end
 
-	Alert:Hide()
-	Alert:SetAlpha(0)
+RecycleAlert = function(Alert)
+	local WasActive
 
-	for i = 1, #ActiveAlerts do
+	for i = #ActiveAlerts, 1, -1 do
 		if ActiveAlerts[i] == Alert then
-			tinsert(UnusedAlerts, tremove(ActiveAlerts, i))
-
-			break
+			tremove(ActiveAlerts, i)
+			WasActive = true
 		end
 	end
+
+	if not WasActive then
+		return
+	end
+
+	Alert.FadeIn:Stop()
+	Alert.FadeOut:Stop()
+	Alert:SetScript("OnMouseUp", nil)
+	Alert:Hide()
+	Alert:SetAlpha(0)
+	tinsert(UnusedAlerts, Alert)
 
 	SortAlerts()
 end

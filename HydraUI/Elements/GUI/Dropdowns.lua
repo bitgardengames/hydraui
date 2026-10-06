@@ -335,7 +335,20 @@ end
 local DropdownSort = DropdownUpdateList
 
 local CreateDropdownSelection = function(self, key, value)
-	local MenuItem = CreateFrame("Frame", nil, self.Menu)
+	local MenuItem = tremove(self.Menu.RecycledItems)
+
+	if MenuItem then
+		MenuItem:EnableMouse(true)
+		MenuItem.Key = key
+		MenuItem.Value = value
+		MenuItem.ID = self.ID
+		MenuItem.Text:SetText(key)
+		tinsert(self.Menu, MenuItem)
+
+		return MenuItem
+	end
+
+	MenuItem = CreateFrame("Frame", nil, self.Menu)
 	MenuItem:SetSize(DROPDOWN_WIDTH - 6, WIDGET_HEIGHT)
 	MenuItem:SetScript("OnMouseDown", MenuItemOnMouseDown)
 	MenuItem:SetScript("OnMouseUp", MenuItemOnMouseUp)
@@ -460,8 +473,12 @@ local DropdownRemoveSelection = function(self, key)
 
 			self.Menu[i]:Hide()
 			self.Menu[i]:EnableMouse(false)
+			self.Menu[i].Key = nil
+			self.Menu[i].Value = nil
+			self.Menu[i].ID = nil
+			self.Menu[i].Text:SetText("")
 
-			tremove(self.Menu, i)
+			tinsert(self.Menu.RecycledItems, tremove(self.Menu, i))
 			DropdownUpdateList(self)
 
 			return
@@ -564,6 +581,7 @@ GUI.Widgets.CreateDropdown = function(self, id, value, values, label, tooltip, h
 	Dropdown.Menu.Offset = 1
 	Dropdown.Menu.SelectedItem = nil
 	Dropdown.Menu.SynchronizedValue = nil
+	Dropdown.Menu.RecycledItems = {}
 
 	Dropdown.Button.Menu = Dropdown.Menu
 	Dropdown.Button.Parent = Dropdown

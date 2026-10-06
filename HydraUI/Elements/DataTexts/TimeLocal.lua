@@ -54,6 +54,11 @@ local OnEnable = function(self)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", OnLeave)
 	self:SetScript("OnMouseUp", OnMouseUp)
+
+	if self.Ticker then
+		self.Ticker:Cancel()
+	end
+
 	self.Ticker = C_Timer.NewTicker(10, function()
 		Update(self)
 	end)

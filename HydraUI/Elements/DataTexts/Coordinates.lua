@@ -79,6 +79,11 @@ end
 local OnEnable = function(self)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", OnLeave)
+
+	if self.Ticker then
+		self.Ticker:Cancel()
+	end
+
 	self.Ticker = C_Timer.NewTicker(0.5, function()
 		Update(self)
 	end)
@@ -94,6 +99,7 @@ local OnDisable = function(self)
 
 	self:SetScript("OnEnter", nil)
 	self:SetScript("OnLeave", nil)
+	self.TooltipShown = false
 
 	self.Text:SetText("")
 end

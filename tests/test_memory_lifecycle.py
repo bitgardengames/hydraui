@@ -5,6 +5,8 @@ from pathlib import Path
 LIB_MOTION = Path("HydraUI/Elements/Libraries/LibMotion.lua").read_text()
 ALERTS = Path("HydraUI/Elements/Alerts.lua").read_text()
 POPUP = Path("HydraUI/Elements/Popup.lua").read_text()
+DROPDOWNS = Path("HydraUI/Elements/GUI/Dropdowns.lua").read_text()
+GUILD = Path("HydraUI/Elements/DataTexts/Guild.lua").read_text()
 
 
 def test_animation_restarts_cannot_accumulate_updater_references():
@@ -43,3 +45,20 @@ def test_hidden_popup_releases_callbacks_and_arguments():
         assert f"PopupFrame.{button}.Arg1 = nil" in release
         assert f"PopupFrame.{button}.Arg2 = nil" in release
     assert "ReleasePopup(self.Parent)" in POPUP
+
+
+def test_removed_dropdown_rows_are_reused_without_retaining_values():
+    create = DROPDOWNS[DROPDOWNS.index("local CreateDropdownSelection") : DROPDOWNS.index("local ConfigureDropdownSelection")]
+    remove = DROPDOWNS[DROPDOWNS.index("local DropdownRemoveSelection") : DROPDOWNS.index("GUI.Widgets.CreateDropdown")]
+
+    assert "tremove(self.Menu.RecycledItems)" in create
+    assert "tinsert(self.Menu.RecycledItems, tremove(self.Menu, i))" in remove
+    for field in ("Key", "Value", "ID"):
+        assert f"self.Menu[i].{field} = nil" in remove
+
+
+def test_guild_data_text_releases_hover_only_event_on_disable():
+    disable = GUILD[GUILD.index("local OnDisable") : GUILD.index('HydraUI:AddDataText("Guild"')]
+
+    assert 'self:UnregisterEvent("MODIFIER_STATE_CHANGED")' in disable
+    assert "self.TooltipShown = false" in disable

@@ -573,14 +573,19 @@ local function EnableAuras(frame)
 		return
 	end
 
-	for _, container in ipairs({frame.Buffs, frame.Debuffs}) do
-		if container then
-			container.__owner = frame
-			container.ForceUpdate = function()
-				UpdateAuras(frame, "ForceUpdate", frame.unit)
-			end
+	local function EnableContainer(container)
+		if not container then
+			return
+		end
+
+		container.__owner = frame
+		container.ForceUpdate = function()
+			UpdateAuras(frame, "ForceUpdate", frame.unit)
 		end
 	end
+
+	EnableContainer(frame.Buffs)
+	EnableContainer(frame.Debuffs)
 
 	frame:RegisterEvent("UNIT_AURA", UpdateAuras)
 

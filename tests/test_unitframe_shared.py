@@ -173,6 +173,26 @@ class SharedUnitFrameCoverage(unittest.TestCase):
         self.assertIn("self:ForEachHeaderChild(header, Operations[operation], value, descriptor)", update)
         self.assertNotIn("function(", update)
 
+    def test_secure_group_headers_register_and_drive_their_children(self):
+        source = (ROOT / "Spawning.lua").read_text()
+        initializer = source[
+            source.index("local HEADER_INITIAL_CONFIG"):
+            source.index("function UF:CreateGroupHeader")
+        ]
+        creator = source[
+            source.index("function UF:CreateGroupHeader"):
+            source.index("local function HeaderAttributes")
+        ]
+
+        self.assertIn("RegisterUnitWatch(self)", initializer)
+        self.assertIn("SecureHandlerStateTemplate", creator)
+        self.assertIn("SecureHandlerEnterLeaveTemplate", creator)
+        self.assertIn(
+            'RegisterAttributeDriver(header, "state-visibility", condition)',
+            creator,
+        )
+        self.assertNotIn('RegisterStateDriver(header, "visibility", condition)', creator)
+
     def test_pet_styles_map_their_own_family_settings_in_the_factory(self):
         factory = FACTORY
         self.assertIn('FamilySetting(config, "-width")', factory)

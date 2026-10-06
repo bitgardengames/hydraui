@@ -306,11 +306,6 @@ function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
 	local template = petHeader and "SecureGroupPetHeaderTemplate" or "SecureGroupHeaderTemplate"
 	local header = CreateFrame("Frame", name, HydraUI.UIParent, template)
 	header:SetAttribute("template", "SecureUnitButtonTemplate")
-	header:SetAttribute("initialConfigFunction", HEADER_INITIAL_CONFIG)
-
-	for index = 1, #attributes, 2 do
-		header:SetAttribute(attributes[index], attributes[index + 1])
-	end
 
 	header.InitializeChild = function(_, childName)
 		local child = _G[childName]
@@ -328,6 +323,15 @@ function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
 		local style = petHeader and (visibility == "party" and "partypet" or "raidpet") or visibility
 		HydraUI.UnitFrames:InitializeHeaderChild(child, unit, HydraUI.StyleFuncs[style])
 	end
+
+	for index = 1, #attributes, 2 do
+		header:SetAttribute(attributes[index], attributes[index + 1])
+	end
+
+	-- Setting the secure initializer can immediately create children when the
+	-- player is already grouped. Install the insecure callback and all header
+	-- attributes first so those children can be styled on every client.
+	header:SetAttribute("initialConfigFunction", HEADER_INITIAL_CONFIG)
 
 	local condition
 

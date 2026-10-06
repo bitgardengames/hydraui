@@ -284,6 +284,22 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
             self.assertIn(f'"{attribute}"', attrs)
         self.assertGreaterEqual(source.count("self:GetGrowthOffsets("), 2)
 
+    def test_group_header_callback_exists_before_secure_children_can_spawn(self):
+        source = (ROOT / "Spawning.lua").read_text()
+        create_header = source[
+            source.index("function UF:CreateGroupHeader"):
+            source.index("local function HeaderAttributes")
+        ]
+
+        self.assertLess(
+            create_header.index("header.InitializeChild ="),
+            create_header.index('header:SetAttribute("initialConfigFunction"'),
+        )
+        self.assertLess(
+            create_header.index("for index = 1, #attributes, 2 do"),
+            create_header.index('header:SetAttribute("initialConfigFunction"'),
+        )
+
     def test_spawners_hide_the_corresponding_blizzard_frames(self):
         source = (ROOT / "Spawning.lua").read_text()
         self.assertIn("function UF:DisableBlizzardUnitFrame(unit)", source)

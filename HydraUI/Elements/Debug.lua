@@ -72,7 +72,7 @@ elseif HydraUI.IsCata then
 		local HighestPoints = 0
 
 		for i = 1, 5 do -- Default UI uses 5 here for some reason? Just going to roll with it right now even though it makes no sense to me
-			ID, Name, Desc, Icon, PointsSpent = GetTalentTabInfo(i)
+			local ID, Name, Desc, Icon, PointsSpent = GetTalentTabInfo(i)
 
 			if Name then
 				if PointsSpent > HighestPoints then
@@ -100,7 +100,7 @@ else
 		local HighestPoints = 0
 
 		for i = 1, 5 do -- Default UI uses 5 here for some reason? Just going to roll with it right now even though it makes no sense to me
-			Name, Texture, PointsSpent = GetTalentTabInfo(i)
+			local Name, Texture, PointsSpent = GetTalentTabInfo(i)
 
 			if Name and type(PointsSpent) == "number" then
 				if PointsSpent > HighestPoints then

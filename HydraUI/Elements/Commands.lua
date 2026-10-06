@@ -23,15 +23,15 @@ Commands["reset"] = function()
 end
 
 Commands["texel"] = function()
-	IsGMClient = function()
-		return true
-	end
-
 	if not IsAddOnLoaded("Blizzard_DebugTools") then
 		LoadAddOn("Blizzard_DebugTools")
 	end
 
-	TexelSnappingVisualizer:Show()
+	if TexelSnappingVisualizer then
+		TexelSnappingVisualizer:Show()
+	else
+		HydraUI:print(Language["The texel snapping visualizer is unavailable on this client."])
+	end
 
 	--[[
 	local PIXEL_SNAPPING_OPTIONS = {

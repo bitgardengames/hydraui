@@ -85,3 +85,19 @@ def test_first_party_lua_avoids_redundant_control_flow_parentheses():
                 offenders.append(f"{path.relative_to(REPOSITORY_ROOT)}:{line_number}")
 
     assert not offenders, "Redundant control-flow parentheses found in:\n" + "\n".join(offenders)
+
+
+def test_debug_tools_command_does_not_replace_blizzard_security_api():
+    commands = (SOURCE_ROOT / "Elements" / "Commands.lua").read_text()
+
+    assert not re.search(r"^\s*IsGMClient\s*=", commands, re.MULTILINE)
+
+
+def test_debug_talent_values_are_local():
+    debug = (SOURCE_ROOT / "Elements" / "Debug.lua").read_text()
+
+    assert not re.search(
+        r"^\s*(?:ID,\s*)?Name,\s*(?:Desc,\s*Icon|Texture),\s*PointsSpent\s*=",
+        debug,
+        re.MULTILINE,
+    )

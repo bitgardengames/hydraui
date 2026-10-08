@@ -241,25 +241,11 @@ function Operations.powerColor(frame, value)
 end
 
 function Operations.healthTexture(frame, value)
-	local texture = Assets:GetTexture(value)
-
-	frame.Health:SetStatusBarTexture(texture)
-	frame.Health.bg:SetTexture(texture)
-
-	if frame.HealBar then
-		frame.HealBar:SetStatusBarTexture(texture)
-	end
-
-	if frame.AbsorbsBar then
-		frame.AbsorbsBar:SetStatusBarTexture(texture)
-	end
+	UF.UnitOperations.HealthTexture(UF, frame, value)
 end
 
 function Operations.powerTexture(frame, value)
-	local texture = Assets:GetTexture(value)
-
-	frame.Power:SetStatusBarTexture(texture)
-	frame.Power.bg:SetTexture(texture)
+	UF.UnitOperations.PowerTexture(UF, frame, value)
 end
 
 function Operations.debuffs(frame, value)

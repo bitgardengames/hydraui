@@ -225,7 +225,7 @@ class SharedUnitFrameCoverage(unittest.TestCase):
 
     def test_live_health_texture_update_reaches_every_prediction_texture(self):
         shared = FACTORY
-        update = re.search(r"function UF:SetHealthTexture\(.*?\nend", shared, re.S).group(0)
+        update = re.search(r"function UnitOperations.HealthTexture\(.*?\nend", shared, re.S).group(0)
         for expression in (
             "frame.Health:SetStatusBarTexture(texture)",
             "frame.Health.bg:SetTexture(texture)",

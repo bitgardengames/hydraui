@@ -1,4 +1,4 @@
-"""Verify friendly nameplate hotkeys against the native Lua driver."""
+"""Verify Blizzard nameplate visibility against the native Lua driver."""
 from pathlib import Path
 import shutil
 import subprocess

@@ -204,6 +204,21 @@ local GetUnitColor = function(unit)
 	end
 end
 
+-- Call the original setter from the post-hook to avoid invoking the hook again.
+local SetStatusBarColor = GameTooltipStatusBar.SetStatusBarColor
+local UpdateStatusBarColor = function(self)
+	local Unit = select(2, self:GetParent():GetUnit())
+
+	if not Unit or not UnitExists(Unit) then
+		return
+	end
+
+	local R, G, B = HydraUI:HexToRGB(GetUnitColor(Unit))
+
+	SetStatusBarColor(self, R, G, B)
+	self.BG:SetVertexColor(R, G, B)
+end
+
 local FilterUnit = function(unit)
 	local State
 
@@ -288,8 +303,7 @@ local OnTooltipSetUnit = function(self)
 			Class = ""
 		end
 
-		GameTooltipStatusBar:SetStatusBarColor(HydraUI:HexToRGB(Color))
-		GameTooltipStatusBar.BG:SetVertexColor(HydraUI:HexToRGB(Color))
+		UpdateStatusBarColor(GameTooltipStatusBar)
 
 		if HydraUI.IsMainline then
 			local EffectiveLevel = UnitEffectiveLevel(UnitID)
@@ -577,10 +591,7 @@ local OnValueChanged = function(self)
 		return
 	end
 
-	local Color = GetUnitColor(Unit)
-
-	self:SetStatusBarColor(HydraUI:HexToRGB(Color))
-	self.BG:SetVertexColor(HydraUI:HexToRGB(Color))
+	UpdateStatusBarColor(self)
 
 	if not Settings["tooltips-show-health-text"] then
 		return
@@ -672,6 +683,11 @@ function Tooltips:StyleStatusBar()
 	HydraUI:SetFontInfo(GameTooltipStatusBar.HealthPercent, Settings["tooltips-font"], Settings["tooltips-font-size"], Settings["tooltips-font-flags"])
 	GameTooltipStatusBar.HealthPercent:SetPoint("RIGHT", GameTooltipStatusBar, -3, 0)
 	GameTooltipStatusBar.HealthPercent:SetJustifyH("RIGHT")
+
+	-- Blizzard can reset the color after updating the value. Restore our color
+	-- after every setter call without replacing Blizzard's method or reading
+	-- its potentially secret color arguments.
+	hooksecurefunc(GameTooltipStatusBar, "SetStatusBarColor", UpdateStatusBarColor)
 
 	GameTooltipStatusBar:HookScript("OnValueChanged", OnValueChanged)
 	GameTooltipStatusBar:HookScript("OnShow", OnShow)

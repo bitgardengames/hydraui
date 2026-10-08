@@ -68,7 +68,7 @@ class SharedUnitFrameCoverage(unittest.TestCase):
         self.assertIn('self:SetScale(1)', source)
         self.assertNotIn('self:SetScale(UIParent:GetScale())', source)
         self.assertIn(
-            "CreateNamePlateButton(base, unit, HydraUI.StyleFuncs.nameplate)",
+            "CreateNamePlateButton(parent, unit, HydraUI.StyleFuncs.nameplate)",
             source,
         )
         self.assertIn('CreateFrame("Button", nil, parent)', constructor)

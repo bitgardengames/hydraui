@@ -357,7 +357,7 @@ function UF:CreateNamePlateDriver()
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)
 		self.NamePlatesByUnit[unit] = plate
 		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_ADDED", unit)
-		plate:UpdateAllElements("NAME_PLATE_UNIT_ADDED")
+		plate:Refresh("NAME_PLATE_UNIT_ADDED")
 	end
 
 	local function Removed(unit)
@@ -392,7 +392,7 @@ function UF:CreateNamePlateDriver()
 			plate = plate and plate._unitFrame
 			UF.NamePlateCallback(plate, event, "target")
 			if plate then
-				plate:UpdateAllElements(event)
+				plate:Refresh(event)
 			end
 		end
 	end)

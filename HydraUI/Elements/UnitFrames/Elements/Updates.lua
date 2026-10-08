@@ -303,7 +303,7 @@ function UnitOperations.ElementEnabled(UF, frame, value, options)
 	end
 
 	if options.forceUpdate then
-		frame:UpdateAllElements("ForceUpdate")
+		frame:Refresh("ForceUpdate")
 	end
 end
 

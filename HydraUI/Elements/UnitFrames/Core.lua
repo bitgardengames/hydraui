@@ -62,6 +62,18 @@ local function DispatchEvent(self, event, ...)
 	end
 end
 
+-- Pet events also report changes on their owner. Keep this registration rule
+-- in one place for both initial subscriptions and secure unit changes.
+local function BindUnitEvent(self, event)
+	local otherUnit = secondaryUnits[event] and secondaryUnits[event][self.unit]
+
+	if otherUnit then
+		self._registerUnitEvent(self, event, self.unit, otherUnit)
+	else
+		self._registerUnitEvent(self, event, self.unit)
+	end
+end
+
 local function Subscribe(self, event, handler, global)
 	local handlers = self._events[event]
 	local firstHandler = not handlers
@@ -96,13 +108,7 @@ local function Subscribe(self, event, handler, global)
 
 		self._unitEvents[event] = true
 
-		local otherUnit = secondaryUnits[event] and secondaryUnits[event][self.unit]
-
-		if otherUnit then
-			self._registerUnitEvent(self, event, self.unit, otherUnit)
-		else
-			self._registerUnitEvent(self, event, self.unit)
-		end
+		BindUnitEvent(self, event)
 	end
 end
 
@@ -151,13 +157,7 @@ local function UpdateUnit(self, event)
 		self.realUnit = unit ~= realUnit and realUnit or nil
 
 		for registeredEvent in next, self._unitEvents do
-			local otherUnit = secondaryUnits[registeredEvent] and secondaryUnits[registeredEvent][unit]
-
-			if otherUnit then
-				self._registerUnitEvent(self, registeredEvent, unit, otherUnit)
-			else
-				self._registerUnitEvent(self, registeredEvent, unit)
-			end
+			BindUnitEvent(self, registeredEvent)
 		end
 	end
 
@@ -182,16 +182,12 @@ local function UnitAttributeChanged(self, name, value)
 	end
 end
 
-local function PollEventless(self)
-	self:Refresh("PollEventless")
-end
-
 local function StartEventlessPolling(self)
 	UpdateUnit(self, "OnShow")
 
 	if not self._pollTicker then
 		self._pollTicker = C_Timer.NewTicker(0.5, function()
-			PollEventless(self)
+			self:Refresh("PollEventless")
 		end)
 	end
 end
@@ -336,11 +332,10 @@ local function InitializeUnitButton(frame, unit, builder, pollsUnit)
 		if unit ~= "player" then
 			frame:RegisterEvent("UNIT_PET", UpdatePet)
 		end
-	end
 
-	if not pollsUnit then
 		frame:SetScript("OnShow", UpdateUnit)
 	end
+
 	frame:HookScript("OnAttributeChanged", UnitAttributeChanged)
 	EnableClickCasting(frame)
 end

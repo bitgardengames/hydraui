@@ -112,8 +112,7 @@ Methods["Resting"] = function(unit)
 	end
 end
 
-Events["Status"] = HealthEvent .. "UNIT_CONNECTION PLAYER_FLAGS_CHANGED PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE"
-Methods["Status"] = function(unit)
+local function GetStatus(unit)
 	if UnitIsDead(unit) then
 		return "|cFFEE4D4D" .. DEAD .. "|r"
 	elseif UnitIsGhost(unit) then
@@ -123,8 +122,11 @@ Methods["Status"] = function(unit)
 	elseif UnitIsAFK(unit) then
 		return "|cFFEEEEEE" .. AFK .. "|r"
 	end
+end
 
-	return ""
+Events["Status"] = HealthEvent .. "UNIT_CONNECTION PLAYER_FLAGS_CHANGED PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE"
+Methods["Status"] = function(unit)
+	return GetStatus(unit) or ""
 end
 
 Events["Level"] = "UNIT_LEVEL PLAYER_LEVEL_UP UNIT_CLASSIFICATION_CHANGED"
@@ -240,14 +242,10 @@ end
 
 Events["HealthDeficit"] = HealthEvent .. "UNIT_MAXHEALTH PLAYER_FLAGS_CHANGED UNIT_CONNECTION PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE"
 Methods["HealthDeficit"] = function(unit)
-	if UnitIsDead(unit) then
-		return "|cFFEE4D4D" .. DEAD .. "|r"
-	elseif UnitIsGhost(unit) then
-		return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-	elseif not UnitIsConnected(unit) then
-		return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
-	elseif UnitIsAFK(unit) then
-		return "|cFFEEEEEE" .. AFK .. "|r"
+	local status = GetStatus(unit)
+
+	if status then
+		return status
 	end
 
 	local Current = UnitHealth(unit)
@@ -261,14 +259,10 @@ end
 
 Events["HealthDeficit:Short"] = HealthEvent .. "UNIT_MAXHEALTH PLAYER_FLAGS_CHANGED UNIT_CONNECTION PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE"
 Methods["HealthDeficit:Short"] = function(unit)
-	if UnitIsDead(unit) then
-		return "|cFFEE4D4D" .. DEAD .. "|r"
-	elseif UnitIsGhost(unit) then
-		return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-	elseif not UnitIsConnected(unit) then
-		return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
-	elseif UnitIsAFK(unit) then
-		return "|cFFEEEEEE" .. AFK .. "|r"
+	local status = GetStatus(unit)
+
+	if status then
+		return status
 	end
 
 	local Current = UnitHealth(unit)
@@ -282,14 +276,10 @@ end
 
 Events["GroupStatus"] = HealthEvent .. "UNIT_MAXHEALTH UNIT_CONNECTION PLAYER_FLAGS_CHANGED PARTY_MEMBER_ENABLE PARTY_MEMBER_DISABLE"
 Methods["GroupStatus"] = function(unit)
-	if UnitIsDead(unit) then
-		return "|cFFEE4D4D" .. DEAD .. "|r"
-	elseif UnitIsGhost(unit) then
-		return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-	elseif not UnitIsConnected(unit) then
-		return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
-	elseif UnitIsAFK(unit) then
-		return "|cFFEEEEEE" .. AFK .. "|r"
+	local status = GetStatus(unit)
+
+	if status then
+		return status
 	end
 
 	local Current = UnitHealth(unit)
@@ -336,17 +326,10 @@ if HydraUI.IsMainline then
 	end
 
 	Methods["HealthDeficit"] = function(unit)
-		if UnitIsDead(unit) then
-			return "|cFFEE4D4D" .. DEAD .. "|r"
-		end
-		if UnitIsGhost(unit) then
-			return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-		end
-		if not UnitIsConnected(unit) then
-			return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
-		end
-		if UnitIsAFK(unit) then
-			return "|cFFEEEEEE" .. AFK .. "|r"
+		local status = GetStatus(unit)
+
+		if status then
+			return status
 		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
@@ -360,17 +343,10 @@ if HydraUI.IsMainline then
 	end
 
 	Methods["HealthDeficit:Short"] = function(unit)
-		if UnitIsDead(unit) then
-			return "|cFFEE4D4D" .. DEAD .. "|r"
-		end
-		if UnitIsGhost(unit) then
-			return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-		end
-		if not UnitIsConnected(unit) then
-			return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
-		end
-		if UnitIsAFK(unit) then
-			return "|cFFEEEEEE" .. AFK .. "|r"
+		local status = GetStatus(unit)
+
+		if status then
+			return status
 		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
@@ -384,17 +360,10 @@ if HydraUI.IsMainline then
 	end
 
 	Methods["GroupStatus"] = function(unit)
-		if UnitIsDead(unit) then
-			return "|cFFEE4D4D" .. DEAD .. "|r"
-		end
-		if UnitIsGhost(unit) then
-			return "|cFFEEEEEE" .. Language["Ghost"] .. "|r"
-		end
-		if not UnitIsConnected(unit) then
-			return "|cFFEEEEEE" .. PLAYER_OFFLINE .. "|r"
-		end
-		if UnitIsAFK(unit) then
-			return "|cFFEEEEEE" .. AFK .. "|r"
+		local status = GetStatus(unit)
+
+		if status then
+			return status
 		end
 
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
@@ -498,76 +467,18 @@ Methods["Name"] = function(unit, realunit, arg)
 	end
 end
 
--- Deprecated as of April 8th, 2022
-Events["Name4"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name4"] = function(unit)
-	local Name = UnitName(unit)
+-- Keep the fixed-length names used by older saved tag strings. Unlike Name,
+-- these tags always use the displayed unit rather than the original vehicle unit.
+for _, limit in ipairs({4, 5, 8, 10, 14, 15, 20, 30}) do
+	local tagName = "Name" .. limit
 
-	if Name then
-		return UTF8Sub(Name, 4)
-	end
-end
+	Events[tagName] = "UNIT_NAME_UPDATE UNIT_PET"
+	Methods[tagName] = function(unit)
+		local name = UnitName(unit)
 
-Events["Name5"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name5"] = function(unit)
-	local Name = UnitName(unit)
-
-	if Name then
-		return UTF8Sub(Name, 5)
-	end
-end
-
-Events["Name8"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name8"] = function(unit)
-	local Name = UnitName(unit)
-
-	if Name then
-		return UTF8Sub(Name, 8)
-	end
-end
-
-Events["Name10"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name10"] = function(unit)
-	local Name = UnitName(unit)
-
-	if Name then
-		return UTF8Sub(Name, 10)
-	end
-end
-
-Events["Name14"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name14"] = function(unit)
-	local Name = UnitName(unit)
-
-	if Name then
-		return UTF8Sub(Name, 14)
-	end
-end
-
-Events["Name15"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name15"] = function(unit)
-	local Name = UnitName(unit)
-
-	if Name then
-		return UTF8Sub(Name, 15)
-	end
-end
-
-Events["Name20"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name20"] = function(unit)
-	local Name = UnitName(unit)
-
-	if Name then
-		return UTF8Sub(Name, 20)
-	end
-end
-
-Events["Name30"] = "UNIT_NAME_UPDATE UNIT_PET"
-Methods["Name30"] = function(unit)
-	local Name = UnitName(unit)
-
-	if Name then
-		return UTF8Sub(Name, 30)
+		if name then
+			return UTF8Sub(name, limit)
+		end
 	end
 end
 
@@ -717,20 +628,22 @@ local function ParseTag(token)
 	return {name = tagName, prefix = prefix, suffix = suffix, arguments = arguments}
 end
 
+-- Escape fixed text once when binding a tag, rather than on every unit event.
 local function Compile(tagString)
 	local parts, subscriptions, cursor = {}, {}, 1
 	while true do
 		local first, last = tagString:find("%b[]", cursor)
 		if not first then
 			if cursor <= #tagString then
-				parts[#parts + 1] = sub(tagString, cursor)
+				parts[#parts + 1] = gsub(sub(tagString, cursor), "%%", "%%%%")
 			end
 			break
 		end
 		if first > cursor then
-			parts[#parts + 1] = sub(tagString, cursor, first - 1)
+			parts[#parts + 1] = gsub(sub(tagString, cursor, first - 1), "%%", "%%%%")
 		end
 		local descriptor = ParseTag(sub(tagString, first, last))
+		descriptor.format = gsub(descriptor.prefix, "%%", "%%%%") .. "%s" .. gsub(descriptor.suffix, "%%", "%%%%")
 		parts[#parts + 1] = descriptor
 		local declarations = Events[descriptor.name]
 		if declarations then
@@ -748,7 +661,7 @@ local function FormatTagString(binding, unit, realUnit)
 	for i = 1, #binding.parts do
 		local part = binding.parts[i]
 		if type(part) == "string" then
-			output[#output + 1] = gsub(part, "%%", "%%%%")
+			output[#output + 1] = part
 		else
 			local method = Methods[part.name]
 			local value = method and method(unit, realUnit, unpack(part.arguments))
@@ -757,7 +670,7 @@ local function FormatTagString(binding, unit, realUnit)
 			-- formatting argument so prefixes and suffixes still work in combat.
 			local secret = HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)
 			if secret or (value ~= nil and value ~= "") then
-				output[#output + 1] = gsub(part.prefix, "%%", "%%%%") .. "%s" .. gsub(part.suffix, "%%", "%%%%")
+				output[#output + 1] = part.format
 				values[#values + 1] = value
 			end
 		end

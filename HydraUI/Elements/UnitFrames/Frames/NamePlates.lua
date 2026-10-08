@@ -329,33 +329,50 @@ function UF:CreateNamePlateDriver()
 		end
 	end
 
-	local function DisableBlizzardPlate(base)
-		local blizzard = base and (base.UnitFrame or base.unitFrame)
-		if blizzard and blizzard ~= base._unitFrame then
-			blizzard:UnregisterAllEvents()
-			blizzard:Hide()
-			blizzard:SetAlpha(0)
+	local function SyncBlizzardVisibility(blizzard)
+		local base = blizzard:GetParent()
+		local plate = base and not base:IsForbidden() and base._unitFrame
+		-- Blizzard may pool its unit frames independently of the world-space base.
+		-- Ignore callbacks from a frame that no longer owns this plate's unit.
+		if not plate or not plate.unit or plate._blizzardFrame ~= blizzard then
+			return
+		end
+
+		if blizzard:IsShown() then
+			plate:Show()
+			plate:Refresh("NamePlateVisibility")
+		else
+			plate:Hide()
 		end
 	end
 
-	local function UpdateVisibility(plate, unit, event)
-		-- Mainline can keep a world-space plate alive while Blizzard hides its
-		-- contents. Our replacement must honor the friendly-nameplate toggle too.
-		if HydraUI.IsMainline and not UnitIsUnit(unit, "player") and UnitIsFriend("player", unit)
-			and not C_CVar.GetCVarBool("nameplateShowFriends") then
-			plate:Hide()
-		else
-			plate:Show()
-			plate:Refresh(event or "NamePlateVisibility")
+	local function BindBlizzardVisibility(base, plate)
+		local blizzard = base.UnitFrame or base.unitFrame
+		plate._blizzardFrame = blizzard
+		if not blizzard or blizzard == plate or blizzard:IsForbidden() then
+			return
 		end
+
+		-- Keep Blizzard's events and shown state intact. Only suppress its artwork;
+		-- the HydraUI frame remains a sibling so it does not inherit this alpha.
+		blizzard:SetAlpha(0)
+		if not blizzard._hydraUIVisibilityHooked then
+			blizzard:HookScript("OnShow", SyncBlizzardVisibility)
+			blizzard:HookScript("OnHide", SyncBlizzardVisibility)
+			blizzard._hydraUIVisibilityHooked = true
+		end
+		SyncBlizzardVisibility(blizzard)
 	end
 
 	local function Added(unit)
 		local base = C_NamePlate.GetNamePlateForUnit(unit)
-		if not base then
+		if not base or base:IsForbidden() then
 			return
 		end
-		DisableBlizzardPlate(base)
+		local blizzard = base.UnitFrame or base.unitFrame
+		if not blizzard or blizzard:IsForbidden() then
+			return
+		end
 		local plate = base._unitFrame
 		if not plate then
 			-- Keep the Blizzard nameplate as the parent. Reparenting this frame to HydraUIParent would detach it from the world-space plate.
@@ -365,7 +382,8 @@ function UF:CreateNamePlateDriver()
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)
 		self.NamePlatesByUnit[unit] = plate
 		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_ADDED", unit)
-		UpdateVisibility(plate, unit, "NAME_PLATE_UNIT_ADDED")
+		BindBlizzardVisibility(base, plate)
+		plate:Refresh("NAME_PLATE_UNIT_ADDED")
 	end
 
 	local function Removed(unit)
@@ -375,6 +393,7 @@ function UF:CreateNamePlateDriver()
 		end
 		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_REMOVED", unit)
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, nil)
+		plate._blizzardFrame = nil
 		self.NamePlatesByUnit[unit] = nil
 	end
 
@@ -384,28 +403,21 @@ function UF:CreateNamePlateDriver()
 	else
 		driver:RegisterEvent("PLAYER_LOGIN")
 	end
-	driver:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+	-- Observe additions after Blizzard has assigned its unit frame, including
+	-- clients that acquire a different pooled frame on every addition.
+	if NamePlateDriverFrame and type(NamePlateDriverFrame.OnNamePlateAdded) == "function" then
+		hooksecurefunc(NamePlateDriverFrame, "OnNamePlateAdded", function(_, unit)
+			Added(unit)
+		end)
+	else
+		driver:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+	end
 	driver:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 	driver:RegisterEvent("PLAYER_TARGET_CHANGED")
-	if HydraUI.IsMainline then
-		driver:RegisterEvent("CVAR_UPDATE")
-		driver:RegisterEvent("UNIT_FACTION")
-	end
 	driver:SetScript("OnEvent", function(_, event, unit)
 		if event == "PLAYER_LOGIN" then
 			ApplyCVars()
 			driver:UnregisterEvent("PLAYER_LOGIN")
-		elseif event == "CVAR_UPDATE" then
-			if unit and unit:lower() == "nameplateshowfriends" then
-				for plateUnit, plate in next, self.NamePlatesByUnit do
-					UpdateVisibility(plate, plateUnit)
-				end
-			end
-		elseif event == "UNIT_FACTION" then
-			local plate = self.NamePlatesByUnit[unit]
-			if plate then
-				UpdateVisibility(plate, unit)
-			end
 		elseif event == "NAME_PLATE_UNIT_ADDED" then
 			Added(unit)
 		elseif event == "NAME_PLATE_UNIT_REMOVED" then

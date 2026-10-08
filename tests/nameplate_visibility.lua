@@ -83,6 +83,12 @@ for _, mainline in ipairs({true, false}) do
             local base = Frame()
             bases[unit] = base
             local blizzard = Frame(base)
+            local health = Frame(blizzard)
+            if mainline then
+                blizzard.HealthBarsContainer = {healthBar = health}
+            else
+                blizzard.healthBar = health
+            end
             base.acquired = blizzard
             blizzard.events.CVAR_UPDATE = true
             blizzard:Hide()
@@ -98,6 +104,25 @@ for _, mainline in ipairs({true, false}) do
             assert(not plate.shown)
             blizzard:SetShown(true)
             assert(plate.shown and plate.refreshes > refreshes)
+            -- Blizzard hotkeys/settings can hide only the bar, retaining the
+            -- outer frame for names or widgets. No outer OnHide event fires.
+            for _, toggle in ipairs({'all', 'friendly', 'enemy'}) do
+                health:SetShown(false)
+                assert(blizzard.shown and not plate.shown, toggle)
+                health:SetShown(true)
+                assert(blizzard.shown and plate.shown, toggle)
+            end
+            health:Hide()
+            blizzard:Hide()
+            blizzard:Show()
+            assert(not plate.shown) -- Outer OnShow must not override the bar.
+            Event('PLAYER_TARGET_CHANGED', 'target')
+            assert(not plate.shown)
+            Event('NAME_PLATE_UNIT_REMOVED', unit)
+            Added(unit)
+            assert(not plate.shown) -- Initial native bar state matters too.
+            health:Show()
+            assert(plate.shown)
             base:Hide()
             assert(not plate:IsVisible())
             base:Show()
@@ -109,6 +134,7 @@ for _, mainline in ipairs({true, false}) do
             Added(unit)
             assert(base._unitFrame == plate and plate.shown)
             assert(#blizzard.hooks.OnShow == 1 and #blizzard.hooks.OnHide == 1)
+            assert(#health.hooks.OnShow == 1 and #health.hooks.OnHide == 1)
         end
         -- A pooled Blizzard frame can move to a different world-space base.
         local oldBase, newBase = bases.nameplate1, bases.nameplate2

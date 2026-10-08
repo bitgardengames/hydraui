@@ -1,44 +1,53 @@
--- Run the real driver against Blizzard-owned visibility and pooled unit frames.
-local file = assert(io.open('HydraUI/Elements/UnitFrames/Frames/NamePlates.lua'))
-local source = file:read('*a')
-file:close()
-local driverSource = assert(source:match('(function UF:CreateNamePlateDriver%(%).-)\nUF.NamePlateCallback ='))
-local compile = loadstring or load
-local install = assert(compile('return function(UF, HydraUI)\n' .. driverSource .. '\nend'))()
+-- Visibility is inherited through native parenting; no addon show/hide policy.
+local function Read(path)
+    local file = assert(io.open(path))
+    local source = file:read('*a')
+    file:close()
+    return source
+end
+local root = 'HydraUI/Elements/UnitFrames/'
+local driverSource = assert(Read(root .. 'Frames/NamePlates.lua'):match('(function UF:CreateNamePlateDriver%(%).-)\nUF.NamePlateCallback ='))
+local bindingSource = assert(Read(root .. 'Core.lua'):match('(function UnitFrames:SetNamePlateUnit[%s%S]*)'))
+local compile, unpackValues = loadstring or load, unpack or table.unpack
+local install = assert(compile('return function(UF, HydraUI)\nlocal UnitFrames = HydraUI.UnitFrames\n' .. bindingSource .. '\n' .. driverSource .. '\nend'))()
 
 local function Frame(parent)
-    local frame = {shown = true, alpha = 1, events = {}, hooks = {}, parent = parent}
+    local frame = {shown = true, alpha = 1, events = {}, children = {}, regions = {}, _unitEvents = {}, showCalls = 0, hideCalls = 0}
+    function frame:SetParent(newParent)
+        if self.parent then
+            for i, child in ipairs(self.parent.children) do
+                if child == self then table.remove(self.parent.children, i); break end
+            end
+        end
+        self.parent = newParent
+        if newParent then table.insert(newParent.children, self) end
+    end
+    function frame:GetParent() return self.parent end
+    function frame:GetChildren() return unpackValues(self.children) end
+    function frame:GetRegions() return unpackValues(self.regions) end
     function frame:RegisterEvent(event) self.events[event] = true end
     function frame:UnregisterEvent(event) self.events[event] = nil end
-    function frame:UnregisterAllEvents() error('Blizzard events must stay registered') end
+    frame._unregisterEvent = frame.UnregisterEvent
+    function frame:_registerUnitEvent(event, unit) self.events[event] = unit end
+    function frame:UnregisterAllEvents() error('Do not disable native events') end
     function frame:SetScript(_, handler) self.event = handler end
-    function frame:HookScript(script, handler)
-        self.hooks[script] = self.hooks[script] or {}
-        table.insert(self.hooks[script], handler)
-    end
-    function frame:SetShown(shown)
-        if self.shown == shown then return end
-        self.shown = shown
-        for _, handler in ipairs(self.hooks[shown and 'OnShow' or 'OnHide'] or {}) do
-            handler(self)
-        end
-    end
-    function frame:Show() self:SetShown(true) end
-    function frame:Hide() self:SetShown(false) end
+    function frame:HookScript() error('Do not mirror native visibility with hooks') end
+    function frame:SetShown(shown) self.shown = shown end
+    function frame:Show() self.showCalls = self.showCalls + 1; self.shown = true end
+    function frame:Hide() self.hideCalls = self.hideCalls + 1; self.shown = false end
     function frame:IsShown() return self.shown end
     function frame:IsVisible() return self.shown and (not self.parent or self.parent:IsVisible()) end
-    function frame:GetEffectiveAlpha()
-        return self.alpha * (self.parent and self.parent:GetEffectiveAlpha() or 1)
-    end
     function frame:IsForbidden() return self.forbidden or false end
-    function frame:GetParent() return self.parent end
     function frame:SetAlpha(alpha) self.alpha = alpha end
+    function frame:GetEffectiveAlpha() return self.alpha * (self.parent and self.parent:GetEffectiveAlpha() or 1) end
     function frame:Refresh() self.refreshes = (self.refreshes or 0) + 1 end
+    frame:SetParent(parent)
     return frame
 end
-
--- Any independent visibility policy is an error: Blizzard alone decides.
-UnitIsFriend = function() error('Do not classify nameplate visibility') end
+local function Region()
+    return {alpha = 1, SetAlpha = function(self, alpha) self.alpha = alpha end}
+end
+UnitIsFriend = function() error('Do not classify visibility') end
 UnitIsUnit = UnitIsFriend
 C_CVar = {SetCVar = function() end, GetCVarBool = function() error('Do not read visibility CVars') end}
 IsLoggedIn = function() return true end
@@ -51,141 +60,100 @@ hooksecurefunc = function(object, method, callback)
     end
 end
 
-for _, mainline in ipairs({true, false}) do
+for _, layout in ipairs({'modern', 'legacy', 'lowercase', 'outer'}) do
     for _, useDriverHook in ipairs({true, false}) do
-        local UF = {NamePlateCVars = {}, NamePlateCallback = function() end}
-        local HydraUI = {IsMainline = mainline, StyleFuncs = {}}
+        local hider = Frame()
+        hider:Hide()
+        local UF = {Hider = hider, NamePlateCVars = {}, NamePlateCallback = function() end}
+        local HydraUI = {StyleFuncs = {}, UnitFrames = {}}
         local bases = {}
         C_NamePlate = {GetNamePlateForUnit = function(unit) return bases[unit] end}
-        HydraUI.UnitFrames = {
-            CreateNamePlateButton = function(_, base) return Frame(base) end,
-            SetNamePlateUnit = function(_, plate, unit)
-                plate.unit = unit
-                plate:SetShown(unit ~= nil)
-            end}
+        HydraUI.UnitFrames.CreateNamePlateButton = function(_, parent) return Frame(parent) end
         NamePlateDriverFrame = useDriverHook and {OnNamePlateAdded = function(_, unit)
-            local base = bases[unit]
-            base.UnitFrame = base.acquired
+            bases[unit].UnitFrame = bases[unit].acquired
         end} or nil
         install(UF, HydraUI)
         UF:CreateNamePlateDriver()
         local driver = UF.NamePlateDriver
         local function Event(event, unit) driver.event(driver, event, unit) end
         local function Added(unit)
-            if useDriverHook then
-                NamePlateDriverFrame:OnNamePlateAdded(unit)
-            else
-                bases[unit].UnitFrame = bases[unit].acquired
-                Event('NAME_PLATE_UNIT_ADDED', unit)
-            end
+            if useDriverHook then NamePlateDriverFrame:OnNamePlateAdded(unit)
+            else bases[unit].UnitFrame = bases[unit].acquired; Event('NAME_PLATE_UNIT_ADDED', unit) end
         end
         assert(not driver.events.CVAR_UPDATE and not driver.events.UNIT_FACTION)
-        assert((driver.events.NAME_PLATE_UNIT_ADDED == true) == not useDriverHook)
-        -- Friendly, hostile, and personal plates all follow the same rule.
+        -- NPC, friendly player and enemy all obey the same parent chain.
         for _, unit in ipairs({'nameplate1', 'nameplate2', 'nameplate3'}) do
             local base = Frame()
             bases[unit] = base
             local blizzard = Frame(base)
             local health = Frame(blizzard)
-            blizzard.name = Frame(blizzard)
+            if layout == 'modern' then blizzard.HealthBarsContainer = {healthBar = health}
+            elseif layout == 'legacy' then blizzard.healthBar = health
+            elseif layout == 'lowercase' then blizzard.healthbar = health
+            else health = blizzard end
+            blizzard.name = Region()
+            blizzard.regions = {Region(), blizzard.name}
+            health.regions[#health.regions + 1] = Region()
             blizzard.WidgetContainer = Frame(blizzard)
-            if mainline then
-                blizzard.HealthBarsContainer = {healthBar = health}
-            else
-                blizzard.healthBar = health
-            end
-            base.acquired = blizzard
+            blizzard.WidgetContainer.regions = {Region()}
             blizzard.events.CVAR_UPDATE = true
-            blizzard:Hide()
+            base.acquired = blizzard
+            health:Hide()
             Added(unit)
             local plate = base._unitFrame
-            assert(not plate.shown and not blizzard.shown)
-            assert(plate.alpha == 1)
-            assert(plate:GetParent() == base and blizzard.events.CVAR_UPDATE)
-            blizzard:Show()
-            assert(plate.shown and blizzard.alpha == 0)
-            assert(blizzard.name:GetEffectiveAlpha() == 0)
-            local refreshes = plate.refreshes
-            blizzard:Hide()
-            assert(not plate.shown)
-            blizzard:SetShown(true)
-            assert(plate.shown and plate.refreshes > refreshes)
-            -- Blizzard hotkeys/settings can hide only the bar, retaining the
-            -- outer frame for names or widgets. No outer OnHide event fires.
-            for _, toggle in ipairs({'all', 'friendly', 'enemy'}) do
-                health:SetShown(false)
-                assert(blizzard.shown and not plate.shown, toggle)
-                health:SetShown(true)
-                assert(blizzard.shown and plate.shown, toggle)
-            end
-            -- Friendly players may retain a name with no health bar. That
-            -- native name must be visible instead of both renderers disappearing.
-            health:Hide()
-            assert(not plate.shown and blizzard.name:IsVisible())
-            assert(blizzard.name:GetEffectiveAlpha() == 1)
-            -- Turning the friendly display off can change only the native name
-            -- while the bar remains hidden. Let Blizzard render that decision.
-            blizzard.name:Hide()
-            assert(not plate.shown and not blizzard.name:IsVisible())
-            assert(blizzard.WidgetContainer:GetEffectiveAlpha() == 1)
-            blizzard.name:Show()
-            assert(not plate.shown and blizzard.name:GetEffectiveAlpha() == 1)
-            -- Returning to full plates suppresses native artwork without duplicates.
+            assert(plate:GetParent() == health)
+            assert(plate:IsShown() and not plate:IsVisible())
+            assert(blizzard.alpha == 1 and health.alpha == 1)
+            assert(blizzard.name.alpha == 1 and blizzard.WidgetContainer.regions[1].alpha == 1)
+            assert(health.regions[#health.regions].alpha == 0)
+            assert(blizzard.events.CVAR_UPDATE)
             health:Show()
-            assert(plate.shown and blizzard.name:GetEffectiveAlpha() == 0)
-            health:Hide()
-            blizzard:Hide()
-            blizzard:Show()
-            assert(not plate.shown) -- Outer OnShow must not override the bar.
-            Event('PLAYER_TARGET_CHANGED', 'target')
-            assert(not plate.shown)
-            Event('NAME_PLATE_UNIT_REMOVED', unit)
-            Added(unit)
-            assert(not plate.shown) -- Initial native bar state matters too.
-            assert(blizzard.name:GetEffectiveAlpha() == 1)
-            health:Show()
-            assert(plate.shown)
-            base:Hide()
-            assert(not plate:IsVisible())
-            base:Show()
             assert(plate:IsVisible())
+            for _, ancestor in ipairs({health, blizzard, base}) do
+                ancestor:Hide()
+                assert(not plate:IsVisible() and plate:IsShown())
+                ancestor:Show()
+                assert(plate:IsVisible())
+                ancestor:SetAlpha(0)
+                assert(plate:GetEffectiveAlpha() == 0)
+                ancestor:SetAlpha(0.4)
+                assert(plate:GetEffectiveAlpha() == 0.4)
+                ancestor:SetAlpha(1)
+            end
+            -- Initial native name-only state survives re-binding untouched.
+            health:Hide()
             Event('NAME_PLATE_UNIT_REMOVED', unit)
-            blizzard:Hide()
-            blizzard:Show()
-            assert(not plate.shown and not plate.unit and not UF.NamePlatesByUnit[unit])
+            assert(not plate.unit and plate:GetParent() == hider and not plate:IsVisible())
             Added(unit)
-            assert(base._unitFrame == plate and plate.shown)
-            assert(#blizzard.hooks.OnShow == 1 and #blizzard.hooks.OnHide == 1)
-            assert(#health.hooks.OnShow == 1 and #health.hooks.OnHide == 1)
+            assert(not plate:IsVisible() and plate:IsShown())
+            assert(blizzard.name.alpha == 1)
+            health:Show()
+            assert(plate:IsVisible())
+            assert(plate.showCalls == 0 and plate.hideCalls == 0)
+            -- Custom children must never be included in artwork suppression.
+            plate.regions = {Region()}
+            Added(unit)
+            assert(plate.regions[1].alpha == 1)
         end
-        -- A pooled Blizzard frame can move to a different world-space base.
+        -- Pooled Blizzard frames can move independently of cached HydraUI plates.
         local oldBase, newBase = bases.nameplate1, bases.nameplate2
-        local pooled, stale = oldBase.UnitFrame, newBase.UnitFrame
         Event('NAME_PLATE_UNIT_REMOVED', 'nameplate1')
         Event('NAME_PLATE_UNIT_REMOVED', 'nameplate2')
-        pooled.parent = newBase
+        local pooled = oldBase.UnitFrame
+        pooled:SetParent(newBase)
         newBase.acquired = pooled
         Added('nameplate2')
+        assert(newBase._unitFrame:IsVisible() and not oldBase._unitFrame:IsVisible())
         pooled:Hide()
-        assert(not newBase._unitFrame.shown)
-        stale:Hide()
-        stale:Show()
-        assert(not newBase._unitFrame.shown)
+        assert(not newBase._unitFrame:IsVisible())
         pooled:Show()
-        assert(newBase._unitFrame.shown and not oldBase._unitFrame.shown)
-        -- Forbidden nameplates stay entirely under Blizzard's control.
+        assert(newBase._unitFrame:IsVisible())
         local forbidden = Frame()
         forbidden.forbidden = true
-        bases.nameplate4 = forbidden
         forbidden.acquired = Frame(forbidden)
+        bases.nameplate4 = forbidden
         Added('nameplate4')
-        assert(not forbidden._unitFrame and forbidden.UnitFrame.alpha == 1)
-        local forbiddenChild = Frame()
-        forbiddenChild.acquired = Frame(forbiddenChild)
-        forbiddenChild.acquired.forbidden = true
-        bases.nameplate5 = forbiddenChild
-        Added('nameplate5')
-        assert(not forbiddenChild._unitFrame and forbiddenChild.UnitFrame.alpha == 1)
+        assert(not forbidden._unitFrame)
     end
 end
-print('Blizzard nameplate visibility checks passed')
+print('Native nameplate parenting checks passed')

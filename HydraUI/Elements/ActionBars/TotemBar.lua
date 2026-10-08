@@ -40,6 +40,118 @@ function AB:ShowActionBars()
 	for i = 1, 7 do
 		C_CVar.SetCVar("showMultiActionBar" .. i, "1")
 	end
+
+	self:EnableAlwaysShowButtons()
+end
+
+local function EnableAlwaysShowButtons()
+	if InCombatLockdown() then
+		return false
+	end
+
+	-- Older clients use the CVar; current clients store this per Edit Mode bar.
+	if not (C_EditMode and C_EditMode.GetLayouts) then
+		if C_CVar.GetCVar("alwaysShowActionBars") ~= nil then
+			C_CVar.SetCVar("alwaysShowActionBars", "1")
+			return true
+		end
+		return false
+	end
+
+	if not (EditModePresetLayoutManager and Enum.EditModeActionBarSetting
+		and Enum.EditModeActionBarSetting.AlwaysShowButtons) then
+		return false
+	end
+
+	-- Only edit fresh copies, never the tables owned by Blizzard's secure frames.
+	local Info = C_EditMode.GetLayouts()
+	local Layouts = EditModePresetLayoutManager:GetCopyOfPresetLayouts()
+	local PresetCount = #Layouts
+
+	for _, Layout in ipairs(Info.layouts) do
+		table.insert(Layouts, Layout)
+	end
+
+	local Layout = Layouts[Info.activeLayout]
+	if not Layout then
+		return false
+	end
+
+	local Changed = false
+	for _, System in ipairs(Layout.systems) do
+		if System.system == Enum.EditModeSystem.ActionBar then
+			for _, Setting in ipairs(System.settings) do
+				if Setting.setting == Enum.EditModeActionBarSetting.AlwaysShowButtons and Setting.value ~= 1 then
+					Setting.value = 1
+					Changed = true
+				end
+			end
+		end
+	end
+
+	if not Changed then
+		return true
+	end
+
+	local AddedLayout
+	if Info.activeLayout <= PresetCount then
+		-- Presets are read-only. Save a character copy rather than changing them.
+		local CharacterCount = 0
+		for _, SavedLayout in ipairs(Info.layouts) do
+			if SavedLayout.layoutType == Enum.EditModeLayoutType.Character then
+				CharacterCount = CharacterCount + 1
+			end
+		end
+
+		if CharacterCount >= Constants.EditModeConsts.EditModeMaxLayoutsPerType then
+			HydraUI:print("Select a custom Edit Mode layout to enable Always Show Buttons; character layout slots are full.")
+			return true
+		end
+
+		Layout = CopyTable(Layout)
+		Layout.layoutType = Enum.EditModeLayoutType.Character
+		Layout.layoutName = "HydraUI"
+		Layout.layoutIndex = nil
+		-- Restore the original preset in the save table.
+		Layouts[Info.activeLayout] = EditModePresetLayoutManager:GetCopyOfPresetLayouts()[Info.activeLayout]
+		table.insert(Layouts, Layout)
+		AddedLayout = #Layouts
+	end
+
+	Info.layouts = Layouts
+	C_EditMode.SaveLayouts(Info)
+	if AddedLayout then
+		C_EditMode.OnLayoutAdded(AddedLayout, true, false)
+	else
+		C_EditMode.SetActiveLayout(Info.activeLayout)
+	end
+	return true
+end
+
+function AB:EnableAlwaysShowButtons()
+	-- This frame is separate from AB's extra-action-bar combat repair handler.
+	local Pending = CreateFrame("Frame")
+	local Applying = false
+	local function Apply()
+		if Applying then
+			return
+		end
+		Applying = true
+		local Complete = EnableAlwaysShowButtons()
+		Applying = false
+		if Complete then
+			Pending:UnregisterAllEvents()
+			Pending:SetScript("OnEvent", nil)
+		end
+	end
+
+	Pending:RegisterEvent("PLAYER_ENTERING_WORLD")
+	Pending:RegisterEvent("PLAYER_REGEN_ENABLED")
+	if C_EditMode and C_EditMode.GetLayouts then
+		Pending:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+	end
+	Pending:SetScript("OnEvent", Apply)
+	Apply()
 end
 
 local MultiCastSummonSpellButton_Update = function()

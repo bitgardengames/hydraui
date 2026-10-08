@@ -157,6 +157,50 @@ local RestoreBagButtonPositions = function()
 	BagsFrame:PositionButtons()
 end
 
+local StyleMainlineBagTextures = function(button)
+	-- CircularItemButtonTemplate masks the item and both search overlays.
+	-- Detach the mask rather than hiding it, which leaves textures masked.
+	if button.CircleMask then
+		local Icon = button.Icon or button.icon
+
+		if Icon then
+			Icon:RemoveMaskTexture(button.CircleMask)
+		end
+
+		if button.searchOverlay then
+			button.searchOverlay:RemoveMaskTexture(button.CircleMask)
+		end
+
+		if button.ItemContextOverlay then
+			button.ItemContextOverlay:RemoveMaskTexture(button.CircleMask)
+		end
+	end
+
+	-- UpdateTextures reapplies circular atlases on bag updates. Keep the
+	-- original regions available to Blizzard, but replace their artwork.
+	local Normal = button:GetNormalTexture()
+	local Pushed = button:GetPushedTexture()
+	local Highlight = button:GetHighlightTexture()
+
+	if Normal then
+		Normal:SetTexture(nil)
+	end
+
+	if Pushed then
+		Pushed:SetColorTexture(0.2, 0.9, 0.2, 0.4)
+	end
+
+	if Highlight then
+		Highlight:SetColorTexture(1, 1, 1, 0.25)
+		Highlight:SetBlendMode("BLEND")
+		Highlight:SetAlpha(1)
+	end
+
+	if button.SlotHighlightTexture then
+		button.SlotHighlightTexture:SetColorTexture(0.9, 0.9, 0.1, 0.2)
+	end
+end
+
 function BagsFrame:Load()
 	if not Settings["ab-enable"] then
 		return
@@ -270,7 +314,7 @@ function BagsFrame:Load()
 
 		Object:SetHighlightTexture(Highlight)
 
-		if i ~= 1 then
+		if HydraUI.IsMainline or i ~= 1 then
 			local Pushed = Object:CreateTexture(nil, "ARTWORK")
 			Pushed:SetPoint("TOPLEFT", Object, 0, 0)
 			Pushed:SetPoint("BOTTOMRIGHT", Object, 0, 0)
@@ -278,6 +322,13 @@ function BagsFrame:Load()
 			Pushed:SetDrawLayer("ARTWORK", 7)
 
 			Object:SetPushedTexture(Pushed)
+		end
+	end
+
+	if HydraUI.IsMainline then
+		for i = 1, #self.Objects do
+			StyleMainlineBagTextures(self.Objects[i])
+			hooksecurefunc(self.Objects[i], "UpdateTextures", StyleMainlineBagTextures)
 		end
 	end
 

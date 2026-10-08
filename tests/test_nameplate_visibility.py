@@ -17,3 +17,13 @@ class NameplateVisibilityTests(unittest.TestCase):
             capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_no_visibility_or_alpha_overrides(self):
+        frames = ROOT / "HydraUI/Elements/UnitFrames"
+        source = (frames / "Frames/NamePlates.lua").read_text()
+        spawning = (frames / "Spawning.lua").read_text()
+        for cvar in ("nameplateMinAlpha", "nameplateMaxAlpha", "nameplateSelectedAlpha"):
+            self.assertNotIn(cvar, source + spawning)
+        self.assertNotIn("SyncBlizzardVisibility", source)
+        self.assertNotIn("BindBlizzardVisibility", source)
+        self.assertNotIn("SetIgnoreParentAlpha", source)

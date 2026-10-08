@@ -51,10 +51,10 @@ function AB:StyleActionButton(button)
 
 	-- ActionButtonMixin exposes the icon as Icon on current clients. Keep the
 	-- lowercase lookup for older clients, which used the template global.
+	-- Keep Blizzard-owned fields and methods secure for stance updates in combat.
 	local Icon = button.Icon or button.icon
 
 	if Icon then
-		button.icon = Icon
 		Icon:ClearAllPoints()
 		Icon:SetPoint("TOPLEFT", button, 1, -1)
 		Icon:SetPoint("BOTTOMRIGHT", button, -1, 1)
@@ -80,7 +80,6 @@ function AB:StyleActionButton(button)
 		HydraUI:SetFontInfo(button.HotKey, Settings["ab-font"], Settings["ab-font-size"], Settings["ab-font-flags"])
 		button.HotKey:SetJustifyH("LEFT")
 		button.HotKey:SetTextColor(1, 1, 1)
-		button.HotKey.SetTextColor = function() end
 
 		local Text = button.HotKey:GetText()
 
@@ -97,11 +96,6 @@ function AB:StyleActionButton(button)
 			button.HotKey:SetText("|cFFFFFFFF" .. Text .. "|r")
 		end
 
-		button.HotKey.OST = button.HotKey.SetText
-		button.HotKey.SetText = function(self, text)
-			self:OST("|cFFFFFFFF" .. text .. "|r")
-		end
-
 		if not Settings["ab-show-hotkey"] then
 			button.HotKey:SetAlpha(0)
 		end
@@ -114,7 +108,6 @@ function AB:StyleActionButton(button)
 		HydraUI:SetFontInfo(button.Name, Settings["ab-font"], Settings["ab-font-size"], Settings["ab-font-flags"])
 		button.Name:SetJustifyH("LEFT")
 		button.Name:SetTextColor(1, 1, 1)
-		button.Name.SetTextColor = function() end
 
 		if not Settings["ab-show-macro"] then
 			button.Name:SetAlpha(0)
@@ -128,7 +121,6 @@ function AB:StyleActionButton(button)
 		button.Count:SetJustifyH("RIGHT")
 		button.Count:SetDrawLayer("OVERLAY")
 		button.Count:SetTextColor(1, 1, 1)
-		button.Count.SetTextColor = function() end
 
 		if not Settings["ab-show-count"] then
 			button.Count:SetAlpha(0)
@@ -266,17 +258,11 @@ function AB:StylePetActionButton(button)
 		button.HotKey:SetJustifyH("LEFT")
 		button.HotKey:SetDrawLayer("OVERLAY")
 		button.HotKey:SetTextColor(1, 1, 1)
-		button.HotKey.SetTextColor = function() end
 
 		local Text = button.HotKey:GetText()
 
 		if Text then
 			button.HotKey:SetText("|cFFFFFFFF" .. Text .. "|r")
-		end
-
-		button.HotKey.OST = button.HotKey.SetText
-		button.HotKey.SetText = function(self, text)
-			self:OST("|cFFFFFFFF" .. text .. "|r")
 		end
 
 		if not Settings["action-bars-show-hotkeys"] then
@@ -292,7 +278,6 @@ function AB:StylePetActionButton(button)
 		button.Name:SetJustifyH("LEFT")
 		button.Name:SetDrawLayer("OVERLAY")
 		button.Name:SetTextColor(1, 1, 1)
-		button.Name.SetTextColor = function() end
 
 		if not Settings["action-bars-show-macro-names"] then
 			button.Name:SetAlpha(0)
@@ -306,7 +291,6 @@ function AB:StylePetActionButton(button)
 		button.Count:SetJustifyH("RIGHT")
 		button.Count:SetDrawLayer("OVERLAY")
 		button.Count:SetTextColor(1, 1, 1)
-		button.Count.SetTextColor = function() end
 
 		if not Settings["action-bars-show-count"] then
 			button.Count:SetAlpha(0)
@@ -473,7 +457,6 @@ local UpdateActionBarFont = function()
 		end
 	end
 end
-
 
 
 GUI:AddWidgets(Language["General"], Language["Action Bars"], function(left, right)

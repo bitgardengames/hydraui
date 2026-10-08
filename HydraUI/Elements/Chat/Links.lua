@@ -66,49 +66,48 @@ local function FindLinks(_, _, message, ...)
 	return false, FormatLinks(message), ...
 end
 
-local SetEditBoxToLink = function(box, text)
-	box:SetText("")
+local CopyDialog
 
-	if not box:IsShown() then
-		ChatEdit_ActivateChat(box)
-	else
-		ChatEdit_UpdateHeader(box)
+local function ShowCopyDialog(text)
+	if not CopyDialog then
+		CopyDialog = CreateFrame("Frame", nil, HydraUI.UIParent, "BackdropTemplate")
+		CopyDialog:SetSize(420, 80)
+		CopyDialog:SetPoint("CENTER")
+		CopyDialog:SetFrameStrata("DIALOG")
+		CopyDialog:SetBackdrop(HydraUI.BackdropAndBorder)
+		CopyDialog:SetBackdropColor(0, 0, 0, 1)
+		CopyDialog:SetBackdropBorderColor(0, 0, 0, 1)
+		CopyDialog:EnableMouse(true)
+
+		local label = CopyDialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		label:SetPoint("TOP", 0, -12)
+		label:SetText(Language["Copy"] .. " (Ctrl+C)")
+
+		local editBox = CreateFrame("EditBox", nil, CopyDialog, "InputBoxTemplate")
+		editBox:SetSize(380, 24)
+		editBox:SetPoint("BOTTOM", 0, 15)
+		editBox:SetAutoFocus(false)
+		editBox:SetScript("OnEscapePressed", function() CopyDialog:Hide() end)
+		editBox:SetScript("OnEnterPressed", function() CopyDialog:Hide() end)
+		CopyDialog:SetScript("OnHide", function() editBox:ClearFocus() end)
+		CopyDialog.EditBox = editBox
 	end
 
-	box:SetFocus(true)
-	box:Insert(text)
-	box:HighlightText()
+	CopyDialog:Show()
+	CopyDialog.EditBox:SetText(text)
+	CopyDialog.EditBox:SetFocus()
+	CopyDialog.EditBox:HighlightText()
 end
 
 ItemRefTooltip.SetHyperlink = function(self, link, text, button, chatFrame)
-	if sub(link, 1, 3) == "url" then
-		local EditBox = ChatEdit_ChooseBoxForSend()
-		local Link = sub(link, 5)
-
-		EditBox:SetAttribute("chatType", "URL")
-
-		SetEditBoxToLink(EditBox, Link)
-	elseif sub(link, 1, 5) == "email" then
-		local EditBox = ChatEdit_ChooseBoxForSend()
-		local Email = sub(link, 7)
-
-		EditBox:SetAttribute("chatType", "EMAIL")
-
-		SetEditBoxToLink(EditBox, Email)
-	elseif sub(link, 1, 7) == "discord" then
-		local EditBox = ChatEdit_ChooseBoxForSend()
-		local Link = sub(link, 9)
-
-		EditBox:SetAttribute("chatType", "DISCORD")
-
-		SetEditBoxToLink(EditBox, Link)
-	elseif sub(link, 1, 6) == "friend" then
-		local EditBox = ChatEdit_ChooseBoxForSend()
-		local Tag = sub(link, 8)
-
-		EditBox:SetAttribute("chatType", "FRIEND")
-
-		SetEditBoxToLink(EditBox, Tag)
+	if sub(link, 1, 4) == "url:" then
+		ShowCopyDialog(sub(link, 5))
+	elseif sub(link, 1, 6) == "email:" then
+		ShowCopyDialog(sub(link, 7))
+	elseif sub(link, 1, 8) == "discord:" then
+		ShowCopyDialog(sub(link, 9))
+	elseif sub(link, 1, 7) == "friend:" then
+		ShowCopyDialog(sub(link, 8))
 	elseif sub(link, 1, 7) == "command" then
 		local EditBox = ChatEdit_ChooseBoxForSend()
 		local Command = sub(link, 9)

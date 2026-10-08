@@ -140,7 +140,7 @@ def test_right_window_uses_one_background_opacity_setting():
 def test_chat_install_uses_compatible_channel_api():
     coordinator = (ROOT / "Chat.lua").read_text()
     adapter = coordinator[coordinator.index("local AddChannelToFrame"):coordinator.index("function Chat:Install()")]
-    install = coordinator[coordinator.index("function Chat:Install()"):coordinator.index("function Chat:SetChatTypeInfo()")]
+    install = coordinator[coordinator.index("function Chat:Install()"):coordinator.index("local MoveChatFrames")]
 
     assert "ChatFrame_AddChannel or function" in adapter
     assert "C_ChatInfo.AddChannelToWindow" in adapter

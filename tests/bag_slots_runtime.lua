@@ -57,7 +57,7 @@ for _, button in ipairs(module.Objects) do
 	assert(button.width == 32 and button.height == 32)
 	assert(button.IconMask.shown == false)
 end
-assert(MainMenuBarBackpackButton.normal.texture == nil)
+assert(rawget(MainMenuBarBackpackButton.normal, 'texture') == nil)
 assert(MainMenuBarBackpackButton.BackpackIcon.texture == "Interface\\Icons\\INV_Misc_Bag_08")
 assert(MainMenuBarBackpackButton.BackpackIcon.shown)
 -- Blizzard may replace button-state textures without affecting our icon.

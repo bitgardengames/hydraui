@@ -355,6 +355,13 @@ function Chat:StyleChatFrame(frame)
 		FCF_SetLocked(frame, 1)
 	end
 
+	-- Mainline uses SetShown for the focus border, bypassing Disable's Show override.
+	if HydraUI.IsMainline then
+		for _, Region in ipairs({EditBox.focusLeft, EditBox.focusMid, EditBox.focusRight}) do
+			Region:SetTexture(nil)
+		end
+	end
+
 	EditBox:ClearAllPoints()
 	EditBox:SetPoint("TOPLEFT", self.EditBox, -2, 0)
 	EditBox:SetPoint("BOTTOMRIGHT", self.EditBox, 0, 0)

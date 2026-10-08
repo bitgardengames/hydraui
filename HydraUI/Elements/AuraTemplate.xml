@@ -1,10 +1,6 @@
 <Ui>
-	<Button name="HydraUIAuraTemplate" virtual="true" inherits="SecureActionButtonTemplate">
-		<!-- Secure headers can create aura buttons in combat; register clicks in the template. -->
-		<RegisterForClicks>
-			<AbsValue val="RightButtonUp"/>
-		</RegisterForClicks>
-
+	<!-- Secure headers can create aura buttons in combat; register clicks in the template. -->
+	<Button name="HydraUIAuraTemplate" virtual="true" inherits="SecureActionButtonTemplate" registerForClicks="RightButtonUp">
 		<Attributes>
 			<Attribute name="type" value="cancelaura"/>
 		</Attributes>

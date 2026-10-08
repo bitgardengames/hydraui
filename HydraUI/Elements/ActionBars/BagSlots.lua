@@ -217,6 +217,15 @@ function BagsFrame:Load()
 
 		local Icon = Object.Icon or Object.icon or _G[Name .. "IconTexture"]
 
+		-- The retail backpack uses button-state artwork rather than an item
+		-- icon. Give it a separate texture so clearing the normal artwork
+		-- cannot erase the backpack, including when Blizzard updates its state.
+		if HydraUI.IsMainline and Object == MainMenuBarBackpackButton then
+			Icon = Object:CreateTexture(nil, "ARTWORK")
+			Icon:SetTexture("Interface\\Icons\\INV_Misc_Bag_08")
+			Object.BackpackIcon = Icon
+		end
+
 		if Icon then
 			if Object.IconMask then
 				Icon:RemoveMaskTexture(Object.IconMask)

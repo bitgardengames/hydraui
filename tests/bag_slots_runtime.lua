@@ -1,7 +1,7 @@
 local combat = false
 function InCombatLockdown() return combat end
 local function frame(name)
-	local f = {name = name, shown = true, hooks = {}, IconBorder = false, SlotArt = false, SlotBackground = false, SlotHighlightTexture = false}
+	local f = {name = name, shown = true, hooks = {}, normal = false, IconBorder = false, SlotArt = false, SlotBackground = false, SlotHighlightTexture = false}
 	setmetatable(f, {__index = function(self, key)
 		return function() end
 	end})
@@ -15,7 +15,8 @@ local function frame(name)
 	function f:SetScript(event, callback) self[event] = callback end
 	function f:RegisterEvent(event) self.event = event end
 	function f:UnregisterEvent() self.event = nil end
-	function f:GetNormalTexture() return nil end
+	function f:GetNormalTexture() return self.normal end
+	function f:SetTexture(texture) self.texture = texture end
 	function f:CreateTexture() return frame('texture') end
 	return f
 end
@@ -32,6 +33,11 @@ for _, name in ipairs({'CharacterReagentBag0Slot', 'CharacterBag3Slot', 'Charact
 	_G[name].Icon = frame('icon')
 	_G[name].IconMask = frame('mask')
 end
+-- Unlike equipped bags, the backpack can expose only button-state artwork.
+MainMenuBarBackpackButton.Icon = false
+MainMenuBarBackpackButton.icon = false
+MainMenuBarBackpackButton.normal = frame('backpack normal')
+MainMenuBarBackpackButton.normal:SetTexture('blizzard backpack artwork')
 local module = frame('module')
 module.IsPositioning = false
 module.Panel = false
@@ -51,6 +57,12 @@ for _, button in ipairs(module.Objects) do
 	assert(button.width == 32 and button.height == 32)
 	assert(button.IconMask.shown == false)
 end
+assert(rawget(MainMenuBarBackpackButton.normal, 'texture') == nil)
+assert(MainMenuBarBackpackButton.BackpackIcon.texture == "Interface\\Icons\\INV_Misc_Bag_08")
+assert(MainMenuBarBackpackButton.BackpackIcon.shown)
+-- Blizzard may replace button-state textures without affecting our icon.
+MainMenuBarBackpackButton.normal:SetTexture('updated blizzard artwork')
+assert(MainMenuBarBackpackButton.BackpackIcon.texture == "Interface\\Icons\\INV_Misc_Bag_08")
 local blizzard = frame('blizzard')
 MainMenuBarBackpackButton:SetParent(blizzard)
 assert(MainMenuBarBackpackButton.parent == module.Panel)

@@ -336,7 +336,7 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
         source = (ROOT / "Spawning.lua").read_text()
         self.assertIn("function UF:DisableBlizzardUnitFrame(unit)", source)
         for frame in ("PlayerFrame", "TargetFrame", "FocusFrame", "PetFrame"):
-            self.assertIn(f"_G.{frame}", source)
+            self.assertRegex(source, rf"HideBlizzardFrame\((?:_G\.)?{frame}\)")
         self.assertIn('self:DisableBlizzardUnitFrame("party")', source)
         self.assertIn('self:DisableBlizzardUnitFrame("boss")', source)
 

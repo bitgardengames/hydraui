@@ -114,14 +114,9 @@ function UF:SpawnSingletonFrames()
 	if Settings["player-enable"] then
 		local Player = HydraUI.UnitFrames["player"]
 
-		if Settings["unitframes-player-enable-power"] and (not Settings["player-move-power"]) then
-			Player:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-health-height"] + Settings["unitframes-player-power-height"] + 3)
-		else
+		if not Settings["unitframes-player-enable-power"] or Settings["player-move-power"] then
 			Player:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-health-height"] + 2)
 		end
-
-		Player:SetPoint("TOPRIGHT", HydraUI.UIParent, "CENTER", -68, -281)
-		Player:SetParent(HydraUI.UIParent)
 
 		if Settings["player-enable-portrait"] then
 			Player:EnableElement("Portrait")
@@ -151,17 +146,13 @@ function UF:SpawnSingletonFrames()
 			HydraUI:CreateMover(Player.CastAnchor, 2)
 		end
 
-		HydraUI.UnitFrames["player"] = Player
 		HydraUI:CreateMover(Player)
 
-		Player:UpdateAllElements("ForceUpdate")
+		Player:Refresh("ForceUpdate")
 	end
 
 	if Settings["target-enable"] then
 		local Target = HydraUI.UnitFrames["target"]
-		Target:SetSize(Settings["unitframes-target-width"], Settings["unitframes-target-health-height"] + Settings["unitframes-target-power-height"] + 3)
-		Target:SetPoint("TOPLEFT", HydraUI.UIParent, "CENTER", 68, -281)
-		Target:SetParent(HydraUI.UIParent)
 
 		if Settings["target-enable-portrait"] then
 			Target:EnableElement("Portrait")
@@ -186,47 +177,33 @@ function UF:SpawnSingletonFrames()
 			HydraUI:CreateMover(Target.CastAnchor, 2)
 		end
 
-		HydraUI.UnitFrames["target"] = Target
 		HydraUI:CreateMover(Target)
 
-		Target:UpdateAllElements("ForceUpdate")
+		Target:Refresh("ForceUpdate")
 	end
 
 	if Settings["tot-enable"] then
 		local TargetTarget = HydraUI.UnitFrames["targettarget"]
-		TargetTarget:SetSize(Settings["unitframes-targettarget-width"], Settings["unitframes-targettarget-health-height"] + Settings["unitframes-targettarget-power-height"] + 3)
-		TargetTarget:SetParent(HydraUI.UIParent)
 
 		if Settings["target-enable"] then
 			TargetTarget:SetPoint("TOPRIGHT", HydraUI.UnitFrames["target"], "BOTTOMRIGHT", 0, -2)
-		else
-			TargetTarget:SetPoint("TOPRIGHT", HydraUI.UIParent, "CENTER", 68, -341)
 		end
 
-		HydraUI.UnitFrames["targettarget"] = TargetTarget
 		HydraUI:CreateMover(TargetTarget)
 	end
 
 	if Settings["pet-enable"] then
 		local Pet = HydraUI.UnitFrames["pet"]
-		Pet:SetSize(Settings["unitframes-pet-width"], Settings["unitframes-pet-health-height"] + Settings["unitframes-pet-power-height"] + 3)
-		Pet:SetParent(HydraUI.UIParent)
 
 		if Settings["player-enable"] then
 			Pet:SetPoint("TOPLEFT", HydraUI.UnitFrames["player"], "BOTTOMLEFT", 0, -2)
-		else
-			Pet:SetPoint("TOPLEFT", HydraUI.UIParent, "CENTER", -68, -341)
 		end
 
-		HydraUI.UnitFrames["pet"] = Pet
 		HydraUI:CreateMover(Pet)
 	end
 
 	if Settings["focus-enable"] then
 		local Focus = HydraUI.UnitFrames["focus"]
-		Focus:SetSize(Settings["unitframes-focus-width"], Settings["unitframes-focus-health-height"] + Settings["unitframes-focus-power-height"] + 3)
-		Focus:SetPoint("RIGHT", HydraUI.UIParent, "CENTER", -68, 304)
-		Focus:SetParent(HydraUI.UIParent)
 
 		if Settings["focus-enable-buffs"] then
 			Focus:EnableElement("Auras")
@@ -234,7 +211,6 @@ function UF:SpawnSingletonFrames()
 			Focus:DisableElement("Auras")
 		end
 
-		HydraUI.UnitFrames["focus"] = Focus
 		HydraUI:CreateMover(Focus)
 	end
 end

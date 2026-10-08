@@ -21,9 +21,9 @@ def test_native_tags_pass_secret_values_to_the_font_string_without_inspection():
 def test_native_tag_literals_escape_format_placeholders():
     source = TAGS.read_text()
     formatter = source[
-        source.index("local function FormatTagString"):
-        source.index("local function UpdateBinding")
+        source.index("local function Compile"):
+        source.index("local function FormatTagString")
     ]
 
-    assert 'gsub(part, "%%", "%%%%")' in formatter
-    assert 'gsub(part.prefix, "%%", "%%%%") .. "%s"' in formatter
+    assert 'gsub(sub(tagString, cursor), "%%", "%%%%")' in formatter
+    assert 'gsub(descriptor.prefix, "%%", "%%%%") .. "%s"' in formatter

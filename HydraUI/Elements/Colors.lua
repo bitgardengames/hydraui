@@ -271,9 +271,10 @@ function HydraUI:UpdateUnitFrameColors()
 	Colors.tapped = {HydraUI:HexToRGB(Settings["color-tapped"])}
 	Colors.disconnected = {HydraUI:HexToRGB(Settings["color-disconnected"])}
 	Colors.health = {HydraUI:HexToRGB(Settings["ui-header-texture-color"])}
-	for status = 0, 3 do
-		Colors.threat[status] = {GetThreatStatusColor(status)}
-	end
+	Colors.threat[0] = nil
+	Colors.threat[1] = {1, 1, 0}
+	Colors.threat[2] = {1, 1, 0}
+	Colors.threat[3] = {1, 0, 0}
 end
 
 HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Colors"], function(left, right)

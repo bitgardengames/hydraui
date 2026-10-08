@@ -13,24 +13,8 @@ local DispelTypesByClass = {
 local DispelPriority = {Magic = 4, Curse = 3, Disease = 2, Poison = 1}
 local ValidDispelTypes = DispelTypesByClass[PlayerClass]
 
-local function FindHighestPriorityDebuff(unit)
-	local bestName, bestPriority
-
-	for index = 1, 40 do
-		local name, _, _, debuffType = UnitAura(unit, index, "HARMFUL")
-
-		if not name then
-			break
-		end
-
-		local priority = debuffType and ValidDispelTypes[debuffType] and DispelPriority[debuffType]
-
-		if priority and (not bestPriority or priority > bestPriority) then
-			bestName, bestPriority = name, priority
-		end
-	end
-
-	return bestName
+local function IsInaccessible(value)
+	return HydraUI.IsMainline and issecretvalue(value) and not canaccessvalue(value)
 end
 
 local function UpdateDispel(frame, _, unit)
@@ -39,29 +23,46 @@ local function UpdateDispel(frame, _, unit)
 	end
 
 	local element = frame.Dispel
-	local name = FindHighestPriorityDebuff(frame.unit)
+	local bestPriority, bestIcon, bestCount, bestType, bestDuration, bestExpiration, bestSpellID
 
-	if not name then
+	UF.EnumerateAuras(frame.unit, "HARMFUL", function(_, name, icon, count, debuffType, duration, expiration, caster, stealable, spellID)
+		if IsInaccessible(debuffType) then
+			return
+		end
+
+		local priority = debuffType and ValidDispelTypes and ValidDispelTypes[debuffType] and DispelPriority[debuffType]
+
+		if priority and (not bestPriority or priority > bestPriority) then
+			bestPriority, bestIcon, bestCount, bestType = priority, icon, count, debuffType
+			bestDuration, bestExpiration, bestSpellID = duration, expiration, spellID
+		end
+	end)
+
+	if not bestPriority then
+		element.SpellID = nil
 		element:Hide()
 
 		return
 	end
 
-	local _, icon, count, debuffType, duration, expiration, _, _, _, spellID = AuraUtil.FindAuraByName(name, frame.unit, "HARMFUL")
+	element.SpellID = bestSpellID
+	element.icon:SetTexture(bestIcon)
 
-	if not expiration then
-		element:Hide()
-
-		return
+	if not IsInaccessible(bestDuration) and not IsInaccessible(bestExpiration) and bestDuration and bestDuration > 0 and bestExpiration then
+		element.cd:SetCooldown(bestExpiration - bestDuration, bestDuration)
+		element.cd:Show()
+	else
+		element.cd:Hide()
 	end
 
-	element.SpellID = spellID
-	element.icon:SetTexture(icon)
-	element.cd:SetCooldown(expiration - duration, duration)
-	element.count:SetText(count and count > 1 and count or "")
+	if IsInaccessible(bestCount) then
+		element.count:SetText("")
+	else
+		element.count:SetText(bestCount and bestCount > 1 and bestCount or "")
+	end
 
-	local color = DebuffTypeColor[debuffType]
-	element:SetBackdropBorderColor(color.r, color.g, color.b)
+	local color = HydraUI.DebuffColors[bestType] or HydraUI.DebuffColors.none
+	element:SetBackdropBorderColor(unpack(color))
 	element:Show()
 end
 

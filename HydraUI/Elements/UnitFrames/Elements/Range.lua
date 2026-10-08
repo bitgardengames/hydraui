@@ -21,12 +21,19 @@ local function UpdateRange(frame)
 	end
 
 	local inRange, checked
+	local alphaSet
 
 	if connected then
 		inRange, checked = UnitInRange(frame.unit)
 
 		if IsInaccessible(inRange) then
+			if frame.SetAlphaFromBoolean and not IsInaccessible(checked) and checked then
+				frame:SetAlphaFromBoolean(inRange, range.insideAlpha, range.outsideAlpha)
+				alphaSet = true
+			end
+
 			inRange = nil
+			checked = nil
 		end
 
 		if IsInaccessible(checked) then
@@ -36,7 +43,9 @@ local function UpdateRange(frame)
 
 	local outsideRange = connected and checked and not inRange
 
-	frame:SetAlpha(outsideRange and range.outsideAlpha or range.insideAlpha)
+	if not alphaSet then
+		frame:SetAlpha(outsideRange and range.outsideAlpha or range.insideAlpha)
+	end
 
 	if range.PostUpdate then
 		range:PostUpdate(frame, inRange, checked, connected)
@@ -85,6 +94,7 @@ local function RangeOnShow(frame)
 	if RangeEnabledFrames[frame] then
 		RangeFrames[frame] = true
 		StartRangeDriver()
+		UpdateRange(frame)
 	end
 end
 
@@ -101,6 +111,9 @@ local function EnableRange(frame)
 	end
 
 	range.__owner = frame
+	range.ForceUpdate = function()
+		UpdateRange(frame)
+	end
 	range.insideAlpha = range.insideAlpha or 1
 	range.outsideAlpha = range.outsideAlpha or 0.55
 	RangeEnabledFrames[frame] = true
@@ -126,6 +139,7 @@ local function DisableRange(frame)
 end
 
 UF:RegisterElement("Range", {
+	update = UpdateRange,
 	enable = EnableRange,
 	disable = DisableRange,
 })

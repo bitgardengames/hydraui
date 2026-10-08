@@ -1,7 +1,7 @@
 local combat = false
 function InCombatLockdown() return combat end
 local function frame(name)
-	local f = {name = name, shown = true, hooks = {}, normal = false, IconBorder = false, SlotArt = false, SlotBackground = false, SlotHighlightTexture = false}
+	local f = {name = name, shown = true, hooks = {}, removedMasks = {}, normal = false, CircleMask = false, searchOverlay = false, ItemContextOverlay = false, IconBorder = false, SlotArt = false, SlotBackground = false, SlotHighlightTexture = false}
 	setmetatable(f, {__index = function(self, key)
 		return function() end
 	end})
@@ -17,6 +17,18 @@ local function frame(name)
 	function f:UnregisterEvent() self.event = nil end
 	function f:GetNormalTexture() return self.normal end
 	function f:SetTexture(texture) self.texture = texture end
+	function f:SetColorTexture(...) self.color = {...}; self.texture = 'color' end
+	function f:RemoveMaskTexture(mask) self.removedMasks = self.removedMasks or {}; self.removedMasks[mask] = true end
+	function f:GetPushedTexture() return self.pushed end
+	function f:GetHighlightTexture() return self.highlight end
+	function f:SetPushedTexture(texture) self.pushed = texture end
+	function f:SetHighlightTexture(texture) self.highlight = texture end
+	function f:UpdateTextures()
+		self.normal:SetTexture('circular border')
+		self.pushed:SetTexture('circular border')
+		self.highlight:SetTexture('circular highlight')
+		self.SlotHighlightTexture:SetTexture('circular highlight')
+	end
 	function f:CreateTexture() return frame('texture') end
 	return f
 end
@@ -32,6 +44,11 @@ for _, name in ipairs({'CharacterReagentBag0Slot', 'CharacterBag3Slot', 'Charact
 	_G[name] = frame(name)
 	_G[name].Icon = frame('icon')
 	_G[name].IconMask = frame('mask')
+	_G[name].CircleMask = frame('circle mask')
+	_G[name].searchOverlay = frame('search')
+	_G[name].ItemContextOverlay = frame('context')
+	_G[name].SlotHighlightTexture = frame('slot highlight')
+	_G[name].normal = frame('normal')
 end
 -- Unlike equipped bags, the backpack can expose only button-state artwork.
 MainMenuBarBackpackButton.Icon = false
@@ -49,13 +66,23 @@ function ui:CreateMover() end
 function ui:HexToRGB() return 0, 0, 0 end
 local language = setmetatable({}, {__index = function(_, key) return key end})
 C_Container = {SetInsertItemsLeftToRight = function() end}
-assert(loadfile('HydraUI/Elements/ActionBars/BagSlots.lua'))('HydraUI', {get = function() return ui, language, {}, settings, {} end})
+assert(loadfile('HydraUI/Elements/ActionBars/BagSlots.lua'))('HydraUI', {get = function() return ui, language, {GetTexture = function() return 'blank' end}, settings, {} end})
 module:Load()
 assert(#module.Objects == 6)
 for _, button in ipairs(module.Objects) do
 	assert(button.parent == module.Panel)
 	assert(button.width == 32 and button.height == 32)
 	assert(button.IconMask.shown == false)
+	if button ~= MainMenuBarBackpackButton then
+		assert(button.Icon.removedMasks[button.CircleMask])
+	end
+	assert(button.searchOverlay.removedMasks[button.CircleMask])
+	assert(button.ItemContextOverlay.removedMasks[button.CircleMask])
+	button:UpdateTextures()
+	assert(rawget(button.normal, 'texture') == nil)
+	assert(button.pushed.texture == 'color')
+	assert(button.highlight.texture == 'color')
+	assert(button.SlotHighlightTexture.texture == 'color')
 end
 assert(rawget(MainMenuBarBackpackButton.normal, 'texture') == nil)
 assert(MainMenuBarBackpackButton.BackpackIcon.texture == "Interface\\Icons\\INV_Misc_Bag_08")

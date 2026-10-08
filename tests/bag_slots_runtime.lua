@@ -10,8 +10,18 @@ local function frame(name)
 	function f:SetPoint(...) self.point = {...} end
 	function f:SetSize(w, h) self.width, self.height = w, h end
 	function f:SetAlpha(a) self.alpha = a end
-	function f:Show() self.shown = true end
-	function f:Hide() self.shown = false end
+	function f:HookScript(event, callback) self.hooks[event] = callback end
+	function f:IsShown() return self.shown end
+	function f:Show()
+		local changed = not self.shown
+		self.shown = true
+		if changed and self.hooks.OnShow then self.hooks.OnShow(self) end
+	end
+	function f:Hide()
+		local changed = self.shown
+		self.shown = false
+		if changed and self.hooks.OnHide then self.hooks.OnHide(self) end
+	end
 	function f:SetScript(event, callback) self[event] = callback end
 	function f:RegisterEvent(event) self.event = event end
 	function f:UnregisterEvent() self.event = nil end
@@ -111,4 +121,30 @@ assert(module.Panel.shown and module.Panel.alpha == 0.4)
 settings['bags-frame-visibility'] = 'SHOW'
 module:UpdateVisibility()
 assert(module.Panel.shown and module.Panel.alpha == 1)
+assert(module.Panel.width == 220 and module.Panel.height == 40)
+for _, button in ipairs({CharacterBag0Slot, CharacterBag1Slot, CharacterBag2Slot, CharacterBag3Slot}) do
+	button:Hide()
+end
+assert(module.Panel.width == 76 and module.Panel.height == 40)
+assert(CharacterReagentBag0Slot.point[2] == MainMenuBarBackpackButton)
+-- Changing icon size while collapsed must use the visible count.
+settings['bags-frame-size'] = 40
+module:PositionButtons()
+assert(module.Panel.width == 92 and module.Panel.height == 48)
+combat = true
+CharacterBag0Slot:Show()
+assert(module.Panel.width == 92)
+assert(module.event == 'PLAYER_REGEN_ENABLED')
+combat = false
+module:OnEvent('PLAYER_REGEN_ENABLED')
+assert(module.Panel.width == 136)
+for _, button in ipairs({CharacterBag1Slot, CharacterBag2Slot, CharacterBag3Slot}) do
+	button:Show()
+end
+assert(module.Panel.width == 268 and module.Panel.height == 48)
+-- Hiding the whole panel must not change the expanded slot count.
+settings['bags-frame-visibility'] = 'HIDE'
+module:UpdateVisibility()
+module:PositionButtons()
+assert(module.Panel.width == 268)
 print('Bag slots runtime checks passed')

@@ -132,22 +132,39 @@ function BagsFrame:PositionButtons()
 		end
 	end
 
+	local Previous
+	local VisibleCount = 0
+	local Size = Settings["bags-frame-size"]
+
 	for i = #self.Objects, 1, -1 do
 		local Object = self.Objects[i]
 
-		Object:ClearAllPoints()
+		if not HydraUI.IsMainline or Object:IsShown() then
+			Object:ClearAllPoints()
 
-		if i == #self.Objects then
-			Object:SetPoint("RIGHT", self.Panel, -4, 0)
-		else
-			Object:SetPoint("RIGHT", self.Objects[i+1], "LEFT", -4, 0)
+			if Previous then
+				Object:SetPoint("RIGHT", Previous, "LEFT", -4, 0)
+			else
+				Object:SetPoint("RIGHT", self.Panel, -4, 0)
+			end
+
+			Previous = Object
+			VisibleCount = VisibleCount + 1
 		end
 
-		if (IsVanilla or IsTBC) and i == 1 then
-			Object:SetSize(Settings["bags-frame-size"] / 2, Settings["bags-frame-size"])
+		if HasKeyRing and i == 1 then
+			Object:SetSize(Size / 2, Size)
 		else
-			Object:SetSize(Settings["bags-frame-size"], Settings["bags-frame-size"])
+			Object:SetSize(Size, Size)
 		end
+	end
+
+	if HasKeyRing then
+		self.Panel:SetSize(((Size + 4) * (#self.Objects - 1)) + 8 + (Size / 2), Size + 8)
+	else
+		-- IsShown checks each button's own state even when our panel is hidden.
+		-- Collapsed retail bars retain only the backpack and reagent bag.
+		self.Panel:SetSize(((Size + 4) * VisibleCount) + 4, Size + 8)
 	end
 
 	self.IsPositioning = false
@@ -340,6 +357,8 @@ function BagsFrame:Load()
 		hooksecurefunc(self.Objects[i], "SetPoint", RestoreBagButtonPositions)
 
 		if HydraUI.IsMainline then
+			self.Objects[i]:HookScript("OnShow", RestoreBagButtonPositions)
+			self.Objects[i]:HookScript("OnHide", RestoreBagButtonPositions)
 			hooksecurefunc(self.Objects[i], "SetParent", RestoreBagButtonPositions)
 			hooksecurefunc(self.Objects[i], "SetSize", RestoreBagButtonPositions)
 		end
@@ -367,12 +386,6 @@ end
 local UpdateBagFrameSize = function(value)
 	if not BagsFrame.Panel then
 		return
-	end
-
-	if HasKeyRing then
-		BagsFrame.Panel:SetSize(((value + 4) * (#BagsFrame.Objects - 1)) + 8 + (value / 2), value + 8)
-	else
-		BagsFrame.Panel:SetSize(((value + 4) * #BagsFrame.Objects) + 4, value + 8)
 	end
 
 	BagsFrame:PositionButtons()

@@ -129,6 +129,10 @@ local function IsTrackedCooldown(kind, duration)
 	return duration and (duration > MinTreshold or (kind == "spell" and duration == MinTreshold))
 end
 
+local function IsInaccessibleCooldown(start, duration)
+	return HydraUI.IsMainline and ((issecretvalue(start) and not canaccessvalue(start)) or (issecretvalue(duration) and not canaccessvalue(duration)))
+end
+
 local function FindEarliestDeadline(records, deadline)
 	for _, Record in pairs(records) do
 		if Record.Deadline and (not deadline or Record.Deadline < deadline) then
@@ -166,6 +170,12 @@ end
 local function UpdateRecord(records, kind, id, start, duration)
 	local Record = records[id]
 
+	if IsInaccessibleCooldown(start, duration) then
+		-- A restricted cooldown cannot supply a reliable completion deadline.
+		ReleaseRecord(records, id)
+		return
+	end
+
 	if start and IsTrackedCooldown(kind, duration) then
 		if not Record then
 			Record = (kind == "item" and table.remove(ItemTables, #ItemTables)) or {}
@@ -191,7 +201,9 @@ local function UpdateExpiredRecords(records, kind, now)
 		if Record.Deadline <= now then
 			local Start, Duration = GetCooldown(kind, ID)
 
-			if Start and IsTrackedCooldown(kind, Duration) and Start + Duration > now then
+			if IsInaccessibleCooldown(Start, Duration) then
+				ReleaseRecord(records, ID)
+			elseif Start and IsTrackedCooldown(kind, Duration) and Start + Duration > now then
 				Record.Deadline = Start + Duration
 			else
 				Cooldowns:ShowReady(kind, ID)

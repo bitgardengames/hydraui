@@ -95,7 +95,7 @@ class SharedUnitFrameCoverage(unittest.TestCase):
                           "PowerColor", "HealthReverse", "PowerReverse",
                           "HealthTexture", "PowerTexture", "AuraSize",
                           "AuraSpacing", "ElementEnabled"):
-            self.assertIn(f"function UnitOperations.{operation}", shared)
+            self.assertRegex(shared, rf"(?:function UnitOperations\.{operation}\b|UnitOperations\.{operation} = Apply)")
         for module in ("Focus", "Pet", "TargetTarget", "Boss", "Target", "Player"):
             self.assertIn("UF:CreateUnitUpdater(", (FRAMES / f"{module}.lua").read_text())
 
@@ -225,7 +225,9 @@ class SharedUnitFrameCoverage(unittest.TestCase):
 
     def test_live_health_texture_update_reaches_every_prediction_texture(self):
         shared = FACTORY
-        update = re.search(r"function UF:SetHealthTexture\(.*?\nend", shared, re.S).group(0)
+        update = re.search(r"local function ApplyHealthTexture\(.*?\nend", shared, re.S).group(0)
+        self.assertIn("ApplyHealthTexture(self, frame, value)", shared)
+        self.assertIn("UnitOperations.HealthTexture = ApplyHealthTexture", shared)
         for expression in (
             "frame.Health:SetStatusBarTexture(texture)",
             "frame.Health.bg:SetTexture(texture)",
@@ -336,7 +338,7 @@ class UnitFrameSpawnerCoverage(unittest.TestCase):
         source = (ROOT / "Spawning.lua").read_text()
         self.assertIn("function UF:DisableBlizzardUnitFrame(unit)", source)
         for frame in ("PlayerFrame", "TargetFrame", "FocusFrame", "PetFrame"):
-            self.assertIn(f"_G.{frame}", source)
+            self.assertIn(f"HideBlizzardFrame({frame})", source)
         self.assertIn('self:DisableBlizzardUnitFrame("party")', source)
         self.assertIn('self:DisableBlizzardUnitFrame("boss")', source)
 

@@ -154,7 +154,7 @@ function UF:SpawnSingletonFrames()
 		HydraUI.UnitFrames["player"] = Player
 		HydraUI:CreateMover(Player)
 
-		Player:UpdateAllElements("ForceUpdate")
+		Player:Refresh("ForceUpdate")
 	end
 
 	if Settings["target-enable"] then
@@ -189,7 +189,7 @@ function UF:SpawnSingletonFrames()
 		HydraUI.UnitFrames["target"] = Target
 		HydraUI:CreateMover(Target)
 
-		Target:UpdateAllElements("ForceUpdate")
+		Target:Refresh("ForceUpdate")
 	end
 
 	if Settings["tot-enable"] then

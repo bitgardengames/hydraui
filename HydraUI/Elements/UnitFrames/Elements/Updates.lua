@@ -3,6 +3,65 @@ local HydraUI, _, Assets, Settings = ns:get()
 
 local UF = HydraUI:GetModule("Unit Frames")
 
+-- Public setters and settings callbacks share the same widget updates.
+local function ApplyHealthColor(UF, frame, value)
+	UF:SetHealthAttributes(frame.Health, value)
+	frame.Health:ForceUpdate()
+end
+
+local function ApplyPowerColor(UF, frame, value)
+	UF:SetPowerAttributes(frame.Power, value)
+	frame.Power:ForceUpdate()
+end
+
+local function ApplyHealthReverse(UF, frame, value)
+	local health = frame.Health
+	local healBar = frame.HealBar
+	local absorbsBar = frame.AbsorbsBar
+	local point = value and "RIGHT" or "LEFT"
+	local relativePoint = value and "LEFT" or "RIGHT"
+
+	health:SetReverseFill(value)
+
+	if healBar then
+		healBar:SetReverseFill(value)
+		healBar:ClearAllPoints()
+		healBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
+	end
+
+	if absorbsBar then
+		absorbsBar:SetReverseFill(value)
+		absorbsBar:ClearAllPoints()
+		absorbsBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
+	end
+end
+
+local function ApplyPowerReverse(UF, frame, value)
+	frame.Power:SetReverseFill(value)
+end
+
+local function ApplyHealthTexture(UF, frame, value)
+	local texture = Assets:GetTexture(value)
+
+	frame.Health:SetStatusBarTexture(texture)
+	frame.Health.bg:SetTexture(texture)
+
+	if frame.HealBar then
+		frame.HealBar:SetStatusBarTexture(texture)
+	end
+
+	if frame.AbsorbsBar then
+		frame.AbsorbsBar:SetStatusBarTexture(texture)
+	end
+end
+
+local function ApplyPowerTexture(UF, frame, value)
+	local texture = Assets:GetTexture(value)
+
+	frame.Power:SetStatusBarTexture(texture)
+	frame.Power.bg:SetTexture(texture)
+end
+
 function UF:SetFrameWidth(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
@@ -38,61 +97,33 @@ end
 function UF:ApplyHealthAttributes(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
-	if not frame then
-		return
+	if frame then
+		ApplyHealthColor(self, frame, value)
 	end
-
-	self:SetHealthAttributes(frame.Health, value)
-	frame.Health:ForceUpdate()
 end
 
 function UF:ApplyPowerAttributes(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
-	if not frame then
-		return
+	if frame then
+		ApplyPowerColor(self, frame, value)
 	end
-
-	self:SetPowerAttributes(frame.Power, value)
-	frame.Power:ForceUpdate()
 end
 
 function UF:SetHealthReverseFill(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
-	if not frame then
-		return
-	end
-
-	local health = frame.Health
-	local healBar = frame.HealBar
-	local absorbsBar = frame.AbsorbsBar
-	local point = value and "RIGHT" or "LEFT"
-	local relativePoint = value and "LEFT" or "RIGHT"
-
-	health:SetReverseFill(value)
-
-	if healBar then
-		healBar:SetReverseFill(value)
-		healBar:ClearAllPoints()
-		healBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
-	end
-
-	if absorbsBar then
-		absorbsBar:SetReverseFill(value)
-		absorbsBar:ClearAllPoints()
-		absorbsBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
+	if frame then
+		ApplyHealthReverse(self, frame, value)
 	end
 end
 
 function UF:SetPowerReverseFill(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
-	if not frame then
-		return
+	if frame then
+		ApplyPowerReverse(self, frame, value)
 	end
-
-	frame.Power:SetReverseFill(value)
 end
 
 function UF:SetElementEnabled(unit, value, element)
@@ -112,35 +143,17 @@ end
 function UF:SetHealthTexture(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
-	if not frame then
-		return
-	end
-
-	local texture = Assets:GetTexture(value)
-
-	frame.Health:SetStatusBarTexture(texture)
-	frame.Health.bg:SetTexture(texture)
-
-	if frame.HealBar then
-		frame.HealBar:SetStatusBarTexture(texture)
-	end
-
-	if frame.AbsorbsBar then
-		frame.AbsorbsBar:SetStatusBarTexture(texture)
+	if frame then
+		ApplyHealthTexture(self, frame, value)
 	end
 end
 
 function UF:SetPowerTexture(unit, value)
 	local frame = HydraUI.UnitFrames[unit]
 
-	if not frame then
-		return
+	if frame then
+		ApplyPowerTexture(self, frame, value)
 	end
-
-	local texture = Assets:GetTexture(value)
-
-	frame.Power:SetStatusBarTexture(texture)
-	frame.Power.bg:SetTexture(texture)
 end
 
 function UF:SetAuraSize(unit, value, element, width)
@@ -211,62 +224,17 @@ function UnitOperations.PowerHeight(UF, frame, value, options)
 	frame:SetHeight(Settings[options.healthHeight] + value + 3)
 end
 
-function UnitOperations.HealthColor(UF, frame, value)
-	UF:SetHealthAttributes(frame.Health, value)
-	frame.Health:ForceUpdate()
-end
+UnitOperations.HealthColor = ApplyHealthColor
 
-function UnitOperations.PowerColor(UF, frame, value)
-	UF:SetPowerAttributes(frame.Power, value)
-	frame.Power:ForceUpdate()
-end
+UnitOperations.PowerColor = ApplyPowerColor
 
-function UnitOperations.HealthReverse(UF, frame, value)
-	local health = frame.Health
-	local point, relativePoint = value and "RIGHT" or "LEFT", value and "LEFT" or "RIGHT"
+UnitOperations.HealthReverse = ApplyHealthReverse
 
-	health:SetReverseFill(value)
+UnitOperations.PowerReverse = ApplyPowerReverse
 
-	local healBar = frame.HealBar
+UnitOperations.HealthTexture = ApplyHealthTexture
 
-	if healBar then
-		healBar:SetReverseFill(value)
-		healBar:ClearAllPoints()
-		healBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
-	end
-
-	local absorbsBar = frame.AbsorbsBar
-
-	if absorbsBar then
-		absorbsBar:SetReverseFill(value)
-		absorbsBar:ClearAllPoints()
-		absorbsBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
-	end
-end
-
-function UnitOperations.PowerReverse(UF, frame, value)
-	frame.Power:SetReverseFill(value)
-end
-
-function UnitOperations.HealthTexture(UF, frame, value)
-	local texture = Assets:GetTexture(value)
-	frame.Health:SetStatusBarTexture(texture)
-	frame.Health.bg:SetTexture(texture)
-
-	if frame.HealBar then
-		frame.HealBar:SetStatusBarTexture(texture)
-	end
-
-	if frame.AbsorbsBar then
-		frame.AbsorbsBar:SetStatusBarTexture(texture)
-	end
-end
-
-function UnitOperations.PowerTexture(UF, frame, value)
-	local texture = Assets:GetTexture(value)
-	frame.Power:SetStatusBarTexture(texture)
-	frame.Power.bg:SetTexture(texture)
-end
+UnitOperations.PowerTexture = ApplyPowerTexture
 
 function UnitOperations.AuraSize(UF, frame, value, options)
 	local auras = frame[options.element]
@@ -303,7 +271,7 @@ function UnitOperations.ElementEnabled(UF, frame, value, options)
 	end
 
 	if options.forceUpdate then
-		frame:UpdateAllElements("ForceUpdate")
+		frame:Refresh("ForceUpdate")
 	end
 end
 

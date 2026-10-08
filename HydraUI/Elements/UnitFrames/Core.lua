@@ -391,6 +391,11 @@ function UnitFrames:CreateNamePlateButton(parent, unit, builder)
 
 	BuildElements(frame, unit, builder)
 
+	-- A native parent becoming visible only requires fresh data, not Show/Hide.
+	frame:SetScript("OnShow", function(self)
+		self:Refresh("NamePlateShown")
+	end)
+
 	return frame
 end
 
@@ -401,7 +406,8 @@ function UnitFrames:SetNamePlateUnit(frame, unit)
 		end
 
 		frame.unit = nil
-		frame:Hide()
+		-- Detach from the native pool so another unit cannot inherit this child.
+		frame:SetParent(UF.Hider)
 
 		return
 	end
@@ -412,6 +418,5 @@ function UnitFrames:SetNamePlateUnit(frame, unit)
 		frame._registerUnitEvent(frame, event, unit)
 	end
 
-	frame:Show()
 	frame:Refresh("RefreshUnit")
 end

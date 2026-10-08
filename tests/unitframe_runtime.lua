@@ -46,6 +46,7 @@ local function NewFrame()
 	function frame:SetAttribute(name, value)
 		self.attributes[name] = value
 	end
+	function frame:SetParent(parent) self.parent = parent end
 	function frame:IsShown()
 		return self.visible
 	end
@@ -168,9 +169,12 @@ assert(not polling._pollTicker and not polling.watched)
 -- Nameplate reuse retains event subscriptions and refreshes the new unit.
 local plate = HydraUI.UnitFrames:CreateNamePlateButton({}, "nameplate1", function() end)
 plate:RegisterEvent("UNIT_HEALTH", first)
+plate.scripts.OnShow(plate)
+assert(updates[#updates][1] == "NamePlateShown")
 plate.registrations = {}
 HydraUI.UnitFrames:SetNamePlateUnit(plate, nil)
-assert(not plate.unit and not plate:IsShown())
+assert(not plate.unit and plate.parent == UF.Hider)
+assert(plate:IsShown()) -- Unit binding does not override local visibility.
 HydraUI.UnitFrames:SetNamePlateUnit(plate, "nameplate2")
 assert(plate.registrations[2][3] == "nameplate2")
 assert(updates[#updates][2] == "nameplate2")

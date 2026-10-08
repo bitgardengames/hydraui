@@ -338,6 +338,18 @@ function UF:CreateNamePlateDriver()
 		end
 	end
 
+	local function UpdateVisibility(plate, unit, event)
+		-- Mainline can keep a world-space plate alive while Blizzard hides its
+		-- contents. Our replacement must honor the friendly-nameplate toggle too.
+		if HydraUI.IsMainline and not UnitIsUnit(unit, "player") and UnitIsFriend("player", unit)
+			and not C_CVar.GetCVarBool("nameplateShowFriends") then
+			plate:Hide()
+		else
+			plate:Show()
+			plate:Refresh(event or "NamePlateVisibility")
+		end
+	end
+
 	local function Added(unit)
 		local base = C_NamePlate.GetNamePlateForUnit(unit)
 		if not base then
@@ -353,7 +365,7 @@ function UF:CreateNamePlateDriver()
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)
 		self.NamePlatesByUnit[unit] = plate
 		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_ADDED", unit)
-		plate:Refresh("NAME_PLATE_UNIT_ADDED")
+		UpdateVisibility(plate, unit, "NAME_PLATE_UNIT_ADDED")
 	end
 
 	local function Removed(unit)
@@ -375,10 +387,25 @@ function UF:CreateNamePlateDriver()
 	driver:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 	driver:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 	driver:RegisterEvent("PLAYER_TARGET_CHANGED")
+	if HydraUI.IsMainline then
+		driver:RegisterEvent("CVAR_UPDATE")
+		driver:RegisterEvent("UNIT_FACTION")
+	end
 	driver:SetScript("OnEvent", function(_, event, unit)
 		if event == "PLAYER_LOGIN" then
 			ApplyCVars()
 			driver:UnregisterEvent("PLAYER_LOGIN")
+		elseif event == "CVAR_UPDATE" then
+			if unit and unit:lower() == "nameplateshowfriends" then
+				for plateUnit, plate in next, self.NamePlatesByUnit do
+					UpdateVisibility(plate, plateUnit)
+				end
+			end
+		elseif event == "UNIT_FACTION" then
+			local plate = self.NamePlatesByUnit[unit]
+			if plate then
+				UpdateVisibility(plate, unit)
+			end
 		elseif event == "NAME_PLATE_UNIT_ADDED" then
 			Added(unit)
 		elseif event == "NAME_PLATE_UNIT_REMOVED" then

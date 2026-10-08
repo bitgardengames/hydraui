@@ -13,7 +13,16 @@ local IsVanilla = HydraUI.IsVanilla
 local IsTBC = HydraUI.IsTBC
 local HasKeyRing = IsVanilla or IsTBC
 
-if HasKeyRing then
+if HydraUI.IsMainline then
+	BagsFrame.Objects = {
+		CharacterReagentBag0Slot,
+		CharacterBag3Slot,
+		CharacterBag2Slot,
+		CharacterBag1Slot,
+		CharacterBag0Slot,
+		MainMenuBarBackpackButton,
+	}
+elseif HasKeyRing then
 	BagsFrame.Objects = {
 		KeyRingButton,
 		CharacterBag3Slot,
@@ -61,6 +70,15 @@ function BagsFrame:SetAlpha(alpha)
 end
 
 function BagsFrame:UpdateVisibility()
+	if not self.Panel then
+		return
+	end
+
+	if InCombatLockdown() then
+		self:RegisterEvent("PLAYER_REGEN_ENABLED")
+		return
+	end
+
 	if Settings["bags-frame-visibility"] == "HIDE" then
 		self.Panel:SetScript("OnEnter", nil)
 		self.Panel:SetScript("OnLeave", nil)
@@ -99,6 +117,11 @@ function BagsFrame:PositionButtons()
 		return
 	end
 
+	if InCombatLockdown() then
+		self:RegisterEvent("PLAYER_REGEN_ENABLED")
+		return
+	end
+
 	self.IsPositioning = true
 
 	for i = 1, #self.Objects do
@@ -107,12 +130,12 @@ function BagsFrame:PositionButtons()
 		if Object ~= KeyRingButton then
 			Object:SetParent(self.Panel)
 		end
-
-		Object:ClearAllPoints()
 	end
 
 	for i = #self.Objects, 1, -1 do
 		local Object = self.Objects[i]
+
+		Object:ClearAllPoints()
 
 		if i == #self.Objects then
 			Object:SetPoint("RIGHT", self.Panel, -4, 0)
@@ -136,14 +159,6 @@ end
 
 function BagsFrame:Load()
 	if not Settings["ab-enable"] then
-		return
-	end
-
-	if HydraUI.ClientVersion >= 100000 then
-		MainMenuBarBackpackButton:ClearAllPoints()
-		MainMenuBarBackpackButton:SetPoint("BOTTOMRIGHT", HydraUI:GetModule("Micro Buttons").Panel, "TOPRIGHT", 0, 5)
-		MainMenuBarBackpackButton.SetPoint = function() end
-
 		return
 	end
 
@@ -174,7 +189,7 @@ function BagsFrame:Load()
 		Object:HookScript("OnLeave", BagsFrameButtonOnLeave)
 
 		local Name = Object:GetName()
-		local Normal = _G[Name .. "NormalTexture"]
+		local Normal = Object:GetNormalTexture() or _G[Name .. "NormalTexture"]
 		local Count = _G[Name .. "Count"]
 		local Stock = _G[Name .. "Stock"]
 
@@ -200,8 +215,25 @@ function BagsFrame:Load()
 			HydraUI:SetFontInfo(Stock, Settings["ui-widget-font"], Settings["ui-font-size"])
 		end
 
-		if Object.icon then
-			Object.icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+		local Icon = Object.Icon or Object.icon or _G[Name .. "IconTexture"]
+
+		if Icon then
+			if Object.IconMask then
+				Icon:RemoveMaskTexture(Object.IconMask)
+				Object.IconMask:Hide()
+			end
+
+			Icon:ClearAllPoints()
+			Icon:SetAllPoints(Object)
+			Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+		end
+
+		if Object.SlotArt then
+			Object.SlotArt:Hide()
+		end
+
+		if Object.SlotBackground then
+			Object.SlotBackground:Hide()
 		end
 
 		Object.BG = Object:CreateTexture(nil, "BACKGROUND")
@@ -209,7 +241,7 @@ function BagsFrame:Load()
 		Object.BG:SetPoint("BOTTOMRIGHT", Object, 1, -1)
 		Object.BG:SetColorTexture(0, 0, 0)
 
-		if HydraUI.IsMainline then
+		if HydraUI.IsMainline and Object.SlotHighlightTexture then
 			Object.SlotHighlightTexture:SetTexture(Assets:GetTexture("Blank"))
 			Object.SlotHighlightTexture:SetVertexColor(0.9, 0.9, 0.1, 0.2)
 		else
@@ -242,9 +274,22 @@ function BagsFrame:Load()
 
 	self:PositionButtons()
 
+	-- Keep Blizzard's Edit Mode/layout updates from moving the buttons back
+	-- under a bag bar whose visibility is controlled independently of ours.
 	for i = 1, #self.Objects do
 		hooksecurefunc(self.Objects[i], "SetPoint", RestoreBagButtonPositions)
+
+		if HydraUI.IsMainline then
+			hooksecurefunc(self.Objects[i], "SetParent", RestoreBagButtonPositions)
+			hooksecurefunc(self.Objects[i], "SetSize", RestoreBagButtonPositions)
+		end
 	end
+
+	self:SetScript("OnEvent", function(self)
+		self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+		self:PositionButtons()
+		self:UpdateVisibility()
+	end)
 
 	if C_Container and C_Container.SetInsertItemsLeftToRight then
 		C_Container.SetInsertItemsLeftToRight(Settings["bags-loot-from-left"])
@@ -264,7 +309,7 @@ local UpdateBagFrameSize = function(value)
 		return
 	end
 
-	if IsVanilla then
+	if HasKeyRing then
 		BagsFrame.Panel:SetSize(((value + 4) * (#BagsFrame.Objects - 1)) + 8 + (value / 2), value + 8)
 	else
 		BagsFrame.Panel:SetSize(((value + 4) * #BagsFrame.Objects) + 4, value + 8)
@@ -279,5 +324,5 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Action Bars"]
 	right:CreateSlider("bags-frame-size", Settings["bags-frame-size"], 12, 60, 2, Language["Set Bag Size"], Language["Set the size of the bag frame slots"], UpdateBagFrameSize)
 	right:CreateSlider("bags-frame-opacity", Settings["bags-frame-opacity"], 0, 100, 10, Language["Set Faded Opacity"], Language["Set the opacity of the bags frame when visibility is set to Mouseover"], UpdateBagVisibility, nil, "%")
 	right:CreateSlider("bags-frame-max", Settings["bags-frame-max"], 0, 100, 10, Language["Set Max Opacity"], Language["Set the max opacity of the bags frame when visibility is set to Mouseover"], UpdateBagVisibility, nil, "%")
-	right:CreateSwitch("bags-loot-from-left", Settings["bags-loot-from-left"], Language["Loot Left to Right"], Language["When looting, new items will be placed in the leftmost bag"], SetInsertItemsLeftToRight)
+	right:CreateSwitch("bags-loot-from-left", Settings["bags-loot-from-left"], Language["Loot Left to Right"], Language["When looting, new items will be placed in the leftmost bag"], C_Container and C_Container.SetInsertItemsLeftToRight or SetInsertItemsLeftToRight)
 end)

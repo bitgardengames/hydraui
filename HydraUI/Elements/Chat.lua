@@ -164,73 +164,6 @@ function Chat:Install()
 	--Chat:MoveChatFrames()
 	FCF_SelectDockFrame(ChatFrame1)
 end
-function Chat:SetChatTypeInfo()
-	_G["CHAT_DISCORD_SEND"] = Language["Discord: "]
-	_G["CHAT_URL_SEND"] = Language["URL: "]
-	_G["CHAT_EMAIL_SEND"] = Language["Email: "]
-	_G["CHAT_FRIEND_SEND"] = Language["Friend Tag:"]
-
-	ChatTypeInfo["URL"] = {sticky = 0, r = 255/255, g = 206/255,  b = 84/255}
-	ChatTypeInfo["EMAIL"] = {sticky = 0, r = 102/255, g = 187/255,  b = 106/255}
-	ChatTypeInfo["DISCORD"] = {sticky = 0, r = 114/255, g = 137/255,  b = 218/255}
-	ChatTypeInfo["FRIEND"] = {sticky = 0, r = 0, g = 170/255,  b = 255/255}
-
-	ChatTypeInfo["WHISPER"].sticky = 1
-	ChatTypeInfo["BN_WHISPER"].sticky = 1
-	ChatTypeInfo["OFFICER"].sticky = 1
-	ChatTypeInfo["RAID_WARNING"].sticky = 1
-	ChatTypeInfo["CHANNEL"].sticky = 1
-
-	ChatTypeInfo["SAY"].colorNameByClass = true
-	ChatTypeInfo["YELL"].colorNameByClass = true
-	ChatTypeInfo["GUILD"].colorNameByClass = true
-	ChatTypeInfo["OFFICER"].colorNameByClass = true
-	ChatTypeInfo["WHISPER"].colorNameByClass = true
-	ChatTypeInfo["WHISPER_INFORM"].colorNameByClass = true
-	ChatTypeInfo["BN_WHISPER"].colorNameByClass = true
-	ChatTypeInfo["BN_WHISPER_INFORM"].colorNameByClass = true
-	ChatTypeInfo["PARTY"].colorNameByClass = true
-	ChatTypeInfo["PARTY_LEADER"].colorNameByClass = true
-	ChatTypeInfo["RAID"].colorNameByClass = true
-	ChatTypeInfo["RAID_LEADER"].colorNameByClass = true
-	ChatTypeInfo["RAID_WARNING"].colorNameByClass = true
-	ChatTypeInfo["INSTANCE_CHAT"].colorNameByClass = true
-	ChatTypeInfo["INSTANCE_CHAT_LEADER"].colorNameByClass = true
-	ChatTypeInfo["EMOTE"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL1"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL2"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL3"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL4"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL5"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL6"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL7"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL8"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL9"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL10"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL11"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL12"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL13"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL14"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL15"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL16"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL17"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL18"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL19"].colorNameByClass = true
-	ChatTypeInfo["CHANNEL20"].colorNameByClass = true
-
-	if not HydraUI.IsVanilla then
-		ChatTypeInfo["GUILD_ACHIEVEMENT"].colorNameByClass = true
-	end
-
-	if C_CVar.GetCVar("colorChatNamesByClass") ~= "0" then
-		C_CVar.SetCVar("colorChatNamesByClass", 0)
-	end
-
-	if C_CVar.GetCVar("chatClassColorOverride") ~= "0" then
-		C_CVar.SetCVar("chatClassColorOverride", 0)
-	end
-end
 local MoveChatFrames = function()
 	Chat:MoveChatFrames()
 end
@@ -253,7 +186,6 @@ function Chat:Load()
 	end
 
 	self:MoveChatFrames()
-	self:SetChatTypeInfo()
 	self:RestoreHistory()
 	self:InstallFrameHooks()
 	DEFAULT_CHAT_FRAME:SetUserPlaced(true)

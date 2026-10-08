@@ -25,7 +25,7 @@ local function HealthColor(frame, event, unit)
 		color = frame.colors.tapped
 	elseif element.colorThreat and not UnitPlayerControlled(unit) then
 		local threat = UnitThreatSituation("player", unit)
-		color = threat and frame.colors.threat[threat]
+		color = (threat and frame.colors.threat[threat]) or frame.colors.reaction[UnitReaction(unit, "player") or 5]
 	elseif element.colorClass and UnitIsPlayer(unit) then
 		local _, class = UnitClass(unit)
 		color = frame.colors.class[class]

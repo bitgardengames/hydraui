@@ -25,10 +25,12 @@ local function UpdateThreat(frame, _, unit)
 		status = UnitThreatSituation(feedbackUnit or frame.unit, feedbackUnit and frame.unit or nil)
 	end
 
-	local color = status and frame.colors.threat[status]
+	local color = status and status > 0 and frame.colors.threat[status]
 
 	if color then
-		if indicator.SetVertexColor then
+		if indicator.SetBackdropBorderColor then
+			indicator:SetBackdropBorderColor(unpack(color))
+		elseif indicator.SetVertexColor then
 			indicator:SetVertexColor(unpack(color))
 		end
 

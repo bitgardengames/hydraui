@@ -31,9 +31,10 @@ Defaults.PartyEnableMouseover = true
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-local PartyDebuffFilter = function(self, unit, icon, name, texture, count, dtype, duration, timeLeft, caster, stealable, nameplateshow, id)
-	local hasCustom, alwaysShowMine, showForMySpec = SpellGetVisibilityInfo(id, "RAID_INCOMBAT")
-	return not hasCustom or showForMySpec or (alwaysShowMine and (caster == "player" or caster == "pet" or caster == "vehicle"))
+local PartyDebuffFilter = function(self, unit, aura)
+	local hasCustom, alwaysShowMine, showForMySpec = SpellGetVisibilityInfo(aura.spellId, "RAID_INCOMBAT")
+
+	return not hasCustom or showForMySpec or (alwaysShowMine and aura.isFromPlayerOrPlayerPet)
 end
 
 local function CreatePartyDebuffs(frame, health, filter)
@@ -49,6 +50,7 @@ local PartyGroup = {
 	debuffFilter = PartyDebuffFilter, createDebuffs = CreatePartyDebuffs, dispelSize = 20, dispelAboveDebuffs = true,
 	indicators = { auraWatch = true, role = Settings["party-show-role"], leaderX = 0, phasePoint = "TOPRIGHT" }, testStart = -4,
 }
+
 HydraUI.StyleFuncs["party"] = function(frame, unit)
 	UF:BuildGroupFrame(frame, unit, PartyGroup)
 end
@@ -60,42 +62,55 @@ end
 local function UpdatePartyWidth(value)
 	Update("width", value)
 end
+
 local function UpdatePartyHealthHeight(value)
 	Update("healthHeight", value)
 end
+
 local function UpdatePartyHealthColor(value)
 	Update("healthColor", value)
 end
+
 local function UpdatePartyHealthReverseFill(value)
 	Update("healthReverse", value)
 end
+
 local function UpdateEnablePartyPower(value)
 	Update("powerEnabled", value)
 end
+
 local function UpdatePartyPowerHeight(value)
 	Update("powerHeight", value)
 end
+
 local function UpdatePartyPowerReverseFill(value)
 	Update("powerReverse", value)
 end
+
 local function UpdatePartyPowerColor(value)
 	Update("powerColor", value)
 end
+
 local function UpdatePartyShowDebuffs(value)
 	Update("debuffs", value)
 end
+
 local function UpdatePartyShowHighlight(value)
 	Update("highlight", value)
 end
+
 local function UpdateHealthTexture(value)
 	Update("healthTexture", value)
 end
+
 local function UpdatePowerTexture(value)
 	Update("powerTexture", value)
 end
+
 local function TestParty()
 	UF:ToggleGroupTest(PartyGroup)
 end
+
 local function UpdateShowSolo(value)
 	HydraUI.UnitFrames["party"]:SetAttribute("showSolo", value)
 end

@@ -35,8 +35,9 @@ Defaults.RaidEnableMouseover = true
 local UF = HydraUI:GetModule("Unit Frames")
 
 local Ignore = {}
+
 if HydraUI.IsWrath then
-	Ignore[GetSpellInfo(69127)] = true
+	Ignore[GetSpellInfo(69127)] = true -- Chill of the Throne
 end
 
 local RaidDebuffFilter = function(self, unit, icon, name, texture, count, dtype, duration, timeLeft, caster, stealable, nameplateshow, id, canapply, boss, player)
@@ -59,8 +60,7 @@ local function UpdateRaidAnchorSize()
 
 	local rows = floor(40 / Settings["raid-max-columns"])
 	local width = rows * Settings["raid-width"] + (rows * Settings["raid-x-offset"] - 2)
-	local height = (Settings["raid-health-height"] + Settings["raid-power-height"])
-		* (Settings["raid-max-columns"] + Settings["raid-y-offset"]) - 1
+	local height = (Settings["raid-health-height"] + Settings["raid-power-height"]) * (Settings["raid-max-columns"] + Settings["raid-y-offset"]) - 1
 
 	UF.RaidAnchor:SetSize(width, height)
 end
@@ -81,7 +81,9 @@ local RaidGroup = {
 		leaderX = 3,
 		phasePoint = "LEFT",
 	},
+
 	testStart = -24,
+
 	afterUpdate = function(operation)
 		if operation == "width" or operation == "healthHeight" or operation == "powerHeight" then
 			UpdateRaidAnchorSize()
@@ -96,45 +98,59 @@ end
 local function Update(operation, value)
 	UF:UpdateGroupFrames(RaidGroup, operation, value)
 end
+
 local function UpdateRaidWidth(value)
 	Update("width", value)
 end
+
 local function UpdateRaidHealthHeight(value)
 	Update("healthHeight", value)
 end
+
 local function UpdateRaidHealthColor(value)
 	Update("healthColor", value)
 end
+
 local function UpdateRaidHealthOrientation(value)
 	Update("healthOrientation", value)
 end
+
 local function UpdateRaidHealthReverseFill(value)
 	Update("healthReverse", value)
 end
+
 local function UpdateEnableRaidPower(value)
 	Update("powerEnabled", value)
 end
+
 local function UpdateRaidPowerHeight(value)
 	Update("powerHeight", value)
 end
+
 local function UpdateRaidPowerReverseFill(value)
 	Update("powerReverse", value)
 end
+
 local function UpdateRaidPowerColor(value)
 	Update("powerColor", value)
 end
+
 local function UpdateRaidShowHighlight(value)
 	Update("highlight", value)
 end
+
 local function UpdateHealthTexture(value)
 	Update("healthTexture", value)
 end
+
 local function UpdatePowerTexture(value)
 	Update("powerTexture", value)
 end
+
 local function TestRaid()
 	UF:ToggleGroupTest(RaidGroup)
 end
+
 local function UpdateShowSolo(value)
 	HydraUI.UnitFrames["raid"]:SetAttribute("showSolo", value)
 end
@@ -147,18 +163,23 @@ end
 local function UpdateRaidXOffset(value)
 	SetRaidAttribute("xoffset", value)
 end
+
 local function UpdateRaidYOffset(value)
 	SetRaidAttribute("yoffset", value)
 end
+
 local function UpdateRaidUnitsPerColumn(value)
 	SetRaidAttribute("unitsPerColumn", value)
 end
+
 local function UpdateRaidMaxColumns(value)
 	SetRaidAttribute("maxColumns", value)
 end
+
 local function UpdateRaidColumnSpacing(value)
 	SetRaidAttribute("columnSpacing", value)
 end
+
 local function UpdateRaidPoint(value)
 	SetRaidAttribute("point", value)
 end

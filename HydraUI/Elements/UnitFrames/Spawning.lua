@@ -27,32 +27,33 @@ end
 -- Suppress stock frames before creating HydraUI's native unit frames.
 function UF:DisableBlizzardUnitFrame(unit)
 	if unit == "player" then
-		HideBlizzardFrame(_G.PlayerFrame)
+		HideBlizzardFrame(PlayerFrame)
+
 		-- Blizzard still needs these events to switch the vehicle unit safely.
-		if _G.PlayerFrame then
+		if PlayerFrame then
 			for _, event in ipairs({"PLAYER_ENTERING_WORLD", "UNIT_ENTERING_VEHICLE", "UNIT_ENTERED_VEHICLE", "UNIT_EXITING_VEHICLE", "UNIT_EXITED_VEHICLE"}) do
-				_G.PlayerFrame:RegisterEvent(event)
+				PlayerFrame:RegisterEvent(event)
 			end
 
-			_G.PlayerFrame:SetUserPlaced(true)
-			_G.PlayerFrame:SetDontSavePosition(true)
+			PlayerFrame:SetUserPlaced(true)
+			PlayerFrame:SetDontSavePosition(true)
 		end
 	elseif unit == "pet" then
-		HideBlizzardFrame(_G.PetFrame)
+		HideBlizzardFrame(PetFrame)
 	elseif unit == "target" then
-		HideBlizzardFrame(_G.TargetFrame)
-		HideBlizzardFrame(_G.ComboFrame)
+		HideBlizzardFrame(TargetFrame)
+		HideBlizzardFrame(ComboFrame)
 	elseif unit == "focus" then
-		HideBlizzardFrame(_G.FocusFrame)
-		HideBlizzardFrame(_G.TargetofFocusFrame)
+		HideBlizzardFrame(FocusFrame)
+		HideBlizzardFrame(TargetofFocusFrame)
 	elseif unit == "targettarget" then
-		HideBlizzardFrame(_G.TargetFrameToT)
+		HideBlizzardFrame(TargetFrameToT)
 	elseif unit == "boss" then
 		for index = 1, (MAX_BOSS_FRAMES or 5) do
 			HideBlizzardFrame(_G["Boss" .. index .. "TargetFrame"])
 		end
 	elseif unit == "party" then
-		HideBlizzardFrame(_G.PartyFrame)
+		HideBlizzardFrame(PartyFrame)
 
 		for index = 1, (MAX_PARTY_MEMBERS or 4) do
 			HideBlizzardFrame(_G["PartyMemberFrame" .. index])
@@ -358,7 +359,7 @@ function UF:CreateGroupHeader(name, petHeader, visibility, attributes)
 	local condition
 
 	if visibility == "party" then
-		condition = attributes[attributes.showSoloIndex + 1] and "[group:raid] hide; [group:party] show; [nogroup] show; hide" or "[group:party] show; hide"
+		condition = attributes[attributes.showSoloIndex + 1] and "[group:raid] hide; [group:party] show; [nogroup] show; hide" or "[group:raid] hide; [group:party] show; hide"
 	else
 		condition = attributes[attributes.showSoloIndex + 1] and "[group:raid] show; [nogroup] show; hide" or "[group:raid] show; hide"
 	end

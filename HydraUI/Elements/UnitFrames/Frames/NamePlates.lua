@@ -36,6 +36,18 @@ local UF = HydraUI:GetModule("Unit Frames")
 
 local GetNamePlates = C_NamePlate.GetNamePlates
 
+local function SetAuraDirection(auras, direction)
+	if direction == "LTR" then
+		auras.initialAnchor = "TOPLEFT"
+		auras["growth-x"] = "RIGHT"
+	else
+		auras.initialAnchor = "TOPRIGHT"
+		auras["growth-x"] = "LEFT"
+	end
+
+	auras["growth-y"] = "UP"
+end
+
 HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	-- The Blizzard nameplate parent already supplies its effective world/UI scale. Applying UIParent's scale here as well would multiply that scale on the child.
 	self:SetScale(1)
@@ -158,15 +170,7 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 		Buffs.PostCreateIcon = UF.PostCreateIcon
 		Buffs.PostUpdateIcon = UF.PostUpdateIcon
 
-		if Settings["nameplates-buffs-direction"] == "LTR" then
-			Buffs.initialAnchor = "TOPLEFT"
-			Buffs["growth-x"] = "RIGHT"
-			Buffs["growth-y"] = "UP"
-		else
-			Buffs.initialAnchor = "TOPRIGHT"
-			Buffs["growth-x"] = "LEFT"
-			Buffs["growth-y"] = "UP"
-		end
+		SetAuraDirection(Buffs, Settings["nameplates-buffs-direction"])
 
 		self.Buffs = Buffs
 	end
@@ -184,15 +188,7 @@ HydraUI.StyleFuncs["nameplate"] = function(self, unit)
 	Debuffs.showStealableBuffs = true
 	Debuffs.disableMouse = true
 
-	if Settings["nameplates-debuffs-direction"] == "LTR" then
-		Debuffs.initialAnchor = "TOPLEFT"
-		Debuffs["growth-x"] = "RIGHT"
-		Debuffs["growth-y"] = "UP"
-	else
-		Debuffs.initialAnchor = "TOPRIGHT"
-		Debuffs["growth-x"] = "LEFT"
-		Debuffs["growth-y"] = "UP"
-	end
+	SetAuraDirection(Debuffs, Settings["nameplates-debuffs-direction"])
 
 	if Settings["nameplates-enable-auras"] then
 		Debuffs:SetPoint("BOTTOM", self.Buffs, "TOP", 0, 2)
@@ -433,29 +429,13 @@ UF.NamePlateCallback = function(plate)
 	end
 
 	if plate.Buffs then
-		if Settings["nameplates-buffs-direction"] == "LTR" then
-			plate.Buffs.initialAnchor = "TOPLEFT"
-			plate.Buffs["growth-x"] = "RIGHT"
-			plate.Buffs["growth-y"] = "UP"
-		else
-			plate.Buffs.initialAnchor = "TOPRIGHT"
-			plate.Buffs["growth-x"] = "LEFT"
-			plate.Buffs["growth-y"] = "UP"
-		end
+		SetAuraDirection(plate.Buffs, Settings["nameplates-buffs-direction"])
 	end
 
 	if plate.Debuffs then
 		plate.Debuffs.onlyShowPlayer = Settings["nameplates-only-player-debuffs"]
 
-		if Settings["nameplates-debuffs-direction"] == "LTR" then
-			plate.Debuffs.initialAnchor = "TOPLEFT"
-			plate.Debuffs["growth-x"] = "RIGHT"
-			plate.Debuffs["growth-y"] = "UP"
-		else
-			plate.Debuffs.initialAnchor = "TOPRIGHT"
-			plate.Debuffs["growth-x"] = "LEFT"
-			plate.Debuffs["growth-y"] = "UP"
-		end
+		SetAuraDirection(plate.Debuffs, Settings["nameplates-debuffs-direction"])
 	end
 
 	plate:SetSize(Settings["nameplates-width"], Settings["nameplates-height"])
@@ -647,15 +627,7 @@ local NamePlateSetBuffDirection = function(self, value)
 		return
 	end
 
-	if Settings["nameplates-buffs-direction"] == "LTR" then
-		self.Buffs.initialAnchor = "TOPLEFT"
-		self.Buffs["growth-x"] = "RIGHT"
-		self.Buffs["growth-y"] = "UP"
-	else
-		self.Buffs.initialAnchor = "TOPRIGHT"
-		self.Buffs["growth-x"] = "LEFT"
-		self.Buffs["growth-y"] = "UP"
-	end
+	SetAuraDirection(self.Buffs, Settings["nameplates-buffs-direction"])
 
 	self.Buffs:ForceUpdate()
 end
@@ -669,15 +641,7 @@ local NamePlateSetDebuffDirection = function(self, value)
 		return
 	end
 
-	if Settings["nameplates-debuffs-direction"] == "LTR" then
-		self.Debuffs.initialAnchor = "TOPLEFT"
-		self.Debuffs["growth-x"] = "RIGHT"
-		self.Debuffs["growth-y"] = "UP"
-	else
-		self.Debuffs.initialAnchor = "TOPRIGHT"
-		self.Debuffs["growth-x"] = "LEFT"
-		self.Debuffs["growth-y"] = "UP"
-	end
+	SetAuraDirection(self.Debuffs, Settings["nameplates-debuffs-direction"])
 
 	self.Debuffs:ForceUpdate()
 end

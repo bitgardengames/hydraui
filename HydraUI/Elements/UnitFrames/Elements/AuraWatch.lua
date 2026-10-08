@@ -1,6 +1,7 @@
 local _, ns = ...
 local HydraUI = ns:get()
 local UF = HydraUI:GetModule("Unit Frames")
+local AuraFilters = {"HELPFUL", "HARMFUL"}
 
 local function SetMissing(watch, icon)
 	if icon.onlyShowPresent then
@@ -49,14 +50,15 @@ local function Update(frame, _, unit)
 		return
 	end
 
-	local watch, found = frame.AuraWatch, {}
+	local watch = frame.AuraWatch
 
-	for spellID, icon in pairs(watch.icons) do
+	for _, icon in pairs(watch.icons) do
 		SetMissing(watch, icon)
-		found[spellID] = false
 	end
 
-	for _, filter in ipairs({"HELPFUL", "HARMFUL"}) do
+	for i = 1, #AuraFilters do
+		local filter = AuraFilters[i]
+
 		for index = 1, 40 do
 			local name, _, count, _, duration, expiration, caster, _, _, spellID = UnitAura(frame.unit, index, filter)
 
@@ -68,7 +70,6 @@ local function Update(frame, _, unit)
 
 			if icon and (icon.anyUnit or caster == "player" or caster == "vehicle" or caster == "pet") then
 				SetPresent(watch, icon, count, duration, expiration)
-				found[spellID] = true
 			end
 		end
 	end

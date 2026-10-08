@@ -1,18 +1,19 @@
 local HydraUI, Language, Assets, Settings = select(2, ...):get()
 
 local floor = floor
-local UnitHasMana = UnitHasMana
+local UnitPowerMax = UnitPowerMax
 local GetManaRegen = GetManaRegen
 local InCombatLockdown = InCombatLockdown
 local NOT_APPLICABLE = NOT_APPLICABLE
 local Label = MANA_REGEN
+local ManaID = Enum.PowerType.Mana
 
 local OnEnter = function(self)
 	if not self:SetTooltip() then
 		return
 	end
 
-	if not UnitHasMana("player") then
+	if UnitPowerMax("player", ManaID) == 0 then
 		return
 	end
 
@@ -43,7 +44,7 @@ local Update = function(self, event, unit)
 
 	local Result
 
-	if UnitHasMana("player") then
+	if UnitPowerMax("player", ManaID) > 0 then
 		local Base, Combat = GetManaRegen()
 
 		if InCombatLockdown() then

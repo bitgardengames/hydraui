@@ -13,10 +13,54 @@ local WheelDown = KEY_MOUSEWHEELDOWN
 local MouseButton = KEY_BUTTON4:gsub("%s%S$", "")
 local MiddleButton = KEY_BUTTON3
 
+local function StopRotation(animation)
+	animation:Stop()
+end
+
+local function SuppressRotation(animation)
+	if not animation then
+		return
+	end
+
+	-- These groups only rotate decorative textures. Keep Blizzard's methods,
+	-- frame visibility and action state intact, including their combat updates.
+	hooksecurefunc(animation, "Play", StopRotation)
+	animation:Stop()
+end
+
+local function SuppressButtonRotations(button)
+	if not HydraUI.IsMainline then
+		return
+	end
+
+	if button.TargetReticleAnimFrame then
+		SuppressRotation(button.TargetReticleAnimFrame.HighlightAnim)
+	end
+
+	-- The assisted combat frame is created lazily when its action is placed on
+	-- the button. Leave it running: its OnUpdate refreshes the action's icon.
+	local StyledFrame
+	local function UpdateAssistedCombatRotation()
+		local Frame = button.AssistedCombatRotationFrame
+		if Frame and Frame ~= StyledFrame and Frame.ActiveFrame then
+			SuppressRotation(Frame.ActiveFrame.GlowAnim)
+			StyledFrame = Frame
+		end
+	end
+
+	if button.UpdateAssistedCombatRotationFrame then
+		hooksecurefunc(button, "UpdateAssistedCombatRotationFrame", UpdateAssistedCombatRotation)
+	end
+
+	UpdateAssistedCombatRotation()
+end
+
 function AB:StyleActionButton(button)
 	if button.Styled then
 		return
 	end
+
+	SuppressButtonRotations(button)
 
 	if button.IconMask then
 		button.IconMask:Hide()

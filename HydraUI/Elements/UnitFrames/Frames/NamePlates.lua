@@ -24,8 +24,6 @@ Defaults["nameplates-enable-castbar"] = true
 Defaults["nameplates-cast-classcolor"] = true
 Defaults["nameplates-castbar-height"] = 12
 Defaults["nameplates-castbar-enable-icon"] = true
-Defaults["nameplates-selected-alpha"] = 100
-Defaults["nameplates-unselected-alpha"] = 40
 Defaults["nameplates-enable-auras"] = true
 Defaults["nameplates-buffs-direction"] = "LTR"
 Defaults["nameplates-debuffs-direction"] = "RTL"
@@ -329,58 +327,20 @@ function UF:CreateNamePlateDriver()
 		end
 	end
 
-	local function GetBlizzardHealthBar(blizzard)
-		return (blizzard.HealthBarsContainer and blizzard.HealthBarsContainer.healthBar) or blizzard.healthBar or blizzard.healthbar
-	end
-
-	local function SyncBlizzardVisibility(blizzard)
-		local base = blizzard:GetParent()
-		local plate = base and not base:IsForbidden() and base._unitFrame
-		-- Blizzard may pool its unit frames independently of the world-space base.
-		-- Ignore callbacks from a frame that no longer owns this plate's unit.
-		if not plate or not plate.unit or plate._blizzardFrame ~= blizzard then
+	local function SuppressBlizzardArtwork(frame, blizzard, plate)
+		-- Suppress only native artwork, never a frame's shown state or alpha.
+		-- Preserve native names and widgets, including friendly name-only display.
+		if frame == plate or frame == blizzard.WidgetContainer or frame:IsForbidden() then
 			return
 		end
-
-		-- The outer frame can stay shown for widgets or a unit name even when
-		-- Blizzard has hidden the actual nameplate health bar.
-		local health = GetBlizzardHealthBar(blizzard)
-		if blizzard:IsShown() and (not health or health:IsShown()) then
-			blizzard:SetAlpha(0)
-			plate:Show()
-			plate:Refresh("NamePlateVisibility")
-		else
-			plate:Hide()
-			-- Blizzard still owns name-only and widgets-only display. Hiding the
-			-- custom health plate must not make those native contents disappear.
-			blizzard:SetAlpha(1)
-		end
-	end
-
-	local function BindBlizzardVisibility(base, plate)
-		local blizzard = base.UnitFrame or base.unitFrame
-		plate._blizzardFrame = blizzard
-		if not blizzard or blizzard == plate or blizzard:IsForbidden() then
-			return
-		end
-
-		-- Keep Blizzard's events and shown state intact. Its artwork is suppressed
-		-- only while HydraUI supplies the visible health plate.
-		if not blizzard._hydraUIVisibilityHooked then
-			blizzard:HookScript("OnShow", SyncBlizzardVisibility)
-			blizzard:HookScript("OnHide", SyncBlizzardVisibility)
-			blizzard._hydraUIVisibilityHooked = true
-		end
-		local health = GetBlizzardHealthBar(blizzard)
-		if health and not health._hydraUIVisibilityHooked then
-			local function HealthVisibilityChanged()
-				SyncBlizzardVisibility(blizzard)
+		for _, region in ipairs({frame:GetRegions()}) do
+			if region ~= blizzard.name then
+				region:SetAlpha(0)
 			end
-			health:HookScript("OnShow", HealthVisibilityChanged)
-			health:HookScript("OnHide", HealthVisibilityChanged)
-			health._hydraUIVisibilityHooked = true
 		end
-		SyncBlizzardVisibility(blizzard)
+		for _, child in ipairs({frame:GetChildren()}) do
+			SuppressBlizzardArtwork(child, blizzard, plate)
+		end
 	end
 
 	local function Added(unit)
@@ -392,16 +352,23 @@ function UF:CreateNamePlateDriver()
 		if not blizzard or blizzard:IsForbidden() then
 			return
 		end
+		local parent = (blizzard.HealthBarsContainer and blizzard.HealthBarsContainer.healthBar) or blizzard.healthBar or blizzard.healthbar or blizzard
+		if parent:IsForbidden() then
+			return
+		end
 		local plate = base._unitFrame
 		if not plate then
-			-- Keep the Blizzard nameplate as the parent. Reparenting this frame to HydraUIParent would detach it from the world-space plate.
-			plate = HydraUI.UnitFrames:CreateNamePlateButton(base, unit, HydraUI.StyleFuncs.nameplate)
+			-- Inherit visibility from the rendered native bar, not its world-space
+			-- base, which can remain alive while the bar is hidden.
+			plate = HydraUI.UnitFrames:CreateNamePlateButton(parent, unit, HydraUI.StyleFuncs.nameplate)
 			base._unitFrame = plate
+		else
+			plate:SetParent(parent)
 		end
+		SuppressBlizzardArtwork(blizzard, blizzard, plate)
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)
 		self.NamePlatesByUnit[unit] = plate
 		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_ADDED", unit)
-		BindBlizzardVisibility(base, plate)
 		plate:Refresh("NAME_PLATE_UNIT_ADDED")
 	end
 
@@ -412,7 +379,6 @@ function UF:CreateNamePlateDriver()
 		end
 		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_REMOVED", unit)
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, nil)
-		plate._blizzardFrame = nil
 		self.NamePlatesByUnit[unit] = nil
 	end
 
@@ -671,15 +637,6 @@ local UpdateNamePlatesTargetIndicatorSize = function(value)
 	RunForAllNamePlates(NamePlateSetTargetIndicatorSize, value)
 end
 
-local UpdateNamePlateSelectedAlpha = function(value)
-	C_CVar.SetCVar("nameplateSelectedAlpha", value / 100)
-end
-
-local UpdateNamePlateUnselectedAlpha = function(value)
-	C_CVar.SetCVar("nameplateMinAlpha", value / 100)
-	C_CVar.SetCVar("nameplateMaxAlpha", value / 100)
-end
-
 local NamePlateSetBuffDirection = function(self, value)
 	if not self.Buffs then
 		return
@@ -790,7 +747,4 @@ HydraUI:GetModule("GUI"):AddWidgets(Language["General"], Language["Name Plates"]
 	right:CreateSwitch("nameplates-enable-target-indicator", Settings["nameplates-enable-target-indicator"], Language["Enable Target Indicator"], Language["Display an indication on the targeted unit nameplate"], UpdateNamePlatesTargetHighlight)
 	right:CreateDropdown("nameplates-target-indicator-size", Settings["nameplates-target-indicator-size"], {[Language["Small"]] = "SMALL", [Language["Large"]] = "LARGE", [Language["Huge"]] = "HUGE"}, Language["Indicator Size"], Language["Select the size of the target indicator"], UpdateNamePlatesTargetIndicatorSize)
 
-	right:CreateHeader(Language["Opacity"])
-	right:CreateSlider("nameplates-selected-alpha", Settings["nameplates-selected-alpha"], 1, 100, 5, Language["Selected Opacity"], Language["Set the opacity of the selected name plate"], UpdateNamePlateSelectedAlpha)
-	right:CreateSlider("nameplates-unselected-alpha", Settings["nameplates-unselected-alpha"], 0, 100, 5, Language["Unselected Opacity"], Language["Set the opacity of unselected name plates"], UpdateNamePlateUnselectedAlpha)
 end)

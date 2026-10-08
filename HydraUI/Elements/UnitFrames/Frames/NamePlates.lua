@@ -329,6 +329,10 @@ function UF:CreateNamePlateDriver()
 		end
 	end
 
+	local function GetBlizzardHealthBar(blizzard)
+		return (blizzard.HealthBarsContainer and blizzard.HealthBarsContainer.healthBar) or blizzard.healthBar or blizzard.healthbar
+	end
+
 	local function SyncBlizzardVisibility(blizzard)
 		local base = blizzard:GetParent()
 		local plate = base and not base:IsForbidden() and base._unitFrame
@@ -338,7 +342,10 @@ function UF:CreateNamePlateDriver()
 			return
 		end
 
-		if blizzard:IsShown() then
+		-- The outer frame can stay shown for widgets or a unit name even when
+		-- Blizzard has hidden the actual nameplate health bar.
+		local health = GetBlizzardHealthBar(blizzard)
+		if blizzard:IsShown() and (not health or health:IsShown()) then
 			plate:Show()
 			plate:Refresh("NamePlateVisibility")
 		else
@@ -360,6 +367,15 @@ function UF:CreateNamePlateDriver()
 			blizzard:HookScript("OnShow", SyncBlizzardVisibility)
 			blizzard:HookScript("OnHide", SyncBlizzardVisibility)
 			blizzard._hydraUIVisibilityHooked = true
+		end
+		local health = GetBlizzardHealthBar(blizzard)
+		if health and not health._hydraUIVisibilityHooked then
+			local function HealthVisibilityChanged()
+				SyncBlizzardVisibility(blizzard)
+			end
+			health:HookScript("OnShow", HealthVisibilityChanged)
+			health:HookScript("OnHide", HealthVisibilityChanged)
+			health._hydraUIVisibilityHooked = true
 		end
 		SyncBlizzardVisibility(blizzard)
 	end

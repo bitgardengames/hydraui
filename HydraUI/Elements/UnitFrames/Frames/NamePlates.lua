@@ -346,10 +346,14 @@ function UF:CreateNamePlateDriver()
 		-- Blizzard has hidden the actual nameplate health bar.
 		local health = GetBlizzardHealthBar(blizzard)
 		if blizzard:IsShown() and (not health or health:IsShown()) then
+			blizzard:SetAlpha(0)
 			plate:Show()
 			plate:Refresh("NamePlateVisibility")
 		else
 			plate:Hide()
+			-- Blizzard still owns name-only and widgets-only display. Hiding the
+			-- custom health plate must not make those native contents disappear.
+			blizzard:SetAlpha(1)
 		end
 	end
 
@@ -360,9 +364,8 @@ function UF:CreateNamePlateDriver()
 			return
 		end
 
-		-- Keep Blizzard's events and shown state intact. Only suppress its artwork;
-		-- the HydraUI frame remains a sibling so it does not inherit this alpha.
-		blizzard:SetAlpha(0)
+		-- Keep Blizzard's events and shown state intact. Its artwork is suppressed
+		-- only while HydraUI supplies the visible health plate.
 		if not blizzard._hydraUIVisibilityHooked then
 			blizzard:HookScript("OnShow", SyncBlizzardVisibility)
 			blizzard:HookScript("OnHide", SyncBlizzardVisibility)

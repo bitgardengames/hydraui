@@ -27,6 +27,9 @@ local function Frame(parent)
     function frame:Hide() self:SetShown(false) end
     function frame:IsShown() return self.shown end
     function frame:IsVisible() return self.shown and (not self.parent or self.parent:IsVisible()) end
+    function frame:GetEffectiveAlpha()
+        return self.alpha * (self.parent and self.parent:GetEffectiveAlpha() or 1)
+    end
     function frame:IsForbidden() return self.forbidden or false end
     function frame:GetParent() return self.parent end
     function frame:SetAlpha(alpha) self.alpha = alpha end
@@ -84,6 +87,8 @@ for _, mainline in ipairs({true, false}) do
             bases[unit] = base
             local blizzard = Frame(base)
             local health = Frame(blizzard)
+            blizzard.name = Frame(blizzard)
+            blizzard.WidgetContainer = Frame(blizzard)
             if mainline then
                 blizzard.HealthBarsContainer = {healthBar = health}
             else
@@ -95,10 +100,11 @@ for _, mainline in ipairs({true, false}) do
             Added(unit)
             local plate = base._unitFrame
             assert(not plate.shown and not blizzard.shown)
-            assert(blizzard.alpha == 0 and plate.alpha == 1)
+            assert(plate.alpha == 1)
             assert(plate:GetParent() == base and blizzard.events.CVAR_UPDATE)
             blizzard:Show()
-            assert(plate.shown)
+            assert(plate.shown and blizzard.alpha == 0)
+            assert(blizzard.name:GetEffectiveAlpha() == 0)
             local refreshes = plate.refreshes
             blizzard:Hide()
             assert(not plate.shown)
@@ -112,6 +118,21 @@ for _, mainline in ipairs({true, false}) do
                 health:SetShown(true)
                 assert(blizzard.shown and plate.shown, toggle)
             end
+            -- Friendly players may retain a name with no health bar. That
+            -- native name must be visible instead of both renderers disappearing.
+            health:Hide()
+            assert(not plate.shown and blizzard.name:IsVisible())
+            assert(blizzard.name:GetEffectiveAlpha() == 1)
+            -- Turning the friendly display off can change only the native name
+            -- while the bar remains hidden. Let Blizzard render that decision.
+            blizzard.name:Hide()
+            assert(not plate.shown and not blizzard.name:IsVisible())
+            assert(blizzard.WidgetContainer:GetEffectiveAlpha() == 1)
+            blizzard.name:Show()
+            assert(not plate.shown and blizzard.name:GetEffectiveAlpha() == 1)
+            -- Returning to full plates suppresses native artwork without duplicates.
+            health:Show()
+            assert(plate.shown and blizzard.name:GetEffectiveAlpha() == 0)
             health:Hide()
             blizzard:Hide()
             blizzard:Show()
@@ -121,6 +142,7 @@ for _, mainline in ipairs({true, false}) do
             Event('NAME_PLATE_UNIT_REMOVED', unit)
             Added(unit)
             assert(not plate.shown) -- Initial native bar state matters too.
+            assert(blizzard.name:GetEffectiveAlpha() == 1)
             health:Show()
             assert(plate.shown)
             base:Hide()

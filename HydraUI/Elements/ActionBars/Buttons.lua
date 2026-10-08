@@ -33,6 +33,16 @@ local function SuppressButtonRotations(button)
 		return
 	end
 
+	-- Cooldown edges rotate independently of animation groups, including on
+	-- the global cooldown. Keep the swipe and countdown, but remove the edges
+	-- from normal, charge-recovery and loss-of-control cooldowns.
+	for _, key in ipairs({ "cooldown", "chargeCooldown", "lossOfControlCooldown" }) do
+		local Cooldown = button[key]
+		if Cooldown then
+			Cooldown:SetDrawEdge(false)
+		end
+	end
+
 	if button.TargetReticleAnimFrame then
 		SuppressRotation(button.TargetReticleAnimFrame.HighlightAnim)
 	end
@@ -226,7 +236,7 @@ function AB:StyleActionButton(button)
 		button.cooldown:SetPoint("TOPLEFT", button, 1, -1)
 		button.cooldown:SetPoint("BOTTOMRIGHT", button, -1, 1)
 
-		button.cooldown:SetDrawEdge(true)
+		button.cooldown:SetDrawEdge(not HydraUI.IsMainline)
 		button.cooldown:SetEdgeTexture(Assets:GetTexture("Blank"))
 		button.cooldown:SetSwipeColor(0, 0, 0, 1)
 

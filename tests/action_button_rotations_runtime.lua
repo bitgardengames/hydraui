@@ -25,6 +25,11 @@ local reticle = animation()
 local glow = animation()
 local frame = {ActiveFrame = {GlowAnim = glow}, shown = true, updates = 0}
 local button = {TargetReticleAnimFrame = {HighlightAnim = reticle}}
+local function cooldown()
+	return {edge = true, swipe = true, countdown = true, duration = 1.5,
+		SetDrawEdge = function(self, value) self.edge = value end}
+end
+button.cooldown, button.chargeCooldown, button.lossOfControlCooldown = cooldown(), cooldown(), cooldown()
 function button:UpdateAssistedCombatRotationFrame()
 	self.AssistedCombatRotationFrame = frame
 	frame.updates = frame.updates + 1
@@ -32,6 +37,11 @@ function button:UpdateAssistedCombatRotationFrame()
 end
 local originalUpdate, originalPlay = button.UpdateAssistedCombatRotationFrame, reticle.Play
 suppress(button)
+for _, key in ipairs({"cooldown", "chargeCooldown", "lossOfControlCooldown"}) do
+	local cd = button[key]
+	assert(not cd.edge, key .. " still has a rotating edge")
+	assert(cd.swipe and cd.countdown and cd.duration == 1.5, "cooldown state changed")
+end
 assert(not reticle.playing)
 call(reticle, "Play")
 assert(not reticle.playing, "targeting restarted the rotation")
@@ -49,6 +59,8 @@ assert(not existing.playing, "already-created frame was missed")
 suppress({}) -- Older templates need neither field nor method.
 HydraUI.IsMainline = false
 local classic = animation()
-suppress({TargetReticleAnimFrame = {HighlightAnim = classic}})
+local classicCooldown = cooldown()
+suppress({TargetReticleAnimFrame = {HighlightAnim = classic}, cooldown = classicCooldown})
+assert(classicCooldown.edge, "classic cooldown edge was modified")
 assert(classic.playing and not hooks[classic], "classic was modified")
 print("Action button rotation checks passed")

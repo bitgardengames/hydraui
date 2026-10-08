@@ -25,10 +25,8 @@ local UnitIsGhost = UnitIsGhost
 local UnitIsDead = UnitIsDead
 local UnitClass = UnitClass
 local UnitLevel = UnitLevel
-local UnitEffectiveLevel = UnitEffectiveLevel
 local UnitClassification = UnitClassification
 local UnitReaction = UnitReaction
-local UnitIsEnemy = UnitIsEnemy
 local UnitIsAFK = UnitIsAFK
 local IsResting = IsResting
 local GetPetHappiness = GetPetHappiness
@@ -181,13 +179,7 @@ Methods["ShortClassification"] = function(unit)
 end
 
 Events["Plus"] = "UNIT_LEVEL PLAYER_LEVEL_UP UNIT_CLASSIFICATION_CHANGED"
-Methods["Plus"] = function(unit)
-	local Class = UnitClassification(unit)
-
-	if ShortClasses[Class] then
-		return ShortClasses[Class]
-	end
-end
+Methods["Plus"] = Methods["ShortClassification"]
 
 Events["Health"] = HealthEvent .. "UNIT_MAXHEALTH"
 Methods["Health"] = UnitHealth
@@ -311,18 +303,9 @@ if HydraUI.IsMainline then
 		return HydraUI:Comma(UnitHealth(unit))
 	end
 
-	Methods["Health:Short"] = function(unit)
-		return HydraUI:ShortValue(UnitHealth(unit))
-	end
-
 	Methods["HealthValues"] = function(unit)
 		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
 		return HydraUI:Comma(Current) .. " / " .. HydraUI:Comma(Max)
-	end
-
-	Methods["HealthValues:Short"] = function(unit)
-		local Current, Max = UnitHealth(unit), UnitHealthMax(unit)
-		return HydraUI:ShortValue(Current) .. " / " .. HydraUI:ShortValue(Max)
 	end
 
 	Methods["HealthDeficit"] = function(unit)
@@ -449,7 +432,7 @@ end
 
 Events["PowerColor"] = "UNIT_POWER_FREQUENT UNIT_MAXPOWER UNIT_POWER_UPDATE UNIT_DISPLAYPOWER"
 Methods["PowerColor"] = function(unit)
-	local PowerType, PowerToken = UnitPowerType(unit)
+	local _, PowerToken = UnitPowerType(unit)
 
 	if HydraUI.PowerColors[PowerToken] then
 		return format("|cFF%s", HydraUI.PowerColors[PowerToken].Hex)

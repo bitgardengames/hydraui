@@ -15,10 +15,10 @@ HydraUI.UnitFrames = UnitFrames
 local elementHandlers, elementNames = {}, {}
 local colors = HydraUI:GetUnitFrameColors()
 
-local secondaryUnits = {
-	UNIT_ENTERED_VEHICLE = {pet = "player"},
-	UNIT_EXITED_VEHICLE = {pet = "player"},
-	UNIT_PET = {pet = "player"},
+local petOwnerEvents = {
+	UNIT_ENTERED_VEHICLE = true,
+	UNIT_EXITED_VEHICLE = true,
+	UNIT_PET = true,
 }
 
 local eventlessUnits = {boss6 = true, boss7 = true, boss8 = true}
@@ -65,10 +65,8 @@ end
 -- Pet events also report changes on their owner. Keep this registration rule
 -- in one place for both initial subscriptions and secure unit changes.
 local function BindUnitEvent(self, event)
-	local otherUnit = secondaryUnits[event] and secondaryUnits[event][self.unit]
-
-	if otherUnit then
-		self._registerUnitEvent(self, event, self.unit, otherUnit)
+	if self.unit == "pet" and petOwnerEvents[event] then
+		self._registerUnitEvent(self, event, self.unit, "player")
 	else
 		self._registerUnitEvent(self, event, self.unit)
 	end

@@ -3,150 +3,20 @@ local HydraUI, _, Assets, Settings = ns:get()
 
 local UF = HydraUI:GetModule("Unit Frames")
 
-function UF:SetFrameWidth(unit, value)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
-	frame:SetWidth(value)
-end
-
-function UF:SetHealthHeight(unit, value, powerHeight)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
+-- Helpers accept resolved values so public setters and settings callbacks share
+-- the same dimensions and aura positioning without allocating option tables.
+local function SetHealthHeight(frame, value, powerHeight)
 	frame.Health:SetHeight(value)
 	frame:SetHeight(value + powerHeight + 3)
 end
 
-function UF:SetPowerHeight(unit, value, healthHeight)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
+local function SetPowerHeight(frame, value, healthHeight)
 	frame.Power:SetHeight(value)
 	frame:SetHeight(healthHeight + value + 3)
 end
 
-function UF:ApplyHealthAttributes(unit, value)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
-	self:SetHealthAttributes(frame.Health, value)
-	frame.Health:ForceUpdate()
-end
-
-function UF:ApplyPowerAttributes(unit, value)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
-	self:SetPowerAttributes(frame.Power, value)
-	frame.Power:ForceUpdate()
-end
-
-function UF:SetHealthReverseFill(unit, value)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
-	local health = frame.Health
-	local healBar = frame.HealBar
-	local absorbsBar = frame.AbsorbsBar
-	local point = value and "RIGHT" or "LEFT"
-	local relativePoint = value and "LEFT" or "RIGHT"
-
-	health:SetReverseFill(value)
-
-	if healBar then
-		healBar:SetReverseFill(value)
-		healBar:ClearAllPoints()
-		healBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
-	end
-
-	if absorbsBar then
-		absorbsBar:SetReverseFill(value)
-		absorbsBar:ClearAllPoints()
-		absorbsBar:SetPoint(point, health:GetStatusBarTexture(), relativePoint, 0, 0)
-	end
-end
-
-function UF:SetPowerReverseFill(unit, value)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
-	frame.Power:SetReverseFill(value)
-end
-
-function UF:SetElementEnabled(unit, value, element)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame or not frame[element] then
-		return
-	end
-
-	if value then
-		frame:EnableElement(element)
-	else
-		frame:DisableElement(element)
-	end
-end
-
-function UF:SetHealthTexture(unit, value)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
-	local texture = Assets:GetTexture(value)
-
-	frame.Health:SetStatusBarTexture(texture)
-	frame.Health.bg:SetTexture(texture)
-
-	if frame.HealBar then
-		frame.HealBar:SetStatusBarTexture(texture)
-	end
-
-	if frame.AbsorbsBar then
-		frame.AbsorbsBar:SetStatusBarTexture(texture)
-	end
-end
-
-function UF:SetPowerTexture(unit, value)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame then
-		return
-	end
-
-	local texture = Assets:GetTexture(value)
-
-	frame.Power:SetStatusBarTexture(texture)
-	frame.Power.bg:SetTexture(texture)
-end
-
-function UF:SetAuraSize(unit, value, element, width)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame or not frame[element] then
+local function SetAuraSize(frame, value, element, width)
+	if not frame[element] then
 		return
 	end
 
@@ -157,10 +27,8 @@ function UF:SetAuraSize(unit, value, element, width)
 	auras:ForceUpdate()
 end
 
-function UF:SetAuraPosition(unit, value, element, growthX, companion, companionPosition)
-	local frame = HydraUI.UnitFrames[unit]
-
-	if not frame or not frame[element] then
+local function SetAuraPosition(frame, value, element, growthX, companion, companionPosition)
+	if not frame[element] then
 		return
 	end
 
@@ -202,13 +70,11 @@ function UnitOperations.Width(UF, frame, value, options)
 end
 
 function UnitOperations.HealthHeight(UF, frame, value, options)
-	frame.Health:SetHeight(value)
-	frame:SetHeight(value + Settings[options.powerHeight] + 3)
+	SetHealthHeight(frame, value, Settings[options.powerHeight])
 end
 
 function UnitOperations.PowerHeight(UF, frame, value, options)
-	frame.Power:SetHeight(value)
-	frame:SetHeight(Settings[options.healthHeight] + value + 3)
+	SetPowerHeight(frame, value, Settings[options.healthHeight])
 end
 
 function UnitOperations.HealthColor(UF, frame, value)
@@ -269,15 +135,7 @@ function UnitOperations.PowerTexture(UF, frame, value)
 end
 
 function UnitOperations.AuraSize(UF, frame, value, options)
-	local auras = frame[options.element]
-
-	if not auras then
-		return
-	end
-
-	auras.size = value
-	auras:SetSize(Settings[options.width], value)
-	auras:ForceUpdate()
+	SetAuraSize(frame, value, options.element, Settings[options.width])
 end
 
 function UnitOperations.AuraSpacing(UF, frame, value, options)
@@ -308,32 +166,113 @@ function UnitOperations.ElementEnabled(UF, frame, value, options)
 end
 
 function UnitOperations.AuraPosition(UF, frame, value, options)
-	local auras = frame[options.element]
-
-	if not auras then
-		return
-	end
-
-	local relativeTo = frame
-
-	if options.companion and Settings[options.companionPosition] == value and frame[options.companion] then
-		relativeTo = frame[options.companion]
-	end
-
-	auras:ClearAllPoints()
-
-	if value == "TOP" then
-		auras:SetPoint("BOTTOM", relativeTo, "TOP", 0, 2)
-		auras["growth-y"] = "UP"
-	else
-		auras:SetPoint("TOP", relativeTo, "BOTTOM", 0, -2)
-		auras["growth-y"] = "DOWN"
-	end
-
-	auras["growth-x"] = options.growthX
+	SetAuraPosition(frame, value, options.element, options.growthX, options.companion, options.companion and Settings[options.companionPosition])
 end
 
 UF.UnitOperations = UnitOperations
+
+-- Keep public unit-key setters for integrations and frame-specific callbacks.
+function UF:SetFrameWidth(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		UnitOperations.Width(self, frame, value)
+	end
+end
+
+function UF:SetHealthHeight(unit, value, powerHeight)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		SetHealthHeight(frame, value, powerHeight)
+	end
+end
+
+function UF:SetPowerHeight(unit, value, healthHeight)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		SetPowerHeight(frame, value, healthHeight)
+	end
+end
+
+function UF:ApplyHealthAttributes(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		UnitOperations.HealthColor(self, frame, value)
+	end
+end
+
+function UF:ApplyPowerAttributes(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		UnitOperations.PowerColor(self, frame, value)
+	end
+end
+
+function UF:SetHealthReverseFill(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		UnitOperations.HealthReverse(self, frame, value)
+	end
+end
+
+function UF:SetPowerReverseFill(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		UnitOperations.PowerReverse(self, frame, value)
+	end
+end
+
+function UF:SetElementEnabled(unit, value, element)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if not frame or not frame[element] then
+		return
+	end
+
+	if value then
+		frame:EnableElement(element)
+	else
+		frame:DisableElement(element)
+	end
+end
+
+function UF:SetHealthTexture(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		UnitOperations.HealthTexture(self, frame, value)
+	end
+end
+
+function UF:SetPowerTexture(unit, value)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		UnitOperations.PowerTexture(self, frame, value)
+	end
+end
+
+function UF:SetAuraSize(unit, value, element, width)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		SetAuraSize(frame, value, element, width)
+	end
+end
+
+function UF:SetAuraPosition(unit, value, element, growthX, companion, companionPosition)
+	local frame = HydraUI.UnitFrames[unit]
+
+	if frame then
+		SetAuraPosition(frame, value, element, growthX, companion, companionPosition)
+	end
+end
 
 function UF:CreateUnitUpdater(unit, operation, options)
 	local update = assert(UnitOperations[operation], "unknown unit-frame update operation: " .. tostring(operation))

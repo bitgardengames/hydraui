@@ -182,6 +182,9 @@ for _, client in ipairs({'IsVanilla', 'IsTBC'}) do
 	settings['bags-frame-visibility'] = 'SHOW'
 	assert(loadfile('HydraUI/Elements/ActionBars/BagSlots.lua'))('HydraUI', {get = function() return ui, language, {}, settings, {} end})
 	module:Load()
+	for i = 2, #module.Objects do
+		assert(rawget(module.Objects[i].normal, 'texture') == nil)
+	end
 	local function checkKeyRing(size)
 		assert(KeyRingButton.width == size / 2 and KeyRingButton.height == size)
 		assert(KeyRingButton.normal.texture == 'normal artwork')

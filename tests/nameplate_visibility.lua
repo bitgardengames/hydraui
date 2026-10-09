@@ -7,6 +7,8 @@ local function Read(path)
 end
 local root = 'HydraUI/Elements/UnitFrames/'
 local driverSource = assert(Read(root .. 'Frames/NamePlates.lua'):match('(function UF:CreateNamePlateDriver%(%).-)\nUF.NamePlateCallback ='))
+local styleSource = assert(Read(root .. 'Frames/NamePlates.lua'):match('HydraUI.StyleFuncs%["nameplate"%] = function%(self, unit%)\n(.-)\n\t%-%- The Blizzard nameplate parent'))
+local style = assert((loadstring or load)('return function(UF, C_NamePlate, self, unit)\n' .. styleSource .. '\nend'))()
 local bindingSource = assert(Read(root .. 'Core.lua'):match('(function UnitFrames:SetNamePlateUnit[%s%S]*)'))
 local compile, unpackValues = loadstring or load, unpack or table.unpack
 local install = assert(compile('return function(UF, HydraUI)\nlocal UnitFrames = HydraUI.UnitFrames\n' .. bindingSource .. '\n' .. driverSource .. '\nend'))()
@@ -31,15 +33,18 @@ local function Frame(parent)
     function frame:_registerUnitEvent(event, unit) self.events[event] = unit end
     function frame:UnregisterAllEvents() error('Do not disable native events') end
     function frame:SetScript(_, handler) self.event = handler end
-    function frame:HookScript() error('Do not mirror native visibility with hooks') end
+    function frame:HookScript(event, handler)
+        assert(event == 'OnShow')
+        self.onShow = handler
+    end
     function frame:SetShown(shown) self.shown = shown end
-    function frame:Show() self.showCalls = self.showCalls + 1; self.shown = true end
+    function frame:Show() self.showCalls = self.showCalls + 1; self.shown = true; if self.onShow then self.onShow(self) end end
     function frame:Hide() self.hideCalls = self.hideCalls + 1; self.shown = false end
     function frame:IsShown() return self.shown end
     function frame:IsVisible() return self.shown and (not self.parent or self.parent:IsVisible()) end
     function frame:IsForbidden() return self.forbidden or false end
     function frame:SetAlpha(alpha) self.alpha = alpha end
-    function frame:GetEffectiveAlpha() return self.alpha * (self.parent and self.parent:GetEffectiveAlpha() or 1) end
+    function frame:GetEffectiveAlpha() return self.alpha * (not self.ignoreParentAlpha and self.parent and self.parent:GetEffectiveAlpha() or 1) end
     function frame:Refresh() self.refreshes = (self.refreshes or 0) + 1 end
     frame:SetParent(parent)
     return frame
@@ -94,6 +99,10 @@ for _, layout in ipairs({'modern', 'legacy', 'lowercase', 'outer'}) do
             blizzard.name = Region()
             blizzard.regions = {Region(), blizzard.name}
             health.regions[#health.regions + 1] = Region()
+            blizzard.BuffFrame = Frame(blizzard)
+            blizzard.BuffFrame.regions = {Region()}
+            blizzard.DebuffFrame = Frame(blizzard)
+            blizzard.DebuffFrame.regions = {Region()}
             blizzard.WidgetContainer = Frame(blizzard)
             blizzard.WidgetContainer.regions = {Region()}
             blizzard.events.CVAR_UPDATE = true
@@ -104,8 +113,27 @@ for _, layout in ipairs({'modern', 'legacy', 'lowercase', 'outer'}) do
             assert(plate:GetParent() == health)
             assert(plate:IsShown() and not plate:IsVisible())
             assert(blizzard.alpha == 1 and health.alpha == 1)
-            assert(blizzard.name.alpha == 1 and blizzard.WidgetContainer.regions[1].alpha == 1)
+            assert(blizzard.name.alpha == 0 and blizzard.WidgetContainer.regions[1].alpha == 1)
             assert(health.regions[#health.regions].alpha == 0)
+            assert(not blizzard.BuffFrame:IsShown() and not blizzard.DebuffFrame:IsShown())
+            -- Native updates cannot restore names or newly acquired aura artwork.
+            blizzard.name:SetAlpha(1)
+            blizzard.BuffFrame:SetAlpha(1)
+            local aura = Frame(blizzard.BuffFrame)
+            aura.regions = {Region()}
+            aura.ignoreParentAlpha = true
+            blizzard.BuffFrame:Show()
+            blizzard.DebuffFrame:Show()
+            assert(blizzard.name.alpha == 0 and not aura:IsVisible())
+            assert(not blizzard.DebuffFrame:IsShown())
+            assert(blizzard.WidgetContainer:IsShown())
+            -- Re-styling also hides newly introduced native artwork branches.
+            local lateDebuffs = Frame(blizzard)
+            lateDebuffs.regions = {Region()}
+            style(UF, C_NamePlate, plate, unit)
+            assert(not lateDebuffs:IsShown())
+            lateDebuffs:Show()
+            assert(not lateDebuffs:IsShown())
             assert(blizzard.events.CVAR_UPDATE)
             health:Show()
             assert(plate:IsVisible())
@@ -126,7 +154,7 @@ for _, layout in ipairs({'modern', 'legacy', 'lowercase', 'outer'}) do
             assert(not plate.unit and plate:GetParent() == hider and not plate:IsVisible())
             Added(unit)
             assert(not plate:IsVisible() and plate:IsShown())
-            assert(blizzard.name.alpha == 1)
+            assert(blizzard.name.alpha == 0)
             health:Show()
             assert(plate:IsVisible())
             assert(plate.showCalls == 0 and plate.hideCalls == 0)

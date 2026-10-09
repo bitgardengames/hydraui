@@ -2819,7 +2819,7 @@ function HealComm:UNIT_SPELLCAST_SENT(unit, targetName, castGUID, spellID)
 			-- If the player is ungrouped and healing, you can't take advantage of the name -> "unit" map, look in the UnitIDs that would most likely contain the information that's needed.
 			local guid = UnitGUID(targetName)
 			if( not guid ) then
-				guid = UnitName("target") == castTarget and UnitGUID("target") or UnitName("focus") == castTarget and UnitGUID("focus") or UnitName("mouseover") == castTarget and UnitGUID("mouseover") or UnitName("targettarget") == castTarget and UnitGUID("target") or UnitName("focustarget") == castTarget and UnitGUID("focustarget")
+				guid = UnitName("target") == castTarget and UnitGUID("target") or UnitName("focus") == castTarget and UnitGUID("focus") or UnitName("mouseover") == castTarget and UnitGUID("mouseover") or UnitName("targettarget") == castTarget and UnitGUID("targettarget") or UnitName("focustarget") == castTarget and UnitGUID("focustarget")
 			end
 
 			guidPriorities[lastSentID] = nil
@@ -2845,6 +2845,16 @@ function HealComm:UNIT_SPELLCAST_START(unit, cast, spellID)
 
 	local castGUID = castGUIDs[spellID]
 	local castUnit = guidToUnit[castGUID]
+	-- Ungrouped recipients are not in the roster map. Resolve the recorded
+	-- recipient by GUID so changing targets cannot redirect the prediction.
+	if castGUID and not castUnit then
+		for _, candidate in ipairs({"target", "mouseover", "focus", "targettarget", "focustarget"}) do
+			if UnitGUID(candidate) == castGUID then
+				castUnit = candidate
+				break
+			end
+		end
+	end
 	if (isTBC or isWrath) and not castUnit and PlayerTargetSpells[spellName] then
 		castGUID = UnitGUID("player")
 		castUnit = "player"

@@ -94,6 +94,8 @@ for _, layout in ipairs({'modern', 'legacy', 'lowercase', 'outer'}) do
             blizzard.name = Region()
             blizzard.regions = {Region(), blizzard.name}
             health.regions[#health.regions + 1] = Region()
+            blizzard.BuffFrame = Frame(blizzard)
+            blizzard.BuffFrame.regions = {Region()}
             blizzard.WidgetContainer = Frame(blizzard)
             blizzard.WidgetContainer.regions = {Region()}
             blizzard.events.CVAR_UPDATE = true
@@ -104,8 +106,15 @@ for _, layout in ipairs({'modern', 'legacy', 'lowercase', 'outer'}) do
             assert(plate:GetParent() == health)
             assert(plate:IsShown() and not plate:IsVisible())
             assert(blizzard.alpha == 1 and health.alpha == 1)
-            assert(blizzard.name.alpha == 1 and blizzard.WidgetContainer.regions[1].alpha == 1)
+            assert(blizzard.name.alpha == 0 and blizzard.WidgetContainer.regions[1].alpha == 1)
             assert(health.regions[#health.regions].alpha == 0)
+            assert(blizzard.BuffFrame.alpha == 0)
+            -- Native updates cannot restore names or newly acquired aura artwork.
+            blizzard.name:SetAlpha(1)
+            blizzard.BuffFrame:SetAlpha(1)
+            local aura = Frame(blizzard.BuffFrame)
+            aura.regions = {Region()}
+            assert(blizzard.name.alpha == 0 and aura:GetEffectiveAlpha() == 0)
             assert(blizzard.events.CVAR_UPDATE)
             health:Show()
             assert(plate:IsVisible())
@@ -126,7 +135,7 @@ for _, layout in ipairs({'modern', 'legacy', 'lowercase', 'outer'}) do
             assert(not plate.unit and plate:GetParent() == hider and not plate:IsVisible())
             Added(unit)
             assert(not plate:IsVisible() and plate:IsShown())
-            assert(blizzard.name.alpha == 1)
+            assert(blizzard.name.alpha == 0)
             health:Show()
             assert(plate:IsVisible())
             assert(plate.showCalls == 0 and plate.hideCalls == 0)

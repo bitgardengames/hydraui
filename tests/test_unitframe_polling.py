@@ -18,6 +18,14 @@ def test_eventless_polling_stops_while_frames_are_hidden_or_disabled():
     source = CORE_SOURCE.read_text()
 
     assert 'frame:SetScript("OnHide", StopEventlessPolling)' in source
-    assert "self._pollTicker:Cancel()" in source
-    assert "self._pollTicker = nil" in source
+    assert "pollingTicker:Cancel()" in source
+    assert "pollingTicker = nil" in source
     assert "UnregisterUnitWatch(self)\n\tStopEventlessPolling(self)" in source
+
+
+def test_eventless_frames_share_one_timer_and_release_the_last_participant():
+    source = CORE_SOURCE.read_text()
+    assert "pollingFrames[self] = true" in source
+    assert "pollingFrames[self] = nil" in source
+    assert "if pollingTicker and not next(pollingFrames) then" in source
+    assert "C_Timer.NewTicker(0.5, PollEventless)" in source

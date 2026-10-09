@@ -24,7 +24,7 @@ local petOwnerEvents = {
 local eventlessUnits = {boss6 = true, boss7 = true, boss8 = true}
 
 local function IsEventless(unit)
-	return unit:match("%w+target") or eventlessUnits[unit]
+	return unit:match("%w+target$") ~= nil or eventlessUnits[unit] == true
 end
 
 function UF:RegisterElement(name, lifecycle)
@@ -182,20 +182,34 @@ local function UnitAttributeChanged(self, name, value)
 	end
 end
 
+-- Eventless target chains and extra boss slots share one timer. Keep only
+-- visible participants, and release the timer when the last frame leaves.
+local pollingFrames = {}
+local pollingTicker
+
+local function PollEventless()
+	for frame in next, pollingFrames do
+		if frame:IsVisible() then
+			frame:Refresh("PollEventless")
+		end
+	end
+end
+
 local function StartEventlessPolling(self)
 	UpdateUnit(self, "OnShow")
+	pollingFrames[self] = true
 
-	if not self._pollTicker then
-		self._pollTicker = C_Timer.NewTicker(0.5, function()
-			self:Refresh("PollEventless")
-		end)
+	if not pollingTicker then
+		pollingTicker = C_Timer.NewTicker(0.5, PollEventless)
 	end
 end
 
 local function StopEventlessPolling(self)
-	if self._pollTicker then
-		self._pollTicker:Cancel()
-		self._pollTicker = nil
+	pollingFrames[self] = nil
+
+	if pollingTicker and not next(pollingFrames) then
+		pollingTicker:Cancel()
+		pollingTicker = nil
 	end
 end
 

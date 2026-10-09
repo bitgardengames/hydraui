@@ -75,12 +75,14 @@ RegisterUnitWatch = function(frame) frame.watched = true end
 UnregisterUnitWatch = function(frame) frame.watched = false end
 UnitWatchRegistered = function(frame) return frame.watched end
 local tickerCount = 0
+local lastTicker
 C_Timer = {NewTicker = function(interval, callback)
 	assert(interval == 0.5)
 	tickerCount = tickerCount + 1
-	return {callback = callback, Cancel = function(self)
+	lastTicker = {callback = callback, Cancel = function(self)
 		self.cancelled = true
 	end}
+	return lastTicker
 end}
 local function Load(name)
 	assert(loadfile(root .. name))("HydraUI", ns)
@@ -142,6 +144,17 @@ frame.scripts.OnEvent(frame, "PLAYER_ENTERING_WORLD")
 assert(#frame.registrations == 0, "Unchanged units must not rebind native events")
 
 
+-- Repeated updates of an unchanged secure unit must not rebind subscriptions.
+frame.registrations = {}
+frame.scripts.OnAttributeChanged(frame, "unit", "pet")
+frame.scripts.OnShow(frame)
+assert(#frame.registrations == 0)
+frame.modifiedUnit = "vehicle"
+frame.scripts.OnAttributeChanged(frame, "unit", "pet")
+frame.registrations = {}
+frame.scripts.OnShow(frame)
+assert(#frame.registrations == 0)
+
 -- Element order and lifecycle remain stable, including the public refresh alias.
 local updates = {}
 UF:RegisterElement("Test", {
@@ -154,13 +167,13 @@ UF:RegisterElement("Test", {
 local polling = HydraUI.UnitFrames:CreateUnitButton("boss6", nil, function() end)
 assert(polling.Refresh == polling.UpdateAllElements)
 assert(tickerCount == 1 and #updates == 1)
-local ticker = polling._pollTicker
+local ticker = lastTicker
 polling.scripts.OnShow(polling)
 assert(tickerCount == 1)
 ticker.callback()
 assert(updates[#updates][1] == "PollEventless")
 polling:Hide()
-assert(ticker.cancelled and not polling._pollTicker)
+assert(ticker.cancelled)
 polling:Show()
 assert(tickerCount == 2)
 polling:DisableElement("Test")
@@ -169,7 +182,29 @@ polling:Refresh("Test")
 assert(#updates == count)
 polling:EnableElement("Test")
 polling:Disable()
-assert(not polling._pollTicker and not polling.watched)
+assert(lastTicker.cancelled and not polling.watched)
+
+-- Multiple visible eventless frames share one ticker. Hiding one preserves
+-- the others; hiding the final participant cancels it, and showing restarts it.
+local before = tickerCount
+local one = HydraUI.UnitFrames:CreateUnitButton("boss7", nil, function() end)
+local two = HydraUI.UnitFrames:CreateUnitButton("targettarget", nil, function() end)
+assert(tickerCount == before + 1)
+local shared = lastTicker
+count = #updates
+shared.callback()
+assert(#updates == count + 2)
+one:Hide()
+assert(not shared.cancelled)
+count = #updates
+shared.callback()
+assert(#updates == count + 1 and updates[#updates][2] == "targettarget")
+two:Disable()
+assert(shared.cancelled)
+one:Show()
+assert(tickerCount == before + 2)
+one:Disable()
+assert(lastTicker.cancelled)
 
 -- Nameplate reuse retains event subscriptions and refreshes the new unit.
 local plate = HydraUI.UnitFrames:CreateNamePlateButton({}, "nameplate1", function() end)
@@ -271,6 +306,8 @@ for _, mainline in ipairs({false, true}) do
 	UF.TagEvents.Test = "UNIT_NAME_UPDATE"
 	UF.Tag(tagFrame, font, "100% [pre%$>Test<$%post] [Missing]")
 	assert(font.text == "100% pre%x%post ")
+	local originalBinding = font.__tagBinding
+	local originalOutput, originalValues = originalBinding.output, originalBinding.values
 	value = ""
 	tagFrame.handlers.UNIT_NAME_UPDATE(tagFrame, "UNIT_NAME_UPDATE", "target")
 	assert(font.text == "100% pre%x%post ")
@@ -294,7 +331,8 @@ for _, mainline in ipairs({false, true}) do
 		UF.UpdateTags(tagFrame)
 		assert(font.values[1] == secret)
 	end
-	local originalBinding = font.__tagBinding
+	assert(font.__tagBinding.output == originalOutput and font.__tagBinding.values == originalValues)
+	originalBinding = font.__tagBinding
 	assert(#originalBinding.output == 0 and #originalBinding.values == 0)
 	UF.Tag(tagFrame, font, "[Test]")
 	assert(#tagFrame.__tags == 1 and font.__tagBinding ~= originalBinding)
@@ -303,6 +341,18 @@ for _, mainline in ipairs({false, true}) do
 	UF.Untag(tagFrame, font)
 	assert(#tagFrame.__tags == 1 and tagFrame.handlers.UNIT_NAME_UPDATE)
 	UF.Untag(tagFrame, secondFont)
+	UF.Tag(tagFrame, font, "[Test]")
+	-- Rebinding replaces the old label and releases orphan subscriptions.
+	UF.TagEvents.Other = "UNIT_FLAGS"
+	UF.TagMethods.Other = function() return "other" end
+	UF.Tag(tagFrame, secondFont, "[Test]")
+	UF.Tag(tagFrame, font, "[Other]")
+	assert(#tagFrame.__tags == 2 and tagFrame.handlers.UNIT_NAME_UPDATE)
+	UF.Untag(tagFrame, secondFont)
+	assert(not tagFrame.handlers.UNIT_NAME_UPDATE and tagFrame.handlers.UNIT_FLAGS)
+	UF.Untag(tagFrame, font)
+	assert(not tagFrame.handlers.UNIT_FLAGS)
+
 	assert(#tagFrame.__tags == 0 and not font.__tagBinding)
 	assert(not next(tagFrame.__tagEvents) and not tagFrame.handlers.UNIT_NAME_UPDATE)
 
@@ -315,6 +365,23 @@ for _, mainline in ipairs({false, true}) do
 	UF.UpdateTags(tagFrame)
 	assert(font.text == "Play")
 end
+-- Releasing the final tag subscriber leaves an element's handler intact.
+local tagged = HydraUI.UnitFrames:CreateUnitButton("player", nil, function() end)
+local label = {SetText = function() end, SetFormattedText = function() end}
+UF.TagEvents.Lifecycle = "UNIT_FLAGS"
+UF.TagMethods.Lifecycle = function() return "ok" end
+local elementCalls = 0
+local function elementHandler() elementCalls = elementCalls + 1 end
+tagged:RegisterEvent("UNIT_FLAGS", elementHandler)
+tagged:Tag(label, "[Lifecycle]")
+assert(#tagged._events.UNIT_FLAGS == 2)
+tagged:Untag(label)
+assert(#tagged._events.UNIT_FLAGS == 1)
+tagged.scripts.OnEvent(tagged, "UNIT_FLAGS", "player")
+assert(elementCalls == 1)
+tagged:UnregisterEvent("UNIT_FLAGS", elementHandler)
+assert(not tagged._events.UNIT_FLAGS)
+
 print("Unit frame runtime checks passed")
 
 -- Singleton spawning keeps geometry and options for every enable combination,

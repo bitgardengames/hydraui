@@ -83,6 +83,11 @@ local function Subscribe(self, event, handler, global)
 
 	for i = 1, #handlers do
 		if handlers[i] == handler then
+			if global and self._unitEvents[event] then
+				self._unitEvents[event] = nil
+				self._registerEvent(self, event)
+			end
+
 			return
 		end
 	end

@@ -114,6 +114,15 @@ assert(#frame.registrations == 2)
 frame:UnregisterEvent("UNIT_HEALTH")
 assert(#frame.registrations == 3 and not frame._events.UNIT_HEALTH)
 
+-- Reusing a handler must still promote its registration scope.
+frame.registrations = {}
+frame:RegisterEvent("UNIT_HEALTH", first)
+frame:RegisterEvent("UNIT_HEALTH", first, true)
+frame:RegisterEvent("UNIT_HEALTH", first, true)
+assert(#frame.registrations == 2 and not frame._unitEvents.UNIT_HEALTH)
+assert(#frame._events.UNIT_HEALTH == 1)
+frame:UnregisterEvent("UNIT_HEALTH", first)
+
 -- Secure vehicle changes rebind unit events, including pet owner events, while
 -- globally promoted events stay global.
 frame:RegisterEvent("UNIT_HEALTH", first)
@@ -382,6 +391,39 @@ assert(elementCalls == 1)
 tagged:UnregisterEvent("UNIT_FLAGS", elementHandler)
 assert(not tagged._events.UNIT_FLAGS)
 
+-- Real dispatcher integration: shared events survive untagging, unrelated tags
+-- are not evaluated, and rebinding a font does not accumulate old bindings.
+local tagFrame = HydraUI.UnitFrames:CreateUnitButton("player", nil, function() end)
+local nameCalls, healthCalls, elementCalls = 0, 0, 0
+UF.TagMethods.TestName = function() nameCalls = nameCalls + 1; return "name" end
+UF.TagMethods.TestHealth = function() healthCalls = healthCalls + 1; return "health" end
+UF.TagEvents.TestName = "UNIT_NAME_UPDATE"
+UF.TagEvents.TestHealth = "UNIT_HEALTH"
+local function Font()
+	return {SetText = function() end, SetFormattedText = function() end}
+end
+local firstFont, secondFont, healthFont = Font(), Font(), Font()
+tagFrame:Tag(firstFont, "[TestName]")
+tagFrame:Tag(secondFont, "[TestName]")
+tagFrame:Tag(healthFont, "[TestHealth]")
+local function ElementUpdate() elementCalls = elementCalls + 1 end
+tagFrame:RegisterEvent("UNIT_NAME_UPDATE", ElementUpdate)
+nameCalls, healthCalls = 0, 0
+tagFrame.scripts.OnEvent(tagFrame, "UNIT_NAME_UPDATE", "player")
+assert(nameCalls == 2 and healthCalls == 0 and elementCalls == 1)
+tagFrame:Untag(firstFont)
+tagFrame.scripts.OnEvent(tagFrame, "UNIT_NAME_UPDATE", "player")
+assert(nameCalls == 3 and elementCalls == 2)
+tagFrame:Tag(secondFont, "[TestHealth]")
+assert(#tagFrame.__tags == 2 and not tagFrame.__tagEvents.UNIT_NAME_UPDATE)
+assert(#tagFrame._events.UNIT_NAME_UPDATE == 1)
+tagFrame.scripts.OnEvent(tagFrame, "UNIT_NAME_UPDATE", "player")
+assert(nameCalls == 3 and elementCalls == 3)
+tagFrame:Untag(secondFont)
+assert(tagFrame._events.UNIT_HEALTH)
+tagFrame:Untag(healthFont)
+assert(not tagFrame._events.UNIT_HEALTH)
+assert(not next(tagFrame.__tagEvents))
 print("Unit frame runtime checks passed")
 
 -- Singleton spawning keeps geometry and options for every enable combination,

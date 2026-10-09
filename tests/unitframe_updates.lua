@@ -89,6 +89,31 @@ for mask = 0, 3 do
 	local powerTexture = Capture(function() UF:SetPowerTexture("player", "power") end)
 	assert(powerTexture == Capture(function() UF:UpdateGroupFrames({header = "party"}, "powerTexture", "power") end))
 end
+-- Group callbacks receive frame objects, whereas public setters receive keys.
+-- Every live party/raid control must reach the same widgets as singleton updates.
+for _, prefix in ipairs({"party", "raid"}) do
+	local descriptor = {header = prefix, prefix = prefix}
+	frames[prefix] = {frames.player}
+	settings[prefix .. "-power-height"] = 7
+	settings[prefix .. "-health-height"] = 20
+	for _, case in ipairs({
+		{"width", "SetFrameWidth", 140},
+		{"healthHeight", "SetHealthHeight", 24, 7},
+		{"powerHeight", "SetPowerHeight", 9, 20},
+		{"healthColor", "ApplyHealthAttributes", "class"},
+		{"powerColor", "ApplyPowerAttributes", "power"},
+		{"healthReverse", "SetHealthReverseFill", true},
+		{"powerReverse", "SetPowerReverseFill", true},
+	}) do
+		local expected = Capture(function() UF[case[2]](UF, "player", case[3], case[4]) end)
+		assert(expected ~= "")
+		assert(expected == Capture(function() UF:UpdateGroupFrames(descriptor, case[1], case[3]) end), prefix .. case[1])
+	end
+	assert(Capture(function() UF:UpdateGroupFrames(descriptor, "powerEnabled", false) end) == "frame.DisableElement:Power|frame.SetHeight:22")
+	assert(Capture(function() UF:UpdateGroupFrames(descriptor, "powerEnabled", true) end) == "frame.EnableElement:Power|frame.SetHeight:30")
+	assert(Capture(function() UF:UpdateGroupFrames(descriptor, "debuffs", false) end) == "frame.DisableElement:Auras")
+	assert(Capture(function() UF:UpdateGroupFrames(descriptor, "debuffs", true) end) == "frame.EnableElement:Auras")
+end
 for _, position in ipairs({"TOP", "BOTTOM"}) do
 	for _, companionPosition in ipairs({"TOP", "BOTTOM"}) do
 		settings.companionPosition = companionPosition

@@ -37,7 +37,7 @@ Defaults["ab-font-flags"] = ""
 
 for _, descriptor in ipairs(ActionBarDescriptors) do
 	local key = "ab-bar" .. descriptor.index
-	Defaults[key .. "-enable"] = true
+	Defaults[key .. "-enable"] = descriptor.index <= 5
 	Defaults[key .. "-hover"] = false
 	Defaults[key .. "-button-size"] = 32
 	Defaults[key .. "-button-gap"] = 2

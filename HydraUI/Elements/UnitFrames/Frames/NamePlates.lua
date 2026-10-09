@@ -327,16 +327,34 @@ function UF:CreateNamePlateDriver()
 		end
 	end
 
+	local suppressedArtwork = setmetatable({}, {__mode = "k"})
+	local function SuppressAlpha(object)
+		if not object or (object.IsForbidden and object:IsForbidden()) then
+			return
+		end
+		if not suppressedArtwork[object] then
+			suppressedArtwork[object] = true
+			local updating = false
+			hooksecurefunc(object, "SetAlpha", function()
+				if updating then
+					return
+				end
+				updating = true
+				object:SetAlpha(0)
+				updating = false
+			end)
+		end
+		object:SetAlpha(0)
+	end
+
 	local function SuppressBlizzardArtwork(frame, blizzard, plate)
-		-- Suppress only native artwork, never a frame's shown state or alpha.
-		-- Preserve native names and widgets, including friendly name-only display.
+		-- Keep the native frame hierarchy for visibility and widgets, but suppress
+		-- its artwork even when Blizzard refreshes names or reuses aura icons.
 		if frame == plate or frame == blizzard.WidgetContainer or frame:IsForbidden() then
 			return
 		end
 		for _, region in ipairs({frame:GetRegions()}) do
-			if region ~= blizzard.name then
-				region:SetAlpha(0)
-			end
+			SuppressAlpha(region)
 		end
 		for _, child in ipairs({frame:GetChildren()}) do
 			SuppressBlizzardArtwork(child, blizzard, plate)
@@ -364,6 +382,11 @@ function UF:CreateNamePlateDriver()
 			base._unitFrame = plate
 		else
 			plate:SetParent(parent)
+		end
+		SuppressAlpha(blizzard.name)
+		-- Aura containers may acquire additional pooled children after binding.
+		for _, key in ipairs({"BuffFrame", "buffFrame", "Auras", "auras", "AuraContainer"}) do
+			SuppressAlpha(blizzard[key])
 		end
 		SuppressBlizzardArtwork(blizzard, blizzard, plate)
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)

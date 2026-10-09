@@ -33,7 +33,7 @@ local function GetIncomingHeals(unit)
 end
 
 local function UpdatePrediction(frame, _, unit)
-	if unit and unit ~= frame.unit then
+	if not frame.unit or unit and unit ~= frame.unit then
 		return
 	end
 
@@ -55,7 +55,16 @@ local function UpdatePrediction(frame, _, unit)
 end
 
 local function UpdateHealCommUnit(frame, ...)
+	-- Detached nameplates still receive the library's global callbacks.
+	if not frame.unit then
+		return
+	end
+
 	local guid = UnitGUID(frame.unit)
+
+	if not guid then
+		return
+	end
 
 	for i = 1, select("#", ...) do
 		if select(i, ...) == guid then

@@ -70,7 +70,15 @@ local function UpdateHealth(frame, event, unit)
 	end
 
 	bar:SetMinMaxValues(0, maximum)
-	bar:SetValue(UnitIsConnected(unit) and current or maximum)
+	local value = UnitIsConnected(unit) and current or maximum
+
+	-- A new target/focus starts at its own health, without animating from the previous unit.
+	if bar.SetValueImmediately and (event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_FOCUS_CHANGED") then
+		bar:SetValue(value, true)
+	else
+		bar:SetValue(value)
+	end
+
 	bar.cur, bar.max = current, maximum
 
 	local inaccessible = HydraUI.IsMainline and issecretvalue(current) and not canaccessvalue(current)

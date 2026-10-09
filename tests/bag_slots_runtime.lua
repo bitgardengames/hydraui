@@ -27,6 +27,7 @@ local function frame(name)
 	function f:UnregisterEvent() self.event = nil end
 	function f:GetNormalTexture() return self.normal end
 	function f:SetTexture(texture) self.texture = texture end
+	function f:SetTexCoord(...) self.texCoords = {...} end
 	function f:SetColorTexture(...) self.color = {...}; self.texture = 'color' end
 	function f:RemoveMaskTexture(mask) self.removedMasks = self.removedMasks or {}; self.removedMasks[mask] = true end
 	function f:GetPushedTexture() return self.pushed end
@@ -171,6 +172,10 @@ for _, client in ipairs({'IsVanilla', 'IsTBC'}) do
 	module:Load()
 	assert(KeyRingButton.normal == normal and normal.texture == 'original normal artwork')
 	assert(KeyRingButton.pushed == pushed and pushed.texture == 'original pressed artwork')
+	for _, texture in ipairs({normal, pushed}) do
+		assert(texture.texCoords[1] == 0.1 and texture.texCoords[2] == 0.9)
+		assert(texture.texCoords[3] == 0.1 and texture.texCoords[4] == 0.9)
+	end
 	assert(KeyRingButton.width == 16 and KeyRingButton.height == 32)
 	for i = 2, #module.Objects do
 		assert(rawget(module.Objects[i].normal, 'texture') == nil)

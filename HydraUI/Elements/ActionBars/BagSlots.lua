@@ -259,7 +259,17 @@ function BagsFrame:Load()
 		end
 
 		-- The keyring's normal texture is its artwork, not a bag-slot border.
-		if Normal and Object ~= KeyRingButton then
+		if Object == KeyRingButton then
+			if Normal then
+				Normal:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+			end
+
+			local Pushed = Object:GetPushedTexture()
+
+			if Pushed then
+				Pushed:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+			end
+		elseif Normal then
 			Normal:SetTexture(nil)
 		end
 

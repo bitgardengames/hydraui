@@ -138,6 +138,11 @@ for _, registration in ipairs(frame.registrations) do
 	end
 end
 assert(foundPet)
+frame.registrations = {}
+frame.scripts.OnShow(frame)
+frame.scripts.OnEvent(frame, "PLAYER_ENTERING_WORLD")
+assert(#frame.registrations == 0, "Unchanged units must not rebind native events")
+
 
 -- Repeated updates of an unchanged secure unit must not rebind subscriptions.
 frame.registrations = {}
@@ -327,10 +332,19 @@ for _, mainline in ipairs({false, true}) do
 		assert(font.values[1] == secret)
 	end
 	assert(font.__tagBinding.output == originalOutput and font.__tagBinding.values == originalValues)
+	originalBinding = font.__tagBinding
+	assert(#originalBinding.output == 0 and #originalBinding.values == 0)
+	UF.Tag(tagFrame, font, "[Test]")
+	assert(#tagFrame.__tags == 1 and font.__tagBinding ~= originalBinding)
+	local secondFont = {SetText = font.SetText, SetFormattedText = font.SetFormattedText}
+	UF.Tag(tagFrame, secondFont, "[Test]")
+	UF.Untag(tagFrame, font)
+	assert(#tagFrame.__tags == 1 and tagFrame.handlers.UNIT_NAME_UPDATE)
+	UF.Untag(tagFrame, secondFont)
+	UF.Tag(tagFrame, font, "[Test]")
 	-- Rebinding replaces the old label and releases orphan subscriptions.
 	UF.TagEvents.Other = "UNIT_FLAGS"
 	UF.TagMethods.Other = function() return "other" end
-	local secondFont = {SetText = font.SetText, SetFormattedText = font.SetFormattedText}
 	UF.Tag(tagFrame, secondFont, "[Test]")
 	UF.Tag(tagFrame, font, "[Other]")
 	assert(#tagFrame.__tags == 2 and tagFrame.handlers.UNIT_NAME_UPDATE)
@@ -338,7 +352,10 @@ for _, mainline in ipairs({false, true}) do
 	assert(not tagFrame.handlers.UNIT_NAME_UPDATE and tagFrame.handlers.UNIT_FLAGS)
 	UF.Untag(tagFrame, font)
 	assert(not tagFrame.handlers.UNIT_FLAGS)
+
 	assert(#tagFrame.__tags == 0 and not font.__tagBinding)
+	assert(not next(tagFrame.__tagEvents) and not tagFrame.handlers.UNIT_NAME_UPDATE)
+
 	state = {name = "PlayerName"}
 	font.overrideUnit = true
 	tagFrame.realUnit = "vehicle"

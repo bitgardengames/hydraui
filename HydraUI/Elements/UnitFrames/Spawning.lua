@@ -111,108 +111,108 @@ function UF:SpawnSingletonFrames()
 		end
 	end
 
-	if Settings["player-enable"] then
-		local Player = HydraUI.UnitFrames["player"]
+	-- Configure only after every singleton exists, so companion anchors can
+	-- resolve player/target frames regardless of descriptor order.
+	for _, descriptor in ipairs(SingletonUnits) do
+		local frame = HydraUI.UnitFrames[descriptor.unit]
 
-		if not Settings["unitframes-player-enable-power"] or Settings["player-move-power"] then
-			Player:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-health-height"] + 2)
+		if Settings[descriptor.enabled] then
+			self[descriptor.postSpawn](self, frame)
 		end
+	end
+end
 
-		if Settings["player-enable-portrait"] then
-			Player:EnableElement("Portrait")
-		else
-			Player:DisableElement("Portrait")
-		end
-
-		if not Settings["player-enable-pvp"] then
-			Player:DisableElement("PvPIndicator")
-			Player.PvPIndicator:Hide()
-		end
-
-		if Settings["unitframes-show-player-buffs"] then
-			Player.Buffs:Show()
-		else
-			Player.Buffs:Hide()
-		end
-
-		if Settings["unitframes-show-player-debuffs"] then
-			Player.Debuffs:Show()
-		else
-			Player.Debuffs:Hide()
-		end
-
-		if Settings["unitframes-player-enable-castbar"] then
-			Player.CastAnchor:SetPoint("BOTTOM", HydraUI.UIParent, 0, 118)
-			HydraUI:CreateMover(Player.CastAnchor, 2)
-		end
-
-		HydraUI:CreateMover(Player)
-
-		Player:Refresh("ForceUpdate")
+function UF:ConfigurePlayer(player)
+	if not Settings["unitframes-player-enable-power"] or Settings["player-move-power"] then
+		player:SetSize(Settings["unitframes-player-width"], Settings["unitframes-player-health-height"] + 2)
 	end
 
+	if Settings["player-enable-portrait"] then
+		player:EnableElement("Portrait")
+	else
+		player:DisableElement("Portrait")
+	end
+
+	if not Settings["player-enable-pvp"] then
+		player:DisableElement("PvPIndicator")
+		player.PvPIndicator:Hide()
+	end
+
+	if Settings["unitframes-show-player-buffs"] then
+		player.Buffs:Show()
+	else
+		player.Buffs:Hide()
+	end
+
+	if Settings["unitframes-show-player-debuffs"] then
+		player.Debuffs:Show()
+	else
+		player.Debuffs:Hide()
+	end
+
+	if Settings["unitframes-player-enable-castbar"] then
+		player.CastAnchor:SetPoint("BOTTOM", HydraUI.UIParent, 0, 118)
+		HydraUI:CreateMover(player.CastAnchor, 2)
+	end
+
+	HydraUI:CreateMover(player)
+
+	player:Refresh("ForceUpdate")
+end
+
+function UF:ConfigureTarget(target)
+	if Settings["target-enable-portrait"] then
+		target:EnableElement("Portrait")
+	else
+		target:DisableElement("Portrait")
+	end
+
+	if Settings["unitframes-show-target-buffs"] then
+		target.Buffs:Show()
+	else
+		target.Buffs:Hide()
+	end
+
+	if Settings["unitframes-show-target-debuffs"] then
+		target.Debuffs:Show()
+	else
+		target.Debuffs:Hide()
+	end
+
+	if Settings["unitframes-target-enable-castbar"] then
+		target.CastAnchor:SetPoint("BOTTOM", HydraUI.UIParent, 0, 146)
+		HydraUI:CreateMover(target.CastAnchor, 2)
+	end
+
+	HydraUI:CreateMover(target)
+
+	target:Refresh("ForceUpdate")
+end
+
+function UF:ConfigureTargetTarget(targetTarget)
 	if Settings["target-enable"] then
-		local Target = HydraUI.UnitFrames["target"]
-
-		if Settings["target-enable-portrait"] then
-			Target:EnableElement("Portrait")
-		else
-			Target:DisableElement("Portrait")
-		end
-
-		if Settings["unitframes-show-target-buffs"] then
-			Target.Buffs:Show()
-		else
-			Target.Buffs:Hide()
-		end
-
-		if Settings["unitframes-show-target-debuffs"] then
-			Target.Debuffs:Show()
-		else
-			Target.Debuffs:Hide()
-		end
-
-		if Settings["unitframes-target-enable-castbar"] then
-			Target.CastAnchor:SetPoint("BOTTOM", HydraUI.UIParent, 0, 146)
-			HydraUI:CreateMover(Target.CastAnchor, 2)
-		end
-
-		HydraUI:CreateMover(Target)
-
-		Target:Refresh("ForceUpdate")
+		targetTarget:SetPoint("TOPRIGHT", HydraUI.UnitFrames["target"], "BOTTOMRIGHT", 0, -2)
 	end
 
-	if Settings["tot-enable"] then
-		local TargetTarget = HydraUI.UnitFrames["targettarget"]
+	HydraUI:CreateMover(targetTarget)
+end
 
-		if Settings["target-enable"] then
-			TargetTarget:SetPoint("TOPRIGHT", HydraUI.UnitFrames["target"], "BOTTOMRIGHT", 0, -2)
-		end
-
-		HydraUI:CreateMover(TargetTarget)
+function UF:ConfigurePet(pet)
+	if Settings["player-enable"] then
+		pet:SetPoint("TOPLEFT", HydraUI.UnitFrames["player"], "BOTTOMLEFT", 0, -2)
 	end
 
-	if Settings["pet-enable"] then
-		local Pet = HydraUI.UnitFrames["pet"]
+	HydraUI:CreateMover(pet)
+end
 
-		if Settings["player-enable"] then
-			Pet:SetPoint("TOPLEFT", HydraUI.UnitFrames["player"], "BOTTOMLEFT", 0, -2)
-		end
-
-		HydraUI:CreateMover(Pet)
+function UF:ConfigureFocus(focus)
+	if Settings["focus-enable-buffs"] then
+		focus:EnableElement("Auras")
+	else
+		focus:DisableElement("Auras")
 	end
 
-	if Settings["focus-enable"] then
-		local Focus = HydraUI.UnitFrames["focus"]
-
-		if Settings["focus-enable-buffs"] then
-			Focus:EnableElement("Auras")
-		else
-			Focus:DisableElement("Auras")
-		end
-
-		HydraUI:CreateMover(Focus)
-	end
+	HydraUI:CreateMover(focus)
 end
 
 function UF:SpawnBossFrames()

@@ -641,12 +641,6 @@ end
 
 local function FormatTagString(binding, unit, realUnit)
 	local output, values = binding.output, binding.values
-	for i = #output, 1, -1 do
-		output[i] = nil
-	end
-	for i = #values, 1, -1 do
-		values[i] = nil
-	end
 	for i = 1, #binding.parts do
 		local part = binding.parts[i]
 		if type(part) == "string" then
@@ -664,7 +658,13 @@ local function FormatTagString(binding, unit, realUnit)
 			end
 		end
 	end
-	return table.concat(output), values
+	local text = table.concat(output)
+
+	for i = #output, 1, -1 do
+		output[i] = nil
+	end
+
+	return text, values
 end
 
 local function UpdateBinding(frame, binding)
@@ -674,33 +674,52 @@ local function UpdateBinding(frame, binding)
 	else
 		binding.fontString:SetText(output)
 	end
+
+	-- Do not retain unit values (including retail secrets) between updates.
+	for i = #values, 1, -1 do
+		values[i] = nil
+	end
 end
 
 local function TagEvent(frame, event, unit)
 	if unit and unit ~= frame.unit and unit ~= frame.realUnit then
 		return
 	end
-	for i = 1, #frame.__tags do
-		local binding = frame.__tags[i]
-		if binding.subscriptions[event] then
-			UpdateBinding(frame, binding)
+	local bindings = frame.__tagEvents[event]
+
+	if bindings then
+		for i = 1, #bindings do
+			UpdateBinding(frame, bindings[i])
 		end
 	end
 end
 
 function UF.Tag(frame, fontString, tagString)
-	frame.__tags = frame.__tags or {}
+	-- Rebinding a font string replaces its previous lifecycle and subscriptions.
 	if fontString.__tagBinding then
 		UF.Untag(fontString.__owner, fontString)
 	end
+
+	frame.__tags = frame.__tags or {}
+	frame.__tagEvents = frame.__tagEvents or {}
 	local parts, subscriptions = Compile(tagString or "")
 	local binding = {fontString = fontString, tagString = tagString, parts = parts, subscriptions = subscriptions, output = {}, values = {}}
 	frame.__tags[#frame.__tags + 1] = binding
 	fontString.__owner, fontString.__tagBinding = frame, binding
+
 	for event in next, subscriptions do
-		-- UNIT_* events carry a unit; the remaining declarations are shared.
-		frame:RegisterEvent(event, TagEvent, not event:match("^UNIT_"))
+		local bindings = frame.__tagEvents[event]
+
+		if not bindings then
+			bindings = {}
+			frame.__tagEvents[event] = bindings
+			-- UNIT_* events carry a unit; the remaining declarations are shared.
+			frame:RegisterEvent(event, TagEvent, not event:match("^UNIT_"))
+		end
+
+		bindings[#bindings + 1] = binding
 	end
+
 	UpdateBinding(frame, binding)
 end
 
@@ -711,25 +730,26 @@ function UF.Untag(frame, fontString)
 		return
 	end
 
+	for event in next, binding.subscriptions do
+		local bindings = frame.__tagEvents[event]
+
+		for i = #bindings, 1, -1 do
+			if bindings[i] == binding then
+				table.remove(bindings, i)
+				break
+			end
+		end
+
+		if #bindings == 0 then
+			frame.__tagEvents[event] = nil
+			frame:UnregisterEvent(event, TagEvent)
+		end
+	end
+
 	for i = #frame.__tags, 1, -1 do
 		if frame.__tags[i] == binding then
 			table.remove(frame.__tags, i)
 			break
-		end
-	end
-
-	-- Remove only the tag dispatcher, preserving other elements sharing the
-	-- event and other labels that still declare it.
-	for event in next, binding.subscriptions do
-		local needed = false
-		for i = 1, #frame.__tags do
-			if frame.__tags[i].subscriptions[event] then
-				needed = true
-				break
-			end
-		end
-		if not needed then
-			frame:UnregisterEvent(event, TagEvent)
 		end
 	end
 

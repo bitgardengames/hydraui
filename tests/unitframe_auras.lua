@@ -36,7 +36,7 @@ local function Widget(name)
 	return widget
 end
 CreateFrame = function() return Widget("frame") end
-C_NamePlate = {GetNamePlates = function() return plates end}
+C_NamePlate = {GetNamePlates = function() return plates end, GetNamePlateForUnit = function() return nil end}
 local GUI = {}
 function GUI:AddWidgets(_, _, build) self.build = build end
 function HydraUI:GetModule(name) return name == "GUI" and GUI or UF end

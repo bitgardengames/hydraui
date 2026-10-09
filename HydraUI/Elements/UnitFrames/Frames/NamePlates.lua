@@ -47,6 +47,12 @@ local function SetAuraDirection(auras, direction)
 end
 
 HydraUI.StyleFuncs["nameplate"] = function(self, unit)
+	local base = C_NamePlate.GetNamePlateForUnit(unit)
+	local blizzard = base and (base.UnitFrame or base.unitFrame)
+	if blizzard then
+		UF:SuppressBlizzardNamePlate(blizzard, self)
+	end
+
 	-- The Blizzard nameplate parent already supplies its effective world/UI scale. Applying UIParent's scale here as well would multiply that scale on the child.
 	self:SetScale(1)
 	self:SetSize(Settings["nameplates-width"], Settings["nameplates-height"])
@@ -347,18 +353,55 @@ function UF:CreateNamePlateDriver()
 		object:SetAlpha(0)
 	end
 
-	local function SuppressBlizzardArtwork(frame, blizzard, plate)
+	local hiddenArtwork = setmetatable({}, {__mode = "k"})
+	local function HideArtwork(frame)
+		if not frame or frame:IsForbidden() then
+			return
+		end
+		if not hiddenArtwork[frame] then
+			hiddenArtwork[frame] = true
+			frame:HookScript("OnShow", function(self) self:Hide() end)
+		end
+		frame:Hide()
+	end
+
+	local function SuppressBlizzardArtwork(frame, blizzard, plate, ancestors)
 		-- Keep the native frame hierarchy for visibility and widgets, but suppress
 		-- its artwork even when Blizzard refreshes names or reuses aura icons.
 		if frame == plate or frame == blizzard.WidgetContainer or frame:IsForbidden() then
 			return
 		end
+		-- Hide native branches outright: aura buttons can ignore parent alpha.
+		-- Only the ancestors carrying HydraUI's visibility must remain shown.
+		if not ancestors[frame] then
+			HideArtwork(frame)
+		end
 		for _, region in ipairs({frame:GetRegions()}) do
 			SuppressAlpha(region)
 		end
 		for _, child in ipairs({frame:GetChildren()}) do
-			SuppressBlizzardArtwork(child, blizzard, plate)
+			SuppressBlizzardArtwork(child, blizzard, plate, ancestors)
 		end
+	end
+
+	function self:SuppressBlizzardNamePlate(blizzard, plate)
+		if blizzard:IsForbidden() then
+			return
+		end
+		local ancestors = {}
+		local parent = plate:GetParent()
+		while parent do
+			ancestors[parent] = true
+			parent = parent:GetParent()
+		end
+		SuppressAlpha(blizzard.name)
+		for _, key in ipairs({"BuffFrame", "buffFrame", "DebuffFrame", "debuffFrame", "Auras", "auras", "AuraContainer"}) do
+			local container = blizzard[key]
+			if container and not ancestors[container] then
+				HideArtwork(container)
+			end
+		end
+		SuppressBlizzardArtwork(blizzard, blizzard, plate, ancestors)
 	end
 
 	local function Added(unit)
@@ -383,12 +426,7 @@ function UF:CreateNamePlateDriver()
 		else
 			plate:SetParent(parent)
 		end
-		SuppressAlpha(blizzard.name)
-		-- Aura containers may acquire additional pooled children after binding.
-		for _, key in ipairs({"BuffFrame", "buffFrame", "Auras", "auras", "AuraContainer"}) do
-			SuppressAlpha(blizzard[key])
-		end
-		SuppressBlizzardArtwork(blizzard, blizzard, plate)
+		self:SuppressBlizzardNamePlate(blizzard, plate)
 		HydraUI.UnitFrames:SetNamePlateUnit(plate, unit)
 		self.NamePlatesByUnit[unit] = plate
 		UF.NamePlateCallback(plate, "NAME_PLATE_UNIT_ADDED", unit)

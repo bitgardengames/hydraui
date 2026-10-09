@@ -136,6 +136,11 @@ for _, registration in ipairs(frame.registrations) do
 	end
 end
 assert(foundPet)
+frame.registrations = {}
+frame.scripts.OnShow(frame)
+frame.scripts.OnEvent(frame, "PLAYER_ENTERING_WORLD")
+assert(#frame.registrations == 0, "Unchanged units must not rebind native events")
+
 
 -- Element order and lifecycle remain stable, including the public refresh alias.
 local updates = {}
@@ -244,6 +249,10 @@ for _, mainline in ipairs({false, true}) do
 	function tagFrame:RegisterEvent(event, handler)
 		self.handlers[event] = handler
 	end
+	function tagFrame:UnregisterEvent(event, handler)
+		assert(self.handlers[event] == handler)
+		self.handlers[event] = nil
+	end
 	local font = {SetText = function(self, text) self.text = text end,
 		SetFormattedText = function(self, text, ...)
 			local values = {...}
@@ -285,8 +294,18 @@ for _, mainline in ipairs({false, true}) do
 		UF.UpdateTags(tagFrame)
 		assert(font.values[1] == secret)
 	end
+	local originalBinding = font.__tagBinding
+	assert(#originalBinding.output == 0 and #originalBinding.values == 0)
+	UF.Tag(tagFrame, font, "[Test]")
+	assert(#tagFrame.__tags == 1 and font.__tagBinding ~= originalBinding)
+	local secondFont = {SetText = font.SetText, SetFormattedText = font.SetFormattedText}
+	UF.Tag(tagFrame, secondFont, "[Test]")
 	UF.Untag(tagFrame, font)
+	assert(#tagFrame.__tags == 1 and tagFrame.handlers.UNIT_NAME_UPDATE)
+	UF.Untag(tagFrame, secondFont)
 	assert(#tagFrame.__tags == 0 and not font.__tagBinding)
+	assert(not next(tagFrame.__tagEvents) and not tagFrame.handlers.UNIT_NAME_UPDATE)
+
 	state = {name = "PlayerName"}
 	font.overrideUnit = true
 	tagFrame.realUnit = "vehicle"

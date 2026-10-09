@@ -150,9 +150,11 @@ local function UpdateUnit(self, event)
 		return
 	end
 
+	realUnit = unit ~= realUnit and realUnit or nil
+
 	if self.unit ~= unit or self.realUnit ~= realUnit then
 		self.unit = unit
-		self.realUnit = unit ~= realUnit and realUnit or nil
+		self.realUnit = realUnit
 
 		for registeredEvent in next, self._unitEvents do
 			BindUnitEvent(self, registeredEvent)

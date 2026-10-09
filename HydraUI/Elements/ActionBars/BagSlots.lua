@@ -13,6 +13,20 @@ local IsVanilla = HydraUI.IsVanilla
 local IsTBC = HydraUI.IsTBC
 local HasKeyRing = IsVanilla or IsTBC
 
+local StyleKeyRingTextures = function(button)
+	-- Keyring artwork occupies only 18x39 pixels of a 32x64 texture.
+	-- Crop inside that region, and replace the stock fixed-size CENTER anchor.
+	local Normal = button:GetNormalTexture()
+	local Pushed = button:GetPushedTexture()
+
+	for _, Texture in ipairs({Normal, Pushed}) do
+		Texture:ClearAllPoints()
+		Texture:SetAllPoints(button)
+		Texture:SetRotation(0)
+		Texture:SetTexCoord(0.05625, 0.50625, 0.0609375, 0.5484375)
+	end
+end
+
 if HydraUI.IsMainline then
 	BagsFrame.Objects = {
 		CharacterReagentBag0Slot,
@@ -160,6 +174,7 @@ function BagsFrame:PositionButtons()
 	end
 
 	if HasKeyRing then
+		StyleKeyRingTextures(KeyRingButton)
 		self.Panel:SetSize(((Size + 4) * (#self.Objects - 1)) + 8 + (Size / 2), Size + 8)
 	else
 		-- IsShown checks each button's own state even when our panel is hidden.
@@ -258,18 +273,7 @@ function BagsFrame:Load()
 			Object.IconBorder:SetAlpha(0)
 		end
 
-		-- The keyring's normal texture is its artwork, not a bag-slot border.
-		if Object == KeyRingButton then
-			if Normal then
-				Normal:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-			end
-
-			local Pushed = Object:GetPushedTexture()
-
-			if Pushed then
-				Pushed:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-			end
-		elseif Normal then
+		if Normal and Object ~= KeyRingButton then
 			Normal:SetTexture(nil)
 		end
 
@@ -342,7 +346,7 @@ function BagsFrame:Load()
 
 		Object:SetHighlightTexture(Highlight)
 
-		if HydraUI.IsMainline or i ~= 1 then
+		if Object ~= KeyRingButton then
 			local Pushed = Object:CreateTexture(nil, "ARTWORK")
 			Pushed:SetPoint("TOPLEFT", Object, 0, 0)
 			Pushed:SetPoint("BOTTOMRIGHT", Object, 0, 0)
@@ -373,6 +377,10 @@ function BagsFrame:Load()
 			hooksecurefunc(self.Objects[i], "SetParent", RestoreBagButtonPositions)
 			hooksecurefunc(self.Objects[i], "SetSize", RestoreBagButtonPositions)
 		end
+	end
+
+	if HasKeyRing and KeyRingButton.UpdateOrientation then
+		hooksecurefunc(KeyRingButton, "UpdateOrientation", RestoreBagButtonPositions)
 	end
 
 	self:SetScript("OnEvent", function(self)

@@ -8,6 +8,10 @@ local function frame(name)
 	function f:GetName() return self.name end
 	function f:SetParent(parent) self.parent = parent end
 	function f:SetPoint(...) self.point = {...} end
+	function f:ClearAllPoints() self.point = nil; self.allPoints = nil end
+	function f:SetAllPoints(target) self.allPoints = target end
+	function f:SetTexCoord(...) self.texCoords = {...} end
+	function f:SetRotation(rotation) self.rotation = rotation end
 	function f:SetSize(w, h) self.width, self.height = w, h end
 	function f:SetAlpha(a) self.alpha = a end
 	function f:HookScript(event, callback) self.hooks[event] = callback end
@@ -27,7 +31,6 @@ local function frame(name)
 	function f:UnregisterEvent() self.event = nil end
 	function f:GetNormalTexture() return self.normal end
 	function f:SetTexture(texture) self.texture = texture end
-	function f:SetTexCoord(...) self.texCoords = {...} end
 	function f:SetColorTexture(...) self.color = {...}; self.texture = 'color' end
 	function f:RemoveMaskTexture(mask) self.removedMasks = self.removedMasks or {}; self.removedMasks[mask] = true end
 	function f:GetPushedTexture() return self.pushed end
@@ -148,7 +151,8 @@ settings['bags-frame-visibility'] = 'HIDE'
 module:UpdateVisibility()
 module:PositionButtons()
 assert(module.Panel.width == 268)
--- Classic keyring artwork lives in the normal and pushed button textures.
+
+-- Classic keyring art uses button-state textures, not an item icon.
 for _, client in ipairs({'IsVanilla', 'IsTBC'}) do
 	ui.IsMainline = false
 	ui.IsVanilla = client == 'IsVanilla'
@@ -157,28 +161,46 @@ for _, client in ipairs({'IsVanilla', 'IsTBC'}) do
 	module.IsPositioning = false
 	module.Panel = false
 	for _, name in ipairs({'KeyRingButton', 'CharacterBag3Slot', 'CharacterBag2Slot', 'CharacterBag1Slot', 'CharacterBag0Slot', 'MainMenuBarBackpackButton'}) do
-		_G[name] = frame(name)
-		_G[name].Icon = false
-		_G[name].icon = false
-		_G[name].normal = frame('normal')
-		_G[name].normal:SetTexture('original normal artwork')
+		local button = frame(name)
+		_G[name] = button
+		button.Icon = false
+		button.icon = false
+		button.IconMask = false
+		button.normal = frame('normal')
+		button.normal:SetTexture('normal artwork')
+		button.pushed = frame('pushed')
+		button.pushed:SetTexture('pressed artwork')
+		button.normal:SetPoint('CENTER')
+		button.pushed:SetPoint('CENTER')
 	end
-	KeyRingButton.pushed = frame('keyring pushed')
-	KeyRingButton.pushed:SetTexture('original pressed artwork')
-	local normal, pushed = KeyRingButton.normal, KeyRingButton.pushed
-	settings['bags-frame-visibility'] = 'SHOW'
+	function KeyRingButton:UpdateOrientation()
+		self:SetSize(39, 18)
+		self.normal:SetRotation(math.pi / 2)
+		self.pushed:SetRotation(math.pi / 2)
+	end
 	settings['bags-frame-size'] = 32
+	settings['bags-frame-visibility'] = 'SHOW'
 	assert(loadfile('HydraUI/Elements/ActionBars/BagSlots.lua'))('HydraUI', {get = function() return ui, language, {}, settings, {} end})
 	module:Load()
-	assert(KeyRingButton.normal == normal and normal.texture == 'original normal artwork')
-	assert(KeyRingButton.pushed == pushed and pushed.texture == 'original pressed artwork')
-	for _, texture in ipairs({normal, pushed}) do
-		assert(texture.texCoords[1] == 0.1 and texture.texCoords[2] == 0.9)
-		assert(texture.texCoords[3] == 0.1 and texture.texCoords[4] == 0.9)
-	end
-	assert(KeyRingButton.width == 16 and KeyRingButton.height == 32)
 	for i = 2, #module.Objects do
 		assert(rawget(module.Objects[i].normal, 'texture') == nil)
 	end
+	local function checkKeyRing(size)
+		assert(KeyRingButton.width == size / 2 and KeyRingButton.height == size)
+		assert(KeyRingButton.normal.texture == 'normal artwork')
+		assert(KeyRingButton.pushed.texture == 'pressed artwork')
+		for _, texture in ipairs({KeyRingButton.normal, KeyRingButton.pushed}) do
+			assert(texture.allPoints == KeyRingButton and rawget(texture, 'point') == nil)
+			assert(texture.rotation == 0)
+			local uv = texture.texCoords
+			assert(uv[1] == 0.05625 and uv[2] == 0.50625 and uv[3] == 0.0609375 and uv[4] == 0.5484375)
+		end
+	end
+	checkKeyRing(32)
+	settings['bags-frame-size'] = 48
+	module:PositionButtons()
+	checkKeyRing(48)
+	KeyRingButton:UpdateOrientation()
+	checkKeyRing(48)
 end
 print('Bag slots runtime checks passed')

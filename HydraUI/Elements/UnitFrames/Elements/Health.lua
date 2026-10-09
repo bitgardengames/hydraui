@@ -72,8 +72,11 @@ local function UpdateHealth(frame, event, unit)
 	bar:SetMinMaxValues(0, maximum)
 	local value = UnitIsConnected(unit) and current or maximum
 
-	-- A new target/focus starts at its own health, without animating from the previous unit.
-	if bar.SetValueImmediately and (event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_FOCUS_CHANGED") then
+	-- Initialize newly shown/reassigned frames before animating normal health changes.
+	local immediate = event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_FOCUS_CHANGED"
+		or event == "RefreshUnit" or event == "OnShow" or event == "OnAttributeChanged"
+
+	if bar.SetValueImmediately and immediate then
 		bar:SetValue(value, true)
 	else
 		bar:SetValue(value)

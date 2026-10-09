@@ -38,10 +38,10 @@ local function Animate()
 	end
 end
 
-local function SmoothValue(bar, value)
+local function SmoothValue(bar, value, immediate)
 	local _, maximum = bar:GetMinMaxValues()
 
-	if IsSecret(value) or IsSecret(maximum) or (bar.__smoothMaximum and bar.__smoothMaximum ~= maximum) then
+	if immediate or IsSecret(value) or IsSecret(maximum) or (bar.__smoothMaximum and bar.__smoothMaximum ~= maximum) then
 		bar:SetValueImmediately(value)
 		active[bar] = nil
 	else

@@ -258,7 +258,8 @@ function BagsFrame:Load()
 			Object.IconBorder:SetAlpha(0)
 		end
 
-		if Normal then
+		-- The keyring's normal texture is its artwork, not a bag-slot border.
+		if Normal and Object ~= KeyRingButton then
 			Normal:SetTexture(nil)
 		end
 

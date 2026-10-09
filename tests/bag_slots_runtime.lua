@@ -147,4 +147,33 @@ settings['bags-frame-visibility'] = 'HIDE'
 module:UpdateVisibility()
 module:PositionButtons()
 assert(module.Panel.width == 268)
+-- Classic keyring artwork lives in the normal and pushed button textures.
+for _, client in ipairs({'IsVanilla', 'IsTBC'}) do
+	ui.IsMainline = false
+	ui.IsVanilla = client == 'IsVanilla'
+	ui.IsTBC = client == 'IsTBC'
+	module = frame('classic module')
+	module.IsPositioning = false
+	module.Panel = false
+	for _, name in ipairs({'KeyRingButton', 'CharacterBag3Slot', 'CharacterBag2Slot', 'CharacterBag1Slot', 'CharacterBag0Slot', 'MainMenuBarBackpackButton'}) do
+		_G[name] = frame(name)
+		_G[name].Icon = false
+		_G[name].icon = false
+		_G[name].normal = frame('normal')
+		_G[name].normal:SetTexture('original normal artwork')
+	end
+	KeyRingButton.pushed = frame('keyring pushed')
+	KeyRingButton.pushed:SetTexture('original pressed artwork')
+	local normal, pushed = KeyRingButton.normal, KeyRingButton.pushed
+	settings['bags-frame-visibility'] = 'SHOW'
+	settings['bags-frame-size'] = 32
+	assert(loadfile('HydraUI/Elements/ActionBars/BagSlots.lua'))('HydraUI', {get = function() return ui, language, {}, settings, {} end})
+	module:Load()
+	assert(KeyRingButton.normal == normal and normal.texture == 'original normal artwork')
+	assert(KeyRingButton.pushed == pushed and pushed.texture == 'original pressed artwork')
+	assert(KeyRingButton.width == 16 and KeyRingButton.height == 32)
+	for i = 2, #module.Objects do
+		assert(rawget(module.Objects[i].normal, 'texture') == nil)
+	end
+end
 print('Bag slots runtime checks passed')

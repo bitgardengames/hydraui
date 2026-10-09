@@ -640,7 +640,13 @@ local function Compile(tagString)
 end
 
 local function FormatTagString(binding, unit, realUnit)
-	local output, values = {}, {}
+	local output, values = binding.output, binding.values
+	for i = #output, 1, -1 do
+		output[i] = nil
+	end
+	for i = #values, 1, -1 do
+		values[i] = nil
+	end
 	for i = 1, #binding.parts do
 		local part = binding.parts[i]
 		if type(part) == "string" then
@@ -684,8 +690,11 @@ end
 
 function UF.Tag(frame, fontString, tagString)
 	frame.__tags = frame.__tags or {}
+	if fontString.__tagBinding then
+		UF.Untag(fontString.__owner, fontString)
+	end
 	local parts, subscriptions = Compile(tagString or "")
-	local binding = {fontString = fontString, tagString = tagString, parts = parts, subscriptions = subscriptions}
+	local binding = {fontString = fontString, tagString = tagString, parts = parts, subscriptions = subscriptions, output = {}, values = {}}
 	frame.__tags[#frame.__tags + 1] = binding
 	fontString.__owner, fontString.__tagBinding = frame, binding
 	for event in next, subscriptions do
@@ -696,14 +705,34 @@ function UF.Tag(frame, fontString, tagString)
 end
 
 function UF.Untag(frame, fontString)
-	if not frame.__tags then
+	local binding = fontString.__tagBinding
+
+	if not binding or fontString.__owner ~= frame then
 		return
 	end
+
 	for i = #frame.__tags, 1, -1 do
-		if frame.__tags[i].fontString == fontString then
+		if frame.__tags[i] == binding then
 			table.remove(frame.__tags, i)
+			break
 		end
 	end
+
+	-- Remove only the tag dispatcher, preserving other elements sharing the
+	-- event and other labels that still declare it.
+	for event in next, binding.subscriptions do
+		local needed = false
+		for i = 1, #frame.__tags do
+			if frame.__tags[i].subscriptions[event] then
+				needed = true
+				break
+			end
+		end
+		if not needed then
+			frame:UnregisterEvent(event, TagEvent)
+		end
+	end
+
 	fontString.__owner, fontString.__tagBinding = nil, nil
 end
 

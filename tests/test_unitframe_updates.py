@@ -8,7 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize("script", ["unitframe_updates.lua", "unitframe_auras.lua"])
+@pytest.mark.parametrize("script", ["unitframe_updates.lua", "unitframe_auras.lua", "unitframe_runtime.lua"])
 def test_unitframe_widget_behavior(script):
     lua = shutil.which("lua5.1") or shutil.which("lua") or shutil.which("texlua")
     if not lua:

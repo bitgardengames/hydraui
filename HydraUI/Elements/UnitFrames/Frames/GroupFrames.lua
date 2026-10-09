@@ -203,16 +203,19 @@ function UF:BuildGroupFrame(frame, unit, descriptor)
 end
 
 local Operations = {}
+local PowerOptions = {element = "Power"}
+local DebuffOptions = {element = "Auras", component = "Debuffs"}
+
 function Operations.width(frame, value)
-	UF:SetFrameWidth(frame, value)
+	UF.UnitOperations.Width(UF, frame, value)
 end
 
 function Operations.healthHeight(frame, value, descriptor)
-	UF:SetHealthHeight(frame, value, Settings[descriptor.prefix .. "-power-height"])
+	UF.UnitOperations.HealthHeight(UF, frame, value, descriptor.updateOptions)
 end
 
 function Operations.healthColor(frame, value)
-	UF:ApplyHealthAttributes(frame, value)
+	UF.UnitOperations.HealthColor(UF, frame, value)
 end
 
 function Operations.healthOrientation(frame, value)
@@ -220,24 +223,24 @@ function Operations.healthOrientation(frame, value)
 end
 
 function Operations.healthReverse(frame, value)
-	UF:SetHealthReverseFill(frame, value)
+	UF.UnitOperations.HealthReverse(UF, frame, value)
 end
 
 function Operations.powerEnabled(frame, value, descriptor)
-	UF:SetElementEnabled(frame, value, "Power")
+	UF.UnitOperations.ElementEnabled(UF, frame, value, PowerOptions)
 	frame:SetHeight(Settings[descriptor.prefix .. "-health-height"] + (value and Settings[descriptor.prefix .. "-power-height"] + 3 or 2))
 end
 
 function Operations.powerHeight(frame, value, descriptor)
-	UF:SetPowerHeight(frame, value, Settings[descriptor.prefix .. "-health-height"])
+	UF.UnitOperations.PowerHeight(UF, frame, value, descriptor.updateOptions)
 end
 
 function Operations.powerReverse(frame, value)
-	UF:SetPowerReverseFill(frame, value)
+	UF.UnitOperations.PowerReverse(UF, frame, value)
 end
 
 function Operations.powerColor(frame, value)
-	UF:ApplyPowerAttributes(frame, value)
+	UF.UnitOperations.PowerColor(UF, frame, value)
 end
 
 function Operations.healthTexture(frame, value)
@@ -249,7 +252,7 @@ function Operations.powerTexture(frame, value)
 end
 
 function Operations.debuffs(frame, value)
-	UF:SetElementEnabled(frame, value, "Debuffs")
+	UF.UnitOperations.ElementEnabled(UF, frame, value, DebuffOptions)
 end
 
 function Operations.highlight(frame, value)
@@ -261,6 +264,15 @@ function Operations.highlight(frame, value)
 end
 
 function UF:UpdateGroupFrames(descriptor, operation, value)
+	-- Resolve setting keys once per family, then reuse them for every child and
+	-- subsequent slider callback. UnitOperations accepts frames directly.
+	if not descriptor.updateOptions and (operation == "healthHeight" or operation == "powerHeight") then
+		descriptor.updateOptions = {
+			healthHeight = descriptor.prefix .. "-health-height",
+			powerHeight = descriptor.prefix .. "-power-height",
+		}
+	end
+
 	local header = HydraUI.UnitFrames[descriptor.header]
 	if header then
 		self:ForEachHeaderChild(header, Operations[operation], value, descriptor)

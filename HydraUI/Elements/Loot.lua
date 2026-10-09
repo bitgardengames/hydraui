@@ -1,6 +1,6 @@
 local HydraUI, Language, Assets, Settings, Defaults = select(2, ...):get()
 
-Defaults["fast-loot"] = true
+Defaults["fast-loot"] = false
 
 local Loot = HydraUI:NewModule("Loot")
 
